@@ -1,0 +1,380 @@
+import 'package:audioplayers/audioplayers.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:galli_map/galli_map.dart';
+import 'package:jwt_decode/jwt_decode.dart';
+import 'package:packer/constants/app_assets.dart';
+import 'package:packer/constants/app_urls.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
+import 'package:packer/controllers/extensions/map_extension.dart';
+import 'package:packer/controllers/firebase_opt/firebase.dart';
+import 'package:packer/controllers/services/api/enum/request_type.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/socket_service.dart';
+import 'package:packer/enum/order_status_type.dart';
+import 'package:packer/features/views/auth/model/order_notification.dart';
+import 'package:packer/features/views/auth/model/packer_summary.dart';
+import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:vibration/vibration.dart';
+
+class HomeProvider with ChangeNotifier {
+  HomeProvider()
+      : _currentPosition =
+            Position.fromMap({'latitude': 0.0, 'longitude': 0.0});
+
+  User? _user;
+
+  User get user {
+    if (_user == null) {
+      final map = Jwt.parseJwt(DioClient.token);
+      _user = User.fromMap(map);
+    }
+    return _user!;
+  }
+
+  bool isOnline = false;
+  bool _isAvailable = false;
+  bool isOrder = true;
+  bool isOrderPicked = false;
+  bool isLoading = false;
+  String customerName = 'Samarth';
+  int packingTime = 2;
+  bool isDelivered = false;
+  String paymentMethod = 'Cash on delivery';
+  bool isMapFullScreen = false;
+  late Position _currentPosition;
+  LatLng destinationLocation = LatLng(27.673, 85.328);
+  final SocketService _socketService = SocketService();
+
+  PackerSummary? packerSummary;
+
+  // For audio notification sounds
+  final player = AudioPlayer();
+
+  List<OrderNotification> notifications = [];
+  List<OrderNotification> latestOrder = [];
+
+  final dio = Dio();
+  OrderProvider orderProvider = OrderProvider();
+
+  set isAvailable(val) {
+    _isAvailable = val;
+  }
+
+  get isAvailable => _isAvailable;
+
+  clearLatestOrder({bool isFromPayment = true}) {
+    latestOrder.clear();
+    if (isFromPayment) {
+      isAvailable = false;
+    }
+    notifyListeners();
+  }
+
+  Future<void> initialize({bool isFirstTime = false}) async {
+    if (!isFirstTime) {
+      clearLatestOrder();
+    }
+    await getCurrentLocation();
+
+    // connectSocket();
+
+    if (isOnline) {
+      FirebaseAPI().requestPermission();
+      if (isAvailable) {
+        fetchCreatedOrders();
+      }
+      fetchLatestOrders(isFirstTime: isFirstTime);
+    }
+  }
+
+
+  Future<void> fetchpackerSummary() async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.packerSummaryUrl,
+      );
+      // packerSummary = packerSummary.fromJson(response.data);
+      // isOnline = packerSummary?.isOnline ?? false;
+      // isAvailable = packerSummary?.isAvailable ?? false;
+      notifyListeners();
+    } catch (ex) {
+      print('Error: $ex');
+    }
+  }
+
+  Future<LatLng> fetchStoreLocation() async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.packerStoreLocationUrl,
+      );
+      final latlng = (response.data as Map).toLatLng();
+      return latlng;
+    } catch (ex) {
+      print('Error: $ex');
+      rethrow;
+    }
+  }
+
+  /// if available fetch this as they need to see the created orders
+  Future<void> fetchCreatedOrders() async {
+    try {
+      var url = AppUrls.getOrdersByStatusUrl;
+      url += OrderStatusType.created.toString();
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+
+      final List<dynamic> data = response.data;
+      notifications =
+          data.map((order) => OrderNotification.fromJson(order)).toList();
+      notifyListeners();
+    } catch (ex) {
+      print('Error: $ex');
+      throw Exception('Failed to load carts: $ex');
+    }
+  }
+
+  /// if online call this cause, they can't be viewing the latest orders
+  Future<void> fetchLatestOrders({bool isFirstTime = false}) async {
+    try {
+      if (!isFirstTime) {
+        clearLatestOrder(isFromPayment: false);
+        isLoading = true;
+        notifyListeners();
+      }
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.getLatestOrdersUrl,
+      );
+
+      final List<dynamic> data = response.data;
+      latestOrder =
+          data.map((order) => OrderNotification.fromJson(order)).toList();
+      isLoading = false;
+
+      notifyListeners();
+    } catch (ex) {
+      print('Error: $ex');
+      isLoading = false;
+      notifyListeners();
+      throw Exception('Failed to load carts: $ex');
+    }
+  }
+
+  void _watchLocationChanges() {
+    Geolocator.getPositionStream().listen((Position position) {
+      _currentPosition = position;
+    });
+  }
+
+  void _showNotificationPopup(OrderNotification order) {
+    final hasNotification = notifications
+        .firstWhereOrNull((element) => element.orderId == order.orderId);
+    if (hasNotification == null) {
+      player.play(AssetSource(AppAssets.notificationSound));
+      notifications.add(order);
+      notifyListeners();
+    }
+  }
+
+  Future<void> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    _currentPosition = position;
+    notifyListeners();
+  }
+
+  Position get currentPosition => _currentPosition;
+  void updateDestination(LatLng newDestination) {
+    destinationLocation = newDestination;
+  }
+
+  Future<void> getpackerStatus() async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.packerOnlineStatus,
+      );
+      isOnline = response.data['is_online'];
+      notifyListeners();
+    } catch (ex) {
+      print('Error: $ex');
+    }
+  }
+
+  // Future<void> acknowledgeOrder(int index) async {
+  //   try {
+  //     final id = notifications[index].orderId;
+  //     final response = await DioClient().request(
+  //       requestType: RequestType.postWithToken,
+  //       url: AppUrls.acknowledgeOrderUrl.replaceAll("id", id),
+  //     );
+  //     if (response.statusCode == 200) {
+  //       notifications.removeWhere((element) => element.orderId == id);
+  //       notifyListeners();
+  //     }
+  //   } catch (ex) {
+  //     showToast(ex.toString());
+  //     print('Error: $ex');
+  //   }
+  // }
+  Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.acknowledgeOrderUrl.replaceAll('id', orderId),
+      );
+
+      if (response.statusCode == 200) {
+        //Show snackbar
+        final index =
+            notifications.indexWhere((element) => element.orderId == orderId);
+        final orderItem = notifications[index];
+
+        toggleFirebaseTopic();
+
+        navigate(context,
+            route: NavigationConstants.orderDetailsRoute,
+            extra: orderItem.orderId);
+        notifications.removeAt(index);
+
+        fetchLatestOrders();
+        notifyListeners();
+      } else {
+        print('Error acknowledging order: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error acknowledging order: $e');
+      rethrow;
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> updatepackerStatus(bool status) async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.patchWithToken,
+        url: AppUrls.packerOnlineStatus,
+        body: {"isOnline": status},
+      );
+    } catch (ex) {
+      print('Error: $ex');
+    }
+  }
+
+  Future<void> updatepackerAvailability(bool status) async {
+    try {
+      await DioClient().request(
+        requestType: RequestType.patchWithToken,
+        url: AppUrls.packerAvailability,
+        body: {"is_available": status},
+      );
+      isAvailable = status;
+      fetchCreatedOrders();
+      notifyListeners();
+    } catch (ex) {
+      rethrow;
+    }
+  }
+
+  void toggleOnlineStatus() async {
+    isOnline = !isOnline;
+    if (!isOnline) {
+      if (await Vibration.hasVibrator() != null) {
+        Vibration.vibrate(
+          duration: 500,
+        );
+      }
+    }
+    notifyListeners();
+    await updatepackerStatus(isOnline);
+    if (isOnline) {
+      FirebaseAPI().requestPermission();
+      fetchLatestOrders();
+      notifyListeners();
+    } else {
+      _socketService.disconnect();
+      toggleFirebaseTopic();
+      isAvailable = false;
+      isOrder = false;
+      isOrderPicked = false;
+      isDelivered = false;
+      notifyListeners();
+    }
+  }
+
+  void markOrderPicked() {
+    isOrder = false;
+    isOrderPicked = true;
+    notifyListeners();
+  }
+
+  void markArrived() {
+    isDelivered = true;
+    isOrderPicked = false;
+    isOrder = false;
+    notifyListeners();
+  }
+
+  setInitialLocation(Position currentPosition) {
+    _currentPosition = currentPosition;
+    notifyListeners();
+  }
+
+  updateAvailability({String? topicName}) async {
+    try {
+      if (topicName != null) {
+        await updatepackerAvailability(true);
+        toggleFirebaseTopic(topicName: topicName);
+      } else {
+        await updatepackerAvailability(false);
+        toggleFirebaseTopic();
+      }
+    } catch (ex) {
+      rethrow;
+    }
+  }
+
+  toggleFirebaseTopic({String? topicName}) {
+    if (topicName != null) {
+      FirebaseAPI().packerStatus(topicName);
+      FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
+    } else {
+      if (FirebaseAPI().topicName.isEmpty) {
+        // TODO: Check here
+        // FirebaseAPI().topicName = packerSummary?.topicName ?? "";
+      }
+      FirebaseAPI().unsubscribepackerStatus();
+    }
+  }
+}

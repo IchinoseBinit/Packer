@@ -1,0 +1,153 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/features/views/auth/views/login_screen.dart';
+import 'package:packer/features/views/auth/views/splash_screen.dart';
+import 'package:packer/features/views/auth/views/welcome_screen.dart';
+import 'package:packer/features/views/document/views/citizenship.dart';
+import 'package:packer/features/views/document/views/document_list_screen.dart';
+import 'package:packer/features/views/document/views/driving_license.dart';
+import 'package:packer/features/views/document/views/photos_of_location.dart';
+import 'package:packer/features/views/home/thank_you_page.dart';
+import 'package:packer/features/views/navigation/navigation_page.dart';
+import 'package:packer/features/views/order/views/order_detail_page.dart';
+import 'package:packer/features/views/order/views/see_order_items_page.dart';
+import 'package:packer/features/views/order/views/unsettled_orders_screen.dart';
+import 'package:packer/features/views/order/views/view_image_screen.dart';
+import 'package:packer/features/views/profile/profile_screen.dart';
+import 'package:packer/features/views/scan/scan_screen.dart';
+import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
+import 'package:packer/features/views/summary/views/summary_screen.dart';
+
+class AppRouter {
+  static late GoRouter router;
+  static late BuildContext context;
+  GoRouter getRoutes(BuildContext context) {
+    router = GoRouter(
+      initialLocation: NavigationConstants.initialRoute,
+      routes: <RouteBase>[
+        GoRoute(
+            path: NavigationConstants.initialRoute,
+            builder: (BuildContext context, GoRouterState state) {
+              return const SplashScreen();
+            },
+            routes: <RouteBase>[
+              GoRoute(
+                path: NavigationConstants.welcomeScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const WelcomeScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.loginRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const LoginScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.dashboardRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const NavigationScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.documentListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const DocumentListScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.photoSelectionRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const PhotoSelection();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.profileScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ProfileScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.thankYouPageRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ThankYouPage();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.photoSelectionRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const PhotoSelection();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.drivingLicenseScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const DrivingLicenseSelection();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.citizenshipCardScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const CitizenshipSelection();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.orderDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  var orderId = '2685';
+                  if (state.extra != null) {
+                    orderId = (state.extra as Object).toString();
+                  }
+                  return OrderDetails(
+                    orderId: orderId,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.viewImageRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final imageUrl = state.extra as String;
+                  return ViewImageScreen(
+                    imageUrl: imageUrl,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.qrScanScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const ScanScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.unsettledOrdersRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const UnsettledOrdersScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.seeOrderItemsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const SeeOrderedItemsPage();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.weeklySummaryRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const SummaryScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.dailySummaryRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as String;
+                  return DailySummaryScreen(startDate: extra.toString());
+                },
+              ),
+            ]),
+      ],
+    );
+    context = context;
+    return router;
+  }
+}

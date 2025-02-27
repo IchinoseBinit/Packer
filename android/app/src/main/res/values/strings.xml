@@ -1,0 +1,4 @@
+<resources>
+    <string name="accept_text">Accept</string>
+    <string name="call_header">Incoming Call</string>
+</resources>

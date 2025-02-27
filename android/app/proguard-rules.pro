@@ -1,0 +1,6 @@
+-keep class io.agora.**{*;}
+-keep class com.hyphenate.** {*;}
+-dontwarn  com.hyphenate.**
+-dontwarn com.google.devtools.build.android.desugar.runtime.ThrowableExtension
+-dontwarn org.conscrypt.Conscrypt
+-dontwarn org.conscrypt.OpenSSLProvider
