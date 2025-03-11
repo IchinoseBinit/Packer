@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -7,16 +8,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:provider/provider.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/controllers/services/navigate.dart';
+import 'package:provider/provider.dart';
+
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  const ScanScreen({
+    Key? key,
+    this.isfromCartItem = false,
+    this.productId,
+  }) : super(key: key);
+
+  final bool isfromCartItem;
+  final int? productId;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -41,6 +50,10 @@ class _ScanScreenState extends State<ScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OrderProvider>(context, listen: false)
+          .initScanMessage(widget.productId ?? 0);
+    });
   }
 
   var _flash = false;
@@ -48,7 +61,7 @@ class _ScanScreenState extends State<ScanScreen> {
   checkQr(String code) {
     controller?.stop();
 
-    // log(code, name: "qr code data");
+    log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
 
@@ -61,7 +74,7 @@ class _ScanScreenState extends State<ScanScreen> {
         Provider.of<HomeProvider>(context, listen: false)
             .updateAvailability(topicName: topicName);
         removeLoading(context);
-        onBackPressed();
+        Navigator.pop(context);
         showToast("joined the waiting list");
       } catch (ex) {
         removeLoading(context);
@@ -81,9 +94,16 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  onBackPressed() async {
+  // void onBackPressed() {
+  //   // WidgetsBinding.instance.addPostFrameCallback((_) {
+  //   //   navigatePop(context);
+  //   // });
+  // }
+
+  @override
+  void dispose() {
     controller?.dispose();
-    navigatePop(context);
+    super.dispose();
   }
 
   buildFlash() {
@@ -169,60 +189,93 @@ class _ScanScreenState extends State<ScanScreen> {
       width: 200,
       height: 200,
     );
-    return PopScope(
-      onPopInvoked: (val) {
-        onBackPressed();
-      },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            // QRView(
-            //   key: qrKey,
-            //   onQRViewCreated: (qrController) {
-            //     cameraController = qrController;
-            //     qrController.scannedDataStream.listen((scanData) {
-            //       if (scanData.code != null) {
-            //         checkQr(scanData.code!);
-            //       }
-            //     });
-            //   },
-            //   overlay: QrScannerOverlayShape(
-            //     borderColor: AppColors.primaryColor,
-            //   ),
-            // ),
+    return Scaffold(
+      body: Stack(
+        children: [
+          // QRView(
+          //   key: qrKey,
+          //   onQRViewCreated: (qrController) {
+          //     cameraController = qrController;
+          //     qrController.scannedDataStream.listen((scanData) {
+          //       if (scanData.code != null) {
+          //         checkQr(scanData.code!);
+          //       }
+          //     });
+          //   },
+          //   overlay: QrScannerOverlayShape(
+          //     borderColor: AppColors.primaryColor,
+          //   ),
+          // ),
 
-            MobileScanner(
-              fit: BoxFit.cover,
-              scanWindow: scanWindow,
-              controller: controller,
-              errorBuilder: (context, error, child) {
-                return ScannerErrorWidget(error: error);
-              },
-              onDetect: (barcodes) {
-                checkQr(barcodes.barcodes.first.rawValue.toString());
-              },
-            ),
-            _buildBarcodeOverlay(),
-            _buildScanWindow(scanWindow),
+          MobileScanner(
+            fit: BoxFit.cover,
+            scanWindow: scanWindow,
+            controller: controller,
+            errorBuilder: (context, error, child) {
+              return ScannerErrorWidget(error: error);
+            },
+            onDetect: (barcodes) {
+              if (widget.isfromCartItem) {
+                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
+                    context,
+                    controller,
+                    barcodes.barcodes.first.rawValue.toString());
+                return;
+              }
+              checkQr(barcodes.barcodes.first.rawValue.toString());
+            },
+          ),
+          _buildBarcodeOverlay(),
+          _buildScanWindow(scanWindow),
 
-            Positioned(
-              child: buildFlash(),
-              top: 8.h * 6,
-              right: 4.w * 3,
-            ),
-            Positioned(
-              top: 8.h * 6,
-              left: 4.w * 3,
-              child: IconButton(
-                onPressed: () => onBackPressed(),
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                ),
+          Positioned(
+            child: buildFlash(),
+            top: 8.h * 6,
+            right: 4.w * 3,
+          ),
+          Positioned(
+            top: 8.h * 6,
+            left: 4.w * 3,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
               ),
             ),
-          ],
-        ),
+          ),
+          // TODO: i want this in center of width
+          Consumer<OrderProvider>(
+            builder: (context, provider, child) {
+              return Visibility(
+                visible: widget.isfromCartItem && provider.scanMessage != null,
+                child: Positioned(
+                  top: 32.h * 6,
+                  left: 4.w * 3,
+                  right: 4.w * 3,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.scanMessage ?? "",
+                      style: TextStyle(
+                        color: AppColors.backgroundColor,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

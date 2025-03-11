@@ -8,6 +8,16 @@ class AppColors {
 
   static const Color splashBackgroundColor = Color(0xff630897);
 
+  // blue500
+  static const Color blue500 = Color(0xff3F51B5);
+  // blue50
+  static const Color blue50 = Color(0xffE8EAF6);
+
+  // green700
+  static const Color green700 = Color(0xff388E3C);
+  // green50
+  static const Color green50 = Color(0xffE8F5E9);
+
 
 
   //assigned by samayanta

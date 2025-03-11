@@ -1,9 +1,11 @@
-import 'dart:io';
+import 'dart:developer';
 
-import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:galli_map/galli_map.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -17,6 +19,9 @@ import 'package:packer/features/views/order/models/see_order_details_packer.dart
 import 'package:packer/features/views/order/models/unsettled_orders.dart';
 import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class OrderProvider extends ChangeNotifier {
   List<OrderNotification> orders = <OrderNotification>[];
@@ -31,6 +36,7 @@ class OrderProvider extends ChangeNotifier {
   OrderDetailsFetch? get orderDetails => _orderDetails; // Change getter type
   String? get error => _error;
   var isLoading = false;
+  String? scanMessage;
   UnsettledOrders? unsettledOrders;
   List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
     return orderItemsJson
@@ -48,6 +54,86 @@ class OrderProvider extends ChangeNotifier {
   void acceptOrder(int index) {
     orders.removeAt(index);
     notifyListeners();
+  }
+
+  void initScanMessage(int productId){
+    if(kDebugMode){
+      showToast('Item Id: $productId');
+    }
+    for (var element in _orderDetails?.cartItems ?? []) {
+      if (element.id == productId) {
+        scanMessage = "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
+        notifyListeners();
+        return;
+      }
+    }
+  }
+
+  checkItemQr(
+      BuildContext context, MobileScannerController? controller, String code) {
+    controller?.stop();
+
+    log(code, name: "qr code data");
+
+    HapticFeedback.heavyImpact();
+
+    showLoading(context);
+
+    if (code.contains('fasto')) {
+      final prodId = int.tryParse(code.split('+').last) ?? 0;
+
+      try {
+        final isScanned = scanCountOrder(prodId);
+        if (isScanned) {
+          removeLoading(context);
+          Navigator.pop(context);
+        } else {
+          removeLoading(context);
+          controller?.start();
+        }
+        // onBackPressed();
+        // showToast("joined the waiting list");
+      } catch (ex) {
+        removeLoading(context);
+        showToast(ex.toString());
+        print(ex.toString());
+      }
+    } else {
+      removeLoading(context);
+      ShowAlertDialog(
+        body: const Text("Invalid QR"),
+        okFunc: () {
+          Navigator.pop(context);
+          controller?.start();
+        },
+      ).showAlertDialog(context);
+      controller?.start();
+    }
+  }
+
+  bool scanCountOrder(int cartItemId) {
+    for (var element in _orderDetails?.cartItems ?? []) {
+      if (element.id == cartItemId) {
+        if (element.itemScanCount == element.quantity) {
+          showToast("Item already scanned");
+          return false;
+        }
+        element.itemScanCount++;
+        if (element.itemScanCount == element.quantity) {
+          scanMessage = null;
+          showToast("Item scanned successfully");
+          return true;
+        } else {
+          scanMessage =
+              "Scan ${element.quantity - element.itemScanCount} more ${element.productName}";
+        }
+        notifyListeners();
+        return false;
+      }
+    }
+    showToast("Item not found");
+    notifyListeners();
+    return false;
   }
 
   Future<void> getCurrentLocation() async {
@@ -123,6 +209,14 @@ class OrderProvider extends ChangeNotifier {
   Future billOrder(String orderId) async {
     orderPickedDetails = null;
     try {
+      // check for all items scan count is equal to quantity
+      for (var item in _orderDetails?.cartItems ?? []) {
+        if (item.itemScanCount != item.quantity) {
+          showToast("Please scan all items");
+          return;
+        }
+      }
+
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.billOrderUrl.replaceFirst("id", orderId),

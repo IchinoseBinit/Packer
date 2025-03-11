@@ -116,7 +116,11 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.qrScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return const ScanScreen();
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return ScanScreen(
+                    isfromCartItem: args['forCartitem'] ?? false,
+                    productId: args['productId'] ?? 0,
+                  );
                 },
               ),
               GoRoute(
