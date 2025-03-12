@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 
@@ -9,11 +11,11 @@ class NotificationOrderCard extends StatelessWidget {
   final VoidCallback callback;
 
   const NotificationOrderCard({
-    Key? key,
+    super.key,
     required this.orderItem,
     required this.primaryColor,
     required this.callback,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,18 +79,24 @@ class NotificationOrderCard extends StatelessWidget {
                 onTap: () {
                   callback();
                 },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  child: Text(
-                    'Details',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                        ),
+                child: GestureDetector(
+                  onTap: () {
+                    navigate(context,
+                        route: NavigationConstants.bucketqrScreenRoute);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    child: Text(
+                      'Details',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                    ),
                   ),
                 ),
               ),

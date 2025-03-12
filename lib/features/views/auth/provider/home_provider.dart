@@ -1,18 +1,16 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:galli_map/galli_map.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
-import 'package:packer/controllers/extensions/map_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/controllers/services/socket_service.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
@@ -21,10 +19,6 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:vibration/vibration.dart';
 
 class HomeProvider with ChangeNotifier {
-  HomeProvider()
-      : _currentPosition =
-            Position.fromMap({'latitude': 0.0, 'longitude': 0.0});
-
   User? _user;
 
   User get user {
@@ -45,14 +39,10 @@ class HomeProvider with ChangeNotifier {
   bool isDelivered = false;
   String paymentMethod = 'Cash on delivery';
   bool isMapFullScreen = false;
-  late Position _currentPosition;
-  LatLng destinationLocation = LatLng(27.673, 85.328);
-  final SocketService _socketService = SocketService();
 
   PackerSummary? packerSummary;
 
   // For audio notification sounds
-  final player = AudioPlayer();
 
   List<OrderNotification> notifications = [];
   List<OrderNotification> latestOrder = [];
@@ -78,9 +68,6 @@ class HomeProvider with ChangeNotifier {
     if (!isFirstTime) {
       clearLatestOrder();
     }
-    await getCurrentLocation();
-
-    // connectSocket();
 
     if (isOnline) {
       FirebaseAPI().requestPermission();
@@ -90,7 +77,6 @@ class HomeProvider with ChangeNotifier {
       fetchLatestOrders(isFirstTime: isFirstTime);
     }
   }
-
 
   Future<void> fetchpackerSummary() async {
     try {
@@ -104,20 +90,6 @@ class HomeProvider with ChangeNotifier {
       notifyListeners();
     } catch (ex) {
       print('Error: $ex');
-    }
-  }
-
-  Future<LatLng> fetchStoreLocation() async {
-    try {
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.packerStoreLocationUrl,
-      );
-      final latlng = (response.data as Map).toLatLng();
-      return latlng;
-    } catch (ex) {
-      print('Error: $ex');
-      rethrow;
     }
   }
 
@@ -169,53 +141,13 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  void _watchLocationChanges() {
-    Geolocator.getPositionStream().listen((Position position) {
-      _currentPosition = position;
-    });
-  }
-
   void _showNotificationPopup(OrderNotification order) {
     final hasNotification = notifications
         .firstWhereOrNull((element) => element.orderId == order.orderId);
     if (hasNotification == null) {
-      player.play(AssetSource(AppAssets.notificationSound));
       notifications.add(order);
       notifyListeners();
     }
-  }
-
-  Future<void> getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    _currentPosition = position;
-    notifyListeners();
-  }
-
-  Position get currentPosition => _currentPosition;
-  void updateDestination(LatLng newDestination) {
-    destinationLocation = newDestination;
   }
 
   Future<void> getpackerStatus() async {
@@ -323,7 +255,6 @@ class HomeProvider with ChangeNotifier {
       fetchLatestOrders();
       notifyListeners();
     } else {
-      _socketService.disconnect();
       toggleFirebaseTopic();
       isAvailable = false;
       isOrder = false;
@@ -346,11 +277,6 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  setInitialLocation(Position currentPosition) {
-    _currentPosition = currentPosition;
-    notifyListeners();
-  }
-
   updateAvailability({String? topicName}) async {
     try {
       if (topicName != null) {
@@ -361,7 +287,7 @@ class HomeProvider with ChangeNotifier {
         toggleFirebaseTopic();
       }
     } catch (ex) {
-      rethrow;
+      // rethrow;
     }
   }
 

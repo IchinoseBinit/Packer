@@ -1,6 +1,6 @@
 enum OrderStatusType {
   created,
-  acknowledged,
+  packer_assigned,
   picked,
   completed,
   cancelled,
@@ -11,8 +11,8 @@ enum OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return 'created';
-      case OrderStatusType.acknowledged:
-        return 'acknowledged';
+      case OrderStatusType.packer_assigned:
+        return 'packer_assigned';
       case OrderStatusType.picked:
         return 'picked';
       case OrderStatusType.completed:
@@ -32,8 +32,8 @@ extension StatusTypeExtension on OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return "Order Created";
-      case OrderStatusType.acknowledged:
-        return "Packed";
+      case OrderStatusType.packer_assigned:
+        return "packer_assigned";
       case OrderStatusType.picked:
         return "On The Way";
       case OrderStatusType.completed:
@@ -51,8 +51,8 @@ extension StatusTypeExtension on OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return "Created";
-      case OrderStatusType.acknowledged:
-        return "Acknowledged";
+      case OrderStatusType.packer_assigned:
+        return "packer_assigned";
       case OrderStatusType.picked:
         return "Delivering";
       case OrderStatusType.completed:
@@ -70,8 +70,8 @@ extension StatusTypeExtension on OrderStatusType {
     switch (status) {
       case 'created':
         return OrderStatusType.created;
-      case 'acknowledged':
-        return OrderStatusType.acknowledged;
+      case 'packer_assigned':
+        return OrderStatusType.packer_assigned;
       case 'picked':
         return OrderStatusType.picked;
       case 'completed':
@@ -89,7 +89,8 @@ extension StatusTypeExtension on OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return "Created";
-      case OrderStatusType.acknowledged:
+      case OrderStatusType.packer_assigned:
+        return "packer_assigned";
       case OrderStatusType.picked:
         return "On The Way";
       case OrderStatusType.completed:

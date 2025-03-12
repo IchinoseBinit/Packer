@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:galli_map/galli_map.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
@@ -31,8 +30,6 @@ class OrderProvider extends ChangeNotifier {
   WeeklySummary? weeklySummary;
   DailySummary? dailySummary;
   String? _error;
-  late Position _currentPosition;
-  LatLng destinationLocation = LatLng(27.673, 85.328);
   OrderDetailsFetch? get orderDetails => _orderDetails; // Change getter type
   String? get error => _error;
   var isLoading = false;
@@ -56,13 +53,14 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void initScanMessage(int productId){
-    if(kDebugMode){
+  void initScanMessage(int productId) {
+    if (kDebugMode) {
       showToast('Item Id: $productId');
     }
     for (var element in _orderDetails?.cartItems ?? []) {
       if (element.id == productId) {
-        scanMessage = "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
+        scanMessage =
+            "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
         notifyListeners();
         return;
       }
@@ -134,26 +132,6 @@ class OrderProvider extends ChangeNotifier {
     showToast("Item not found");
     notifyListeners();
     return false;
-  }
-
-  Future<void> getCurrentLocation() async {
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    _currentPosition = position;
-    notifyListeners();
-  }
-
-  Position get currentPosition => _currentPosition;
-
-  void updateDestination(LatLng newDestination) {
-    destinationLocation = newDestination;
-    notifyListeners();
-  }
-
-  setInitialLocation(Position currentPosition) {
-    _currentPosition = currentPosition;
-    notifyListeners();
   }
 
   /// Use order type to pass multiple values

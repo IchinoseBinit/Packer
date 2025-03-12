@@ -14,10 +14,10 @@ class OrderScreen extends StatefulWidget {
 }
 
 class OrderScreenState extends State<OrderScreen> {
-
   @override
   void initState() {
-    Provider.of<OrderProvider>(context, listen: false).fetchOrders(orderType: "all");
+    Provider.of<OrderProvider>(context, listen: false)
+        .fetchOrders(orderType: "all");
     super.initState();
   }
 
@@ -41,14 +41,14 @@ class OrderScreenState extends State<OrderScreen> {
                   ),
                 )
               : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: provider.orders.length,
                   primary: false,
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
                     final orderItem = provider.orders[index];
                     switch (orderItem.status) {
-                      case OrderStatusType.acknowledged:
+                      case OrderStatusType.packer_assigned:
                       case OrderStatusType.picked:
                       case OrderStatusType.completed:
                       case OrderStatusType.cancelled:

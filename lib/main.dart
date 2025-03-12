@@ -16,7 +16,6 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
-import 'package:uuid/uuid.dart';
 
 import '/theme/theme.dart';
 

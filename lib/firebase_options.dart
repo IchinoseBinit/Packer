@@ -48,19 +48,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD056BrsykO8NiL-sLyyg-nWjicGGHKtOQ',
-    appId: '1:246901202538:android:bcb28cf998ae65f5b37413',
+    appId: '1:246901202538:android:f79188473bc743d8b37413',
     messagingSenderId: '246901202538',
     projectId: 'dropit-nepal',
-    storageBucket: 'dropit-nepal.appspot.com',
+    storageBucket: 'dropit-nepal.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD056BrsykO8NiL-sLyyg-nWjicGGHKtOQ',
-    appId: '1:246901202538:android:bcb28cf998ae65f5b37413',
+    apiKey: 'AIzaSyCN9kIDBBlzNJiPEX6sHDuBSpEVn-zRAXk',
+    appId: '1:246901202538:ios:4cb2585e0e3fb1a6b37413',
     messagingSenderId: '246901202538',
     projectId: 'dropit-nepal',
-    storageBucket: 'dropit-nepal.appspot.com',
-    iosBundleId: 'com.np.dropit.packer',
+    storageBucket: 'dropit-nepal.firebasestorage.app',
+    iosBundleId: 'com.example.packer',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

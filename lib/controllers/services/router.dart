@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/auth/views/login_screen.dart';
 import 'package:packer/features/views/auth/views/splash_screen.dart';
@@ -10,6 +11,7 @@ import 'package:packer/features/views/document/views/driving_license.dart';
 import 'package:packer/features/views/document/views/photos_of_location.dart';
 import 'package:packer/features/views/home/thank_you_page.dart';
 import 'package:packer/features/views/navigation/navigation_page.dart';
+import 'package:packer/features/views/order/models/fetch_order_details.dart';
 import 'package:packer/features/views/order/views/order_detail_page.dart';
 import 'package:packer/features/views/order/views/see_order_items_page.dart';
 import 'package:packer/features/views/order/views/unsettled_orders_screen.dart';
@@ -75,6 +77,12 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.bucketqrScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const BucketScanScreen();
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.photoSelectionRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const PhotoSelection();
@@ -95,10 +103,9 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.orderDetailsRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  var orderId = '2685';
-                  if (state.extra != null) {
-                    orderId = (state.extra as Object).toString();
-                  }
+                  // var orderId = '3485';
+                  final orderId = state.extra as String;
+
                   return OrderDetails(
                     orderId: orderId,
                   );

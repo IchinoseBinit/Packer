@@ -45,34 +45,31 @@ dependencies:
   # google_maps_flutter_ios: ^2.6.0
   dio: ^5.4.3+1
   provider: ^6.1.2
-  firebase_core: ^2.32.0
-  firebase_messaging: ^14.9.2
-  flutter_local_notifications: ^17.1.2
+  firebase_core: ^3.12.1
+  firebase_messaging: ^15.2.4
+  flutter_local_notifications: ^18.0.1
   flutter_secure_storage: ^9.2.1
   fluttertoast: ^8.2.5
-  google_fonts: ^4.0.4
+  google_fonts: ^6.2.1
   permission_handler: ^11.3.1
-  geolocator: ^10.1.0 
+  geolocator: ^13.0.2 
   web_socket_channel: ^3.0.0
-  intl: ^0.19.0
+  intl: ^0.20.0
   jwt_decode: ^0.3.1
   url_launcher: ^6.3.0
   haptic_feedback: ^0.5.1+1
-  vibration: ^1.9.0
-  audioplayers: ^6.1.0
+  vibration: ^1.8.1
   photo_view: ^0.15.0
   mobile_scanner: ^6.0.2
-  galli_map: ^1.2.7
   flutter_image_compress: ^2.3.0
   slidable_button: ^3.0.0+1
   flutter_callkeep: 
     path: ./flutter_callkeep
   # callkeep: ^0.4.0
   uuid: ^4.5.1
-  awesome_notifications: ^0.10.0
+  awesome_notifications: ^0.10.1
   shared_preferences: ^2.5.1
-  is_lock_screen2: ^2.0.1
-
+  is_lock_screen2: ^2.0.2 
   # galli_vector_package: ^0.0.5
   # galli_vector_plugin: ^0.2.1
 
@@ -88,8 +85,8 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
 
 dependency_overrides: 
   flutter_compass: ^0.8.1
