@@ -10,7 +10,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/order/models/fetch_order_details.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -22,12 +21,11 @@ import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 class BucketScanScreen extends StatefulWidget {
   const BucketScanScreen({
     super.key,
-    this.isfromCartItem = false,
-    this.productId,
+    this.isfromCartItem = false, this.orderId,
   });
 
+  final String? orderId;
   final bool isfromCartItem;
-  final int? productId;
 
   @override
   State<BucketScanScreen> createState() => _BucketScanScreenState();
@@ -52,15 +50,13 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Provider.of<OrderProvider>(context, listen: false)
-      //     .initScanMessage(widget.productId ?? 0);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   var _flash = false;
 
   checkQr(String code, String orderId) {
+    log(orderId, name: "order id:");
     String data = code;
     setState(() {
       data = code;
@@ -80,8 +76,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
         Navigator.pop(context);
         showToast("basket available");
         navigate(context,
-            route: NavigationConstants.orderDetailsRoute,
-            extra: orderId.toString());
+            route: NavigationConstants.orderDetailsRoute, extra: orderId);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
@@ -195,97 +190,99 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // final provider = Provider.of<OrderProvider>(context, listen: false);
+
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: 200,
       height: 200,
     );
     return Scaffold(
-      body: Consumer<OrderDetailsFetch>(
-        builder: (context, value, index) => Stack(
-          children: [
-            MobileScanner(
-              fit: BoxFit.cover,
-              scanWindow: scanWindow,
-              controller: controller,
-              errorBuilder: (context, error, child) {
-                return ScannerErrorWidget(error: error);
-              },
-              onDetect: (barcodes) {
-                if (widget.isfromCartItem) {
-                  Provider.of<OrderProvider>(context, listen: false)
-                      .checkItemQr(context, controller,
-                          barcodes.barcodes.first.rawValue.toString());
-                  return;
-                }
-                checkQr(barcodes.barcodes.first.rawValue.toString(),
-                    value.id.toString());
-              },
-            ),
-            _buildBarcodeOverlay(),
-            _buildScanWindow(scanWindow),
+      body: Stack(
+        children: [
+          MobileScanner(
+            fit: BoxFit.cover,
+            scanWindow: scanWindow,
+            controller: controller,
+            errorBuilder: (context, error, child) {
+              return ScannerErrorWidget(error: error);
+            },
+            onDetect: (barcodes) {
+              
 
-            Positioned(
-              child: buildFlash(),
-              top: 8.h * 6,
-              right: 4.w * 3,
+
+              if (widget.isfromCartItem) {
+                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
+                    context,
+                    controller,
+                    barcodes.barcodes.first.rawValue.toString());
+                return;
+              }
+              checkQr(barcodes.barcodes.first.rawValue.toString(), widget.orderId!);
+            },
+          ),
+          _buildBarcodeOverlay(),
+          _buildScanWindow(scanWindow),
+
+          Positioned(
+            child: buildFlash(),
+            top: 8.h * 6,
+            right: 4.w * 3,
+          ),
+          Positioned(
+            top: 8.h * 6,
+            right: 40.w * 3,
+            child: Text(
+              'Basket Scanner',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.backgroundColor),
             ),
-            Positioned(
-              top: 8.h * 6,
-              right: 40.w * 3,
-              child: Text(
-                'Basket Scanner',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.backgroundColor),
+          ),
+          Positioned(
+            top: 8.h * 6,
+            left: 4.w * 3,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.white,
               ),
             ),
-            Positioned(
-              top: 8.h * 6,
-              left: 4.w * 3,
-              child: IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            // TODO: i want this in center of width
-            Consumer<OrderProvider>(
-              builder: (context, provider, child) {
-                return Visibility(
-                  visible:
-                      widget.isfromCartItem && provider.scanMessage != null,
-                  child: Positioned(
-                    top: 32.h * 6,
-                    left: 4.w * 3,
-                    right: 4.w * 3,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryColor,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        provider.scanMessage ?? "",
-                        style: TextStyle(
-                          color: AppColors.backgroundColor,
-                          fontSize: 12.sp,
-                        ),
+          ),
+          // TODO: i want this in center of width
+          Consumer<OrderProvider>(
+            builder: (context, provider, child) {
+              return Visibility(
+                visible: widget.isfromCartItem && provider.scanMessage != null,
+                child: Positioned(
+                  top: 32.h * 6,
+                  left: 4.w * 3,
+                  right: 4.w * 3,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.scanMessage ?? "",
+                      style: TextStyle(
+                        color: AppColors.backgroundColor,
+                        fontSize: 12.sp,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

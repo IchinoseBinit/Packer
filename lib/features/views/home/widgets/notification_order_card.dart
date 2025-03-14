@@ -82,7 +82,8 @@ class NotificationOrderCard extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                     navigate(context,
-                        route: NavigationConstants.bucketqrScreenRoute);
+                        route: NavigationConstants.bucketqrScreenRoute,
+                        extra: orderItem.orderId);
                   },
                   child: Container(
                     decoration: BoxDecoration(

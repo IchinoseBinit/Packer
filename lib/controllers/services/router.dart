@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/bucket/bucket_scan.dart';
@@ -79,7 +81,11 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.bucketqrScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return const BucketScanScreen();
+                   final orderId = state.extra as String;
+                  
+                  return BucketScanScreen(
+                    orderId: orderId,
+                  );
                 },
               ),
               GoRoute(
@@ -105,6 +111,8 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   // var orderId = '3485';
                   final orderId = state.extra as String;
+
+                  log(orderId, name: "order id:");
 
                   return OrderDetails(
                     orderId: orderId,

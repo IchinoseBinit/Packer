@@ -20,7 +20,6 @@ import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
-import 'package:provider/provider.dart';
 
 class OrderProvider extends ChangeNotifier {
   List<OrderNotification> orders = <OrderNotification>[];
