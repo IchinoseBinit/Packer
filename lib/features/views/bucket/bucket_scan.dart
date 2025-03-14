@@ -1,5 +1,4 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -9,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -17,21 +18,21 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-class ScanScreen extends StatefulWidget {
-  const ScanScreen({
+class BucketScanScreen extends StatefulWidget {
+  const BucketScanScreen({
     super.key,
     this.isfromCartItem = false,
-    this.productId,
+    this.orderId,
   });
 
+  final String? orderId;
   final bool isfromCartItem;
-  final int? productId;
 
   @override
-  State<ScanScreen> createState() => _ScanScreenState();
+  State<BucketScanScreen> createState() => _BucketScanScreenState();
 }
 
-class _ScanScreenState extends State<ScanScreen> {
+class _BucketScanScreenState extends State<BucketScanScreen> {
   @override
   void reassemble() {
     super.reassemble();
@@ -50,15 +51,17 @@ class _ScanScreenState extends State<ScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OrderProvider>(context, listen: false)
-          .initScanMessage(widget.productId ?? 0);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   var _flash = false;
 
-  checkQr(String code) {
+  checkQr(String code, String orderId) {
+    log(orderId, name: "order id:");
+    String data = code;
+    setState(() {
+      data = code;
+    });
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -67,15 +70,14 @@ class _ScanScreenState extends State<ScanScreen> {
 
     showLoading(context);
 
-    if (code.contains('topicName')) {
-      final data = jsonDecode(code);
-      final topicName = data['topicName'];
+    if (code.contains(data)) {
       try {
-        Provider.of<HomeProvider>(context, listen: false)
-            .updateAvailability(topicName: topicName);
+        Provider.of<HomeProvider>(context, listen: false).updateAvailability();
         removeLoading(context);
         Navigator.pop(context);
-        showToast("joined the waiting list");
+        showToast("basket available");
+        navigate(context,
+            route: NavigationConstants.orderDetailsRoute, extra: orderId);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
@@ -94,12 +96,6 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  // void onBackPressed() {
-  //   // WidgetsBinding.instance.addPostFrameCallback((_) {
-  //   //   navigatePop(context);
-  //   // });
-  // }
-
   @override
   void dispose() {
     controller?.dispose();
@@ -114,9 +110,20 @@ class _ScanScreenState extends State<ScanScreen> {
           _flash = !_flash;
         });
       },
-      icon: Icon(
-        _flash ? Icons.flash_off : Icons.flash_on,
-        color: Colors.white,
+      icon: Column(
+        children: [
+          Text(
+            _flash ? 'Flash on' : 'Flash off',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(fontSize: 6, color: Colors.white),
+          ),
+          Icon(
+            _flash ? Icons.flash_on : Icons.flash_off,
+            color: Colors.white,
+          ),
+        ],
       ),
     );
   }
@@ -192,21 +199,6 @@ class _ScanScreenState extends State<ScanScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // QRView(
-          //   key: qrKey,
-          //   onQRViewCreated: (qrController) {
-          //     cameraController = qrController;
-          //     qrController.scannedDataStream.listen((scanData) {
-          //       if (scanData.code != null) {
-          //         checkQr(scanData.code!);
-          //       }
-          //     });
-          //   },
-          //   overlay: QrScannerOverlayShape(
-          //     borderColor: AppColors.primaryColor,
-          //   ),
-          // ),
-
           MobileScanner(
             fit: BoxFit.cover,
             scanWindow: scanWindow,
@@ -222,7 +214,8 @@ class _ScanScreenState extends State<ScanScreen> {
                     barcodes.barcodes.first.rawValue.toString());
                 return;
               }
-              checkQr(barcodes.barcodes.first.rawValue.toString());
+              checkQr(
+                  barcodes.barcodes.first.rawValue.toString(), widget.orderId!);
             },
           ),
           _buildBarcodeOverlay(),
@@ -232,6 +225,17 @@ class _ScanScreenState extends State<ScanScreen> {
             child: buildFlash(),
             top: 8.h * 6,
             right: 4.w * 3,
+          ),
+          Positioned(
+            top: 8.h * 6,
+            right: 40.w * 3,
+            child: Text(
+              'Basket Scanner',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.backgroundColor),
+            ),
           ),
           Positioned(
             top: 8.h * 6,

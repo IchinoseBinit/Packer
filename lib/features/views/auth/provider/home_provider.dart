@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
-import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -47,6 +44,8 @@ class HomeProvider with ChangeNotifier {
   List<OrderNotification> notifications = [];
   List<OrderNotification> latestOrder = [];
 
+  List<String> scannedDataList = [];
+
   final dio = Dio();
   OrderProvider orderProvider = OrderProvider();
 
@@ -55,6 +54,14 @@ class HomeProvider with ChangeNotifier {
   }
 
   get isAvailable => _isAvailable;
+
+  void addList( String data) {
+   
+      scannedDataList.add(data);
+      notifyListeners();
+    
+    print("listttttttttt: $scannedDataList");
+  }
 
   clearLatestOrder({bool isFromPayment = true}) {
     latestOrder.clear();
@@ -301,6 +308,12 @@ class HomeProvider with ChangeNotifier {
         // FirebaseAPI().topicName = packerSummary?.topicName ?? "";
       }
       FirebaseAPI().unsubscribepackerStatus();
+    }
+  }
+
+  updateProductList(String? data) async {
+    if (data != null) {
+      addList(data);
     }
   }
 }

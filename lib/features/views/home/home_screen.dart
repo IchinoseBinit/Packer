@@ -197,6 +197,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   height: 24.h,
                 ),
+                GeneralElevatedButton(
+                  onPressed: () {
+                    navigate(context,
+                        route: NavigationConstants.productqrScreenRoute);
+                  },
+                  title: "Product Scanner",
+                ),
+
+                SizedBox(
+                  height: 24.h,
+                ),
 
                 GeneralElevatedButton(
                     title: "title",
@@ -207,12 +218,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          navigate(context, route: NavigationConstants.bucketqrScreenRoute);
-        },
-        child: const Icon(Icons.qr_code),
       ),
     );
   }

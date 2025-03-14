@@ -2,14 +2,14 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/services/navigate.dart';
+
+import 'package:packer/features/views/product/product_details.dart';
+import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -18,20 +18,22 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-class BucketScanScreen extends StatefulWidget {
-  const BucketScanScreen({
+class ProductScanScreen extends StatefulWidget {
+  const ProductScanScreen({
     super.key,
-    this.isfromCartItem = false, this.orderId,
+    this.isfromCartItem = false,
+    this.productId,
   });
 
-  final String? orderId;
   final bool isfromCartItem;
+  final int? productId;
 
   @override
-  State<BucketScanScreen> createState() => _BucketScanScreenState();
+  State<ProductScanScreen> createState() => _ProductScanScreenState();
 }
 
-class _BucketScanScreenState extends State<BucketScanScreen> {
+class _ProductScanScreenState extends State<ProductScanScreen> {
+  late final productList;
   @override
   void reassemble() {
     super.reassemble();
@@ -50,17 +52,23 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    productList =
+        Provider.of<HomeProvider>(context, listen: false).scannedDataList;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OrderProvider>(context, listen: false)
+          .initScanMessage(widget.productId ?? 0);
+    });
   }
 
   var _flash = false;
 
-  checkQr(String code, String orderId) {
-    log(orderId, name: "order id:");
+  checkQr(String code) {
     String data = code;
-    setState(() {
-      data = code;
-    });
+    if (productList.contains(data)) {
+      showToast("Product already added. \nPlease scan another product");
+      return;
+    }
+
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -71,12 +79,17 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
     if (code.contains(data)) {
       try {
-        Provider.of<HomeProvider>(context, listen: false).updateAvailability();
+        Provider.of<HomeProvider>(context, listen: false)
+            .updateProductList(code);
         removeLoading(context);
         Navigator.pop(context);
-        showToast("basket available");
-        navigate(context,
-            route: NavigationConstants.orderDetailsRoute, extra: orderId);
+        showToast("Product added");
+
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => ProductDetail()));
+
+        // navigate(context,
+        // route: NavigationConstants.productqrScreenRoute);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
@@ -109,20 +122,9 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
           _flash = !_flash;
         });
       },
-      icon: Column(
-        children: [
-          Text(
-            _flash ? 'Flash on' : 'Flash off',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontSize: 6, color: Colors.white),
-          ),
-          Icon(
-            _flash ? Icons.flash_on : Icons.flash_off,
-            color: Colors.white,
-          ),
-        ],
+      icon: Icon(
+        _flash ? Icons.flash_off : Icons.flash_on,
+        color: Colors.white,
       ),
     );
   }
@@ -190,8 +192,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final provider = Provider.of<OrderProvider>(context, listen: false);
-
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: 200,
@@ -208,9 +208,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              
-
-
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
                     context,
@@ -218,27 +215,15 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
                     barcodes.barcodes.first.rawValue.toString());
                 return;
               }
-              checkQr(barcodes.barcodes.first.rawValue.toString(), widget.orderId!);
+              checkQr(barcodes.barcodes.first.rawValue.toString());
             },
           ),
           _buildBarcodeOverlay(),
           _buildScanWindow(scanWindow),
-
           Positioned(
             child: buildFlash(),
             top: 8.h * 6,
             right: 4.w * 3,
-          ),
-          Positioned(
-            top: 8.h * 6,
-            right: 40.w * 3,
-            child: Text(
-              'Basket Scanner',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.backgroundColor),
-            ),
           ),
           Positioned(
             top: 8.h * 6,
@@ -251,7 +236,17 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
               ),
             ),
           ),
-          // TODO: i want this in center of width
+          // Positioned(
+          //   top: 8.h * 6,
+          //   left: 4.w * 3,
+          //   child: Text(
+          //     onPressed: () => Navigator.pop(context),
+          //     icon: const Icon(
+          //       Icons.arrow_back,
+          //       color: Colors.white,
+          //     ),
+          //   ),
+          // ),
           Consumer<OrderProvider>(
             builder: (context, provider, child) {
               return Visibility(
@@ -283,155 +278,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class ScannerOverlay extends CustomPainter {
-  ScannerOverlay(this.scanWindow);
-
-  final Rect scanWindow;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // TODO: use `Offset.zero & size` instead of Rect.largest
-    // we need to pass the size to the custom paint widget
-    final backgroundPath = Path()..addRect(Rect.largest);
-    final cutoutPath = Path()..addRect(scanWindow);
-
-    final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
-      ..style = PaintingStyle.fill
-      ..blendMode = BlendMode.dstOut;
-
-    final backgroundWithCutout = Path.combine(
-      PathOperation.difference,
-      backgroundPath,
-      cutoutPath,
-    );
-    canvas.drawPath(backgroundWithCutout, backgroundPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
-
-class BarcodeOverlay extends CustomPainter {
-  BarcodeOverlay({
-    required this.barcodeCorners,
-    required this.barcodeSize,
-    required this.boxFit,
-    required this.cameraPreviewSize,
-  });
-
-  final List<Offset> barcodeCorners;
-  final Size barcodeSize;
-  final BoxFit boxFit;
-  final Size cameraPreviewSize;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (barcodeCorners.isEmpty ||
-        barcodeSize.isEmpty ||
-        cameraPreviewSize.isEmpty) {
-      return;
-    }
-
-    final adjustedSize = applyBoxFit(boxFit, cameraPreviewSize, size);
-
-    double verticalPadding = size.height - adjustedSize.destination.height;
-    double horizontalPadding = size.width - adjustedSize.destination.width;
-    if (verticalPadding > 0) {
-      verticalPadding = verticalPadding / 2;
-    } else {
-      verticalPadding = 0;
-    }
-
-    if (horizontalPadding > 0) {
-      horizontalPadding = horizontalPadding / 2;
-    } else {
-      horizontalPadding = 0;
-    }
-
-    final double ratioWidth;
-    final double ratioHeight;
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-      ratioWidth = barcodeSize.width / adjustedSize.destination.width;
-      ratioHeight = barcodeSize.height / adjustedSize.destination.height;
-    } else {
-      ratioWidth = cameraPreviewSize.width / adjustedSize.destination.width;
-      ratioHeight = cameraPreviewSize.height / adjustedSize.destination.height;
-    }
-
-    final List<Offset> adjustedOffset = [
-      for (final offset in barcodeCorners)
-        Offset(
-          offset.dx / ratioWidth + horizontalPadding,
-          offset.dy / ratioHeight + verticalPadding,
-        ),
-    ];
-
-    final cutoutPath = Path()..addPolygon(adjustedOffset, true);
-
-    final backgroundPaint = Paint()
-      ..color = Colors.red.withOpacity(0.3)
-      ..style = PaintingStyle.fill
-      ..blendMode = BlendMode.dstOut;
-
-    canvas.drawPath(cutoutPath, backgroundPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
-
-class ScannerErrorWidget extends StatelessWidget {
-  const ScannerErrorWidget({super.key, required this.error});
-
-  final MobileScannerException error;
-
-  @override
-  Widget build(BuildContext context) {
-    String errorMessage;
-
-    switch (error.errorCode) {
-      case MobileScannerErrorCode.controllerUninitialized:
-        errorMessage = 'Controller not ready.';
-      case MobileScannerErrorCode.permissionDenied:
-        errorMessage = 'Permission denied';
-      case MobileScannerErrorCode.unsupported:
-        errorMessage = 'Scanning is unsupported on this device';
-      default:
-        errorMessage = 'Generic Error';
-        break;
-    }
-
-    return ColoredBox(
-      color: Colors.black,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
-              child: Icon(Icons.error, color: Colors.white),
-            ),
-            Text(
-              errorMessage,
-              style: const TextStyle(color: Colors.white),
-            ),
-            Text(
-              error.errorDetails?.message ?? '',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
       ),
     );
   }
