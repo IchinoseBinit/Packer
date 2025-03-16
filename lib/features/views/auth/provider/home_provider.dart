@@ -12,6 +12,7 @@ import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:vibration/vibration.dart';
 
@@ -36,6 +37,7 @@ class HomeProvider with ChangeNotifier {
   bool isDelivered = false;
   String paymentMethod = 'Cash on delivery';
   bool isMapFullScreen = false;
+  OrderDetailModel? orderDetailModel;
 
   PackerSummary? packerSummary;
 
@@ -59,7 +61,7 @@ class HomeProvider with ChangeNotifier {
     scannedDataList.add(data);
     notifyListeners();
 
-    print("listttttttttt: $scannedDataList");
+    print("list: $scannedDataList");
   }
 
   clearLatestOrder({bool isFromPayment = true}) {
@@ -116,7 +118,7 @@ class HomeProvider with ChangeNotifier {
       notifyListeners();
     } catch (ex) {
       print('Error: $ex');
-      throw Exception('Failed to load carts: $ex');
+      // throw Exception('Failed to load carts: $ex');
     }
   }
 
@@ -189,10 +191,12 @@ class HomeProvider with ChangeNotifier {
     try {
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
-        url: AppUrls.acknowledgeOrderUrl.replaceAll('id', orderId),
+        url: "${AppUrls.acknowledgeOrderUrl}/$orderId/acknowledge-packer/",
       );
 
       if (response.statusCode == 200) {
+                orderDetailModel = OrderDetailModel.fromJson(response.data);
+
         //Show snackbar
         final index =
             notifications.indexWhere((element) => element.orderId == orderId);
@@ -200,9 +204,7 @@ class HomeProvider with ChangeNotifier {
 
         toggleFirebaseTopic();
 
-        navigate(context,
-            route: NavigationConstants.orderDetailsRoute,
-            extra: orderItem.orderId);
+        
         notifications.removeAt(index);
 
         fetchLatestOrders();
@@ -212,7 +214,7 @@ class HomeProvider with ChangeNotifier {
       }
     } catch (e) {
       print('Error acknowledging order: $e');
-      rethrow;
+      // rethrow;
     }
 
     notifyListeners();

@@ -38,9 +38,9 @@ class SeeOrderedItemsPage extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.all(16.w),
         children: [
-          CartItemsList(
-              cartItems:
-                  orderPickedDetails?.cartItems ?? orderDetails!.cartItems),
+          // CartItemsList(
+          //     cartItems:
+          //         orderPickedDetails?.cartItems ?? orderDetails!.cartItems),
         ],
       ),
       bottomNavigationBar: Padding(

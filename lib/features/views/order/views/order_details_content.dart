@@ -1,5 +1,8 @@
+// ignore_for_file: unrelated_type_equality_checks
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:provider/provider.dart';
 
 import '/constants/app_constants.dart';
@@ -8,7 +11,6 @@ import '/controllers/services/navigate.dart';
 import '/controllers/services/show_toast_message.dart';
 import '/enum/order_status_type.dart';
 import '/features/views/auth/provider/home_provider.dart';
-import '/features/views/order/models/fetch_order_details.dart';
 import '/features/views/order/provider/order_provider.dart';
 import '/features/views/order/widgets/cart_items_list.dart';
 import '/features/views/widgets/custom_loading_indicator.dart';
@@ -21,12 +23,13 @@ class OrderDetailsContent extends StatelessWidget {
   const OrderDetailsContent({
     super.key,
     required this.orderId,
+    //  required order,
   });
 
   @override
   Widget build(BuildContext context) {
-    final orderProvider = Provider.of<OrderProvider>(context);
-    final OrderDetailsFetch? orderDetails = orderProvider.orderDetails;
+    final orderProvider = Provider.of<HomeProvider>(context);
+    final OrderDetailModel? orderDetails = orderProvider.orderDetailModel;
 
     if (orderDetails == null) {
       return const Center(child: Text('Cannot fetch data'));
@@ -36,12 +39,12 @@ class OrderDetailsContent extends StatelessWidget {
       padding: AppConstants.padding,
       children: [
         OrderInfoCard(data: orderDetails),
-        CartItemsList(cartItems: orderDetails.cartItems),
+        CartItemsList(orderDetailModel: orderDetails),
         SizedBox(
           height: 8.h,
         ),
-        if (orderDetails.status != OrderStatusType.completed &&
-            orderDetails.status != OrderStatusType.cancelled)
+        if (orderDetails.data!.status != OrderStatusType.completed &&
+            orderDetails.data!.status != OrderStatusType.cancelled)
           GeneralElevatedButton(
             onPressed: () {
               showLoading(context);

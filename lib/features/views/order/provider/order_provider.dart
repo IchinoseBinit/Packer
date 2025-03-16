@@ -34,11 +34,11 @@ class OrderProvider extends ChangeNotifier {
   var isLoading = false;
   String? scanMessage;
   UnsettledOrders? unsettledOrders;
-  List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
-    return orderItemsJson
-        .map((json) => SeeOrderDetailsPacker.fromJson(json))
-        .toList();
-  }
+  // List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
+  //   return orderItemsJson
+  //       .map((json) => SeeOrderDetailsPacker.fromJson(json))
+  //       .toList();
+  // }
 
   var hasUploadedHomeImage = false;
 

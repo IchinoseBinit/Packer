@@ -6,14 +6,15 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 
 class CartItemsList extends StatelessWidget {
-  final List<CartItem> cartItems;
-
-  const CartItemsList({super.key, required this.cartItems});
+  final OrderDetailModel orderDetailModel;
+  const CartItemsList({super.key, required this.orderDetailModel});
 
   @override
   Widget build(BuildContext context) {
+    final products= orderDetailModel.productDetails!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -24,26 +25,28 @@ class CartItemsList extends StatelessWidget {
         ListView.separated(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
-          itemCount: cartItems.length,
-          itemBuilder: (context, cartIndex) {
-            final cartItem = cartItems[cartIndex];
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+                int itemScanCount=0;
+
+            final cartItem = products[index];
             return InkWell(
               highlightColor: Colors.transparent,
               onTap: () {
-                log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.id}");
-                if (cartItem.itemScanCount == cartItem.quantity) {
-                  return;
-                }
+                log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.quantity}");
+                // if (cartItem.itemScanCount == cartItem.quantity) {
+                //   return;
+                // }
                 navigate(context,
                     route: NavigationConstants.qrScanScreenRoute,
                     extra: {
                       "forCartitem": true,
-                      "productId" : cartItem.id,
+                      "productId" : orderDetailModel.data!.id,
                     });
               },
               child: ItemWidget(
                 cartItem: cartItem,
-                status: cartItem.itemScanCount == cartItem.quantity
+                status: itemScanCount == cartItem.quantity
                     ? ItemStatus.done
                     : ItemStatus.remaining,
               ),
@@ -65,7 +68,7 @@ class ItemWidget extends StatelessWidget {
     required this.status, // Add a status parameter
   });
 
-  final CartItem cartItem;
+  final ProductDetails cartItem;
   final ItemStatus status; // Enum to define the status
 
   @override
@@ -115,9 +118,9 @@ class ItemWidget extends StatelessWidget {
                 width: 60.h,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: cartItem.productImage.isNotEmpty
+                  child: cartItem.imageUrl!.isNotEmpty
                       ? Image.network(
-                          cartItem.productImage,
+                          cartItem.imageUrl!,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),
@@ -133,7 +136,7 @@ class ItemWidget extends StatelessWidget {
                   SizedBox(
                     width: .3.sw,
                     child: Text(
-                      cartItem.productName,
+                      cartItem.productName!,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: text1Color, // Set text color based on status
@@ -163,31 +166,31 @@ class ItemWidget extends StatelessWidget {
                   SizedBox(
                     height: 4.h,
                   ),
-                  Text(
-                    cartItem.productCompartment,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                      color: text1Color, // Set text color based on status
-                    ),
-                  ),
+                  // Text(
+                  //   cartItem.productCompartment,
+                  //   style: TextStyle(
+                  //     fontSize: 12.sp,
+                  //     fontWeight: FontWeight.bold,
+                  //     color: text1Color, // Set text color based on status
+                  //   ),
+                  // ),
                 ],
               ),
-              if (status == ItemStatus.remaining) ...[
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 8.w),
-                  height: 42.h,
-                  width: 2.w,
-                  color: dividerColor, // Set divider color based on status
-                ),
-                Text(
-                  "Remaining: ${cartItem.quantity - cartItem.itemScanCount}",
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: text1Color, // Set text color based on status
-                  ),
-                ),
-              ],
+              // if (status == ItemStatus.remaining) ...[
+              //   Container(
+              //     margin: EdgeInsets.symmetric(horizontal: 8.w),
+              //     height: 42.h,
+              //     width: 2.w,
+              //     color: dividerColor, // Set divider color based on status
+              //   ),
+              //   Text(
+              //     "Remaining: ${cartItem.quantity - itemScanCount}",
+              //     style: TextStyle(
+              //       fontSize: 10.sp,
+              //       color: text1Color, // Set text color based on status
+              //     ),
+              //   ),
+              // ],
             ],
           ),
         ],

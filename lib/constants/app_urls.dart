@@ -2,9 +2,8 @@ class AppUrls {
   //static const String _baseUrl = "http://192.168.1.98:8000/categories";
 
   static const String _domainUrl = "13.211.205.215:8000";
-  // static const String _domainUrl = "192.168.1.184:8000";
 
-  // static const String _domainUrl = "192.168.1.73:8000";
+  // static const String _domainUrl = "192.168.136.234:8000";
   // static const String _domainUrl = "192.168.100.183:8000";
   static const String _baseUrl = "http://$_domainUrl";
 
@@ -40,8 +39,7 @@ class AppUrls {
   static const String orderUrl = "$_baseUrl/orders";
 
   static const String orderDetailsUrl = "$orderUrl/id/rider-detail";
-  static const String acknowledgeOrderUrl =
-      "$orderUrl/staff/orders/id/acknowledge-packer/";
+  static const String acknowledgeOrderUrl = "$_baseUrl/staff/orders";
   static const String billOrderUrl = "$orderUrl/id/bill";
   //
   static const String orderQrImageUrl = "$orderUrl/view-qr";

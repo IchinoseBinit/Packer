@@ -183,6 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(height: 48.h),
 
                 Consumer<HomeProvider>(builder: (context, val, _) {
+                  print("is available ===== ${val.isAvailable}");
                   if ((val.isOnline && !val.isAvailable)) {
                     return GeneralElevatedButton(
                       onPressed: () {
