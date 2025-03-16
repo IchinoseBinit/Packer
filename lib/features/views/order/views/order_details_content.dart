@@ -29,7 +29,7 @@ class OrderDetailsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<HomeProvider>(context);
-    final OrderDetailModel? orderDetails = orderProvider.orderDetailModel;
+    final OrderDetailModel? orderDetails = Provider.of<HomeProvider>(context).orderDetailModel;
 
     if (orderDetails == null) {
       return const Center(child: Text('Cannot fetch data'));
