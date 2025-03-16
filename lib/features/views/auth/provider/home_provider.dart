@@ -55,11 +55,10 @@ class HomeProvider with ChangeNotifier {
 
   get isAvailable => _isAvailable;
 
-  void addList( String data) {
-   
-      scannedDataList.add(data);
-      notifyListeners();
-    
+  void addList(String data) {
+    scannedDataList.add(data);
+    notifyListeners();
+
     print("listttttttttt: $scannedDataList");
   }
 
@@ -224,7 +223,7 @@ class HomeProvider with ChangeNotifier {
       final response = await DioClient().request(
         requestType: RequestType.patchWithToken,
         url: AppUrls.packerOnlineStatus,
-        body: {"isOnline": status},
+        body: {"is_online": status},
       );
     } catch (ex) {
       print('Error: $ex');
