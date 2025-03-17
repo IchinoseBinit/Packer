@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:provider/provider.dart';
 
 class ProductDetail extends StatelessWidget {
@@ -9,7 +10,7 @@ class ProductDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<HomeProvider>(context, listen: false);
+    final provider = Provider.of<OrderProvider>(context, listen: false);
     List<String> scannedDataList = provider.scannedDataList;
     return Scaffold(
       appBar: AppBar(

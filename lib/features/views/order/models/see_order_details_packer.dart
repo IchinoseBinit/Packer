@@ -1,9 +1,9 @@
 // class SeeOrderDetailsPacker {
 //   final int id;
-//   final String productId;
-//   final String productName;
-//   final String productImage;
-//   final String measurement;
+//   final late final String  productId;
+//   final late final String  productName;
+//   final late final String  productImage;
+//   final late final String  measurement;
 //   final double markedPrice;
 //   final double discountPercent;
 //   final double price;
@@ -21,7 +21,7 @@
 //     required this.quantity,
 //   });
 
-//   factory SeeOrderDetailsPacker.fromJson(Map<String, dynamic> json) {
+//   factory SeeOrderDetailsPacker.fromJson(Map<late final String , dynamic> json) {
 //     return SeeOrderDetailsPacker(
 //       id: json['id'],
 //       productId: json['product_id'],
@@ -36,138 +36,156 @@
 //   }
 // }
 
-class OrderDetailModel {
-  bool? success;
-  List<ProductDetails>? productDetails;
-  Data? data;
+import 'package:packer/controllers/extensions/string_extension.dart';
 
-  OrderDetailModel({this.success, this.productDetails, this.data});
+class OrderDetailModel {
+  late final bool success;
+  late final List<ProductDetails> productDetails;
+  late final OrderData data;
+
+  OrderDetailModel(
+      {required this.success,
+      required this.productDetails,
+      required this.data});
 
   OrderDetailModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     if (json['product_details'] != null) {
       productDetails = <ProductDetails>[];
       json['product_details'].forEach((v) {
-        productDetails!.add(ProductDetails.fromJson(v));
+        productDetails.add(ProductDetails.fromJson(v));
       });
     }
-    data = json['data'] != null ? Data.fromJson(json['data']) : null;
+    data = (json['data'] != null ? OrderData.fromJson(json['data']) : null)!;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
-    if (productDetails != null) {
-      data['product_details'] = productDetails!.map((v) => v.toJson()).toList();
-    }
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
+    data['product_details'] = productDetails.map((v) => v.toJson()).toList();
+    data['data'] = this.data.toJson();
     return data;
   }
 }
 
 class ProductDetails {
-  String? productName;
-  int? quantity;
-  String? imageUrl;
-  num? size;
-  String? measurement;
+  late final int id;
+  late final String productName;
+  late final int quantity;
+  late final String imageUrl;
+  late final double _size;
+  late final String measurement;
+  late int itemScanCount;
 
-  ProductDetails({this.productName, this.quantity, this.imageUrl});
+  String get size {
+    // Utility function to format size
+    if (_size == _size.toInt()) {
+      return _size.toInt().toString();
+    } else {
+      return _size.toString();
+    }
+  }
+
+  ProductDetails(
+      {required this.productName,
+      required this.quantity,
+      required this.imageUrl,
+      required this.measurement});
 
   ProductDetails.fromJson(Map<String, dynamic> json) {
-    productName = json['product_name'];
-    quantity = json['quantity'];
-    imageUrl = json['image_url'];
-    size = json['size'];
+    id = json['id'].toString().toInt();
+    productName = json['product_name'].toString().toStringConversion();
+    quantity = json['quantity'].toString().toInt();
+    imageUrl = json['image_url'].toString().toStringConversion();
+    _size = json['size'].toString().toDouble();
 
-    measurement = json['measurement'];
+    measurement = json['measurement'].toString().toStringConversion();
+    itemScanCount = 0;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['product_name'] = productName;
-    data['quantity'] = quantity;
-    data['image_url'] = imageUrl;
-    data['size'] = size;
+    data['product_name'] = productName.toString().toStringConversion();
+    data['quantity'] = quantity.toString().toInt();
+    data['image_url'] = imageUrl.toString().toStringConversion();
+    data['size'] = size.toString().toInt();
 
-    data['measurement'] = measurement;
+    data['measurement'] = measurement.toString().toStringConversion();
 
     return data;
   }
 }
 
-class Data {
-  int? id;
-  String? status;
-  int? count;
-  String? smallCartFee;
-  String? total;
-  String? finalTotal;
-  UserInfo? userInfo;
-  Null additionalInfo;
-  Null distance;
+class OrderData {
+  late final int id;
+  late final String status;
+  late final int count;
+  late final String smallCartFee;
+  late final String total;
+  late final String finalTotal;
+  late final UserInfo userInfo;
 
-  Data(
-      {this.id,
-      this.status,
-      this.count,
-      this.smallCartFee,
-      this.total,
-      this.finalTotal,
-      this.userInfo,
-      this.additionalInfo,
-      this.distance});
+  OrderData({
+    required this.id,
+    required this.status,
+    required this.count,
+    required this.smallCartFee,
+    required this.total,
+    required this.finalTotal,
+    required this.userInfo,
+  });
 
-  Data.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    status = json['status'];
-    count = json['count'];
-    smallCartFee = json['small_cart_fee'];
-    total = json['total'];
-    finalTotal = json['final_total'];
-    userInfo =
-        json['user_info'] != null ? UserInfo.fromJson(json['user_info']) : null;
+  OrderData.fromJson(Map<String, dynamic> json) {
+    id = json['id'].toString().toInt();
+    status = json['status'].toString().toStringConversion();
+    count = json['count'].toString().toInt();
+    smallCartFee = json['small_cart_fee'].toString().toStringConversion();
+    total = json['total'].toString().toStringConversion();
+    finalTotal = json['final_total'].toString().toStringConversion();
+    userInfo = (json['user_info'] != null
+        ? UserInfo.fromJson(json['user_info'])
+        : null)!;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['status'] = status;
-    data['count'] = count;
-    data['small_cart_fee'] = smallCartFee;
-    data['total'] = total;
-    data['final_total'] = finalTotal;
-    if (userInfo != null) {
-      data['user_info'] = userInfo!.toJson();
-    }
+    data['id'] = id.toString().toInt();
+    data['status'] = status.toString().toStringConversion();
+    data['count'] = count.toString().toInt();
+    data['small_cart_fee'] = smallCartFee.toString().toStringConversion();
+    data['total'] = total.toString().toStringConversion();
+    data['final_total'] = finalTotal.toString().toStringConversion();
+    data['user_info'] = userInfo.toJson();
 
     return data;
   }
 }
 
 class UserInfo {
-  String? name;
-  String? addressName;
-  String? phone;
-  String? address;
+  late final String name;
+  late final String addressName;
+  late final String phone;
+  late final String address;
 
-  UserInfo({this.name, this.addressName, this.phone, this.address});
+  UserInfo(
+      {required this.name,
+      required this.addressName,
+      required this.phone,
+      required this.address});
 
   UserInfo.fromJson(Map<String, dynamic> json) {
-    name = json['name'];
-    addressName = json['address_name'];
-    phone = json['phone'];
-    address = json['address'];
+    name = json['name'].toString().toStringConversion();
+    addressName = json['address_name'].toString().toStringConversion();
+    phone = json['phone'].toString().toStringConversion();
+    address = json['address'].toString().toStringConversion();
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['name'] = name;
-    data['address_name'] = addressName;
-    data['phone'] = phone;
-    data['address'] = address;
+    data['name'] = name.toString().toStringConversion();
+    data['address_name'] = addressName.toString().toStringConversion();
+    data['phone'] = phone.toString().toStringConversion();
+    data['address'] = address.toString().toStringConversion();
     return data;
   }
 }

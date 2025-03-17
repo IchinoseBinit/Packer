@@ -9,12 +9,12 @@ import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 
 class CartItemsList extends StatelessWidget {
-  final OrderDetailModel orderDetailModel;
-  const CartItemsList({super.key, required this.orderDetailModel});
+  final List<ProductDetails> cartItems;
+
+  const CartItemsList({super.key, required this.cartItems});
 
   @override
   Widget build(BuildContext context) {
-    final products= orderDetailModel.productDetails!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,28 +25,26 @@ class CartItemsList extends StatelessWidget {
         ListView.separated(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
-          itemCount: products.length,
-          itemBuilder: (context, index) {
-                int itemScanCount=0;
-
-            final cartItem = products[index];
+          itemCount: cartItems.length,
+          itemBuilder: (context, cartIndex) {
+            final cartItem = cartItems[cartIndex];
             return InkWell(
               highlightColor: Colors.transparent,
               onTap: () {
-                log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.quantity}");
-                // if (cartItem.itemScanCount == cartItem.quantity) {
-                //   return;
-                // }
+                log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.id}");
+                if (cartItem.itemScanCount == cartItem.quantity) {
+                  return;
+                }
                 navigate(context,
-                    route: NavigationConstants.qrScanScreenRoute,
+                    route: NavigationConstants.productqrScreenRoute,
                     extra: {
                       "forCartitem": true,
-                      "productId" : orderDetailModel.data!.id,
+                      "productId": cartItem.id,
                     });
               },
               child: ItemWidget(
-                cartItem: cartItem,
-                status: itemScanCount == cartItem.quantity
+                productItems: cartItem,
+                status: cartItem.itemScanCount == cartItem.quantity
                     ? ItemStatus.done
                     : ItemStatus.remaining,
               ),
@@ -64,11 +62,11 @@ class CartItemsList extends StatelessWidget {
 class ItemWidget extends StatelessWidget {
   const ItemWidget({
     super.key,
-    required this.cartItem,
+    required this.productItems,
     required this.status, // Add a status parameter
   });
 
-  final ProductDetails cartItem;
+  final ProductDetails productItems;
   final ItemStatus status; // Enum to define the status
 
   @override
@@ -118,9 +116,9 @@ class ItemWidget extends StatelessWidget {
                 width: 60.h,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: cartItem.imageUrl!.isNotEmpty
+                  child: productItems.imageUrl.isNotEmpty
                       ? Image.network(
-                          cartItem.imageUrl!,
+                          "http://13.211.205.215:8000${productItems.imageUrl}",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),
@@ -136,7 +134,7 @@ class ItemWidget extends StatelessWidget {
                   SizedBox(
                     width: .3.sw,
                     child: Text(
-                      cartItem.productName!,
+                      productItems.productName,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: text1Color, // Set text color based on status
@@ -145,7 +143,13 @@ class ItemWidget extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "${cartItem.size} ${cartItem.measurement}",
+                    "${productItems.size} ${productItems.measurement}",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: text2Color, // Set text color based on status
+                        ),
+                  ),
+                  Text(
+                    "${productItems.id} ",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: text2Color, // Set text color based on status
                         ),
@@ -157,7 +161,7 @@ class ItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "Qty: ${cartItem.quantity}",
+                    "Qty: ${productItems.quantity}",
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: text1Color, // Set text color based on status
@@ -167,7 +171,7 @@ class ItemWidget extends StatelessWidget {
                     height: 4.h,
                   ),
                   // Text(
-                  //   cartItem.productCompartment,
+                  //   productItems.productCompartment,
                   //   style: TextStyle(
                   //     fontSize: 12.sp,
                   //     fontWeight: FontWeight.bold,
@@ -176,21 +180,21 @@ class ItemWidget extends StatelessWidget {
                   // ),
                 ],
               ),
-              // if (status == ItemStatus.remaining) ...[
-              //   Container(
-              //     margin: EdgeInsets.symmetric(horizontal: 8.w),
-              //     height: 42.h,
-              //     width: 2.w,
-              //     color: dividerColor, // Set divider color based on status
-              //   ),
-              //   Text(
-              //     "Remaining: ${cartItem.quantity - itemScanCount}",
-              //     style: TextStyle(
-              //       fontSize: 10.sp,
-              //       color: text1Color, // Set text color based on status
-              //     ),
-              //   ),
-              // ],
+              if (status == ItemStatus.remaining) ...[
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 8.w),
+                  height: 42.h,
+                  width: 2.w,
+                  color: dividerColor, // Set divider color based on status
+                ),
+                Text(
+                  "Remaining: ${productItems.quantity - productItems.itemScanCount}",
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: text1Color, // Set text color based on status
+                  ),
+                ),
+              ],
             ],
           ),
         ],

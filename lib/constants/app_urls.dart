@@ -45,6 +45,9 @@ class AppUrls {
   static const String orderQrImageUrl = "$orderUrl/view-qr";
   static const String homeImageUrl = "$orderUrl/id/home-image";
 
+    static const String productPostDetail = "$orderUrl/basket-order/";
+
+
   static const String packerOnlineStatus =
       "$_baseUrl/staff/packer/online-status/";
   static const String packerSummaryUrl = "$_packerUrl/summary";

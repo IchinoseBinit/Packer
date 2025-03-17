@@ -1,7 +1,6 @@
-// ignore_for_file: unrelated_type_equality_checks
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:provider/provider.dart';
 
@@ -23,13 +22,14 @@ class OrderDetailsContent extends StatelessWidget {
   const OrderDetailsContent({
     super.key,
     required this.orderId,
-    //  required order,
   });
 
   @override
   Widget build(BuildContext context) {
-    final orderProvider = Provider.of<HomeProvider>(context);
-    final OrderDetailModel? orderDetails = Provider.of<HomeProvider>(context).orderDetailModel;
+    final bucketData = Provider.of<OrderProvider>(context).bucketData;
+    final orderProvider = Provider.of<OrderProvider>(context);
+    final OrderDetailModel? orderDetails = orderProvider.orderDetails;
+    final status = orderDetails?.data.status ?? "";
 
     if (orderDetails == null) {
       return const Center(child: Text('Cannot fetch data'));
@@ -39,16 +39,22 @@ class OrderDetailsContent extends StatelessWidget {
       padding: AppConstants.padding,
       children: [
         OrderInfoCard(data: orderDetails),
-        CartItemsList(orderDetailModel: orderDetails),
+        CartItemsList(cartItems: orderDetails.productDetails),
         SizedBox(
           height: 8.h,
         ),
-        if (orderDetails.data!.status != OrderStatusType.completed &&
-            orderDetails.data!.status != OrderStatusType.cancelled)
+        if (status != OrderStatusType.completed &&
+            status != OrderStatusType.cancelled)
           GeneralElevatedButton(
             onPressed: () {
               showLoading(context);
+
               // TODO: Bill order
+              Provider.of<OrderProvider>(context, listen: false).productPost(
+                  int.parse(orderId),
+                  bucketData,
+                  orderProvider.scannedDataList);
+
               Provider.of<OrderProvider>(context, listen: false)
                   .billOrder(orderId)
                   .then((value) {

@@ -7,11 +7,12 @@ import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
-import 'package:packer/features/views/order/models/fetch_order_details.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/models/order_completed_details.dart';
 import 'package:packer/features/views/order/models/order_picked_details.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -20,20 +21,34 @@ import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class OrderProvider extends ChangeNotifier {
   List<OrderNotification> orders = <OrderNotification>[];
-  OrderDetailsFetch? _orderDetails; // Change to OrderDetailsFetch type
+  OrderDetailModel? _orderDetails; // Change to OrderDetailsFetch type
   OrderPickedDetails? orderPickedDetails;
   CompletedOrderDetails? completedOrderDetails;
   WeeklySummary? weeklySummary;
+  bool _isAvailable = false;
+
   DailySummary? dailySummary;
   String? _error;
-  OrderDetailsFetch? get orderDetails => _orderDetails; // Change getter type
+  OrderDetailModel? get orderDetails => _orderDetails; // Change getter type
   String? get error => _error;
   var isLoading = false;
   String? scanMessage;
   UnsettledOrders? unsettledOrders;
+  List<OrderNotification> latestOrder = [];
+
+  set isAvailable(val) {
+    _isAvailable = val;
+  }
+
+  String bucketData = "";
+  List<String> scannedDataList = [];
+
+  get isAvailable => _isAvailable;
+
   // List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
   //   return orderItemsJson
   //       .map((json) => SeeOrderDetailsPacker.fromJson(json))
@@ -56,7 +71,7 @@ class OrderProvider extends ChangeNotifier {
     if (kDebugMode) {
       showToast('Item Id: $productId');
     }
-    for (var element in _orderDetails?.cartItems ?? []) {
+    for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
         scanMessage =
             "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
@@ -67,7 +82,10 @@ class OrderProvider extends ChangeNotifier {
   }
 
   checkItemQr(
-      BuildContext context, MobileScannerController? controller, String code) {
+    BuildContext context,
+    MobileScannerController? controller,
+    String code,
+  ) {
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -76,8 +94,8 @@ class OrderProvider extends ChangeNotifier {
 
     showLoading(context);
 
-    if (code.contains('fasto')) {
-      final prodId = int.tryParse(code.split('+').last) ?? 0;
+    if (code.contains('-')) {
+      final prodId = int.tryParse(code.split('-').first) ?? 0;
 
       try {
         final isScanned = scanCountOrder(prodId);
@@ -109,7 +127,7 @@ class OrderProvider extends ChangeNotifier {
   }
 
   bool scanCountOrder(int cartItemId) {
-    for (var element in _orderDetails?.cartItems ?? []) {
+    for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (element.itemScanCount == element.quantity) {
           showToast("Item already scanned");
@@ -163,15 +181,88 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchOrderDetails(String orderId) async {
+  clearLatestOrder({bool isFromPayment = true}) {
+    latestOrder.clear();
+    if (isFromPayment) {
+      isAvailable = false;
+    }
+    notifyListeners();
+  }
+
+  Future<void> fetchLatestOrders({bool isFirstTime = false}) async {
     try {
+      if (!isFirstTime) {
+        clearLatestOrder(isFromPayment: false);
+        isLoading = true;
+        notifyListeners();
+      }
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
-        url: AppUrls.orderDetailsUrl.replaceFirst("id", orderId),
+        url: AppUrls.getLatestOrdersUrl,
+      );
+
+      final List<dynamic> data = response.data;
+      latestOrder =
+          data.map((order) => OrderNotification.fromJson(order)).toList();
+      isLoading = false;
+
+      notifyListeners();
+    } catch (ex) {
+      print('Error: $ex');
+      isLoading = false;
+      notifyListeners();
+      throw Exception('Failed to load carts: $ex');
+    }
+  }
+
+  Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: "${AppUrls.acknowledgeOrderUrl}/$orderId/acknowledge-packer/",
       );
 
       if (response.statusCode == 200) {
-        _orderDetails = OrderDetailsFetch.fromJson(response.data);
+        _orderDetails = OrderDetailModel.fromJson(response.data);
+
+        final notifications =
+            Provider.of<HomeProvider>(context, listen: false).notifications;
+
+        //Show snackbar
+        final index =
+            notifications.indexWhere((element) => element.orderId == orderId);
+        // final orderItem = notifications[index];
+        if (index >= 0) {
+          notifications.removeAt(index);
+        }
+        // navigate(context,
+        //     route: NavigationConstants.bucketqrScreenRoute, extra: orderId);
+
+        fetchLatestOrders();
+        notifyListeners();
+      } else {
+        print('Error acknowledging order: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error acknowledging order: $e');
+      // rethrow;
+    }
+  }
+
+  Future<void> productPost(
+      int orderId, String identifier, List productTags) async {
+    try {
+      log(productTags.toString(), name: "product scan response");
+      final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: AppUrls.productPostDetail,
+          body: {
+            "order_id": orderId,
+            "identifier": identifier,
+            "product_unit_tags": productTags
+          });
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         notifyListeners();
       } else {
         print('Error getting order details: ${response.statusCode}');
@@ -187,7 +278,7 @@ class OrderProvider extends ChangeNotifier {
     orderPickedDetails = null;
     try {
       // check for all items scan count is equal to quantity
-      for (var item in _orderDetails?.cartItems ?? []) {
+      for (var item in _orderDetails?.productDetails ?? []) {
         if (item.itemScanCount != item.quantity) {
           showToast("Please scan all items");
           return;
@@ -325,6 +416,23 @@ class OrderProvider extends ChangeNotifier {
       }
     } catch (e) {
       return e;
+    }
+  }
+
+  void addList(String data) {
+    scannedDataList.add(data);
+    notifyListeners();
+  }
+
+  updateProductList(String? data) async {
+    if (data != null) {
+      addList(data);
+    }
+  }
+
+  updateBucketData(String? data) async {
+    if (data != null) {
+      bucketData = data;
     }
   }
 }

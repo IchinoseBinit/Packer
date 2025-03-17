@@ -15,7 +15,6 @@ import 'package:packer/features/views/document/views/photos_of_location.dart';
 import 'package:packer/features/views/home/thank_you_page.dart';
 import 'package:packer/features/views/navigation/navigation_page.dart';
 import 'package:packer/features/views/order/views/order_detail_page.dart';
-import 'package:packer/features/views/order/views/see_order_items_page.dart';
 import 'package:packer/features/views/order/views/unsettled_orders_screen.dart';
 import 'package:packer/features/views/order/views/view_image_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
@@ -81,21 +80,26 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.bucketqrScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                   final orderId = state.extra as String;
-                  
+                  final orderId = state.extra as String;
+
                   return BucketScanScreen(
                     orderId: orderId,
                   );
                 },
               ),
-
               GoRoute(
                 path: NavigationConstants.productqrScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return const ProductScanScreen();
+                  final Map<String, dynamic> extra =
+                      state.extra as Map<String, dynamic>? ?? {};
+
+                  final List<String> productIds =
+                      List<String>.from(extra["productIds"] ?? []);
+                  return ProductScannerScreen(
+                    productId: productIds,
+                  );
                 },
               ),
-
               GoRoute(
                 path: NavigationConstants.photoSelectionRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -150,12 +154,6 @@ class AppRouter {
                 path: NavigationConstants.unsettledOrdersRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const UnsettledOrdersScreen();
-                },
-              ),
-              GoRoute(
-                path: NavigationConstants.seeOrderItemsRoute,
-                builder: (BuildContext context, GoRouterState state) {
-                  return const SeeOrderedItemsPage();
                 },
               ),
               GoRoute(

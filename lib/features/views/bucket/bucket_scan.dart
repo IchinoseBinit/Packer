@@ -10,6 +10,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -33,6 +34,7 @@ class BucketScanScreen extends StatefulWidget {
 }
 
 class _BucketScanScreenState extends State<BucketScanScreen> {
+  String data = "";
   @override
   void reassemble() {
     super.reassemble();
@@ -58,13 +60,14 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
   checkQr(String code, String orderId) {
     log(orderId, name: "order id:");
-    String data = code;
+    data = code;
     setState(() {
       data = code;
+      // print(data);
     });
     controller?.stop();
 
-    log(code, name: "qr code data");
+    log(code, name: "bucket qr code data");
 
     HapticFeedback.heavyImpact();
 
@@ -72,7 +75,9 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
     if (code.contains(data)) {
       try {
-        Provider.of<HomeProvider>(context, listen: false).updateAvailability();
+        Provider.of<OrderProvider>(context, listen: false)
+            .updateBucketData(code);
+
         removeLoading(context);
         Navigator.pop(context);
         showToast("basket available");
@@ -209,9 +214,10 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
             onDetect: (barcodes) {
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                    context,
-                    controller,
-                    barcodes.barcodes.first.rawValue.toString());
+                  context,
+                  controller,
+                  barcodes.barcodes.first.rawValue.toString(),
+                );
                 return;
               }
               checkQr(
@@ -280,155 +286,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class ScannerOverlay extends CustomPainter {
-  ScannerOverlay(this.scanWindow);
-
-  final Rect scanWindow;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // TODO: use `Offset.zero & size` instead of Rect.largest
-    // we need to pass the size to the custom paint widget
-    final backgroundPath = Path()..addRect(Rect.largest);
-    final cutoutPath = Path()..addRect(scanWindow);
-
-    final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
-      ..style = PaintingStyle.fill
-      ..blendMode = BlendMode.dstOut;
-
-    final backgroundWithCutout = Path.combine(
-      PathOperation.difference,
-      backgroundPath,
-      cutoutPath,
-    );
-    canvas.drawPath(backgroundWithCutout, backgroundPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
-
-class BarcodeOverlay extends CustomPainter {
-  BarcodeOverlay({
-    required this.barcodeCorners,
-    required this.barcodeSize,
-    required this.boxFit,
-    required this.cameraPreviewSize,
-  });
-
-  final List<Offset> barcodeCorners;
-  final Size barcodeSize;
-  final BoxFit boxFit;
-  final Size cameraPreviewSize;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (barcodeCorners.isEmpty ||
-        barcodeSize.isEmpty ||
-        cameraPreviewSize.isEmpty) {
-      return;
-    }
-
-    final adjustedSize = applyBoxFit(boxFit, cameraPreviewSize, size);
-
-    double verticalPadding = size.height - adjustedSize.destination.height;
-    double horizontalPadding = size.width - adjustedSize.destination.width;
-    if (verticalPadding > 0) {
-      verticalPadding = verticalPadding / 2;
-    } else {
-      verticalPadding = 0;
-    }
-
-    if (horizontalPadding > 0) {
-      horizontalPadding = horizontalPadding / 2;
-    } else {
-      horizontalPadding = 0;
-    }
-
-    final double ratioWidth;
-    final double ratioHeight;
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-      ratioWidth = barcodeSize.width / adjustedSize.destination.width;
-      ratioHeight = barcodeSize.height / adjustedSize.destination.height;
-    } else {
-      ratioWidth = cameraPreviewSize.width / adjustedSize.destination.width;
-      ratioHeight = cameraPreviewSize.height / adjustedSize.destination.height;
-    }
-
-    final List<Offset> adjustedOffset = [
-      for (final offset in barcodeCorners)
-        Offset(
-          offset.dx / ratioWidth + horizontalPadding,
-          offset.dy / ratioHeight + verticalPadding,
-        ),
-    ];
-
-    final cutoutPath = Path()..addPolygon(adjustedOffset, true);
-
-    final backgroundPaint = Paint()
-      ..color = Colors.red.withOpacity(0.3)
-      ..style = PaintingStyle.fill
-      ..blendMode = BlendMode.dstOut;
-
-    canvas.drawPath(cutoutPath, backgroundPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-}
-
-class ScannerErrorWidget extends StatelessWidget {
-  const ScannerErrorWidget({super.key, required this.error});
-
-  final MobileScannerException error;
-
-  @override
-  Widget build(BuildContext context) {
-    String errorMessage;
-
-    switch (error.errorCode) {
-      case MobileScannerErrorCode.controllerUninitialized:
-        errorMessage = 'Controller not ready.';
-      case MobileScannerErrorCode.permissionDenied:
-        errorMessage = 'Permission denied';
-      case MobileScannerErrorCode.unsupported:
-        errorMessage = 'Scanning is unsupported on this device';
-      default:
-        errorMessage = 'Generic Error';
-        break;
-    }
-
-    return ColoredBox(
-      color: Colors.black,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
-              child: Icon(Icons.error, color: Colors.white),
-            ),
-            Text(
-              errorMessage,
-              style: const TextStyle(color: Colors.white),
-            ),
-            Text(
-              error.errorDetails?.message ?? '',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
       ),
     );
   }

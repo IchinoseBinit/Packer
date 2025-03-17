@@ -18,8 +18,7 @@ class OrderListWidget extends StatelessWidget {
           return const Center(
             child: CircularProgressIndicator.adaptive(),
           );
-        } else
-        if (val.latestOrder.isNotEmpty) {
+        } else if (!val.latestOrder.isNotEmpty) {
           return ListView.builder(
             itemCount: val.latestOrder.length,
             shrinkWrap: true,
@@ -60,6 +59,4 @@ class OrderListWidget extends StatelessWidget {
       return const SizedBox.shrink();
     });
   }
-
-
 }

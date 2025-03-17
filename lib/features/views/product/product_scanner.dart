@@ -7,33 +7,29 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-
-import 'package:packer/features/views/product/product_details.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-class ProductScanScreen extends StatefulWidget {
-  const ProductScanScreen({
+class ProductScannerScreen extends StatefulWidget {
+  const ProductScannerScreen({
     super.key,
     this.isfromCartItem = false,
     this.productId,
   });
 
   final bool isfromCartItem;
-  final int? productId;
+  final List<String>? productId;
 
   @override
-  State<ProductScanScreen> createState() => _ProductScanScreenState();
+  State<ProductScannerScreen> createState() => _ProductScannerScreenState();
 }
 
-class _ProductScanScreenState extends State<ProductScanScreen> {
-  late final productList;
+class _ProductScannerScreenState extends State<ProductScannerScreen> {
   @override
   void reassemble() {
     super.reassemble();
@@ -52,44 +48,33 @@ class _ProductScanScreenState extends State<ProductScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    productList =
-        Provider.of<HomeProvider>(context, listen: false).scannedDataList;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OrderProvider>(context, listen: false)
-          .initScanMessage(widget.productId ?? 0);
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<OrderProvider>(context, listen: false)
+    //       .initScanMessage(widget.productId ?? 0);
+    // });
   }
 
   var _flash = false;
 
   checkQr(String code) {
-    String data = code;
-    if (productList.contains(data)) {
-      showToast("Product already added. \nPlease scan another product");
-      return;
-    }
-
     controller?.stop();
 
-    log(code, name: "qr code data");
+    log(code, name: "Product qr code data");
 
     HapticFeedback.heavyImpact();
 
     showLoading(context);
 
-    if (code.contains(data)) {
+    if (code.contains('-')) {
       try {
-        Provider.of<HomeProvider>(context, listen: false)
+        final productId = int.tryParse(code.split("-").first) ?? 0;
+        Provider.of<OrderProvider>(context, listen: false)
+            .scanCountOrder(productId);
+        Provider.of<OrderProvider>(context, listen: false)
             .updateProductList(code);
         removeLoading(context);
         Navigator.pop(context);
-        showToast("Product added");
-
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => ProductDetail()));
-
-        // navigate(context,
-        // route: NavigationConstants.productqrScreenRoute);
+        showToast("Product Scanned.");
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
@@ -210,9 +195,10 @@ class _ProductScanScreenState extends State<ProductScanScreen> {
             onDetect: (barcodes) {
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                    context,
-                    controller,
-                    barcodes.barcodes.first.rawValue.toString());
+                  context,
+                  controller,
+                  barcodes.barcodes.first.rawValue.toString(),
+                );
                 return;
               }
               checkQr(barcodes.barcodes.first.rawValue.toString());
@@ -236,17 +222,6 @@ class _ProductScanScreenState extends State<ProductScanScreen> {
               ),
             ),
           ),
-          // Positioned(
-          //   top: 8.h * 6,
-          //   left: 4.w * 3,
-          //   child: Text(
-          //     onPressed: () => Navigator.pop(context),
-          //     icon: const Icon(
-          //       Icons.arrow_back,
-          //       color: Colors.white,
-          //     ),
-          //   ),
-          // ),
           Consumer<OrderProvider>(
             builder: (context, provider, child) {
               return Visibility(

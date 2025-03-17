@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:packer/constants/app_urls.dart';
@@ -8,6 +9,7 @@ import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
@@ -43,10 +45,11 @@ class HomeProvider with ChangeNotifier {
 
   // For audio notification sounds
 
+
+
   List<OrderNotification> notifications = [];
   List<OrderNotification> latestOrder = [];
 
-  List<String> scannedDataList = [];
 
   final dio = Dio();
   OrderProvider orderProvider = OrderProvider();
@@ -57,12 +60,8 @@ class HomeProvider with ChangeNotifier {
 
   get isAvailable => _isAvailable;
 
-  void addList(String data) {
-    scannedDataList.add(data);
-    notifyListeners();
-
-    print("list: $scannedDataList");
-  }
+  
+  
 
   clearLatestOrder({bool isFromPayment = true}) {
     latestOrder.clear();
@@ -149,6 +148,20 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  // void initScanMessage(int productId) {
+  //   if (kDebugMode) {
+  //     showToast('Item Id: $productId');
+  //   }
+  //   for (var element in orderDetailModel?.productDetails ?? []) {
+  //     if (element.id == productId) {
+  //       scanMessage =
+  //           "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
+  //       notifyListeners();
+  //       return;
+  //     }
+  //   }
+  // }
+
   void _showNotificationPopup(OrderNotification order) {
     final hasNotification = notifications
         .firstWhereOrNull((element) => element.orderId == order.orderId);
@@ -187,38 +200,6 @@ class HomeProvider with ChangeNotifier {
   //     print('Error: $ex');
   //   }
   // }
-  Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
-    try {
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: "${AppUrls.acknowledgeOrderUrl}/$orderId/acknowledge-packer/",
-      );
-
-      if (response.statusCode == 200) {
-                orderDetailModel = OrderDetailModel.fromJson(response.data);
-
-        //Show snackbar
-        final index =
-            notifications.indexWhere((element) => element.orderId == orderId);
-        final orderItem = notifications[index];
-
-        toggleFirebaseTopic();
-
-        
-        notifications.removeAt(index);
-
-        fetchLatestOrders();
-        notifyListeners();
-      } else {
-        print('Error acknowledging order: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error acknowledging order: $e');
-      // rethrow;
-    }
-
-    notifyListeners();
-  }
 
   Future<void> updatepackerStatus(bool status) async {
     try {
@@ -312,9 +293,5 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  updateProductList(String? data) async {
-    if (data != null) {
-      addList(data);
-    }
-  }
+  
 }

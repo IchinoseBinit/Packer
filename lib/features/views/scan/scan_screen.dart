@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/order/models/unsettled_orders.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -94,11 +95,7 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  // void onBackPressed() {
-  //   // WidgetsBinding.instance.addPostFrameCallback((_) {
-  //   //   navigatePop(context);
-  //   // });
-  // }
+ 
 
   @override
   void dispose() {
@@ -217,9 +214,10 @@ class _ScanScreenState extends State<ScanScreen> {
             onDetect: (barcodes) {
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                    context,
-                    controller,
-                    barcodes.barcodes.first.rawValue.toString());
+                  context,
+                  controller,
+                  barcodes.barcodes.first.rawValue.toString(),
+                );
                 return;
               }
               checkQr(barcodes.barcodes.first.rawValue.toString());
