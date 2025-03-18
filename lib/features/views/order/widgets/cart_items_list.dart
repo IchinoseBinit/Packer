@@ -5,7 +5,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 
 class CartItemsList extends StatelessWidget {
@@ -38,8 +37,8 @@ class CartItemsList extends StatelessWidget {
                 navigate(context,
                     route: NavigationConstants.productqrScreenRoute,
                     extra: {
-                      "forCartitem": true,
-                      "productId": cartItem.id,
+                      'cartItem': true,
+                      'productId': cartItem.id,
                     });
               },
               child: ItemWidget(
@@ -149,7 +148,7 @@ class ItemWidget extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    "${productItems.id} ",
+                    "${productItems.compartment} ",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: text2Color, // Set text color based on status
                         ),

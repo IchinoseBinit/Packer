@@ -23,7 +23,7 @@ class ProductScannerScreen extends StatefulWidget {
   });
 
   final bool isfromCartItem;
-  final List<String>? productId;
+  final List<int>? productId;
 
   @override
   State<ProductScannerScreen> createState() => _ProductScannerScreenState();
@@ -64,9 +64,12 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
     HapticFeedback.heavyImpact();
 
     showLoading(context);
+    // if(code == scannedDataList[])
 
     if (code.contains('-')) {
       try {
+        showToast("Product Scanned Successfully");
+
         final productId = int.tryParse(code.split("-").first) ?? 0;
         Provider.of<OrderProvider>(context, listen: false)
             .scanCountOrder(productId);
@@ -74,7 +77,6 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
             .updateProductList(code);
         removeLoading(context);
         Navigator.pop(context);
-        showToast("Product Scanned.");
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
@@ -177,6 +179,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final productScanned =
+        Provider.of<OrderProvider>(context, listen: false).scanMessage;
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: 200,
@@ -222,6 +226,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
               ),
             ),
           ),
+          
           Consumer<OrderProvider>(
             builder: (context, provider, child) {
               return Visibility(

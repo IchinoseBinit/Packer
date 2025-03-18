@@ -1,7 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
 import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -90,13 +92,15 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.productqrScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  final Map<String, dynamic> extra =
-                      state.extra as Map<String, dynamic>? ?? {};
+                  final extra = state.extra as Map<String, dynamic>?;
 
-                  final List<String> productIds =
-                      List<String>.from(extra["productIds"] ?? []);
+                  // final bool cartItem = extra?['cartItem'] as bool;
+                  final productId =
+                      extra?['productId']; // Assuming it's int or string
+
                   return ProductScannerScreen(
-                    productId: productIds,
+                    productId: [productId], // Ensure it's a list
+                    // isfromCartItem: cartItem,
                   );
                 },
               ),

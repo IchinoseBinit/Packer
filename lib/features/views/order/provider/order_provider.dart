@@ -250,7 +250,7 @@ class OrderProvider extends ChangeNotifier {
   }
 
   Future<void> productPost(
-      int orderId, String identifier, List productTags) async {
+      int orderId, String identifier, List<String> productTags) async {
     try {
       log(productTags.toString(), name: "product scan response");
       final response = await DioClient().request(
@@ -421,12 +421,17 @@ class OrderProvider extends ChangeNotifier {
 
   void addList(String data) {
     scannedDataList.add(data);
+    scannedDataList.clear;
     notifyListeners();
   }
 
   updateProductList(String? data) async {
     if (data != null) {
-      addList(data);
+      if (scannedDataList.contains(data)) {
+        showToast("Product Already Scanned");
+      } else {
+        return addList(data);
+      }
     }
   }
 

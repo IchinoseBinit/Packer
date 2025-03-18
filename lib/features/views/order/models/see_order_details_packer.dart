@@ -76,6 +76,7 @@ class ProductDetails {
   late final double _size;
   late final String measurement;
   late int itemScanCount;
+  late final String compartment;
 
   String get size {
     // Utility function to format size
@@ -90,7 +91,8 @@ class ProductDetails {
       {required this.productName,
       required this.quantity,
       required this.imageUrl,
-      required this.measurement});
+      required this.measurement,
+      required this.compartment});
 
   ProductDetails.fromJson(Map<String, dynamic> json) {
     id = json['id'].toString().toInt();
@@ -98,6 +100,7 @@ class ProductDetails {
     quantity = json['quantity'].toString().toInt();
     imageUrl = json['image_url'].toString().toStringConversion();
     _size = json['size'].toString().toDouble();
+    compartment = json['compartment'].toString().toString();
 
     measurement = json['measurement'].toString().toStringConversion();
     itemScanCount = 0;
@@ -111,6 +114,7 @@ class ProductDetails {
     data['size'] = size.toString().toInt();
 
     data['measurement'] = measurement.toString().toStringConversion();
+    data['compartment'] = compartment.toString().toStringConversion();
 
     return data;
   }
