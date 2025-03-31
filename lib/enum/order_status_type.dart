@@ -1,28 +1,27 @@
 enum OrderStatusType {
   created,
-  packer_assigned,
+  packerAssigned,
   picked,
   completed,
   cancelled,
-  refunds;
+  billing;
 
   @override
   String toString() {
     switch (this) {
       case OrderStatusType.created:
         return 'created';
-      case OrderStatusType.packer_assigned:
-        return 'packer_assigned';
+      case OrderStatusType.packerAssigned:
+        return 'packer assigned';
       case OrderStatusType.picked:
         return 'picked';
       case OrderStatusType.completed:
         return 'completed';
       case OrderStatusType.cancelled:
         return 'cancelled';
-      case OrderStatusType.refunds:
-        return 'refunds';
-      default:
-        return 'created'; // Default to 'created' if the value is not recognized
+      case OrderStatusType.billing:
+        return 'billing';
+      // Default to 'created' if the value is not recognized
     }
   }
 }
@@ -32,18 +31,16 @@ extension StatusTypeExtension on OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return "Order Created";
-      case OrderStatusType.packer_assigned:
-        return "packer_assigned";
+      case OrderStatusType.packerAssigned:
+        return "Packer Assigned";
       case OrderStatusType.picked:
         return "On The Way";
       case OrderStatusType.completed:
         return "Arrived";
       case OrderStatusType.cancelled:
         return "Cancelled";
-      case OrderStatusType.refunds:
-        return "Order Refunded";
-      default:
-        return "Unknown Order";
+      case OrderStatusType.billing:
+        return "Billed";
     }
   }
 
@@ -51,18 +48,16 @@ extension StatusTypeExtension on OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return "Created";
-      case OrderStatusType.packer_assigned:
-        return "packer_assigned";
+      case OrderStatusType.packerAssigned:
+        return "packer Assigned";
       case OrderStatusType.picked:
         return "Delivering";
       case OrderStatusType.completed:
         return "Completed";
       case OrderStatusType.cancelled:
         return "Cancelled";
-      case OrderStatusType.refunds:
-        return "Order Refunded";
-      default:
-        return "Unknown Order";
+      case OrderStatusType.billing:
+        return "Billed";
     }
   }
 
@@ -71,15 +66,15 @@ extension StatusTypeExtension on OrderStatusType {
       case 'created':
         return OrderStatusType.created;
       case 'packer_assigned':
-        return OrderStatusType.packer_assigned;
+        return OrderStatusType.packerAssigned;
       case 'picked':
         return OrderStatusType.picked;
       case 'completed':
         return OrderStatusType.completed;
       case 'cancelled':
         return OrderStatusType.cancelled;
-      case 'refunds':
-        return OrderStatusType.refunds;
+      case 'billing':
+        return OrderStatusType.billing;
       default:
         throw ArgumentError('Unknown status type: $status');
     }
@@ -89,7 +84,7 @@ extension StatusTypeExtension on OrderStatusType {
     switch (this) {
       case OrderStatusType.created:
         return "Created";
-      case OrderStatusType.packer_assigned:
+      case OrderStatusType.packerAssigned:
         return "packer_assigned";
       case OrderStatusType.picked:
         return "On The Way";
@@ -97,7 +92,7 @@ extension StatusTypeExtension on OrderStatusType {
         return "Completed";
       case OrderStatusType.cancelled:
         return "Cancelled";
-      case OrderStatusType.refunds:
+      case OrderStatusType.billing:
         return "Order Refunded";
       default:
         return "Unknown Order";

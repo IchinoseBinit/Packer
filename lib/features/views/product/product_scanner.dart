@@ -73,12 +73,12 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         showToast("Product Scanned Successfully");
 
         // final cartId =Provider.of<>(context).
-        
 
         final productId = int.tryParse(code.split("-").first) ?? 0;
         Provider.of<OrderProvider>(context, listen: false)
             .scanCountOrder(productId);
-            print('ssssssssssssss   :    $productId');
+        print('ssssssssssssss   :    $productId');
+        
         Provider.of<OrderProvider>(context, listen: false)
             .updateProductList(code);
         removeLoading(context);
@@ -232,7 +232,6 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
               ),
             ),
           ),
-          
           Consumer<OrderProvider>(
             builder: (context, provider, child) {
               return Visibility(

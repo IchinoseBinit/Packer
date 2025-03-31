@@ -18,7 +18,7 @@ class OrderListWidget extends StatelessWidget {
           return const Center(
             child: CircularProgressIndicator.adaptive(),
           );
-        } else if (!val.latestOrder.isNotEmpty) {
+        } else if (val.latestOrder.isNotEmpty) {
           return ListView.builder(
             itemCount: val.latestOrder.length,
             shrinkWrap: true,
@@ -26,7 +26,7 @@ class OrderListWidget extends StatelessWidget {
             itemBuilder: (context, index) {
               final orderItem = val.latestOrder[index];
               switch (orderItem.status) {
-                case OrderStatusType.packer_assigned:
+                case OrderStatusType.packerAssigned:
                   return NotificationOrderCard(
                     orderItem: orderItem,
                     primaryColor: AppColors.primaryColor,

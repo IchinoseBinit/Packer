@@ -37,6 +37,7 @@
 // }
 
 import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/enum/order_status_type.dart';
 
 class OrderDetailModel {
   late final bool success;
@@ -122,7 +123,7 @@ class ProductDetails {
 
 class OrderData {
   late final int id;
-  late final String status;
+  late final OrderStatusType status;
   late final int count;
   late final String smallCartFee;
   late final String total;
@@ -141,7 +142,8 @@ class OrderData {
 
   OrderData.fromJson(Map<String, dynamic> json) {
     id = json['id'].toString().toInt();
-    status = json['status'].toString().toStringConversion();
+    status = StatusTypeExtension.fromString(
+        json['status'].toString().toStringConversion());
     count = json['count'].toString().toInt();
     smallCartFee = json['small_cart_fee'].toString().toStringConversion();
     total = json['total'].toString().toStringConversion();

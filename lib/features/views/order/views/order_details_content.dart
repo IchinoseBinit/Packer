@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,13 +16,25 @@ import '/features/views/widgets/custom_loading_indicator.dart';
 import '/features/views/widgets/general_elevated_button.dart';
 import '/features/views/widgets/order_info_card.dart';
 
-class OrderDetailsContent extends StatelessWidget {
+class OrderDetailsContent extends StatefulWidget {
   final String orderId;
 
   const OrderDetailsContent({
     super.key,
     required this.orderId,
   });
+
+  @override
+  State<OrderDetailsContent> createState() => _OrderDetailsContentState();
+}
+
+class _OrderDetailsContentState extends State<OrderDetailsContent> {
+  @override
+  void initState() {
+    super.initState();
+    Provider.of<OrderProvider>(context, listen: false).initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -46,25 +57,18 @@ class OrderDetailsContent extends StatelessWidget {
         if (status != OrderStatusType.completed &&
             status != OrderStatusType.cancelled)
           GeneralElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               showLoading(context);
-              debugger();
-
-              int? parsedOrderId = int.tryParse(orderId);
-
-              if (parsedOrderId != null) {
-                Provider.of<OrderProvider>(context, listen: false).productPost(
-                  parsedOrderId,
-                );
-              }
-
-              //Bill Order
-
+    
+              final parsedOrderId = int.tryParse(widget.orderId) ?? 0;
+    
               Provider.of<OrderProvider>(context, listen: false)
-                  .billOrder(orderId)
+                  .productPost(
+                parsedOrderId,
+              )
                   .then((value) {
                 removeLoading(context);
-
+    
                 Provider.of<HomeProvider>(context, listen: false)
                     .fetchLatestOrders();
                 if (value is bool) {

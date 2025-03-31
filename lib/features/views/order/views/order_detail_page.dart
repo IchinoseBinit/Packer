@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
@@ -41,20 +40,23 @@ class _OrderDetailsState extends State<OrderDetails> {
       appBar: AppBar(
         title: const Text("Order Details"),
       ),
-      body: FutureBuilder<void>(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator.adaptive());
-          }
-          final orderProvider = Provider.of<OrderProvider>(context);
-          if (orderProvider.orderDetails == null) {
-            return const Center(child: Text('Cannot fetch data'));
-          }
-          return OrderDetailsContent(
-            orderId: widget.orderId,
-          );
-        },
+      body: RefreshIndicator(
+        onRefresh: fetchOrderDetails,
+        child: FutureBuilder<void>(
+          future: future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator.adaptive());
+            }
+            final orderProvider = Provider.of<OrderProvider>(context);
+            if (orderProvider.orderDetails == null) {
+              return const Center(child: Text('Cannot fetch data'));
+            }
+            return OrderDetailsContent(
+              orderId: widget.orderId,
+            );
+          },
+        ),
       ),
     );
   }

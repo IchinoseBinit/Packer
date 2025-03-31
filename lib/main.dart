@@ -1,4 +1,5 @@
 import 'dart:developer' as dev;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -16,6 +16,7 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
+import 'package:provider/provider.dart';
 
 import '/theme/theme.dart';
 
@@ -39,6 +40,7 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    dev.debugger();
     handleIncomingCall(message, false);
   });
 
