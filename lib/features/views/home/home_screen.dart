@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,20 +9,16 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/home/widgets/order_list_widget.dart';
-import 'package:packer/features/views/widgets/after_pickup.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
-import 'package:packer/features/views/widgets/icon_text_button.dart';
 import 'package:packer/features/views/widgets/progress_column.dart';
 import 'package:packer/utils/call_keep_utils.dart';
-import 'package:packer/utils/google_map_utils.dart';
-import 'package:uuid/uuid.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -186,31 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontSize: 16.sp,
                         ),
                   ),
-                Consumer<HomeProvider>(builder: (context, val, child) {
-                  if (val.latestOrder.isEmpty) {
-                    return IconTextButton(
-                      height: 60.h,
-                      width: 200.w,
-                      title: "Directions",
-                      assetURl: AppAssets.direction_icon,
-                      onPressed: () async {
-                        try {
-                          final latlng = await val.fetchStoreLocation();
-                          MapUtils.openMap(
-                            latlng.latitude,
-                            latlng.longitude,
-                          );
-                        } catch (ex) {
-                          print(ex.toString());
-                        }
-                      },
-                    );
-                  }
-                  return const SizedBox.shrink();
-                }),
                 SizedBox(height: 48.h),
 
                 Consumer<HomeProvider>(builder: (context, val, _) {
+                  print("is available ===== ${val.isAvailable}");
                   if ((val.isOnline && !val.isAvailable)) {
                     return GeneralElevatedButton(
                       onPressed: () {
@@ -222,13 +195,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   }
                   return const SizedBox.shrink();
                 }),
+
                 SizedBox(
                   height: 24.h,
                 ),
 
-                GeneralElevatedButton(title: "title", onPressed: () {
-                  handleIncomingCall(const RemoteMessage(), false);
-                })
+                GeneralElevatedButton(
+                    title: "title",
+                    onPressed: () {
+                      handleIncomingCall(const RemoteMessage(), false);
+                    })
               ],
             ),
           ),

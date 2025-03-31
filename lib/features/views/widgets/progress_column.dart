@@ -7,8 +7,8 @@ import 'package:packer/features/views/auth/provider/home_provider.dart';
 
 class TodaysProgressWidget extends StatelessWidget {
   const TodaysProgressWidget({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

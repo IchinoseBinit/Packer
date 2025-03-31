@@ -1,5 +1,4 @@
 // import 'package:galli_vector_package/galli_vector_package.dart';
-import 'package:galli_map/galli_map.dart';
 
 import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/order/models/user_info.dart';
@@ -14,7 +13,6 @@ class OrderPickedDetails {
   late final UserInfo userInfo;
   late final List<CartItem> cartItems;
   late final Info customer;
-  late final Route route;
 
   OrderPickedDetails({
     required this.id,
@@ -24,7 +22,6 @@ class OrderPickedDetails {
     required this.userInfo,
     required this.cartItems,
     required this.customer,
-    required this.route,
   });
 
   OrderPickedDetails.fromJson(Map<String, dynamic> json) {
@@ -35,7 +32,6 @@ class OrderPickedDetails {
     total = data['total'].toString().toDouble();
     userInfo = UserInfo.fromJson(data['user_info']);
     customer = Info.fromJson(data['customer_info']);
-    route = Route.fromJson(json['route_data']);
     cartItems = List<CartItem>.from(
         data['cart_items'].map((item) => CartItem.fromJson(item)));
   }
@@ -43,16 +39,16 @@ class OrderPickedDetails {
 
 class Info {
   late final String name;
-  late final String phone;
+  late final int phone;
 
   Info({
     required this.name,
     required this.phone,
   });
 
-  Info.fromJson(Map<String, dynamic> json)
+  Info.fromJson(Map<int, dynamic> json)
       : name = json['name'].toString().toStringConversion(),
-        phone = json['phone_number'].toString().toStringConversion();
+        phone = json['phone_number'].toString().toInt();
 
   Map<String, dynamic> toJson() {
     return {
@@ -65,19 +61,4 @@ class Info {
   String toString() {
     return name;
   }
-}
-
-class Route {
-  late final double distance;
-  late final int minutes;
-  late final List<LatLng> latLngs;
-
-  Route.fromJson(Map<String, dynamic> json)
-      : distance = json['distance'].toString().toDouble(),
-        minutes = json['duration_minutes'].toString().toInt(),
-        latLngs = List<LatLng>.from(json['lat_lngs'].map((x) {
-          final lat = x[1].toString().toDouble();
-          final lon = x[0].toString().toDouble();
-          return LatLng(lat, lon);
-        }));
 }

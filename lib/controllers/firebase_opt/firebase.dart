@@ -87,6 +87,7 @@ class FirebaseAPI {
 
   // Unsubscribe from the topic
   Future<void> unsubscribepackerStatus() async {
+
     await _firebaseMessaging.unsubscribeFromTopic(topicName);
   }
 

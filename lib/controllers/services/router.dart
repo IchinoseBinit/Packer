@@ -1,5 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/product/product_scanner.dart';
+import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/auth/views/login_screen.dart';
 import 'package:packer/features/views/auth/views/splash_screen.dart';
@@ -11,7 +17,6 @@ import 'package:packer/features/views/document/views/photos_of_location.dart';
 import 'package:packer/features/views/home/thank_you_page.dart';
 import 'package:packer/features/views/navigation/navigation_page.dart';
 import 'package:packer/features/views/order/views/order_detail_page.dart';
-import 'package:packer/features/views/order/views/see_order_items_page.dart';
 import 'package:packer/features/views/order/views/unsettled_orders_screen.dart';
 import 'package:packer/features/views/order/views/view_image_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
@@ -77,6 +82,34 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.bucketqrScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final orderId = state.extra as String;
+
+                  return BucketScanScreen(
+                    orderId: orderId,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.productqrScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>?;
+
+                  // final bool cartItem = extra?['cartItem'] as bool;
+                  final productId =
+                      extra?['productId']; // Assuming it's int or string
+
+                  return ProductScannerScreen(
+                    productId: [productId],
+                    isfromCartItem: true,
+
+                    // Ensure it's a list
+                    // isfromCartItem: cartItem,
+                  );
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.photoSelectionRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const PhotoSelection();
@@ -97,10 +130,11 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.orderDetailsRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  var orderId = '2685';
-                  if (state.extra != null) {
-                    orderId = (state.extra as Object).toString();
-                  }
+                  // var orderId = '3485';
+                  final orderId = state.extra as String;
+
+                  log(orderId, name: "order id:");
+
                   return OrderDetails(
                     orderId: orderId,
                   );
@@ -131,12 +165,6 @@ class AppRouter {
                 path: NavigationConstants.unsettledOrdersRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const UnsettledOrdersScreen();
-                },
-              ),
-              GoRoute(
-                path: NavigationConstants.seeOrderItemsRoute,
-                builder: (BuildContext context, GoRouterState state) {
-                  return const SeeOrderedItemsPage();
                 },
               ),
               GoRoute(

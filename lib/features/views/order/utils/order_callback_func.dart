@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:provider/provider.dart';
 
-import '/controllers/services/show_toast_message.dart';
 import '/enum/order_status_type.dart';
 import '/features/views/auth/model/order_notification.dart';
-import '/features/views/order/provider/order_provider.dart';
-import '/features/views/widgets/custom_loading_indicator.dart';
 
 VoidCallback getCallbackFunction(BuildContext context,
     {required OrderNotification orderItem}) {
   switch (orderItem.status) {
-    case OrderStatusType.acknowledged:
+    case OrderStatusType.packerAssigned:
       return () {
         navigate(context,
           route: NavigationConstants.orderDetailsRoute, extra: orderItem.orderId);

@@ -5,10 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 
 class CartItemsList extends StatelessWidget {
-  final List<CartItem> cartItems;
+  final List<ProductDetails> cartItems;
 
   const CartItemsList({super.key, required this.cartItems});
 
@@ -35,14 +35,14 @@ class CartItemsList extends StatelessWidget {
                   return;
                 }
                 navigate(context,
-                    route: NavigationConstants.qrScanScreenRoute,
+                    route: NavigationConstants.productqrScreenRoute,
                     extra: {
-                      "forCartitem": true,
-                      "productId" : cartItem.id,
+                      'cartItem': true,
+                      'productId': cartItem.id,
                     });
               },
               child: ItemWidget(
-                cartItem: cartItem,
+                productItems: cartItem,
                 status: cartItem.itemScanCount == cartItem.quantity
                     ? ItemStatus.done
                     : ItemStatus.remaining,
@@ -61,11 +61,11 @@ class CartItemsList extends StatelessWidget {
 class ItemWidget extends StatelessWidget {
   const ItemWidget({
     super.key,
-    required this.cartItem,
+    required this.productItems,
     required this.status, // Add a status parameter
   });
 
-  final CartItem cartItem;
+  final ProductDetails productItems;
   final ItemStatus status; // Enum to define the status
 
   @override
@@ -115,9 +115,9 @@ class ItemWidget extends StatelessWidget {
                 width: 60.h,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: cartItem.productImage.isNotEmpty
+                  child: productItems.imageUrl.isNotEmpty
                       ? Image.network(
-                          cartItem.productImage,
+                          "http://13.211.205.215:8000${productItems.imageUrl}",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),
@@ -133,7 +133,7 @@ class ItemWidget extends StatelessWidget {
                   SizedBox(
                     width: .3.sw,
                     child: Text(
-                      cartItem.productName,
+                      productItems.productName,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: text1Color, // Set text color based on status
@@ -142,7 +142,13 @@ class ItemWidget extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "${cartItem.size} ${cartItem.measurement}",
+                    "${productItems.size} ${productItems.measurement}",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: text2Color, // Set text color based on status
+                        ),
+                  ),
+                  Text(
+                    "${productItems.compartment} ",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: text2Color, // Set text color based on status
                         ),
@@ -154,7 +160,7 @@ class ItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "Qty: ${cartItem.quantity}",
+                    "Qty: ${productItems.quantity}",
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: text1Color, // Set text color based on status
@@ -163,14 +169,14 @@ class ItemWidget extends StatelessWidget {
                   SizedBox(
                     height: 4.h,
                   ),
-                  Text(
-                    cartItem.productCompartment,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                      color: text1Color, // Set text color based on status
-                    ),
-                  ),
+                  // Text(
+                  //   productItems.productCompartment,
+                  //   style: TextStyle(
+                  //     fontSize: 12.sp,
+                  //     fontWeight: FontWeight.bold,
+                  //     color: text1Color, // Set text color based on status
+                  //   ),
+                  // ),
                 ],
               ),
               if (status == ItemStatus.remaining) ...[
@@ -181,7 +187,7 @@ class ItemWidget extends StatelessWidget {
                   color: dividerColor, // Set divider color based on status
                 ),
                 Text(
-                  "Remaining: ${cartItem.quantity - cartItem.itemScanCount}",
+                  "Remaining: ${productItems.quantity - productItems.itemScanCount}",
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: text1Color, // Set text color based on status

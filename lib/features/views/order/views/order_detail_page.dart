@@ -1,4 +1,3 @@
-// order_details.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +28,7 @@ class _OrderDetailsState extends State<OrderDetails> {
   Future<void> fetchOrderDetails() async {
     try {
       await Provider.of<OrderProvider>(context, listen: false)
-          .fetchOrderDetails(widget.orderId);
+          .acknowledgeOrder(context, widget.orderId);
     } catch (error) {
       print('Error fetching order details: $error');
       // Handle error as needed

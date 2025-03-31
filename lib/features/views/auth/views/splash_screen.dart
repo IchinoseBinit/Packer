@@ -43,9 +43,6 @@ class _SplashScreenState extends State<SplashScreen> {
           // Get the current location
           Position currentPosition = await _getCurrentLocation();
 
-          // Pass the current position to the HomeProvider
-          await Provider.of<HomeProvider>(context, listen: false)
-              .setInitialLocation(currentPosition);
           await Provider.of<HomeProvider>(context, listen: false)
               .fetchpackerSummary();
 
@@ -145,5 +142,4 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
     );
   }
-
 }

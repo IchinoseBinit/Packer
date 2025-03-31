@@ -136,19 +136,18 @@ class TransferItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final quantity = (transferItem.quantity ?? 0) - transferItem.itemScanCount;
+    final isComplete = quantity == 0 || status == ItemStatus.done;
     final backgroundColor =
-        status == ItemStatus.done ? AppColors.green700 : Colors.transparent;
+        isComplete ? AppColors.green700 : Colors.transparent;
 
-    final borderColor = status == ItemStatus.done
-        ? AppColors.green700
-        : const Color(0xffEAEAEA);
+    final borderColor =
+        isComplete ? AppColors.green700 : const Color(0xffEAEAEA);
 
-    final text1Color =
-        status == ItemStatus.done ? AppColors.backgroundColor : Colors.black;
+    final text1Color = isComplete ? AppColors.backgroundColor : Colors.black;
 
-    final text2Color = status == ItemStatus.done
-        ? AppColors.backgroundColor
-        : const Color(0xFF7D7C7C);
+    final text2Color =
+        isComplete ? AppColors.backgroundColor : const Color(0xFF7D7C7C);
 
     return Container(
       decoration: BoxDecoration(
@@ -205,7 +204,7 @@ class TransferItemWidget extends StatelessWidget {
               color: Colors.grey, // Set divider color based on status
             ),
             Text(
-              "Remaining: ${(transferItem.quantity ?? 0) - transferItem.itemScanCount}",
+              "Remaining: $quantity",
               style: TextStyle(
                 fontSize: 10.sp,
                 color: text1Color, // Set text color based on status

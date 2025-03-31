@@ -9,23 +9,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
-import 'package:provider/provider.dart';
-
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({
-    Key? key,
+    super.key,
     this.isfromCartItem = false,
     this.productId,
     this.isFromPackerTransfer = false,
     this.checkIdentifier = false,
-  }) : super(key: key);
+  });
 
   final bool isfromCartItem;
   final int? productId;
@@ -101,11 +100,7 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  // void onBackPressed() {
-  //   // WidgetsBinding.instance.addPostFrameCallback((_) {
-  //   //   navigatePop(context);
-  //   // });
-  // }
+ 
 
   @override
   void dispose() {
@@ -224,9 +219,10 @@ class _ScanScreenState extends State<ScanScreen> {
             onDetect: (barcodes) {
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                    context,
-                    controller,
-                    barcodes.barcodes.first.rawValue.toString());
+                  context,
+                  controller,
+                  barcodes.barcodes.first.rawValue.toString(),
+                );
                 return;
               }
               if (widget.isFromPackerTransfer) {
