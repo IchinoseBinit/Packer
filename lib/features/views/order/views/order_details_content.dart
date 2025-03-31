@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +27,6 @@ class OrderDetailsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bucketData = Provider.of<OrderProvider>(context).bucketData;
     final orderProvider = Provider.of<OrderProvider>(context);
     final OrderDetailModel? orderDetails = orderProvider.orderDetails;
     final status = orderDetails?.data.status ?? "";

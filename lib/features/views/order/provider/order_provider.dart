@@ -66,7 +66,8 @@ class OrderProvider extends ChangeNotifier {
     orders.removeAt(index);
     notifyListeners();
   }
-  void initState(){
+
+  void initState() {
     scannedDataList.clear();
   }
 
@@ -432,7 +433,6 @@ class OrderProvider extends ChangeNotifier {
   }
 
   updateProductList(String? data) async {
-
     if (data != null) {
       if (scannedDataList.contains(data)) {
         showToast("Product Already Scanned");
@@ -444,8 +444,8 @@ class OrderProvider extends ChangeNotifier {
 
   updateBucketData(String? data) async {
     if (data != null) {
-      log(bucketData, name: "basket data:::::::::::");
       bucketData = data;
+      log(bucketData, name: "basket data:::::::::::");
     }
   }
 }
