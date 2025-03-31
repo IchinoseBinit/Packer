@@ -45,6 +45,11 @@ class ProfileScreen extends StatelessWidget {
       'screen': 'notification',
     },
     {
+      'icon': Icons.transform,
+      'title': 'Transfer Items',
+      'screen': 'transfer_list',
+    },
+    {
       'icon': Icons.history,
       'title': 'Transaction History',
       'screen': 'transaction_history',
@@ -71,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
                   profileImage: AppAssets.profileImage,
                   name: value.user.name,
                   id: value.user.id,
-                  phoneNumber: value.user.phoneNumber ?? value.user.role,
+                  phoneNumber: value.user.phoneNumber ?? value.user.role.name,
                 );
               }),
             ],
@@ -161,6 +166,7 @@ class ProfileScreen extends StatelessWidget {
                           AuthController().logout().then(
                             (value) async {
                               removeLoading(context);
+                              Provider.of<HomeProvider>(context, listen: false).resetUser();
                               if (value is bool) {
                                 navigateAndRemoveAll(context,
                                     route: NavigationConstants.loginRoute);
