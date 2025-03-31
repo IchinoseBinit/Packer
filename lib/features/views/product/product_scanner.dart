@@ -48,10 +48,10 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   Provider.of<OrderProvider>(context, listen: false)
-    //       .initScanMessage(widget.productId ?? 0);
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<OrderProvider>(context, listen: false)
+          .initScanMessage(widget.productId?.first ?? 0);
+    });
   }
 
   var _flash = false;
@@ -63,6 +63,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
     HapticFeedback.heavyImpact();
 
+    debugger();
+
     showLoading(context);
     // if(code == scannedDataList[])
 
@@ -70,9 +72,13 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
       try {
         showToast("Product Scanned Successfully");
 
+        // final cartId =Provider.of<>(context).
+        
+
         final productId = int.tryParse(code.split("-").first) ?? 0;
         Provider.of<OrderProvider>(context, listen: false)
             .scanCountOrder(productId);
+            print('ssssssssssssss   :    $productId');
         Provider.of<OrderProvider>(context, listen: false)
             .updateProductList(code);
         removeLoading(context);

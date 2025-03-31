@@ -66,6 +66,9 @@ class OrderProvider extends ChangeNotifier {
     orders.removeAt(index);
     notifyListeners();
   }
+  void initState(){
+    scannedDataList.clear();
+  }
 
   void initScanMessage(int productId) {
     if (kDebugMode) {
@@ -128,6 +131,8 @@ class OrderProvider extends ChangeNotifier {
 
   bool scanCountOrder(int cartItemId) {
     for (var element in _orderDetails?.productDetails ?? []) {
+      print("ssssssssssss: ${element.id}");
+
       if (element.id == cartItemId) {
         if (element.itemScanCount == element.quantity) {
           showToast("Item already scanned");
@@ -250,16 +255,17 @@ class OrderProvider extends ChangeNotifier {
   }
 
   Future<void> productPost(
-      int orderId, String identifier, List<String> productTags) async {
+    int orderId,
+  ) async {
     try {
-      log(productTags.toString(), name: "product scan response");
+      log(scannedDataList.toString(), name: "product scan response");
       final response = await DioClient().request(
           requestType: RequestType.postWithToken,
           url: AppUrls.productPostDetail,
           body: {
             "order_id": orderId,
-            "identifier": identifier,
-            "product_unit_tags": productTags
+            "identifier": bucketData,
+            "product_unit_tags": scannedDataList
           });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -421,11 +427,12 @@ class OrderProvider extends ChangeNotifier {
 
   void addList(String data) {
     scannedDataList.add(data);
-    scannedDataList.clear;
+
     notifyListeners();
   }
 
   updateProductList(String? data) async {
+
     if (data != null) {
       if (scannedDataList.contains(data)) {
         showToast("Product Already Scanned");
@@ -437,6 +444,7 @@ class OrderProvider extends ChangeNotifier {
 
   updateBucketData(String? data) async {
     if (data != null) {
+      log(bucketData, name: "basket data:::::::::::");
       bucketData = data;
     }
   }

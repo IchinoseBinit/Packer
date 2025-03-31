@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
@@ -48,12 +50,17 @@ class OrderDetailsContent extends StatelessWidget {
           GeneralElevatedButton(
             onPressed: () {
               showLoading(context);
+              debugger();
 
-              // TODO: Bill order
-              Provider.of<OrderProvider>(context, listen: false).productPost(
-                  int.parse(orderId),
-                  bucketData,
-                  orderProvider.scannedDataList);
+              int? parsedOrderId = int.tryParse(orderId);
+
+              if (parsedOrderId != null) {
+                Provider.of<OrderProvider>(context, listen: false).productPost(
+                  parsedOrderId,
+                );
+              }
+
+              //Bill Order
 
               Provider.of<OrderProvider>(context, listen: false)
                   .billOrder(orderId)

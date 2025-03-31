@@ -39,16 +39,16 @@ class OrderPickedDetails {
 
 class Info {
   late final String name;
-  late final String phone;
+  late final int phone;
 
   Info({
     required this.name,
     required this.phone,
   });
 
-  Info.fromJson(Map<String, dynamic> json)
+  Info.fromJson(Map<int, dynamic> json)
       : name = json['name'].toString().toStringConversion(),
-        phone = json['phone_number'].toString().toStringConversion();
+        phone = json['phone_number'].toString().toInt();
 
   Map<String, dynamic> toJson() {
     return {

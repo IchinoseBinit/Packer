@@ -99,7 +99,10 @@ class AppRouter {
                       extra?['productId']; // Assuming it's int or string
 
                   return ProductScannerScreen(
-                    productId: [productId], // Ensure it's a list
+                    productId: [productId],
+                    isfromCartItem: true,
+
+                    // Ensure it's a list
                     // isfromCartItem: cartItem,
                   );
                 },
