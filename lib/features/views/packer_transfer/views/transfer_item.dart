@@ -7,6 +7,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
+import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
@@ -37,44 +38,61 @@ class TransferItemsList extends StatelessWidget {
               child: Text("No transfer items available"),
             );
           }
-          return ListView.separated(
-            physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.all(16.w),
-            shrinkWrap: true,
-            itemCount: provider.selectedTransferModel!.items?.length ?? 0,
-            itemBuilder: (context, index) {
-              final transferItem =
-                  provider.selectedTransferModel!.items?[index];
-
-              final String role = provider.role ?? ''; 
-              final bool isPacker = role == "packer";
-              final bool isPacked = transferItem?.status == "packed";
-
-              final ItemStatus status =
-                  (isPacker && isPacked) || (!isPacker && !isPacked)
-                      ? ItemStatus.done
-                      : ItemStatus.remaining;
-              return InkWell(
-                highlightColor: Colors.transparent,
-                onTap: () {
-                  log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
-                  if (status == ItemStatus.done) return;
-                  navigate(context,
-                      route: NavigationConstants.qrScanScreenRoute,
-                      extra: {
-                        "forTranfer": true,
-                        "productId": transferItem?.product,
-                      });
-                },
-                child: TransferItemWidget(
-                  transferItem: transferItem ?? TransferItemModel(),
-                  status: status
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TransferNotificationCard(
+                  primaryColor: Theme.of(context).primaryColor,
+                  transferItem: provider.selectedTransferModel!,
                 ),
-              );
-            },
-            separatorBuilder: (context, index) {
-              return const SizedBox(height: 12);
-            },
+              ),
+              SizedBox(height: 8.h),
+              const Divider(
+                height: 1,
+                color: Color(0xffEAEAEA),
+              ),
+              SizedBox(height: 8.h),
+              Expanded(
+                child: ListView.separated(
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(16.w),
+                  shrinkWrap: true,
+                  itemCount: provider.selectedTransferModel!.items?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final transferItem =
+                        provider.selectedTransferModel!.items?[index];
+
+                    final bool isPacked = transferItem?.status == "packed";
+
+                    final ItemStatus status = (transferItem?.itemScanCount ==
+                                transferItem?.quantity) ||
+                            isPacked
+                        ? ItemStatus.done
+                        : ItemStatus.remaining;
+                    return InkWell(
+                      highlightColor: Colors.transparent,
+                      onTap: () {
+                        log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
+                        if (status == ItemStatus.done) return;
+                        navigate(context,
+                            route: NavigationConstants.qrScanScreenRoute,
+                            extra: {
+                              "forTranfer": true,
+                              "productId": transferItem?.product,
+                            });
+                      },
+                      child: TransferItemWidget(
+                          transferItem: transferItem ?? TransferItemModel(),
+                          status: status),
+                    );
+                  },
+                  separatorBuilder: (context, index) {
+                    return const SizedBox(height: 12);
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
