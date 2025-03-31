@@ -8,7 +8,7 @@ import '/features/views/auth/model/order_notification.dart';
 VoidCallback getCallbackFunction(BuildContext context,
     {required OrderNotification orderItem}) {
   switch (orderItem.status) {
-    case OrderStatusType.packer_assigned:
+    case OrderStatusType.packerAssigned:
       return () {
         navigate(context,
           route: NavigationConstants.orderDetailsRoute, extra: orderItem.orderId);

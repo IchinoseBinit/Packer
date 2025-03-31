@@ -87,7 +87,7 @@ ThemeData lightTheme(BuildContext context) {
       type: BottomNavigationBarType.fixed,
     ),
     radioTheme: RadioThemeData(
-      fillColor: MaterialStateProperty.all(AppColors.primaryColor),
+      fillColor: WidgetStateProperty.all(AppColors.primaryColor),
     ),
   );
 }

@@ -66,6 +66,7 @@ class OrderProvider extends ChangeNotifier {
     orders.removeAt(index);
     notifyListeners();
   }
+
   void initState(){
     scannedDataList.clear();
   }
@@ -102,6 +103,8 @@ class OrderProvider extends ChangeNotifier {
 
       try {
         final isScanned = scanCountOrder(prodId);
+
+        updateProductList(code);
         if (isScanned) {
           removeLoading(context);
           Navigator.pop(context);
@@ -254,7 +257,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> productPost(
+  Future<bool> productPost(
     int orderId,
   ) async {
     try {
@@ -270,48 +273,16 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         notifyListeners();
+        return true;
       } else {
         print('Error getting order details: ${response.statusCode}');
+        return false;
       }
     } catch (e) {
       print('Error getting order details: $e');
       _error = 'Failed to load order details: $e';
       notifyListeners();
-    }
-  }
-
-  Future billOrder(String orderId) async {
-    orderPickedDetails = null;
-    try {
-      // check for all items scan count is equal to quantity
-      for (var item in _orderDetails?.productDetails ?? []) {
-        if (item.itemScanCount != item.quantity) {
-          showToast("Please scan all items");
-          return;
-        }
-      }
-
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: AppUrls.billOrderUrl.replaceFirst("id", orderId),
-      );
-
-      if (response.statusCode == 200) {
-        orderPickedDetails = OrderPickedDetails.fromJson(response.data);
-        orders.removeWhere((element) => element.orderId == orderId);
-        hasUploadedHomeImage = false;
-        showToast("Order picked successfully");
-        notifyListeners();
-        print(
-            "__________________________________________________________________________________");
-        print(orderPickedDetails);
-        return true;
-      } else {
-        throw response.data;
-      }
-    } catch (ex) {
-      orderPickedDetails = null;
-      return ex;
+      return false;
     }
   }
 
@@ -427,6 +398,8 @@ class OrderProvider extends ChangeNotifier {
 
   void addList(String data) {
     scannedDataList.add(data);
+
+    print(scannedDataList);
 
     notifyListeners();
   }
