@@ -40,7 +40,6 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    dev.debugger();
     handleIncomingCall(message, false);
   });
 
