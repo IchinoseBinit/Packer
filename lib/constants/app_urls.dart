@@ -3,7 +3,7 @@ class AppUrls {
 
   static const String _domainUrl = "13.211.205.215:8000";
 
-  // static const String _domainUrl = "192.168.136.234:8000";
+  // static const String _domainUrl = "192.168.1.73:8000";
   // static const String _domainUrl = "192.168.100.183:8000";
   static const String _baseUrl = "http://$_domainUrl";
 
@@ -65,4 +65,24 @@ class AppUrls {
   static const String dailySummaryUrl = "$_packerUrl/order-view/";
 
   static const String fcmTokenUrl = "$_baseUrl/notification/register-device";
+
+
+  // packer_transfer
+  static const String packerTransferUrl = "$_baseUrl/packer/transfers/";
+  static const String packerTransferDetailsUrl = "$_baseUrl/packer/transfers/id/";
+  // scan-unit
+  static const String scanUnitUrl = "$_baseUrl/packer/transfers/id/scan-units/";
+  // complete
+  static const String completeTransferUrl = "$_baseUrl/packer/transfers/id/complete/";
+
+
+  // manager_transfer
+  static const String managerTransferUrl = "$_baseUrl/store/transfers/";
+  static const String managerTransferDetailsUrl = "$_baseUrl/store/transfers/id/";
+  // verify-units
+  static const String verifyUnitsUrl = "$_baseUrl/store/transfers/id/verify-units/";
+  // accept
+  static const String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
+
+
 }

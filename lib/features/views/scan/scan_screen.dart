@@ -9,24 +9,27 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/features/views/order/models/unsettled_orders.dart';
-import 'package:provider/provider.dart';
-
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({
     super.key,
     this.isfromCartItem = false,
     this.productId,
+    this.isFromPackerTransfer = false,
+    this.checkIdentifier = false,
   });
 
   final bool isfromCartItem;
   final int? productId;
+  final bool isFromPackerTransfer;
+  final bool checkIdentifier;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -52,8 +55,10 @@ class _ScanScreenState extends State<ScanScreen> {
     super.initState();
     controller = MobileScannerController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OrderProvider>(context, listen: false)
-          .initScanMessage(widget.productId ?? 0);
+      if (widget.isfromCartItem) {
+        Provider.of<OrderProvider>(context, listen: false)
+            .initScanMessage(widget.productId ?? 0);
+      }
     });
   }
 
@@ -220,6 +225,23 @@ class _ScanScreenState extends State<ScanScreen> {
                 );
                 return;
               }
+              if (widget.isFromPackerTransfer) {
+                Provider.of<PackerTransferProvider>(context, listen: false)
+                    .checkItemQr(
+                        context,
+                        controller,
+                        barcodes.barcodes.first.rawValue.toString(),
+                        widget.productId ?? 0);
+                return;
+              }
+              if (widget.checkIdentifier) {
+                Provider.of<PackerTransferProvider>(context, listen: false)
+                    .checkIdentifier(
+                        context,
+                        controller,
+                        barcodes.barcodes.first.rawValue.toString());
+                return;
+              }
               checkQr(barcodes.barcodes.first.rawValue.toString());
             },
           ),
@@ -247,6 +269,36 @@ class _ScanScreenState extends State<ScanScreen> {
             builder: (context, provider, child) {
               return Visibility(
                 visible: widget.isfromCartItem && provider.scanMessage != null,
+                child: Positioned(
+                  top: 32.h * 6,
+                  left: 4.w * 3,
+                  right: 4.w * 3,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.scanMessage ?? "",
+                      style: TextStyle(
+                        color: AppColors.backgroundColor,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          Consumer<PackerTransferProvider>(
+            builder: (context, provider, child) {
+              return Visibility(
+                visible: widget.isFromPackerTransfer && provider.scanMessage != null,
                 child: Positioned(
                   top: 32.h * 6,
                   left: 4.w * 3,
