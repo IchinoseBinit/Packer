@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -35,53 +34,61 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
     Provider.of<OrderProvider>(context, listen: false).initState();
   }
 
-
   @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
     final OrderDetailModel? orderDetails = orderProvider.orderDetails;
     final status = orderDetails?.data.status ?? "";
+    final showButton = orderProvider.showButton;
 
     if (orderDetails == null) {
       return const Center(child: Text('Cannot fetch data'));
     }
 
-    return ListView(
-      padding: AppConstants.padding,
-      children: [
-        OrderInfoCard(data: orderDetails),
-        CartItemsList(cartItems: orderDetails.productDetails),
-        SizedBox(
-          height: 8.h,
+    return Scaffold(
+        body: ListView(
+          padding: AppConstants.padding,
+          children: [
+            OrderInfoCard(data: orderDetails),
+            CartItemsList(cartItems: orderDetails.productDetails),
+            SizedBox(
+              height: 8.h,
+            ),
+          ],
         ),
-        if (status != OrderStatusType.completed &&
-            status != OrderStatusType.cancelled)
-          GeneralElevatedButton(
-            onPressed: () async {
-              showLoading(context);
-    
-              final parsedOrderId = int.tryParse(widget.orderId) ?? 0;
-    
-              Provider.of<OrderProvider>(context, listen: false)
-                  .productPost(
-                parsedOrderId,
+        bottomNavigationBar: (status != OrderStatusType.completed &&
+                status != OrderStatusType.cancelled &&
+                showButton)
+            ? Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                child: GeneralElevatedButton(
+                  onPressed: () async {
+                    showLoading(context);
+
+                    final parsedOrderId = int.tryParse(widget.orderId) ?? 0;
+
+                    Provider.of<OrderProvider>(context, listen: false)
+                        .productPost(
+                      parsedOrderId,
+                    )
+                        .then((value) {
+                      removeLoading(context);
+
+                      Provider.of<HomeProvider>(context, listen: false)
+                          .fetchLatestOrders();
+                      navigateAndRemoveAll(context,
+                          route: NavigationConstants.dashboardRoute);
+                    });
+                  },
+                  title: 'Bill this order',
+                ),
               )
-                  .then((value) {
-                removeLoading(context);
-    
-                Provider.of<HomeProvider>(context, listen: false)
-                    .fetchLatestOrders();
-                if (value is bool) {
-                  navigateAndRemoveAll(context,
-                      route: NavigationConstants.dashboardRoute);
-                } else {
-                  showToast(value.toString());
-                }
-              });
-            },
-            title: 'Bill this order',
-          ),
-      ],
-    );
+            : Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                child: GeneralElevatedButton(
+                  onPressed: () {},
+                  title: 'Scan all items',
+                ),
+              ));
   }
 }

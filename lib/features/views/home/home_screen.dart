@@ -167,19 +167,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 // SizedBox(height: 20.h),
 
                 if (provider.isOrder)
-                  Text(
-                    "Go to store",
-                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16.sp,
-                        ),
+                  Center(
+                    child: Text(
+                      "Go to store",
+                      style:
+                          Theme.of(context).textTheme.headlineSmall!.copyWith(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16.sp,
+                              ),
+                    ),
                   ),
                 SizedBox(height: 48.h),
                 SizedBox(
                   height: 24.h,
                 ),
-
               ],
             ),
           ),

@@ -48,6 +48,7 @@ class OrderProvider extends ChangeNotifier {
   List<String> scannedDataList = [];
 
   get isAvailable => _isAvailable;
+  bool showButton = false;
 
   // List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
   //   return orderItemsJson
@@ -66,7 +67,6 @@ class OrderProvider extends ChangeNotifier {
     orders.removeAt(index);
     notifyListeners();
   }
-
 
   void initState() {
     scannedDataList.clear();
@@ -146,6 +146,10 @@ class OrderProvider extends ChangeNotifier {
         if (element.itemScanCount == element.quantity) {
           scanMessage = null;
           showToast("Item scanned successfully");
+
+           showButton = true;
+
+          notifyListeners();
           return true;
         } else {
           scanMessage =
