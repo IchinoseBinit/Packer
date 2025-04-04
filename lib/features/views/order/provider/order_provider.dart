@@ -48,6 +48,7 @@ class OrderProvider extends ChangeNotifier {
   List<String> scannedDataList = [];
 
   get isAvailable => _isAvailable;
+  bool showButton = false;
 
   // List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
   //   return orderItemsJson
@@ -145,6 +146,10 @@ class OrderProvider extends ChangeNotifier {
         if (element.itemScanCount == element.quantity) {
           scanMessage = null;
           showToast("Item scanned successfully");
+
+           showButton = true;
+
+          notifyListeners();
           return true;
         } else {
           scanMessage =
@@ -416,8 +421,8 @@ class OrderProvider extends ChangeNotifier {
 
   updateBucketData(String? data) async {
     if (data != null) {
-      log(bucketData, name: "basket data:::::::::::");
       bucketData = data;
+      log(bucketData, name: "basket data:::::::::::");
     }
   }
 

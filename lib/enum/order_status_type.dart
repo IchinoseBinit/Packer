@@ -4,7 +4,7 @@ enum OrderStatusType {
   picked,
   completed,
   cancelled,
-  refunds;
+  billing;
 
   @override
   String toString() {
@@ -19,8 +19,8 @@ enum OrderStatusType {
         return 'completed';
       case OrderStatusType.cancelled:
         return 'cancelled';
-      case OrderStatusType.refunds:
-        return 'refunds';
+      case OrderStatusType.billing:
+        return 'billing';
       // Default to 'created' if the value is not recognized
     }
   }
@@ -39,8 +39,8 @@ extension StatusTypeExtension on OrderStatusType {
         return "Arrived";
       case OrderStatusType.cancelled:
         return "Cancelled";
-      case OrderStatusType.refunds:
-        return "Order Refunded";
+      case OrderStatusType.billing:
+        return "Billed";
     }
   }
 
@@ -56,8 +56,8 @@ extension StatusTypeExtension on OrderStatusType {
         return "Completed";
       case OrderStatusType.cancelled:
         return "Cancelled";
-      case OrderStatusType.refunds:
-        return "Order Refunded";
+      case OrderStatusType.billing:
+        return "Billed";
     }
   }
 
@@ -73,8 +73,8 @@ extension StatusTypeExtension on OrderStatusType {
         return OrderStatusType.completed;
       case 'cancelled':
         return OrderStatusType.cancelled;
-      case 'refunds':
-        return OrderStatusType.refunds;
+      case 'billing':
+        return OrderStatusType.billing;
       default:
         throw ArgumentError('Unknown status type: $status');
     }
@@ -92,7 +92,7 @@ extension StatusTypeExtension on OrderStatusType {
         return "Completed";
       case OrderStatusType.cancelled:
         return "Cancelled";
-      case OrderStatusType.refunds:
+      case OrderStatusType.billing:
         return "Order Refunded";
       default:
         return "Unknown Order";
