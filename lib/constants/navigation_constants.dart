@@ -29,4 +29,6 @@ class NavigationConstants {
   // transfer_list
   static const String transferListRoute = 'transfer_list';
   static const String transferDetailsRoute = 'transfer_details';
+  // scan_rack
+  static const String scanRackRoute = 'scan_rack';
 }

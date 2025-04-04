@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/date_formatter.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
@@ -22,8 +23,8 @@ class _TransferListState extends State<TransferList> {
         title: const Text('Transfer List'),
       ),
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
-        Provider.of<PackerTransferProvider>(context, listen: false).setRole(
-            provider.user.role);
+        Provider.of<PackerTransferProvider>(context, listen: false)
+            .setRole(provider.user.role);
         print("user role: ${provider.user.role}");
 
         return FutureBuilder(
@@ -56,9 +57,7 @@ class _TransferListState extends State<TransferList> {
                       // Handle item tap
                       Provider.of<PackerTransferProvider>(context,
                               listen: false)
-                          .fetchTransferDetails(data.id ?? 0);
-                      navigate(context,
-                          route: NavigationConstants.transferDetailsRoute);
+                          .onDetailsTaped(context, data);
                     },
                     transferItem: data,
                     primaryColor: Theme.of(context).primaryColor,
@@ -78,13 +77,13 @@ class _TransferListState extends State<TransferList> {
 class TransferNotificationCard extends StatelessWidget {
   final TransferModel transferItem;
   final Color primaryColor;
-  final VoidCallback callback;
+  final VoidCallback? callback;
 
   const TransferNotificationCard({
     Key? key,
     required this.transferItem,
     required this.primaryColor,
-    required this.callback,
+    this.callback,
   }) : super(key: key);
 
   @override
@@ -133,36 +132,45 @@ class TransferNotificationCard extends StatelessWidget {
                             .bodyMedium
                             ?.copyWith(color: Colors.grey[700]),
                       ),
+                      Text(
+                        'Requested at: ${DateFormatter().formatTimestamp(transferItem.createdAt ?? '')}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.grey[700]),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 12.h),
-            const Divider(),
-            SizedBox(height: 12.h),
-            Align(
-              alignment: Alignment.centerRight,
-              child: InkWell(
-                onTap: () {
-                  callback();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  child: Text(
-                    'Details',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                        ),
+            if (callback != null) ...[
+              SizedBox(height: 12.h),
+              const Divider(),
+              SizedBox(height: 12.h),
+              Align(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: () {
+                    callback?.call();
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    child: Text(
+                      'Details',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                          ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ]
           ],
         ),
       ),
