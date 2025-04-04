@@ -19,6 +19,8 @@ import 'package:packer/features/views/navigation/navigation_page.dart';
 import 'package:packer/features/views/order/views/order_detail_page.dart';
 import 'package:packer/features/views/order/views/unsettled_orders_screen.dart';
 import 'package:packer/features/views/order/views/view_image_screen.dart';
+import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
+import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
@@ -153,6 +155,8 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return ScanScreen(
                     isfromCartItem: args['forCartitem'] ?? false,
+                    isFromPackerTransfer: args['forTranfer'] ?? false,
+                    checkIdentifier: args['checkIdentifier'] ?? false,
                     productId: args['productId'] ?? 0,
                   );
                 },
@@ -174,6 +178,18 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   final extra = state.extra as String;
                   return DailySummaryScreen(startDate: extra.toString());
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.transferListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const TransferList();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.transferDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const TransferItemsList();
                 },
               ),
             ]),

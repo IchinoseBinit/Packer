@@ -29,6 +29,10 @@ class HomeProvider with ChangeNotifier {
     return _user!;
   }
 
+  void resetUser() {
+    _user = null;
+  }
+
   bool isOnline = false;
   bool _isAvailable = false;
   bool isOrder = true;

@@ -10,8 +10,8 @@ navigatePop<T extends Object?>(BuildContext context, [T? result]) {
   return context.pop(result);
 }
 
-navigateReplacement(BuildContext context, {required String route}) async {
-  context.replace(route.addSlashInRoute());
+navigateReplacement(BuildContext context, {required String route, Object? extra}) async {
+  context.replace(route.addSlashInRoute(), extra: extra);
 }
 
 navigateAndRemoveAll(BuildContext context, {required String route}) {

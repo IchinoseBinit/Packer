@@ -1,5 +1,6 @@
 import 'dart:developer' as dev;
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
@@ -22,6 +24,8 @@ import '/theme/theme.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +44,6 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    dev.debugger();
     handleIncomingCall(message, false);
   });
 
@@ -52,7 +55,13 @@ void main() async {
   // setupCallKeep();
 
   // setEventHandler();
-
+//  AwesomeNotifications().stream.listen((receivedAction) {
+//     if (receivedAction.buttonKeyPressed == 'Accept') {
+//       AppRouter.router.go('/callScreen'); // Navigate when Accept is clicked
+//     } else if (receivedAction.buttonKeyPressed == 'Reject') {
+//       AwesomeNotifications().dismiss(receivedAction.id!);
+//     }
+//   });
   runApp(const MyApp());
 }
 
@@ -106,7 +115,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     print('not answered call ${currentCall?.toMap()}');
     if (currentCall != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        onCallAccepted(currentCall.uuid);
+        onCallAccepted(context, currentCall.uuid);
         navigateWithRouter(AppRouter.router,
             route: NavigationConstants.orderDetailsRoute,
             extra: currentCall.extra?['order_id']);
@@ -121,6 +130,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider(create: (context) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => PackerTransferProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
@@ -146,6 +156,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   ],
                 ],
               ),
+              
               debugShowCheckedModeBanner: false,
               title: 'packer',
               themeMode: ThemeMode.light,

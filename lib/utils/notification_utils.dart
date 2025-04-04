@@ -1,6 +1,9 @@
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/bucket/bucket_scan.dart';
 
 class NotificationUtils {
   static AwesomeNotifications awesomeNotification = AwesomeNotifications();
@@ -25,6 +28,26 @@ class NotificationUtils {
   @pragma('vm:entry-point')
   static Future<void> onActionReceivedMethod(
       ReceivedAction receivedAction) async {
+//     debugPrint("PRINT");
+//     if (receivedAction.buttonKeyPressed == "Accept") {
+//       debugPrint("ACCEPTED");
+//       // navigate(context, route: NavigationConstants.bucketqrScreenRoute);
+
+// MaterialPage(child: BucketScanScreen());      // CallKeepUtils.callKeep.acceptCall(receivedAction.payload!["call_id"]);
+
+    // CallKeepUtils.callKeep.startCall(
+    //     receivedAction.payload!["call_id"],
+    //     receivedAction.payload!["caller_name"],
+    //     receivedAction.payload!["caller_number"],
+    //     receivedAction.payload!["caller_image"]);
+
+    //      debugPrint('onActionReceivedMethod');
+    // final payload = receivedAction.payload ?? {};
+    // if (payload["navigate"] == "true") {
+    //   if()
+
+    // }
+
     // if (receivedAction.buttonKeyPressed == "Reject") {
     //   if (receivedAction.payload!["order"] != null) {
     //     SharedPreferences prefs = await SharedPreferences.getInstance();

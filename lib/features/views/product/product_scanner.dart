@@ -63,8 +63,6 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
     HapticFeedback.heavyImpact();
 
-    debugger();
-
     showLoading(context);
     // if(code == scannedDataList[])
 

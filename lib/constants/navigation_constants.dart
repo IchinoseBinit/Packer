@@ -25,4 +25,8 @@ class NavigationConstants {
   // Weekly Summary
   static const String weeklySummaryRoute = 'weekly_summary';
   static const String dailySummaryRoute = 'daily_summary';
+
+  // transfer_list
+  static const String transferListRoute = 'transfer_list';
+  static const String transferDetailsRoute = 'transfer_details';
 }

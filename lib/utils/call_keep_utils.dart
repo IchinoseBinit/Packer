@@ -1,17 +1,14 @@
-import 'dart:developer';
 import 'dart:math';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:is_lock_screen2/is_lock_screen2.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
-import 'package:packer/controllers/api/dio_client.dart';
-import 'package:packer/controllers/services/router.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
+import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/utils/notification_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -118,24 +115,26 @@ void handleIncomingCall(RemoteMessage message, bool isBackground) async {
         'notificationId': message.data["order"] ?? '1234567890',
         ...message.data,
         'screen': 'call',
+        'navigation': 'true'
       });
 
   List<NotificationActionButton>? buttons = fullScreen || fullScreenDelivery
       ? [
-          // NotificationActionButton(
-          //   key: 'Reject',
-          //   label: 'Reject',
-          //   actionType: ActionType.Default,
-          // ),
           NotificationActionButton(
             key: 'Accept',
             label: 'Accept',
             actionType: ActionType.Default,
             color: AppColors.primaryColor,
           ),
+          NotificationActionButton(
+            key: 'Reject',
+            label: 'Reject',
+            actionType: ActionType.DismissAction,
+          ),
         ]
       : null;
   try {
+    
     final notificationStatus = await awesomeNotification.createNotification(
         content: content, actionButtons: buttons);
 
@@ -155,9 +154,26 @@ void handleIncomingCall(RemoteMessage message, bool isBackground) async {
   } catch (ex) {
     print(ex);
   }
+
+  
 }
 
-void onCallAccepted(String callUUID) {
+// void listenToActionStream(BuildContext context) {
+//   AwesomeNotifications().actionStream.listen((receivedNotification) {
+//     if (receivedNotification.buttonKeyPressed == 'ACCEPT') {
+//       Navigator.of(context).push(
+//         MaterialPageRoute(builder: (context) => BucketScanScreen()),
+//       );
+//     }
+    
+//     // You can also check the payload if needed
+//     if (receivedNotification.payload?['navigation'] == 'true') {
+//       // Additional navigation logic
+//     }
+//   });
+// }
+
+void onCallAccepted(BuildContext context, String callUUID) {
   // Navigate to call screen when answered
   print("Call Accepted: $callUUID");
 } // Future<void> setEventHandler() async {
