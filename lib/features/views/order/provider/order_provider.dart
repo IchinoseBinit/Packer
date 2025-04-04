@@ -67,7 +67,7 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void initState(){
+  void initState() {
     scannedDataList.clear();
   }
 
@@ -405,7 +405,6 @@ class OrderProvider extends ChangeNotifier {
   }
 
   updateProductList(String? data) async {
-
     if (data != null) {
       if (scannedDataList.contains(data)) {
         showToast("Product Already Scanned");
@@ -419,6 +418,18 @@ class OrderProvider extends ChangeNotifier {
     if (data != null) {
       log(bucketData, name: "basket data:::::::::::");
       bucketData = data;
+    }
+  }
+
+  clearBasket() async {
+    try {
+      var url = AppUrls.basketClearUrl.replaceAll("id", bucketData);
+      await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+      );
+    } catch (e) {
+      return e;
     }
   }
 }
