@@ -1,19 +1,14 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_constants.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/home/widgets/order_list_widget.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
-import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/progress_column.dart';
-import 'package:packer/utils/call_keep_utils.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -181,30 +176,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                   ),
                 SizedBox(height: 48.h),
-
-                Consumer<HomeProvider>(builder: (context, val, _) {
-                  print("is available ===== ${val.isAvailable}");
-                  if ((val.isOnline && !val.isAvailable)) {
-                    return GeneralElevatedButton(
-                      onPressed: () {
-                        navigate(context,
-                            route: NavigationConstants.qrScanScreenRoute);
-                      },
-                      title: "Join the waitlist",
-                    );
-                  }
-                  return const SizedBox.shrink();
-                }),
-
                 SizedBox(
                   height: 24.h,
                 ),
 
-                GeneralElevatedButton(
-                    title: "title",
-                    onPressed: () {
-                      handleIncomingCall(const RemoteMessage(), false);
-                    })
               ],
             ),
           ),

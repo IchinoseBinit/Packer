@@ -26,6 +26,13 @@ class OrderListWidget extends StatelessWidget {
             itemBuilder: (context, index) {
               final orderItem = val.latestOrder[index];
               switch (orderItem.status) {
+                case OrderStatusType.created:
+                  return NotificationOrderCard(
+                    orderItem: orderItem,
+                    primaryColor: AppColors.primaryColor,
+                    callback:
+                        getCallbackFunction(context, orderItem: orderItem),
+                  );
                 case OrderStatusType.packerAssigned:
                   return NotificationOrderCard(
                     orderItem: orderItem,
