@@ -74,7 +74,7 @@ class TransferItemsList extends StatelessWidget {
                         log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
                         if (status == ItemStatus.done) return;
                         if (provider.role != "packer" &&
-                            transferItem?.rack != null) {
+                            transferItem?.rack != null && transferItem?.rack!.isNotEmpty == true) {
                           navigate(context,
                               route: NavigationConstants.scanRackRoute,
                               extra: {
@@ -116,7 +116,8 @@ class TransferItemsList extends StatelessWidget {
         }
         return Padding(
           padding: const EdgeInsets.all(16.0),
-          child: GeneralElevatedButton(
+          child: provider.showCompleteButton() ?
+          GeneralElevatedButton(
             onPressed: () {
               Provider.of<PackerTransferProvider>(context, listen: false)
                   .completeTransfer(context);
@@ -126,6 +127,20 @@ class TransferItemsList extends StatelessWidget {
                     'packer'
                 ? 'Complete'
                 : 'Accept',
+          ) : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Text(
+                  "Please scan all items to complete the transfer",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ],
           ),
         );
       }),
@@ -188,6 +203,8 @@ class TransferItemWidget extends StatelessWidget {
                   textAlign: TextAlign.start,
                 ),
               ),
+              if (transferItem.rack != null &&
+                  transferItem.rack!.isNotEmpty)
               RichText(
                 text: TextSpan(
                   text: "Rack: ",

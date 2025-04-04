@@ -44,6 +44,17 @@ class PackerTransferProvider extends ChangeNotifier {
     
   }
 
+  bool showCompleteButton(){
+    if (selectedTransferModel?.items != null) {
+      for (var element in selectedTransferModel!.items!) {
+        if (element.itemScanCount != element.quantity) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   void onDetailsTaped(BuildContext context, TransferModel data) {
     if (role != "packer") {
       selectedTransferModel = data;

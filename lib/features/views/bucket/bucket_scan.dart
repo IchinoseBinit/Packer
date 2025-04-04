@@ -60,11 +60,11 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
   checkQr(String code, String orderId) {
     log(orderId, name: "order id:");
-    data = code;
-    setState(() {
-      data = code;
-      // print(data);
-    });
+    // data = code;
+    // setState(() {
+    //   data = code;
+    //   // print(data);
+    // });
     controller?.stop();
 
     log(code, name: "bucket qr code data");
@@ -73,7 +73,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
     showLoading(context);
 
-    if (code.contains(data)) {
+    if (code.toLowerCase().contains("basket")) {
       try {
         Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(code);

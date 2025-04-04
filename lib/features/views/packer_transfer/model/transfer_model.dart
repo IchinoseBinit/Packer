@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 
 class TransferModel {
@@ -37,12 +38,12 @@ class TransferModel {
 
   factory TransferModel.fromMap(Map<String, dynamic> map) {
     return TransferModel(
-      id: map['id'] != null ? map['id'] as int : null,
-      identifier: map['identifier'] != null ? map['identifier'] as String : null,
-      source: map['source'] != null ? map['source'] as String : null,
-      destination: map['destination'] != null ? map['destination'] as String : null,
-      status: map['status'] != null ? map['status'] as String : null,
-      createdAt: map['createdAt'] != null ? map['createdAt'] as String : null,
+      id: map['id'].toString().toInt(),
+      identifier: map['identifier'].toString().toStringConversion(),
+      source: map['source'].toString().toStringConversion(),
+      destination: map['destination'].toString().toStringConversion(),
+      status: map['status'].toString().toStringConversion(),
+      createdAt: map['createdAt'].toString().toStringConversion(),
       items: map['items'] != null
           ? List<TransferItemModel>.from(
               (map['items'] as List<dynamic>).map<TransferItemModel>(
