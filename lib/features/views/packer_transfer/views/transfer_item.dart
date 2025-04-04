@@ -129,6 +129,7 @@ class TransferItemWidget extends StatelessWidget {
 
     final text2Color =
         isComplete ? AppColors.backgroundColor : const Color(0xFF7D7C7C);
+    print(transferItem.tags);
 
     return Container(
       decoration: BoxDecoration(
