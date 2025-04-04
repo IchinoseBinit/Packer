@@ -57,9 +57,7 @@ class _TransferListState extends State<TransferList> {
                       // Handle item tap
                       Provider.of<PackerTransferProvider>(context,
                               listen: false)
-                          .fetchTransferDetails(data.id ?? 0);
-                      navigate(context,
-                          route: NavigationConstants.transferDetailsRoute);
+                          .onDetailsTaped(context, data);
                     },
                     transferItem: data,
                     primaryColor: Theme.of(context).primaryColor,
@@ -85,7 +83,7 @@ class TransferNotificationCard extends StatelessWidget {
     Key? key,
     required this.transferItem,
     required this.primaryColor,
-     this.callback,
+    this.callback,
   }) : super(key: key);
 
   @override

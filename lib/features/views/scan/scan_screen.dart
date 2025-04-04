@@ -295,6 +295,32 @@ class _ScanScreenState extends State<ScanScreen> {
               );
             },
           ),
+          Visibility(
+            visible: widget.checkIdentifier,
+            child: Positioned(
+              top: 32.h * 6,
+              left: 4.w * 3,
+              right: 4.w * 3,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Scan the identifier code',
+                  style: TextStyle(
+                    color: AppColors.backgroundColor,
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
           Consumer<PackerTransferProvider>(
             builder: (context, provider, child) {
               return Visibility(

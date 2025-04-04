@@ -22,6 +22,7 @@ import 'package:packer/features/views/order/views/view_image_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
+import 'package:packer/features/views/scan/rack_scan_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
@@ -137,6 +138,20 @@ class AppRouter {
 
                   return OrderDetails(
                     orderId: orderId,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.scanRackRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  // var orderId = '3485';
+                  final data = state.extra as Map<String, dynamic>;
+
+                  log(data.toString(), name: "scanRackRoute");
+
+                  return RackScanScreen(
+                    rack: data['rack'] ?? '',
+                    productId: data['productId'] ?? 0,
                   );
                 },
               ),

@@ -63,18 +63,27 @@ class TransferItemsList extends StatelessWidget {
                     final transferItem =
                         provider.selectedTransferModel!.items?[index];
 
-                    final bool isPacked = transferItem?.status == "packed";
+                    ItemStatus status =
+                        (transferItem?.itemScanCount == transferItem?.quantity)
+                            ? ItemStatus.done
+                            : ItemStatus.remaining;
 
-                    final ItemStatus status = (transferItem?.itemScanCount ==
-                                transferItem?.quantity) ||
-                            isPacked
-                        ? ItemStatus.done
-                        : ItemStatus.remaining;
                     return InkWell(
                       highlightColor: Colors.transparent,
                       onTap: () {
                         log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
                         if (status == ItemStatus.done) return;
+                        if (provider.role != "packer" &&
+                            transferItem?.rack != null) {
+                          navigate(context,
+                              route: NavigationConstants.scanRackRoute,
+                              extra: {
+                                "rack": transferItem?.rack,
+                                "productId": transferItem?.product,
+                              });
+                          return;
+                        }
+                        provider.initScanMessage(transferItem?.product ?? 0);
                         navigate(context,
                             route: NavigationConstants.qrScanScreenRoute,
                             extra: {
@@ -176,6 +185,25 @@ class TransferItemWidget extends StatelessWidget {
                         color: text1Color,
                       ),
                   textAlign: TextAlign.start,
+                ),
+              ),
+              RichText(
+                text: TextSpan(
+                  text: "Rack: ",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: text2Color,
+                        fontSize: 14.sp,
+                      ),
+                  children: <TextSpan>[
+                    TextSpan(
+                      text: transferItem.rack,
+                      style:
+                          Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                color: text1Color,
+                                fontSize: 14.sp,
+                              ),
+                    ),
+                  ],
                 ),
               ),
               Text(
