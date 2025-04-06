@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '/constants/app_constants.dart';
 import '/constants/navigation_constants.dart';
 import '/controllers/services/navigate.dart';
-import '/controllers/services/show_toast_message.dart';
 import '/enum/order_status_type.dart';
 import '/features/views/auth/provider/home_provider.dart';
 import '/features/views/order/provider/order_provider.dart';
@@ -16,11 +15,11 @@ import '/features/views/widgets/general_elevated_button.dart';
 import '/features/views/widgets/order_info_card.dart';
 
 class OrderDetailsContent extends StatefulWidget {
-  final String orderId;
+  final OrderDetailModel order;
 
   const OrderDetailsContent({
     super.key,
-    required this.orderId,
+    required this.order,
   });
 
   @override
@@ -29,43 +28,41 @@ class OrderDetailsContent extends StatefulWidget {
 
 class _OrderDetailsContentState extends State<OrderDetailsContent> {
   @override
-  void initState() {
-    super.initState();
-    Provider.of<OrderProvider>(context, listen: false).initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
-    final OrderDetailModel? orderDetails = orderProvider.orderDetails;
-    final status = orderDetails?.data.status ?? "";
+    final status = widget.order.data.status;
     final showButton = orderProvider.showButton;
 
-    if (orderDetails == null) {
-      return const Center(child: Text('Cannot fetch data'));
-    }
-
-    return Scaffold(
-        body: ListView(
-          padding: AppConstants.padding,
-          children: [
-            OrderInfoCard(data: orderDetails),
-            CartItemsList(cartItems: orderDetails.productDetails),
-            SizedBox(
-              height: 8.h,
-            ),
-          ],
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: AppConstants.padding,
+            children: [
+              OrderInfoCard(data: widget.order),
+              CartItemsList(cartItems: widget.order.productDetails),
+              SizedBox(
+                height: 8.h,
+              ),
+            ],
+          ),
         ),
-        bottomNavigationBar: (status != OrderStatusType.completed &&
+        (status != OrderStatusType.completed &&
                 status != OrderStatusType.cancelled &&
                 showButton)
             ? Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 8.h,
+                ).copyWith(
+                  bottom: MediaQuery.of(context).padding.bottom + 20.h,
+                ),
                 child: GeneralElevatedButton(
                   onPressed: () async {
                     showLoading(context);
 
-                    final parsedOrderId = int.tryParse(widget.orderId) ?? 0;
+                    final parsedOrderId =
+                        int.tryParse(widget.order.data.id.toString()) ?? 0;
 
                     Provider.of<OrderProvider>(context, listen: false)
                         .productPost(
@@ -73,7 +70,7 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                     )
                         .then((value) {
                       removeLoading(context);
-
+                      
                       Provider.of<HomeProvider>(context, listen: false)
                           .fetchLatestOrders();
                       navigateAndRemoveAll(context,
@@ -89,6 +86,8 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   onPressed: () {},
                   title: 'Scan all items',
                 ),
-              ));
+              ),
+      ],
+    );
   }
 }

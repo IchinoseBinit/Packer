@@ -72,6 +72,22 @@ class OrderProvider extends ChangeNotifier {
     scannedDataList.clear();
   }
 
+  // check by item id in scan list with required quantity
+  bool checkItem(int productId) {
+    for (ProductDetails element in _orderDetails?.productDetails ?? []) {
+      if (element.id == productId) {
+        // get from scanned data list split by -
+        final scannedLength = scannedDataList
+            .where((item) => item.startsWith(productId.toString()))
+            .length;
+        if (scannedLength == element.quantity) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   void initScanMessage(int productId) {
     if (kDebugMode) {
       showToast('Item Id: $productId');
@@ -147,7 +163,7 @@ class OrderProvider extends ChangeNotifier {
           scanMessage = null;
           showToast("Item scanned successfully");
 
-           showButton = true;
+          showButton = true;
 
           notifyListeners();
           return true;
@@ -277,6 +293,7 @@ class OrderProvider extends ChangeNotifier {
           });
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        scannedDataList.clear();
         notifyListeners();
         return true;
       } else {

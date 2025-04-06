@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/order/views/order_details_content.dart';
@@ -22,6 +23,7 @@ class _OrderDetailsState extends State<OrderDetails> {
   void initState() {
     super.initState();
     future = fetchOrderDetails();
+    Provider.of<OrderProvider>(context, listen: false).initState();
   }
 
   Future<void> fetchOrderDetails() async {
@@ -30,32 +32,47 @@ class _OrderDetailsState extends State<OrderDetails> {
           .acknowledgeOrder(context, widget.orderId);
     } catch (error) {
       print('Error fetching order details: $error');
-      // Handle error as needed
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Order Details"),
-      ),
-      body: RefreshIndicator(
-        onRefresh: fetchOrderDetails,
-        child: FutureBuilder<void>(
-          future: future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator.adaptive());
-            }
-            final orderProvider = Provider.of<OrderProvider>(context);
-            if (orderProvider.orderDetails == null) {
-              return const Center(child: Text('Cannot fetch data'));
-            }
-            return OrderDetailsContent(
-              orderId: widget.orderId,
-            );
-          },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (did, result) async {
+        if (did) return;
+        Provider.of<OrderProvider>(context, listen: false).initState();
+        navigatePop(context);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Order Details"),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Provider.of<OrderProvider>(context, listen: false).initState();
+              navigatePop(context);
+            },
+          ),
+        ),
+        body: RefreshIndicator(
+          onRefresh: fetchOrderDetails,
+          child: FutureBuilder<void>(
+            future: future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                    child: CircularProgressIndicator.adaptive());
+              }
+              final orderProvider = Provider.of<OrderProvider>(context);
+              if (orderProvider.orderDetails == null) {
+                return const Center(child: Text('Cannot fetch data'));
+              }
+              return OrderDetailsContent(
+                order: orderProvider.orderDetails!,
+              );
+            },
+          ),
         ),
       ),
     );

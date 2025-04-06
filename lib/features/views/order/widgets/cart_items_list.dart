@@ -6,6 +6,8 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:provider/provider.dart';
 
 class CartItemsList extends StatelessWidget {
   final List<ProductDetails> cartItems;
@@ -14,46 +16,50 @@ class CartItemsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Items Ordered:"),
-        ),
-        ListView.separated(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: cartItems.length,
-          itemBuilder: (context, cartIndex) {
-            final cartItem = cartItems[cartIndex];
-            return InkWell(
-              highlightColor: Colors.transparent,
-              onTap: () {
-                log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.id}");
-                if (cartItem.itemScanCount == cartItem.quantity) {
-                  return;
-                }
-                navigate(context,
-                    route: NavigationConstants.productqrScreenRoute,
-                    extra: {
-                      'cartItem': true,
-                      'productId': cartItem.id,
-                    });
+    return Consumer<OrderProvider>(
+      builder: (context, state, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text("Items Ordered:"),
+            ),
+            ListView.separated(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: cartItems.length,
+              itemBuilder: (context, cartIndex) {
+                final cartItem = cartItems[cartIndex];
+                return InkWell(
+                  highlightColor: Colors.transparent,
+                  onTap: () {
+                    log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.id}");
+                    if (state.checkItem(cartItem.id)) {
+                      return;
+                    }
+                    navigate(context,
+                        route: NavigationConstants.productqrScreenRoute,
+                        extra: {
+                          'cartItem': true,
+                          'productId': cartItem.id,
+                        });
+                  },
+                  child: ItemWidget(
+                    productItems: cartItem,
+                    status: state.checkItem(cartItem.id)
+                        ? ItemStatus.done
+                        : ItemStatus.remaining,
+                  ),
+                );
               },
-              child: ItemWidget(
-                productItems: cartItem,
-                status: cartItem.itemScanCount == cartItem.quantity
-                    ? ItemStatus.done
-                    : ItemStatus.remaining,
-              ),
-            );
-          },
-          separatorBuilder: (context, index) {
-            return const SizedBox(height: 12);
-          },
-        ),
-      ],
+              separatorBuilder: (context, index) {
+                return const SizedBox(height: 12);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
