@@ -83,6 +83,7 @@ class AppUrls {
   static const String verifyUnitsUrl =
       "$_baseUrl/store/transfers/id/verify-units/";
   // accept
-  static const String acceptTransferUrl =
-      "$_baseUrl/store/transfers/id/accept/";
+  static const String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
+
+  static const String basketClearUrl = "$_baseUrl/basket/id/clear/";
 }

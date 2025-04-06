@@ -2,39 +2,35 @@
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
-import 'package:provider/provider.dart';
 
-import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/auth/provider/home_provider.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
-class BucketScanScreen extends StatefulWidget {
-  const BucketScanScreen({
-    super.key,
-    this.isfromCartItem = false,
-    this.orderId,
-  });
+class RackScanScreen extends StatefulWidget {
+  const RackScanScreen({
+    Key? key,
+    required this.rack,
+    required this.productId,
+  }) : super(key: key);
 
-  final String? orderId;
-  final bool isfromCartItem;
+  final String rack;
+  final int productId;
 
   @override
-  State<BucketScanScreen> createState() => _BucketScanScreenState();
+  State<RackScanScreen> createState() => _RackScanScreenState();
 }
 
-class _BucketScanScreenState extends State<BucketScanScreen> {
-  String data = "";
+class _RackScanScreenState extends State<RackScanScreen> {
   @override
   void reassemble() {
     super.reassemble();
@@ -53,47 +49,35 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (widget.isfromCartItem) {
+    //     Provider.of<OrderProvider>(context, listen: false)
+    //         .initScanMessage(widget.productId ?? 0);
+    //   }
+    // });
   }
 
   var _flash = false;
 
-  checkQr(String code, String orderId) {
-    log(orderId, name: "order id:");
-    data = code;
-    setState(() {
-      data = code;
-      // print(data);
-    });
+  checkQr(String code) {
     controller?.stop();
 
-    log(code, name: "bucket qr code data");
+    log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
 
     showLoading(context);
 
-    if (code.contains(data)) {
-      try {
-        Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(code);
-
-        try {
-          Provider.of<OrderProvider>(context, listen: false).clearBasket();
-        } catch (ex) {
-          debugPrint(ex.toString());
-        }
-
-        removeLoading(context);
-        Navigator.pop(context);
-        showToast("basket available");
-        navigate(context,
-            route: NavigationConstants.orderDetailsRoute, extra: orderId);
-      } catch (ex) {
-        removeLoading(context);
-        showToast(ex.toString());
-        print(ex.toString());
-      }
+    if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
+      Provider.of<PackerTransferProvider>(context, listen: false)
+          .initScanMessage(widget.productId);
+      navigateReplacement(context,
+          route: NavigationConstants.qrScanScreenRoute,
+          extra: {
+            "forTranfer": true,
+            "productId": widget.productId,
+          });
+      removeLoading(context);
     } else {
       removeLoading(context);
       ShowAlertDialog(
@@ -121,20 +105,9 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
           _flash = !_flash;
         });
       },
-      icon: Column(
-        children: [
-          Text(
-            _flash ? 'Flash on' : 'Flash off',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontSize: 6, color: Colors.white),
-          ),
-          Icon(
-            _flash ? Icons.flash_on : Icons.flash_off,
-            color: Colors.white,
-          ),
-        ],
+      icon: Icon(
+        _flash ? Icons.flash_off : Icons.flash_on,
+        color: Colors.white,
       ),
     );
   }
@@ -210,6 +183,21 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // QRView(
+          //   key: qrKey,
+          //   onQRViewCreated: (qrController) {
+          //     cameraController = qrController;
+          //     qrController.scannedDataStream.listen((scanData) {
+          //       if (scanData.code != null) {
+          //         checkQr(scanData.code!);
+          //       }
+          //     });
+          //   },
+          //   overlay: QrScannerOverlayShape(
+          //     borderColor: AppColors.primaryColor,
+          //   ),
+          // ),
+
           MobileScanner(
             fit: BoxFit.cover,
             scanWindow: scanWindow,
@@ -218,16 +206,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              if (widget.isfromCartItem) {
-                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                  context,
-                  controller,
-                  barcodes.barcodes.first.rawValue.toString(),
-                );
-                return;
-              }
-              checkQr(
-                  barcodes.barcodes.first.rawValue.toString(), widget.orderId!);
+              checkQr(barcodes.barcodes.first.rawValue.toString());
             },
           ),
           _buildBarcodeOverlay(),
@@ -237,17 +216,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
             child: buildFlash(),
             top: 8.h * 6,
             right: 4.w * 3,
-          ),
-          Positioned(
-            top: 8.h * 6,
-            right: 40.w * 3,
-            child: Text(
-              'Basket Scanner',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.backgroundColor),
-            ),
           ),
           Positioned(
             top: 8.h * 6,
@@ -261,35 +229,28 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
             ),
           ),
           // TODO: i want this in center of width
-          Consumer<OrderProvider>(
-            builder: (context, provider, child) {
-              return Visibility(
-                visible: widget.isfromCartItem && provider.scanMessage != null,
-                child: Positioned(
-                  top: 32.h * 6,
-                  left: 4.w * 3,
-                  right: 4.w * 3,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      provider.scanMessage ?? "",
-                      style: TextStyle(
-                        color: AppColors.backgroundColor,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ),
+          Positioned(
+            top: 32.h * 6,
+            left: 4.w * 3,
+            right: 4.w * 3,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16.w,
+                vertical: 8.h,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Scan the rack "${widget.rack}" code',
+                style: TextStyle(
+                  color: AppColors.backgroundColor,
+                  fontSize: 12.sp,
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ],
       ),

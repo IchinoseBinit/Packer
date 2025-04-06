@@ -425,4 +425,16 @@ class OrderProvider extends ChangeNotifier {
       log(bucketData, name: "basket data:::::::::::");
     }
   }
+
+  clearBasket() async {
+    try {
+      var url = AppUrls.basketClearUrl.replaceAll("id", bucketData);
+      await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+      );
+    } catch (e) {
+      return e;
+    }
+  }
 }

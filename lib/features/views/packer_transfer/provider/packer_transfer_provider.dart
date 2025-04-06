@@ -29,6 +29,38 @@ class PackerTransferProvider extends ChangeNotifier {
     role = value.name;
   }
 
+  void initScanMessage (int id) {
+    for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
+      if (element.product == id) {
+    print("init scan message if");
+        scanMessage =
+            "Scan ${(element.quantity ?? 0) - element.itemScanCount} ${element.productName}";
+        notifyListeners();
+        return;
+      }
+    }
+    scanMessage = null;
+    notifyListeners();
+    
+  }
+
+  void onDetailsTaped(BuildContext context, TransferModel data) {
+    if (role != "packer") {
+      selectedTransferModel = data;
+      navigate(
+        context,
+        route: NavigationConstants.qrScanScreenRoute,
+        extra: {
+          "checkIdentifier": true,
+          "productId": data.id ?? 0,
+        },
+      );
+      return;
+    }
+    fetchTransferDetails(data.id ?? 0);
+    navigate(context, route: NavigationConstants.transferDetailsRoute);
+  }
+
   Future<void> fetchTransferList(BuildContext context) async {
     try {
       transferListLoading = true;
@@ -43,19 +75,19 @@ class PackerTransferProvider extends ChangeNotifier {
         for (var item in data) {
           transferList.add(TransferModel.fromMap(item));
         }
-        if (role != "packer" && transferList.isNotEmpty) {
-          navigateReplacement(
-            context,
-            route: NavigationConstants.qrScanScreenRoute,
-            extra: {
-              "checkIdentifier": true,
-              "productId": 0,
-            },
-          );
-          return;
-        } else {
-          notifyListeners();
-        }
+        // if (role != "packer" && transferList.isNotEmpty) {
+        //   navigateReplacement(
+        //     context,
+        //     route: NavigationConstants.qrScanScreenRoute,
+        //     extra: {
+        //       "checkIdentifier": true,
+        //       "productId": 0,
+        //     },
+        //   );
+        //   return;
+        // } else {
+        notifyListeners();
+        // }
       } else {
         showToast('Failed to fetch transfer list');
       }
@@ -77,18 +109,17 @@ class PackerTransferProvider extends ChangeNotifier {
     HapticFeedback.heavyImpact();
 
     showLoading(context);
-    for (var element in transferList) {
-      if (element.identifier.toString() == code) {
-        selectedTransferModel = element;
-        scanTagsList.clear();
-        notifyListeners();
-        removeLoading(context);
-        fetchTransferDetails(selectedTransferModel?.id ?? 0);
-        navigateReplacement(context,
-            route: NavigationConstants.transferDetailsRoute);
-        return;
-      }
+
+    if (selectedTransferModel?.identifier.toString() == code) {
+      scanTagsList.clear();
+      notifyListeners();
+      removeLoading(context);
+      fetchTransferDetails(selectedTransferModel?.id ?? 0);
+      navigateReplacement(context,
+          route: NavigationConstants.transferDetailsRoute);
+      return;
     }
+
     _handleInvalidQR(context, controller);
   }
 
@@ -210,11 +241,7 @@ class PackerTransferProvider extends ChangeNotifier {
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
           scanTagsList.clear();
-          selectedTransferModel?.items?.map((e) {
-            if (e.product == productId) {
-              e.status = 'packed';
-            }
-          }).toList();
+          notifyListeners();
           removeLoading(context);
           Navigator.pop(context);
         } else {
