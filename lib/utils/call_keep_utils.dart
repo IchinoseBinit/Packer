@@ -8,7 +8,6 @@ import 'package:is_lock_screen2/is_lock_screen2.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
-import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/utils/notification_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -49,7 +48,7 @@ void setupCallKeep() async {
 }
 
 @pragma('vm:entry-point')
-void handleIncomingCall(RemoteMessage message, bool isBackground) async {
+void handleIncomingCall( RemoteMessage message, bool isBackground) async {
   bool ringtone = true;
   AwesomeNotifications awesomeNotification =
       await NotificationUtils.changeNotification();
@@ -115,6 +114,7 @@ void handleIncomingCall(RemoteMessage message, bool isBackground) async {
         'notificationId': message.data["order"] ?? '1234567890',
         ...message.data,
         'screen': 'call',
+        'orderId' :  message.data["order_id"] ?? '',
         'navigation': 'true'
       });
 
@@ -125,12 +125,9 @@ void handleIncomingCall(RemoteMessage message, bool isBackground) async {
             label: 'Accept',
             actionType: ActionType.Default,
             color: AppColors.primaryColor,
+            
           ),
-          NotificationActionButton(
-            key: 'Reject',
-            label: 'Reject',
-            actionType: ActionType.DismissAction,
-          ),
+         
         ]
       : null;
   try {
