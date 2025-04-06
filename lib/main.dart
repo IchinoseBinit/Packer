@@ -1,4 +1,5 @@
 import 'dart:developer' as dev;
+import 'dart:developer';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -19,19 +20,19 @@ import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '/theme/theme.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   NotificationUtils.initializeLocalNotifications();
+
 
   // Request permission for notifications
   await FirebaseAPI().requestPermission();
@@ -52,17 +53,10 @@ void main() async {
     dev.log('Message data: ${message.data}');
   });
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // setupCallKeep();
 
-  // setEventHandler();
-//  AwesomeNotifications().stream.listen((receivedAction) {
-//     if (receivedAction.buttonKeyPressed == 'Accept') {
-//       AppRouter.router.go('/callScreen'); // Navigate when Accept is clicked
-//     } else if (receivedAction.buttonKeyPressed == 'Reject') {
-//       AwesomeNotifications().dismiss(receivedAction.id!);
-//     }
-//   });
   runApp(const MyApp());
+
+  
 }
 
 @pragma('vm:entry-point')
@@ -82,6 +76,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+  
   }
 
   @override
@@ -109,6 +105,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       return null;
     }
   }
+//   AwesomeNotifications().actionStream.listen((receivedAction) {
+//   if (receivedAction.buttonKeyPressed == 'ACCEPT_ORDER') {
+//     final orderId = receivedAction.payload?['orderId'];
+//     if (orderId != null) {
+//       _router.go('/order/$orderId');
+//     }
+//   }
+// });
 
   checkAndNavigationCallingPage() async {
     var currentCall = await getCurrentCall();
@@ -156,7 +160,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   ],
                 ],
               ),
-              
               debugShowCheckedModeBanner: false,
               title: 'packer',
               themeMode: ThemeMode.light,

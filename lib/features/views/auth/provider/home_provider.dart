@@ -49,11 +49,8 @@ class HomeProvider with ChangeNotifier {
 
   // For audio notification sounds
 
-
-
   List<OrderNotification> notifications = [];
   List<OrderNotification> latestOrder = [];
-
 
   final dio = Dio();
   OrderProvider orderProvider = OrderProvider();
@@ -63,9 +60,6 @@ class HomeProvider with ChangeNotifier {
   }
 
   get isAvailable => _isAvailable;
-
-  
-  
 
   clearLatestOrder({bool isFromPayment = true}) {
     latestOrder.clear();
@@ -95,8 +89,9 @@ class HomeProvider with ChangeNotifier {
         requestType: RequestType.getWithToken,
         url: AppUrls.packerSummaryUrl,
       );
-      // packerSummary = packerSummary.fromJson(response.data);
-      // isOnline = packerSummary?.isOnline ?? false;
+
+      packerSummary = PackerSummary.fromJson(response.data['data']);
+      isOnline = packerSummary?.isOnline ?? false;
       // isAvailable = packerSummary?.isAvailable ?? false;
       notifyListeners();
     } catch (ex) {
@@ -296,6 +291,4 @@ class HomeProvider with ChangeNotifier {
       FirebaseAPI().unsubscribepackerStatus();
     }
   }
-
-  
 }

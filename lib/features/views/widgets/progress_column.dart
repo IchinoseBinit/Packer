@@ -12,6 +12,7 @@ class TodaysProgressWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<HomeProvider>(context, listen: false).fetchpackerSummary();
     return Consumer<HomeProvider>(builder: (_, provider, __) {
       final packerSummary = provider.packerSummary;
       if (packerSummary == null) {
@@ -29,7 +30,9 @@ class TodaysProgressWidget extends StatelessWidget {
                   fontSize: 20.sp,
                 ),
           ),
-          SizedBox(height: 8.h,),
+          SizedBox(
+            height: 8.h,
+          ),
           Container(
             decoration: BoxDecoration(
               color: AppColors.fillColor,
@@ -38,9 +41,10 @@ class TodaysProgressWidget extends StatelessWidget {
             child: Padding(
               padding: AppConstants.padding,
               child: Builder(builder: (context) {
-                final width = (1.sw - 64 - 40.w)/3;
+                // debugger();
+                final width = (1.sw - 64 - 40.w) / 2;
                 return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     EachCountWidget(
                       width: width,
@@ -54,14 +58,6 @@ class TodaysProgressWidget extends StatelessWidget {
                       width: width,
                       title: "Time",
                       value: packerSummary.onlineTime.toString(),
-                    ),
-                    SizedBox(
-                      width: 20.w,
-                    ),
-                    EachCountWidget(
-                      width: width,
-                      title: "Distance",
-                      value: packerSummary.totalDistance.toString(),
                     ),
                   ],
                 );
@@ -89,7 +85,7 @@ class EachCountWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.backgroundColor,
         borderRadius: BorderRadius.circular(10),

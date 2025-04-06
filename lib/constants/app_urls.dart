@@ -34,7 +34,7 @@ class AppUrls {
   //login api path
   static const String loginUrldemo = "$_authUrl/api/token/";
 
-  static const String _packerUrl = "$_baseUrl/rider";
+  static const String _packerUrl = "$_baseUrl/staff/packer";
 
   static const String orderUrl = "$_baseUrl/orders";
 
@@ -45,12 +45,11 @@ class AppUrls {
   static const String orderQrImageUrl = "$orderUrl/view-qr";
   static const String homeImageUrl = "$orderUrl/id/home-image";
 
-    static const String productPostDetail = "$orderUrl/basket-order/";
-
+  static const String productPostDetail = "$orderUrl/basket-order/";
 
   static const String packerOnlineStatus =
       "$_baseUrl/staff/packer/online-status/";
-  static const String packerSummaryUrl = "$_packerUrl/summary";
+  static const String packerSummaryUrl = "$_packerUrl/summary/";
   static const String packerStoreLocationUrl = "$_packerUrl/store-location";
 
   static const String packerAvailability =
@@ -66,23 +65,24 @@ class AppUrls {
 
   static const String fcmTokenUrl = "$_baseUrl/notification/register-device";
 
-
   // packer_transfer
   static const String packerTransferUrl = "$_baseUrl/packer/transfers/";
-  static const String packerTransferDetailsUrl = "$_baseUrl/packer/transfers/id/";
+  static const String packerTransferDetailsUrl =
+      "$_baseUrl/packer/transfers/id/";
   // scan-unit
   static const String scanUnitUrl = "$_baseUrl/packer/transfers/id/scan-units/";
   // complete
-  static const String completeTransferUrl = "$_baseUrl/packer/transfers/id/complete/";
-
+  static const String completeTransferUrl =
+      "$_baseUrl/packer/transfers/id/complete/";
 
   // manager_transfer
   static const String managerTransferUrl = "$_baseUrl/store/transfers/";
-  static const String managerTransferDetailsUrl = "$_baseUrl/store/transfers/id/";
+  static const String managerTransferDetailsUrl =
+      "$_baseUrl/store/transfers/id/";
   // verify-units
-  static const String verifyUnitsUrl = "$_baseUrl/store/transfers/id/verify-units/";
+  static const String verifyUnitsUrl =
+      "$_baseUrl/store/transfers/id/verify-units/";
   // accept
-  static const String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
-
-
+  static const String acceptTransferUrl =
+      "$_baseUrl/store/transfers/id/accept/";
 }

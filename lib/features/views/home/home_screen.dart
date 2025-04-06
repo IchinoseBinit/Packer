@@ -24,7 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     final provider = Provider.of<HomeProvider>(context, listen: false);
+
     provider.initialize(isFirstTime: true);
+    provider.fetchpackerSummary();
     getToken();
   }
 
