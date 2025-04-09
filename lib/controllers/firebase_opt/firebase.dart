@@ -50,6 +50,29 @@ class FirebaseAPI {
         .checkPermissionList(channelKey: 'call_channel', permissions: perms);
   }
 
+  // schedule awesome notification
+  void scheduleNotification() async {
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: 1010,
+        channelKey: 'scheduled_channel',
+        title: 'Basket Filling Reminder',
+        body: 'Open the app to re-stock',
+        notificationLayout: NotificationLayout.Default,
+      ),
+      schedule: NotificationInterval(
+        interval: Duration(minutes: 10),
+        timeZone: await AwesomeNotifications().getLocalTimeZoneIdentifier(),
+        repeats: false,
+      ),
+    );
+  }
+
+  // Cancel scheduled notification
+  void cancelScheduledNotification() async {
+    await AwesomeNotifications().cancel(1010);
+  }
+
   // Display notification using flutter_local_notifications
   Future<void> displayNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
@@ -87,8 +110,11 @@ class FirebaseAPI {
 
   // Unsubscribe from the topic
   Future<void> unsubscribepackerStatus() async {
-
-    await _firebaseMessaging.unsubscribeFromTopic(topicName);
+    try {
+      await _firebaseMessaging.unsubscribeFromTopic(topicName);
+    } on Exception catch (e) {
+      // TODO
+    }
   }
 
   // Listen to notifications related to packer status

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
@@ -24,12 +25,19 @@ class ScanScreen extends StatefulWidget {
     this.productId,
     this.isFromPackerTransfer = false,
     this.checkIdentifier = false,
+    this.scanCarton = false,
+    this.forBasket = false,
+    this.message = "",
+
   });
 
   final bool isfromCartItem;
   final int? productId;
   final bool isFromPackerTransfer;
   final bool checkIdentifier;
+  final bool scanCarton;
+  final bool forBasket;
+  final String message;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -70,6 +78,11 @@ class _ScanScreenState extends State<ScanScreen> {
     log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
+    if (widget.scanCarton){
+      controller?.start();
+      navigatePop(context, code);
+      return;
+    }
 
     showLoading(context);
 
@@ -242,6 +255,14 @@ class _ScanScreenState extends State<ScanScreen> {
                         barcodes.barcodes.first.rawValue.toString());
                 return;
               }
+              if (widget.forBasket) {
+                Provider.of<PackerTransferProvider>(context, listen: false)
+                    .checkBasketQr(
+                        context,
+                        controller,
+                        barcodes.barcodes.first.rawValue.toString());
+                return;
+              }
               checkQr(barcodes.barcodes.first.rawValue.toString());
             },
           ),
@@ -313,6 +334,32 @@ class _ScanScreenState extends State<ScanScreen> {
                 alignment: Alignment.center,
                 child: Text(
                   'Scan the identifier code',
+                  style: TextStyle(
+                    color: AppColors.backgroundColor,
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Visibility(
+            visible: widget.message.isNotEmpty,
+            child: Positioned(
+              top: 32.h * 6,
+              left: 4.w * 3,
+              right: 4.w * 3,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  widget.message,
                   style: TextStyle(
                     color: AppColors.backgroundColor,
                     fontSize: 12.sp,

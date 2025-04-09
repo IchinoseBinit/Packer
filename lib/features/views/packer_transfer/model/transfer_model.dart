@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 
 class TransferModel {
@@ -12,6 +13,7 @@ class TransferModel {
     String? status;
     String? createdAt;
     List<TransferItemModel>? items;
+    List<BasketModel>? baskets;
 
     TransferModel({
         this.id,
@@ -21,6 +23,7 @@ class TransferModel {
         this.status,
         this.createdAt,
         this.items,
+        this.baskets,
     });
 
 
@@ -43,14 +46,21 @@ class TransferModel {
       source: map['source'].toString().toStringConversion(),
       destination: map['destination'].toString().toStringConversion(),
       status: map['status'].toString().toStringConversion(),
-      createdAt: map['createdAt'].toString().toStringConversion(),
+      createdAt: map['created_at'].toString().toStringConversion(),
       items: map['items'] != null
           ? List<TransferItemModel>.from(
               (map['items'] as List<dynamic>).map<TransferItemModel>(
                 (x) => TransferItemModel.fromMap(x as Map<String, dynamic>),
               ),
             )
-          : null,
+          : [],
+      baskets: map['baskets'] != null 
+          ? List<BasketModel>.from(
+              (map['baskets'] as List<dynamic>).map<BasketModel>(
+                (x) => BasketModel.fromJson(x as Map<String, dynamic>),
+              ),
+            )
+          : [],
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -45,6 +46,14 @@ class _LoginScreenState extends State<LoginScreen> {
               .fetchpackerSummary()
               .then((v) {
             removeLoading(context);
+            // final homeProvider =
+            //     Provider.of<HomeProvider>(context, listen: false);
+            // if (homeProvider.packerSummary?.storeType.contains("main") ==
+            //     true) {
+            //   navigateReplacement(context,
+            //       route: NavigationConstants.lowStockRoute);
+            //     return;
+            // }
             context.go(NavigationConstants.dashboardRoute.addSlashInRoute());
           });
         } else {

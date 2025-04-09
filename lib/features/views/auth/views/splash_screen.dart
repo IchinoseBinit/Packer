@@ -48,6 +48,14 @@ class _SplashScreenState extends State<SplashScreen> {
 
           // Navigate to the home screen
           if (context.mounted) {
+            // final homeProvider =
+            //     Provider.of<HomeProvider>(context, listen: false);
+            // if (homeProvider.packerSummary?.storeType.contains("main") ==
+            //     true) {
+            //   navigateReplacement(context,
+            //       route: NavigationConstants.lowStockRoute);
+            //     return;
+            // }
             navigateReplacement(context,
                 route: NavigationConstants.dashboardRoute);
           }

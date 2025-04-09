@@ -73,23 +73,7 @@ class TransferItemsList extends StatelessWidget {
                       onTap: () {
                         log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
                         if (status == ItemStatus.done) return;
-                        if (provider.role != "packer" &&
-                            transferItem?.rack != null && transferItem?.rack!.isNotEmpty == true) {
-                          navigate(context,
-                              route: NavigationConstants.scanRackRoute,
-                              extra: {
-                                "rack": transferItem?.rack,
-                                "productId": transferItem?.product,
-                              });
-                          return;
-                        }
-                        provider.initScanMessage(transferItem?.product ?? 0);
-                        navigate(context,
-                            route: NavigationConstants.qrScanScreenRoute,
-                            extra: {
-                              "forTranfer": true,
-                              "productId": transferItem?.product,
-                            });
+                        provider.itemTaped(context, transferItem);
                       },
                       child: TransferItemWidget(
                           transferItem: transferItem ?? TransferItemModel(),
@@ -116,32 +100,34 @@ class TransferItemsList extends StatelessWidget {
         }
         return Padding(
           padding: const EdgeInsets.all(16.0),
-          child: provider.showCompleteButton() ?
-          GeneralElevatedButton(
-            onPressed: () {
-              Provider.of<PackerTransferProvider>(context, listen: false)
-                  .completeTransfer(context);
-            },
-            title: Provider.of<PackerTransferProvider>(context, listen: false)
-                        .role ==
-                    'packer'
-                ? 'Complete'
-                : 'Accept',
-          ) : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Text(
-                  "Please scan all items to complete the transfer",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).primaryColor,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+          child: provider.showCompleteButton()
+              ? GeneralElevatedButton(
+                  onPressed: () {
+                    Provider.of<PackerTransferProvider>(context, listen: false)
+                        .completeTransfer(context);
+                  },
+                  title: Provider.of<PackerTransferProvider>(context,
+                                  listen: false)
+                              .role ==
+                          'packer'
+                      ? 'Complete'
+                      : 'Accept',
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Text(
+                        "Please scan all items to complete the transfer",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).primaryColor,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         );
       }),
     );
@@ -188,60 +174,54 @@ class TransferItemWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 8.w),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: .3.sw,
-                child: Text(
-                  transferItem.productName ?? "Unknown",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: text1Color,
-                      ),
-                  textAlign: TextAlign.start,
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: .3.sw,
+                  child: Text(
+                    transferItem.productName ?? "Unknown",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: text1Color,
+                        ),
+                    textAlign: TextAlign.start,
+                  ),
                 ),
-              ),
-              if (transferItem.rack != null &&
-                  transferItem.rack!.isNotEmpty)
-              RichText(
-                text: TextSpan(
-                  text: "Rack: ",
+                if (transferItem.rack != null && transferItem.rack!.isNotEmpty)
+                  RichText(
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      text: "Rack: ",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: text2Color,
+                            fontSize: 14.sp,
+                          ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: transferItem.rack,
+                          style:
+                              Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                    color: text1Color,
+                                    fontSize: 14.sp,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Text(
+                  "Quantity: ${transferItem.quantity}",
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: text2Color,
-                        fontSize: 14.sp,
                       ),
-                  children: <TextSpan>[
-                    TextSpan(
-                      text: transferItem.rack,
-                      style:
-                          Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                color: text1Color,
-                                fontSize: 14.sp,
-                              ),
-                    ),
-                  ],
                 ),
-              ),
-              Text(
-                "Quantity: ${transferItem.quantity}",
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: text2Color,
-                    ),
-              ),
-            ],
+              ],
+            ),
           ),
           const Spacer(),
-          if (status == ItemStatus.done)
-            Text(
-              "Status: ${transferItem.status}",
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.bold,
-                color: text1Color,
-              ),
-            ),
+          
           if (status == ItemStatus.remaining) ...[
             Container(
               margin: EdgeInsets.symmetric(horizontal: 8.w),

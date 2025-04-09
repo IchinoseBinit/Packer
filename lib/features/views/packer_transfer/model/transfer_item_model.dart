@@ -40,16 +40,16 @@ class TransferItemModel {
   factory TransferItemModel.fromMap(Map<String, dynamic> map) {
     return TransferItemModel(
       id: map['id'].toString().toInt(),
-      product: map['product'].toString().toInt(),
+      product: map['product_id'].toString().toInt(),
       productName: map['product_name'].toString().toString(),
       quantity: map['quantity'].toString().toInt(),
       status: map['status'].toString().toStringConversion(),
       rack: map['rack'].toString().toStringConversion(),
       itemScanCount:
           map['item_scan_count'].toString().toInt() ,
-      tags: map['tags'] != null
+      tags: map['unit_tags'] != null
           ? List<String>.from(
-              (map['tags'] as List<dynamic>).map<String>((x) => x as String))
+              (map['unit_tags'] as List<dynamic>).map<String>((x) => x as String))
           : null,
     );
   }

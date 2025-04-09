@@ -5,11 +5,13 @@ import 'package:packer/features/views/auth/provider/home_provider.dart';
 class CustomSwitch extends StatefulWidget {
   final double width;
   final double height;
+  final bool fromWareHouse;
 
   const CustomSwitch({
     super.key,
     this.width = 115,
     this.height = 40,
+    this.fromWareHouse = false,
   });
 
   @override
@@ -27,7 +29,7 @@ class CustomSwitchState extends State<CustomSwitch> {
     return Consumer<HomeProvider>(builder: (_, value, __) {
       return GestureDetector(
         onTap: () {
-          value.toggleOnlineStatus();
+          value.toggleOnlineStatus(isFromWarehouse: widget.fromWareHouse);
         },
         child: Container(
           width: widget.width,

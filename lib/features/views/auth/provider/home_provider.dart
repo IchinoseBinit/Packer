@@ -227,7 +227,7 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  void toggleOnlineStatus() async {
+  void toggleOnlineStatus({bool isFromWarehouse = false}) async {
     isOnline = !isOnline;
     if (!isOnline) {
       if (await Vibration.hasVibrator() != null) {
@@ -240,10 +240,14 @@ class HomeProvider with ChangeNotifier {
     await updatepackerStatus(isOnline);
     if (isOnline) {
       FirebaseAPI().requestPermission();
-      fetchLatestOrders();
+      if (!isFromWarehouse) {
+        fetchLatestOrders();
+      }
       notifyListeners();
     } else {
-      toggleFirebaseTopic();
+      if (!isFromWarehouse) {
+        toggleFirebaseTopic();
+      }
       isAvailable = false;
       isOrder = false;
       isOrderPicked = false;

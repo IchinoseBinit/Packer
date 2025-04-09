@@ -10,16 +10,19 @@ import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class PackerTransferProvider extends ChangeNotifier {
   var transferList = <TransferModel>[];
   var transferListLoading = false;
   String? scanMessage;
   TransferModel? selectedTransferModel;
+  BasketModel? selectedBasketModel;
   var selectedTransferModelLoading = false;
   String? role;
 
@@ -29,10 +32,10 @@ class PackerTransferProvider extends ChangeNotifier {
     role = value.name;
   }
 
-  void initScanMessage (int id) {
+  void initScanMessage(int id) {
     for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
       if (element.product == id) {
-    print("init scan message if");
+        print("init scan message if");
         scanMessage =
             "Scan ${(element.quantity ?? 0) - element.itemScanCount} ${element.productName}";
         notifyListeners();
@@ -41,10 +44,9 @@ class PackerTransferProvider extends ChangeNotifier {
     }
     scanMessage = null;
     notifyListeners();
-    
   }
 
-  bool showCompleteButton(){
+  bool showCompleteButton() {
     if (selectedTransferModel?.items != null) {
       for (var element in selectedTransferModel!.items!) {
         if (element.itemScanCount != element.quantity) {
@@ -126,8 +128,7 @@ class PackerTransferProvider extends ChangeNotifier {
       notifyListeners();
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
-      navigateReplacement(context,
-          route: NavigationConstants.transferDetailsRoute);
+      navigateReplacement(context, route: NavigationConstants.basketListRoute);
       return;
     }
 
@@ -216,6 +217,40 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
+  onBasketScanTapped(BuildContext context, BasketModel basket) {
+    selectedBasketModel = basket;
+    notifyListeners();
+    navigate(context, route: NavigationConstants.qrScanScreenRoute, extra: {
+      "forBasket": true,
+      "message": "Scan Basket",
+    });
+  }
+
+  checkBasketQr(
+      BuildContext context, MobileScannerController? controller, String code) {
+    controller?.stop();
+
+    log(code, name: "qr code data");
+
+    HapticFeedback.heavyImpact();
+
+    showLoading(context);
+
+    if (selectedBasketModel?.identifier
+            .toLowerCase()
+            .contains(code.toLowerCase()) ??
+        false) {
+      scanTagsList.clear();
+      notifyListeners();
+      removeLoading(context);
+      fetchBasketDetails(code);
+      navigateReplacement(context,
+          route: NavigationConstants.transferDetailsRoute);
+      return;
+    }
+    _handleInvalidQR(context, controller);
+  }
+
   void _handleInvalidQR(
       BuildContext context, MobileScannerController? controller) {
     removeLoading(context);
@@ -226,6 +261,79 @@ class PackerTransferProvider extends ChangeNotifier {
         controller?.start();
       },
     ).showAlertDialog(context);
+  }
+
+  // itemTaped
+  void itemTaped(BuildContext context, TransferItemModel? item) {
+    if (item == null) {
+      showToast("Item not found");
+      return;
+    }
+    if (role == "manager") {
+      if (item.rack != null && item.rack!.isNotEmpty) {
+        navigate(context,
+            route: NavigationConstants.scanRackRoute,
+            extra: {"rack": item.rack, "productId": item.product});
+        return;
+      }
+      showYesNo(context).then((value) {
+        if (value == true) {
+          navigate(
+            context,
+            route: NavigationConstants.scanRackRoute,
+            extra: {
+              "updateRack": true,
+              "productId": item.product,
+              'message': '${item.productName} - Assign a Rack'
+            },
+          );
+          return;
+        } else {
+          initScanMessage(item.product ?? 0);
+          navigate(
+            context,
+            route: NavigationConstants.qrScanScreenRoute,
+            extra: {
+              "forTranfer": true,
+              "productId": item.product,
+            },
+          );
+        }
+      });
+    } else {
+      initScanMessage(item.product ?? 0);
+      navigate(
+        context,
+        route: NavigationConstants.qrScanScreenRoute,
+        extra: {
+          "forTranfer": true,
+          "productId": item.product,
+        },
+      );
+    }
+  }
+
+  // show yes no for update product rack
+  Future<bool?> showYesNo(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Confirmation"),
+          content: const Text("Do you want to assign a rack?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("No"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // post scanned tags
@@ -247,6 +355,7 @@ class PackerTransferProvider extends ChangeNotifier {
           body: {
             "product_id": productId,
             "unit_tags": scanTagsList,
+            if (role != "packer") "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
@@ -268,6 +377,44 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
+  void updateRack(BuildContext context, String code, int productId) async {
+    try {
+      showLoading(context);
+      final url = AppUrls.updateRackUrl;
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+        body: {
+          "rack_identifier": code,
+          "product_id": productId,
+          // "store_id": "selectedTransferModel?.storeId",
+        },
+      );
+      removeLoading(context);
+      if (response.statusCode == 200) {
+        for (var element
+            in selectedTransferModel?.items ?? <TransferItemModel>[]) {
+          if (element.product == productId) {
+            element.rack = code;
+          }
+        }
+        Provider.of<PackerTransferProvider>(context, listen: false)
+            .initScanMessage(productId);
+        navigateReplacement(context,
+            route: NavigationConstants.qrScanScreenRoute,
+            extra: {
+              "forTranfer": true,
+              "productId": productId,
+            });
+      } else {
+        showToast('Failed to update rack');
+      }
+    } catch (ex) {
+      showToast(ex.toString());
+      removeLoading(context);
+    } 
+  }
+
   // complete transfer
   Future<void> completeTransfer(BuildContext context) async {
     try {
@@ -286,6 +433,9 @@ class PackerTransferProvider extends ChangeNotifier {
       );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
+        selectedTransferModel?.baskets?.removeWhere(
+          (element) => element.identifier == selectedBasketModel?.identifier,
+        );
         Navigator.pop(context);
       } else {
         showToast('Failed to complete transfer');
@@ -294,6 +444,32 @@ class PackerTransferProvider extends ChangeNotifier {
       showToast(ex.toString());
     } finally {
       removeLoading(context);
+    }
+  }
+
+  fetchBasketDetails(String code) async {
+    try {
+      selectedTransferModelLoading = true;
+      final url = AppUrls.basketUrl.replaceAll(':id', code);
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+      if (response.statusCode == 200) {
+        selectedTransferModel?.items = [];
+        for (var element in response.data['products'] ?? []) {
+          selectedTransferModel?.items?.add(
+            TransferItemModel.fromMap(element),
+          );
+        }
+      } else {
+        showToast('Failed to fetch basket details');
+      }
+    } catch (ex) {
+      showToast(ex.toString());
+    } finally {
+      selectedTransferModelLoading = false;
+      notifyListeners();
     }
   }
 

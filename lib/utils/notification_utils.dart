@@ -127,6 +127,21 @@ class NotificationUtils {
       defaultColor: AppColors.primaryColor,
       ledColor: Colors.red,
     );
+    NotificationChannel channel4 = NotificationChannel(
+      channelKey: 'scheduled_channel',
+      channelName: 'scheduled channel',
+      channelDescription: 'Scheduled notifications',
+      playSound: true,
+      onlyAlertOnce: false,
+      enableVibration: true,
+      locked: true,
+      soundSource: 'resource://raw/res_ringtone',
+      defaultRingtoneType: DefaultRingtoneType.Ringtone,
+      groupAlertBehavior: GroupAlertBehavior.Children,
+      importance: NotificationImportance.Max,
+      defaultColor: AppColors.primaryColor,
+      ledColor: Colors.red,
+    );
     NotificationChannel channel2 = NotificationChannel(
         channelKey: 'alerts',
         channelName: 'alerts',
@@ -139,7 +154,7 @@ class NotificationUtils {
         importance: NotificationImportance.High,
         defaultColor: AppColors.primaryColor,
         ledColor: Colors.red);
-    return [channel, channel2, channel_3];
+    return [channel, channel2, channel_3, channel4];
   }
 
   static List<NotificationChannel> getSilentChannels() {

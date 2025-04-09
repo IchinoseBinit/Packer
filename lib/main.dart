@@ -14,6 +14,7 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/firebase_options.dart';
@@ -43,6 +44,7 @@ void main() async {
     android: initializationSettingsAndroid,
   );
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     handleIncomingCall(message, false);
@@ -135,6 +137,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (context) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => PackerTransferProvider()),
+        ChangeNotifierProvider(create: (_) => StockProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

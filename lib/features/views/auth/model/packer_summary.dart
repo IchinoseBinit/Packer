@@ -6,6 +6,7 @@ class PackerSummary {
   // late String totalDistance;
   // late String topicName;
   late bool isOnline;
+  late String storeType;
   // late bool isAvailable;
 
   PackerSummary.fromJson(Map obj) {
@@ -13,6 +14,7 @@ class PackerSummary {
     orderCount = obj['total_order_count'].toString().toInt();
     // totalDistance = obj['total_distance'].toString().toStringConversion();
     isOnline = obj['is_online'].toString().toBool(false);
+    storeType = obj['store_type'].toString().toStringConversion();
     // isAvailable = obj['is_available'].toString().toBool(false);
     // topicName = obj['topic_name'] ?? "packers";
   }

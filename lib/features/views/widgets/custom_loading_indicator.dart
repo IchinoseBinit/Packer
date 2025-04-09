@@ -52,5 +52,7 @@ void showLoading(BuildContext context, {String? label}) {
 }
 
 void removeLoading(BuildContext context) {
-  Navigator.pop(context);
+  if (Navigator.canPop(context)) {
+    Navigator.pop(context);
+  }
 }

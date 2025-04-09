@@ -2,43 +2,37 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
-import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
-
-import 'package:packer/constants/app_colors.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
-import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
-class RackScanScreen extends StatefulWidget {
-  const RackScanScreen({
-    Key? key,
-    required this.rack,
-    required this.productId,
-    this.updateRack = false,
-    this.cartonProduct = false,
-    this.message = "",
-  }) : super(key: key);
+import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-  final String rack;
-  final int productId;
-  final bool updateRack;
-  final bool cartonProduct;
-  final String message;
+class LowStockScanner extends StatefulWidget {
+  const LowStockScanner({
+    super.key,
+    this.forProduct = false,
+  });
+
+  final bool forProduct;
 
   @override
-  State<RackScanScreen> createState() => _RackScanScreenState();
+  State<LowStockScanner> createState() => _LowStockScannerState();
 }
 
-class _RackScanScreenState extends State<RackScanScreen> {
+class _LowStockScannerState extends State<LowStockScanner> {
   @override
   void reassemble() {
     super.reassemble();
@@ -57,50 +51,40 @@ class _RackScanScreenState extends State<RackScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (widget.isfromCartItem) {
-    //     Provider.of<OrderProvider>(context, listen: false)
-    //         .initScanMessage(widget.productId ?? 0);
-    //   }
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   var _flash = false;
 
   checkQr(String code) {
+   
     controller?.stop();
-
-    log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
 
-    if (widget.cartonProduct) {
-      Provider.of<StockProvider>(context, listen: false)
-          .scanRack(context, controller, code);
-          return;
-    }
-
     showLoading(context);
 
-    // updateRack
-    if (widget.updateRack) {
-      Provider.of<PackerTransferProvider>(context, listen: false)
-          .updateRack(context, code, widget.productId);
-          return;
-    }
-    
+    if (code.toLowerCase().contains("basket")) {
+      try {
+        Provider.of<OrderProvider>(context, listen: false)
+            .updateBucketData(code);
 
-    if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
-      Provider.of<PackerTransferProvider>(context, listen: false)
-          .initScanMessage(widget.productId);
-      navigateReplacement(context,
-          route: NavigationConstants.qrScanScreenRoute,
-          extra: {
-            "forTranfer": true,
-            "productId": widget.productId,
-          });
+        try {
+          Provider.of<OrderProvider>(context, listen: false).clearBasket();
+        } catch (ex) {
+          debugPrint(ex.toString());
+        }
 
-      removeLoading(context);
+        removeLoading(context);
+        Navigator.pop(context);
+        showToast("basket available");
+        // navigate(context,
+        //     route: NavigationConstants.orderDetailsRoute, extra: orderId);
+      } catch (ex) {
+        removeLoading(context);
+        showToast(ex.toString());
+        print(ex.toString());
+      }
     } else {
       removeLoading(context);
       ShowAlertDialog(
@@ -128,9 +112,20 @@ class _RackScanScreenState extends State<RackScanScreen> {
           _flash = !_flash;
         });
       },
-      icon: Icon(
-        _flash ? Icons.flash_off : Icons.flash_on,
-        color: Colors.white,
+      icon: Column(
+        children: [
+          Text(
+            _flash ? 'Flash on' : 'Flash off',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(fontSize: 6, color: Colors.white),
+          ),
+          Icon(
+            _flash ? Icons.flash_on : Icons.flash_off,
+            color: Colors.white,
+          ),
+        ],
       ),
     );
   }
@@ -206,21 +201,6 @@ class _RackScanScreenState extends State<RackScanScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // QRView(
-          //   key: qrKey,
-          //   onQRViewCreated: (qrController) {
-          //     cameraController = qrController;
-          //     qrController.scannedDataStream.listen((scanData) {
-          //       if (scanData.code != null) {
-          //         checkQr(scanData.code!);
-          //       }
-          //     });
-          //   },
-          //   overlay: QrScannerOverlayShape(
-          //     borderColor: AppColors.primaryColor,
-          //   ),
-          // ),
-
           MobileScanner(
             fit: BoxFit.cover,
             scanWindow: scanWindow,
@@ -229,7 +209,18 @@ class _RackScanScreenState extends State<RackScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              checkQr(barcodes.barcodes.first.rawValue.toString());
+              if (widget.forProduct) {
+                Provider.of<StockProvider>(context, listen: false).checkItemQr(
+                  context,
+                  controller,
+                  barcodes.barcodes.first.rawValue.toString(),
+                );
+                return;
+              }else{
+                Provider.of<StockProvider>(context, listen: false)
+                    .checkBasketQr(context,
+                  controller,barcodes.barcodes.first.rawValue.toString());
+              }
             },
           ),
           _buildBarcodeOverlay(),
@@ -239,6 +230,17 @@ class _RackScanScreenState extends State<RackScanScreen> {
             child: buildFlash(),
             top: 8.h * 6,
             right: 4.w * 3,
+          ),
+          Positioned(
+            top: 8.h * 6,
+            right: 40.w * 3,
+            child: Text(
+             widget.forProduct ? 'Product Scanner' : 'Basket Scanner',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.backgroundColor),
+            ),
           ),
           Positioned(
             top: 8.h * 6,
@@ -252,53 +254,35 @@ class _RackScanScreenState extends State<RackScanScreen> {
             ),
           ),
           // TODO: i want this in center of width
-          if (widget.rack.isNotEmpty)
-          Positioned(
-            top: 32.h * 6,
-            left: 4.w * 3,
-            right: 4.w * 3,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 8.h,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Scan the rack "${widget.rack}" code',
-                style: TextStyle(
-                  color: AppColors.backgroundColor,
-                  fontSize: 12.sp,
+          Consumer<StockProvider>(
+            builder: (context, provider, child) {
+              return Visibility(
+                visible: widget.forProduct && provider.scanMessage.isNotEmpty,
+                child: Positioned(
+                  top: 32.h * 6,
+                  left: 4.w * 3,
+                  right: 4.w * 3,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.scanMessage,
+                      style: TextStyle(
+                        color: AppColors.backgroundColor,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          if (widget.message.isNotEmpty)
-          Positioned(
-            top: 32.h * 6,
-            left: 4.w * 3,
-            right: 4.w * 3,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 8.h,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                widget.message,
-                style: TextStyle(
-                  color: AppColors.backgroundColor,
-                  fontSize: 12.sp,
-                ),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),

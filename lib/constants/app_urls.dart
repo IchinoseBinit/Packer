@@ -74,6 +74,8 @@ class AppUrls {
   // complete
   static const String completeTransferUrl =
       "$_baseUrl/packer/transfers/id/complete/";
+  // low-stock
+  static const String lowStockUrl = "$_baseUrl/packer/low-stock-products/";
 
   // manager_transfer
   static const String managerTransferUrl = "$_baseUrl/store/transfers/";
@@ -82,8 +84,28 @@ class AppUrls {
   // verify-units
   static const String verifyUnitsUrl =
       "$_baseUrl/store/transfers/id/verify-units/";
+  // updateRackUrl
+  static const String updateRackUrl =
+      "$_baseUrl/update-product-availabilty-rack/";
   // accept
   static const String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
 
   static const String basketClearUrl = "$_baseUrl/basket/id/clear/";
+
+  // staff/scan-basket
+  static const String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
+
+  // add-products
+  static const String addProductsUrl = "$_baseUrl/staff/add-products/";
+  // transfer-basket-inventory/
+  static const String transferBasketInventoryUrl =
+      "$_baseUrl/staff/transfer-basket-inventory/";
+
+
+      // carton_info/<str:carton_identifier>/
+  static const String cartonInfoUrl = "$_baseUrl/carton_info/:id/";
+
+
+  // /basket/<str:identifier>/
+  static const String basketUrl = "$_baseUrl/basket/:id/";
 }

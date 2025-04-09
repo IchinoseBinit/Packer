@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/home/home_screen.dart';
+import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/views/order_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 import 'package:svg_flutter/svg.dart';
 
 class NavigationScreen extends StatefulWidget {
@@ -27,9 +30,19 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
   final widgets = [
     const HomeScreen(),
-    const OrderScreen(),
+    // const OrderScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    final home =Provider.of<HomeProvider>(context, listen: false);
+    if (home.packerSummary?.storeType.contains("main") == true) {
+      widgets[0] = HomeWarehouseScreen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,24 +68,24 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 ),
                 label: 'Home',
               ),
-              BottomNavigationBarItem(
-                icon: Column(
-                  children: [
-                    SvgPicture.asset(
-                      width: 32.w,
-                      height: 32.h,
-                      color: selectedIndex == 1 ? changingColor : Colors.grey,
-                      AppAssets.box,
-                    ),
-                  ],
-                ),
-                label: 'Orders',
-              ),
+              // BottomNavigationBarItem(
+              //   icon: Column(
+              //     children: [
+              //       SvgPicture.asset(
+              //         width: 32.w,
+              //         height: 32.h,
+              //         color: selectedIndex == 1 ? changingColor : Colors.grey,
+              //         AppAssets.box,
+              //       ),
+              //     ],
+              //   ),
+              //   label: 'Orders',
+              // ),
               BottomNavigationBarItem(
                 icon: SvgPicture.asset(
                   width: 32.w,
                   height: 32.h,
-                  color: selectedIndex == 2 ? changingColor : Colors.grey,
+                  color: selectedIndex == 1 ? changingColor : Colors.grey,
                   AppAssets.profile,
                 ),
                 label: 'Profile',

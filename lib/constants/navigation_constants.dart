@@ -29,6 +29,12 @@ class NavigationConstants {
   // transfer_list
   static const String transferListRoute = 'transfer_list';
   static const String transferDetailsRoute = 'transfer_details';
+  // basket_list
+  static const String basketListRoute = 'basket_list';
   // scan_rack
   static const String scanRackRoute = 'scan_rack';
+  // LowStockScreen
+  static const String lowStockRoute = 'low_stock';
+  static const String lowStockDetailRoute = 'low_stock_detail';
+  static const String lowStockScannerRoute = 'low_stock_scanner';
 }

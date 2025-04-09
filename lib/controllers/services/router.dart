@@ -3,7 +3,12 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
+import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
+import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
+import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
 import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -142,6 +147,12 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.basketListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return BasketList();
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.scanRackRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   // var orderId = '3485';
@@ -151,7 +162,32 @@ class AppRouter {
 
                   return RackScanScreen(
                     rack: data['rack'] ?? '',
+                    updateRack: data['updateRack'] ?? false,
                     productId: data['productId'] ?? 0,
+                    cartonProduct: data['cartonProduct'] ?? false,
+                    message: data['message'] ?? '',
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.lowStockRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return HomeWarehouseScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.lowStockDetailRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return LowStockDetails();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.lowStockScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  final forProduct = args['forProduct'] ?? false;
+                  return LowStockScanner(
+                    forProduct: forProduct,
                   );
                 },
               ),
@@ -172,7 +208,10 @@ class AppRouter {
                     isfromCartItem: args['forCartitem'] ?? false,
                     isFromPackerTransfer: args['forTranfer'] ?? false,
                     checkIdentifier: args['checkIdentifier'] ?? false,
+                    scanCarton: args['scanCarton'] ?? false,
                     productId: args['productId'] ?? 0,
+                    message: args['message'] ?? '',
+                    forBasket: args['forBasket'] ?? false,
                   );
                 },
               ),

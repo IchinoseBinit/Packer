@@ -115,23 +115,17 @@ class TransferNotificationCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Transfer Request",
+                        "Transfer Request (${transferItem.status})",
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Text(
-                        'Source: ${transferItem.source} → Destination: ${transferItem.destination}',
+                        '${transferItem.source} → ${transferItem.destination}',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
                             ?.copyWith(color: Colors.grey[700]),
                       ),
-                      Text(
-                        'Status: ${transferItem.status}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.grey[700]),
-                      ),
+                      
                       Text(
                         'Requested at: ${DateFormatter().formatTimestamp(transferItem.createdAt ?? '')}',
                         style: Theme.of(context)
