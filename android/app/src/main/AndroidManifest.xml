@@ -20,7 +20,7 @@
 
 
     <application
-        android:label="packer"
+        android:label="Packer"
         android:name="${applicationName}"
         android:allowBackup="false"
         android:fullBackupContent="false"

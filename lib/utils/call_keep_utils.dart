@@ -115,7 +115,6 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
         ...message.data,
         'screen': 'call',
         'orderId' :  message.data["order_id"] ?? '',
-        'navigation': 'true'
       });
 
   List<NotificationActionButton>? buttons = fullScreen || fullScreenDelivery

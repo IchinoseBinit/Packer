@@ -18,7 +18,7 @@ class OrderListWidget extends StatelessWidget {
           return const Center(
             child: CircularProgressIndicator.adaptive(),
           );
-        } else if (val.latestOrder.isNotEmpty) {
+        } else if (val.latestOrder.isEmpty) {
           return ListView.builder(
             itemCount: val.latestOrder.length,
             shrinkWrap: true,
@@ -40,7 +40,7 @@ class OrderListWidget extends StatelessWidget {
                     callback:
                         getCallbackFunction(context, orderItem: orderItem),
                   );
-                
+
                 case OrderStatusType.billing:
                   return NotificationOrderCard(
                     orderItem: orderItem,

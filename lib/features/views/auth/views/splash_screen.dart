@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,10 +8,8 @@ import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 
@@ -120,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Container(
         width: 1.sw,
-        color: AppColors.splashBackgroundColor,
+        color: AppColors.splashNewBackgroundColor,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -128,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen> {
             const Spacer(),
             Center(
               child: Image.asset(
-                AppAssets.splashScreenImage,
+                AppAssets.splashScreenLogo,
                 fit: BoxFit.contain,
                 width: 300.h,
                 height: 300.h,

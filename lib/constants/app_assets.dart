@@ -30,13 +30,10 @@ class AppAssets {
   static const homeIcon = "$_iconPath/homeIcon.svg";
   static const box = "$_iconPath/Box.svg";
 
-
-
   static const acknowledgedOrderImage = "$_imagePath/order_ready.png";
-
+  static const splashScreenLogo = "$_imagePath/logo.png";
 
   static const phoneRingIcon = "$_iconPath/phone_ring.svg";
 
   static const notificationSound = "$_soundPath/notification.mp3";
-
 }

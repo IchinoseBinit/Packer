@@ -1,7 +1,5 @@
 import 'dart:developer' as dev;
-import 'dart:developer';
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +19,6 @@ import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '/theme/theme.dart';
 
