@@ -243,8 +243,10 @@ class StockProvider extends ChangeNotifier {
     } catch (e) {
       showToast(e.toString());
     } finally {
-      removeLoading(context);
-      navigatePop(context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        removeLoading(context);
+        navigatePop(context);
+      });
       scannedList = [];
     }
   }
@@ -262,15 +264,15 @@ class StockProvider extends ChangeNotifier {
       // }
 
       showToast("Transferred Successfully");
-      navigatePop(context);
       lowStockList.remove(selectedModel);
       notifyListeners();
       if (lowStockList.isEmpty) {
         fetchLowStockProducts();
       }
+      navigatePop(context);
     } catch (e) {
       showToast(e.toString());
-    } 
+    }
   }
 
   void _handleInvalidQR(
@@ -331,11 +333,19 @@ class StockProvider extends ChangeNotifier {
     );
   }
 
-  void scanRack(
-      BuildContext context, MobileScannerController? controller, String code) {
+  void scanRack(BuildContext context, MobileScannerController? controller,
+      String code) async {
     if (cartonModel != null) {
       if (cartonModel!.rackName.isEmpty) {
-        updateRack(context, code, cartonModel!.productId);
+        final value = await updateRack(context, code, cartonModel!.productId);
+        if (value) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            navigateReplacement(context,
+                route: NavigationConstants.dashboardRoute);
+          });
+        } else {
+          controller?.start();
+        }
       } else if (code
           .toLowerCase()
           .contains(cartonModel!.rackName.toLowerCase())) {
@@ -352,9 +362,11 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  void updateRack(BuildContext context, String code, int productId) async {
+  Future<bool> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
-      showToast("Updating rack...");
+      // show loading
+      showLoading(context);
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
@@ -362,21 +374,25 @@ class StockProvider extends ChangeNotifier {
         body: {
           "rack_identifier": code,
           "product_id": productId,
-          // "store_id": "selectedTransferModel?.storeId",
         },
       );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        removeLoading(context);
+      });
 
       if (response.statusCode == 200) {
         showToast("Rack updated successfully");
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigateAndRemoveAll(context,
-              route: NavigationConstants.dashboardRoute);
-        });
+        return true;
       } else {
         showToast('Failed to update rack');
+        return false;
       }
     } catch (ex) {
-      showToast(ex.toString());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        removeLoading(context);
+        showToast(ex.toString());
+      });
+      return false;
     }
   }
 }

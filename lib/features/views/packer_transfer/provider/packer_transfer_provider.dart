@@ -355,29 +355,37 @@ class PackerTransferProvider extends ChangeNotifier {
           body: {
             "product_id": productId,
             "unit_tags": scanTagsList,
-            if (role != "packer") "basket_identifier": selectedBasketModel?.identifier,
+            if (role != "packer")
+              "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
           scanTagsList.clear();
           notifyListeners();
-          removeLoading(context);
-          Navigator.pop(context);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            removeLoading(context);
+            navigatePop(context);
+          });
         } else {
           showToast('Failed to post tags');
-          removeLoading(context);
-          navigatePop(context);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            removeLoading(context);
+            navigatePop(context);
+          });
         }
       }
     } catch (ex) {
       showToast(ex.toString());
-      removeLoading(context);
-      navigatePop(context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        removeLoading(context);
+        navigatePop(context);
+      });
     }
   }
 
-  void updateRack(BuildContext context, String code, int productId) async {
+  Future<bool> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
       showLoading(context);
       final url = AppUrls.updateRackUrl;
@@ -387,10 +395,11 @@ class PackerTransferProvider extends ChangeNotifier {
         body: {
           "rack_identifier": code,
           "product_id": productId,
-          // "store_id": "selectedTransferModel?.storeId",
         },
       );
-      removeLoading(context);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        removeLoading(context);
+      });
       if (response.statusCode == 200) {
         for (var element
             in selectedTransferModel?.items ?? <TransferItemModel>[]) {
@@ -398,21 +407,29 @@ class PackerTransferProvider extends ChangeNotifier {
             element.rack = code;
           }
         }
-        Provider.of<PackerTransferProvider>(context, listen: false)
-            .initScanMessage(productId);
-        navigateReplacement(context,
-            route: NavigationConstants.qrScanScreenRoute,
-            extra: {
-              "forTranfer": true,
-              "productId": productId,
-            });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Provider.of<PackerTransferProvider>(context, listen: false)
+              .initScanMessage(productId);
+          navigateReplacement(context,
+              route: NavigationConstants.qrScanScreenRoute,
+              extra: {
+                "forTranfer": true,
+                "productId": productId,
+              });
+        });
+        return true;
       } else {
         showToast('Failed to update rack');
+        return false;
       }
     } catch (ex) {
-      showToast(ex.toString());
-      removeLoading(context);
-    } 
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        removeLoading(context);
+        showToast(ex.toString());
+      });
+      return false;
+    }
   }
 
   // complete transfer

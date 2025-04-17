@@ -13,11 +13,11 @@ class BasketList extends StatelessWidget {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
+        if (didPop) return;
               navigatePop(context);
           Provider.of<PackerTransferProvider>(context, listen: false)
               .fetchTransferList(context);
-        }
+        
       },
       child: Scaffold(
         appBar: AppBar(
@@ -26,6 +26,7 @@ class BasketList extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
+              navigatePop(context);
               Provider.of<PackerTransferProvider>(context, listen: false)
                   .fetchTransferList(context);
             },
