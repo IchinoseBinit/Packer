@@ -37,6 +37,19 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+    flavorDimensions "env"
+
+    productFlavors {
+        staging {
+            dimension "env"
+        }
+
+        production {
+            dimension "env"
+        }
+
+        
+    }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
