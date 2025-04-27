@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
@@ -54,6 +57,33 @@ class _OrderDetailsState extends State<OrderDetails> {
               navigatePop(context);
             },
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: InkWell(
+                onTap: () {
+                  navigate(context,
+                      route: NavigationConstants.bucketqrScreenRoute,
+                      extra: widget.orderId);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Text("Add basket",
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.primaryColor)),
+                  ),
+                ),
+              ),
+            )
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: fetchOrderDetails,

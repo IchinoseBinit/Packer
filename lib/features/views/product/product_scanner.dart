@@ -183,8 +183,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final productScanned =
-        Provider.of<OrderProvider>(context, listen: false).scanMessage;
+    // final productScanned =
+    //     Provider.of<OrderProvider>(context, listen: false).scanMessage;
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: 200,

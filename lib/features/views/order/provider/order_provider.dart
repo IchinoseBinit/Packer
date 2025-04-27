@@ -45,6 +45,8 @@ class OrderProvider extends ChangeNotifier {
   }
 
   String bucketData = "";
+  List<String> basketDataList = [];
+
   List<String> scannedDataList = [];
 
   get isAvailable => _isAvailable;
@@ -288,7 +290,7 @@ class OrderProvider extends ChangeNotifier {
           url: AppUrls.productPostDetail,
           body: {
             "order_id": orderId,
-            "identifier": bucketData,
+            "identifier": basketDataList,
             "product_unit_tags": scannedDataList
           });
 
@@ -437,9 +439,16 @@ class OrderProvider extends ChangeNotifier {
   }
 
   updateBucketData(String? data) async {
+    debugger();
     if (data != null) {
-      bucketData = data;
-      log(bucketData, name: "basket data:::::::::::");
+      log("sssssssss $data");
+
+      if (basketDataList.contains(data)) {
+        showToast("Basket Already Scanned");
+      } else {
+        basketDataList.add(data);
+        log("sssssssss $basketDataList");
+      }
     }
   }
 
