@@ -64,7 +64,7 @@ class CartItemsList extends StatelessWidget {
   }
 }
 
-class ItemWidget extends StatelessWidget {
+class ItemWidget extends StatefulWidget {
   const ItemWidget({
     super.key,
     required this.productItems,
@@ -72,28 +72,42 @@ class ItemWidget extends StatelessWidget {
   });
 
   final ProductDetails productItems;
-  final ItemStatus status; // Enum to define the status
+  final ItemStatus status;
+  @override
+  State<ItemWidget> createState() => _ItemWidgetState();
+}
+
+class _ItemWidgetState extends State<ItemWidget> {
+  // Enum to define the status
+  @override
+  void initState() {
+    super.initState();
+
+    // final provider =Provider.of<OrderProvider>(context, listen: false);
+    // final cartItemId= provider.orderPickedDetails!.cartItems[0].id;
+    // provider.scanCountOrder(cartItemId);
+  }
 
   @override
   Widget build(BuildContext context) {
     // Determine the colors based on the status
-    final backgroundColor = status == ItemStatus.done
+    final backgroundColor = widget.status == ItemStatus.done
         ? AppColors.green700 // Green border for "Done"
         : Colors.transparent; // Light blue background for "Remaining"
 
-    final borderColor = status == ItemStatus.done
+    final borderColor = widget.status == ItemStatus.done
         ? AppColors.green700 // Green border for "Done"
         : Color(0xffEAEAEA); // Blue border for "Remaining"
 
-    final text1Color = status == ItemStatus.done
+    final text1Color = widget.status == ItemStatus.done
         ? AppColors.backgroundColor // Green text for "Done"
         : Colors.black; // Blue text for "Remaining"
 
-    final text2Color = status == ItemStatus.done
+    final text2Color = widget.status == ItemStatus.done
         ? AppColors.backgroundColor // Green text for "Done"
         : const Color(0xFF7D7C7C); // Blue text for "Remaining"
 
-    final dividerColor = status == ItemStatus.done
+    final dividerColor = widget.status == ItemStatus.done
         ? AppColors.backgroundColor // Green divider for "Done"
         : Colors.black; // Light blue divider for "Remaining"
 
@@ -121,9 +135,9 @@ class ItemWidget extends StatelessWidget {
                 width: 60.h,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: productItems.imageUrl.isNotEmpty
+                  child: widget.productItems.imageUrl.isNotEmpty
                       ? Image.network(
-                          "http://13.211.205.215:8000${productItems.imageUrl}",
+                          "http://13.211.205.215:8000${widget.productItems.imageUrl}",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),
@@ -139,7 +153,7 @@ class ItemWidget extends StatelessWidget {
                   SizedBox(
                     width: .3.sw,
                     child: Text(
-                      productItems.productName,
+                      widget.productItems.productName,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: text1Color, // Set text color based on status
@@ -148,13 +162,13 @@ class ItemWidget extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "${productItems.size} ${productItems.measurement}",
+                    "${widget.productItems.size} ${widget.productItems.measurement}",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: text2Color, // Set text color based on status
                         ),
                   ),
                   Text(
-                    "${productItems.compartment} ",
+                    "${widget.productItems.compartment} ",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: text2Color, // Set text color based on status
                         ),
@@ -166,7 +180,7 @@ class ItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "Qty: ${productItems.quantity}",
+                    "Qty: ${widget.productItems.quantity}",
                     style: TextStyle(
                       fontSize: 16.sp,
                       color: text1Color, // Set text color based on status
@@ -185,7 +199,7 @@ class ItemWidget extends StatelessWidget {
                   // ),
                 ],
               ),
-              if (status == ItemStatus.remaining) ...[
+              if (widget.status == ItemStatus.remaining) ...[
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 8.w),
                   height: 42.h,
@@ -193,7 +207,7 @@ class ItemWidget extends StatelessWidget {
                   color: dividerColor, // Set divider color based on status
                 ),
                 Text(
-                  "Remaining: ${productItems.quantity - productItems.itemScanCount}",
+                  "Remaining: ${widget.productItems.quantity - widget.productItems.itemScanCount}",
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: text1Color, // Set text color based on status

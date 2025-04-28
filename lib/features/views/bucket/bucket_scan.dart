@@ -58,11 +58,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
   checkQr(String code, String orderId) {
     log(orderId, name: "order id:");
-    // data = code;
-    // setState(() {
-    //   data = code;
-    //   // print(data);
-    // });
+  
     controller?.stop();
 
     log(code, name: "bucket qr code data");
@@ -76,11 +72,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
         Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(code);
 
-        try {
-          Provider.of<OrderProvider>(context, listen: false).clearBasket();
-        } catch (ex) {
-          debugPrint(ex.toString());
-        }
+       
 
         removeLoading(context);
         Navigator.pop(context);

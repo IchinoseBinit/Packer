@@ -20,6 +20,7 @@ import 'package:packer/features/views/order/models/unsettled_orders.dart';
 import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/post_basket_model.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -44,19 +45,27 @@ class OrderProvider extends ChangeNotifier {
     _isAvailable = val;
   }
 
-  String bucketData = "";
+  // String bucketData = "";
   List<String> basketDataList = [];
+  Map<String, List<String>> scannedDataPerBasket = {};
 
   List<String> scannedDataList = [];
 
   get isAvailable => _isAvailable;
   bool showButton = false;
+  bool isChecked = false;
 
   // List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
   //   return orderItemsJson
   //       .map((json) => SeeOrderDetailsPacker.fromJson(json))
   //       .toList();
   // }
+  void addProductTagToBasket(String basketId, String productTag) {
+    if (!scannedDataPerBasket.containsKey(basketId)) {
+      scannedDataPerBasket[basketId] = [];
+    }
+    scannedDataPerBasket[basketId]!.add(productTag);
+  }
 
   var hasUploadedHomeImage = false;
 
@@ -72,6 +81,8 @@ class OrderProvider extends ChangeNotifier {
 
   void initState() {
     scannedDataList.clear();
+    isChecked = false;
+    showButton = false;
   }
 
   // check by item id in scan list with required quantity
@@ -170,8 +181,10 @@ class OrderProvider extends ChangeNotifier {
           notifyListeners();
           return true;
         } else {
+          element.quantity = element.quantity - element.itemScanCount;
           scanMessage =
               "Scan ${element.quantity - element.itemScanCount} more ${element.productName}";
+          notifyListeners();
         }
         notifyListeners();
         return false;
@@ -280,31 +293,81 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> productPost(
-    int orderId,
-  ) async {
+  // Future<bool> productPost(
+  //   int orderId,
+  // ) async {
+  //   List<Basket> baskets = basketDataList.map((identifier) {
+  //     return Basket(
+  //       identifier: identifier,
+  //       productIdentifiers: scannedDataList,
+  //     );
+  //   }).toList();
+  //   PostBasketRequest postBasketRequest = PostBasketRequest(
+  //     orderId: orderId,
+  //     data: baskets,
+  //   );
+  //   final data = postBasketRequest.toJson();
+
+  //   try {
+  //     log(scannedDataList.toString(), name: "product scan response");
+  //     final response = await DioClient().request(
+  //         requestType: RequestType.postWithToken,
+  //         url: AppUrls.productPostDetail,
+  //         body: data);
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       log("SUccessfully posted basket data", name: "basket data response");
+  //       scannedDataList.clear();
+  //       notifyListeners();
+  //       return true;
+  //     } else {
+  //       print('Error getting order details: ${response.statusCode}');
+  //       return false;
+  //     }
+  //   } catch (e) {
+  //     print('Error getting order details: $e');
+  //     _error = 'Failed to load order details: $e';
+  //     notifyListeners();
+  //     return false;
+  //   }
+  // }
+  Future<bool> productPost(int orderId) async {
+    List<Basket> baskets = basketDataList.map((identifier) {
+      return Basket(
+        identifier: identifier,
+        productIdentifiers:
+            List<String>.from(scannedDataPerBasket[identifier] ?? []),
+      );
+    }).toList();
+
+    PostBasketRequest postBasketRequest = PostBasketRequest(
+      orderId: orderId,
+      data: baskets,
+    );
+
+    final data = postBasketRequest.toJson();
+
     try {
-      log(scannedDataList.toString(), name: "product scan response");
+      log(data.toString(), name: "productPost body data");
+
       final response = await DioClient().request(
-          requestType: RequestType.postWithToken,
-          url: AppUrls.productPostDetail,
-          body: {
-            "order_id": orderId,
-            "identifier": basketDataList,
-            "product_unit_tags": scannedDataList
-          });
+        requestType: RequestType.postWithToken,
+        url: AppUrls.productPostDetail,
+        body: data,
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        scannedDataList.clear();
+        log("Successfully posted basket data", name: "basket data response");
+        scannedDataPerBasket.clear();
         notifyListeners();
         return true;
       } else {
-        print('Error getting order details: ${response.statusCode}');
+        print('Error posting basket data: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      print('Error getting order details: $e');
-      _error = 'Failed to load order details: $e';
+      print('Error posting basket data: $e');
+      _error = 'Failed to post basket data: $e';
       notifyListeners();
       return false;
     }
@@ -439,28 +502,38 @@ class OrderProvider extends ChangeNotifier {
   }
 
   updateBucketData(String? data) async {
-    debugger();
+    // debugger();
     if (data != null) {
       log("sssssssss $data");
+
+      // bucketData = data;
 
       if (basketDataList.contains(data)) {
         showToast("Basket Already Scanned");
       } else {
         basketDataList.add(data);
-        log("sssssssss $basketDataList");
+        log("basket listtttt $basketDataList");
+        notifyListeners();
       }
     }
   }
 
   clearBasket() async {
     try {
-      var url = AppUrls.basketClearUrl.replaceAll("id", bucketData);
+      var url = AppUrls.basketClearUrl.replaceAll("id", basketDataList.first);
       await DioClient().request(
         requestType: RequestType.postWithToken,
         url: url,
       );
+      basketDataList.clear();
     } catch (e) {
       return e;
     }
+  }
+
+  toggle(bool value) {
+    // debugger();
+    isChecked = value;
+    notifyListeners();
   }
 }

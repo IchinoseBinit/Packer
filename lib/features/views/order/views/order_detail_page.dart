@@ -21,7 +21,6 @@ class OrderDetails extends StatefulWidget {
 
 class _OrderDetailsState extends State<OrderDetails> {
   late Future<void> future;
-
   @override
   void initState() {
     super.initState();
@@ -40,6 +39,8 @@ class _OrderDetailsState extends State<OrderDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final isFull = Provider.of<OrderProvider>(context, listen: true).isChecked;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (did, result) async {
@@ -58,31 +59,35 @@ class _OrderDetailsState extends State<OrderDetails> {
             },
           ),
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: InkWell(
-                onTap: () {
-                  navigate(context,
-                      route: NavigationConstants.bucketqrScreenRoute,
-                      extra: widget.orderId);
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black, width: 1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    child: Text("Add basket",
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.primaryColor)),
+            if (isFull)
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: InkWell(
+                  onTap: () {
+                    navigate(context,
+                        route: NavigationConstants.bucketqrScreenRoute,
+                        extra: widget.orderId);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
+                      child: Text("Add basket",
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.primaryColor)),
+                    ),
                   ),
                 ),
-              ),
-            )
+              )
           ],
         ),
         body: RefreshIndicator(
