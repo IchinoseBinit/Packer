@@ -20,10 +20,12 @@ class ProductScannerScreen extends StatefulWidget {
     super.key,
     this.isfromCartItem = false,
     this.productId,
+    // required this.index,
   });
 
   final bool isfromCartItem;
   final List<int>? productId;
+  // final int index;
 
   @override
   State<ProductScannerScreen> createState() => _ProductScannerScreenState();
@@ -181,7 +183,6 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
       width: 200,

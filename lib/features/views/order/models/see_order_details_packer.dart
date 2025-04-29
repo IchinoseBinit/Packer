@@ -72,7 +72,7 @@ class OrderDetailModel {
 class ProductDetails {
   late final int id;
   late final String productName;
-  late final int quantity;
+   int? quantity;
   late final String imageUrl;
   late final double _size;
   late final String measurement;
@@ -90,7 +90,7 @@ class ProductDetails {
 
   ProductDetails(
       {required this.productName,
-      required this.quantity,
+       this.quantity,
       required this.imageUrl,
       required this.measurement,
       required this.compartment});

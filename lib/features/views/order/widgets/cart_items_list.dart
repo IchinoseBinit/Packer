@@ -43,6 +43,7 @@ class CartItemsList extends StatelessWidget {
                         extra: {
                           'cartItem': true,
                           'productId': cartItem.id,
+                          // 'index': cartIndex,
                         });
                   },
                   child: ItemWidget(
@@ -90,6 +91,8 @@ class _ItemWidgetState extends State<ItemWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // final quantity =
+    // Provider.of<OrderProvider>(context, listen: false).remainingquantity;
     // Determine the colors based on the status
     final backgroundColor = widget.status == ItemStatus.done
         ? AppColors.green700 // Green border for "Done"
@@ -207,7 +210,7 @@ class _ItemWidgetState extends State<ItemWidget> {
                   color: dividerColor, // Set divider color based on status
                 ),
                 Text(
-                  "Remaining: ${widget.productItems.quantity - widget.productItems.itemScanCount}",
+                  "Remaining: ${widget.productItems.quantity! - widget.productItems.itemScanCount}",
                   style: TextStyle(
                     fontSize: 10.sp,
                     color: text1Color, // Set text color based on status

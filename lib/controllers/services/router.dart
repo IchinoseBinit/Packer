@@ -106,9 +106,12 @@ class AppRouter {
                   final productId =
                       extra?['productId']; // Assuming it's int or string
 
+                  // final index = state.extra as int? ?? 0;
+
                   return ProductScannerScreen(
                     productId: [productId],
                     isfromCartItem: true,
+                    // index: index,
 
                     // Ensure it's a list
                     // isfromCartItem: cartItem,

@@ -45,7 +45,7 @@ class OrderProvider extends ChangeNotifier {
     _isAvailable = val;
   }
 
-  // String bucketData = "";
+  String bucketData = "";
   List<String> basketDataList = [];
   Map<String, List<String>> scannedDataPerBasket = {};
 
@@ -54,12 +54,8 @@ class OrderProvider extends ChangeNotifier {
   get isAvailable => _isAvailable;
   bool showButton = false;
   bool isChecked = false;
+  // num remainingquantity = 0;
 
-  // List<SeeOrderDetailsPacker> parseOrderItems(List<dynamic> orderItemsJson) {
-  //   return orderItemsJson
-  //       .map((json) => SeeOrderDetailsPacker.fromJson(json))
-  //       .toList();
-  // }
   void addProductTagToBasket(String basketId, String productTag) {
     if (!scannedDataPerBasket.containsKey(basketId)) {
       scannedDataPerBasket[basketId] = [];
@@ -83,6 +79,7 @@ class OrderProvider extends ChangeNotifier {
     scannedDataList.clear();
     isChecked = false;
     showButton = false;
+    // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
   }
 
   // check by item id in scan list with required quantity
@@ -162,17 +159,21 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  bool scanCountOrder(int cartItemId) {
+  bool scanCountOrder(
+    int cartItemId,
+  ) {
+    debugger();
     for (var element in _orderDetails?.productDetails ?? []) {
       print("ssssssssssss: ${element.id}");
+      var quantity = element.quantity;
 
       if (element.id == cartItemId) {
-        if (element.itemScanCount == element.quantity) {
+        if (element.itemScanCount == quantity) {
           showToast("Item already scanned");
           return false;
         }
         element.itemScanCount++;
-        if (element.itemScanCount == element.quantity) {
+        if (element.itemScanCount == quantity) {
           scanMessage = null;
           showToast("Item scanned successfully");
 
@@ -181,9 +182,11 @@ class OrderProvider extends ChangeNotifier {
           notifyListeners();
           return true;
         } else {
-          element.quantity = element.quantity - element.itemScanCount;
           scanMessage =
               "Scan ${element.quantity - element.itemScanCount} more ${element.productName}";
+          // remainingquantity = element.quantity - element.itemScanCount;
+          element.quantity--;
+
           notifyListeners();
         }
         notifyListeners();
@@ -279,8 +282,6 @@ class OrderProvider extends ChangeNotifier {
         if (index >= 0) {
           notifications.removeAt(index);
         }
-        // navigate(context,
-        //     route: NavigationConstants.bucketqrScreenRoute, extra: orderId);
 
         fetchLatestOrders();
         notifyListeners();
@@ -293,44 +294,6 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  // Future<bool> productPost(
-  //   int orderId,
-  // ) async {
-  //   List<Basket> baskets = basketDataList.map((identifier) {
-  //     return Basket(
-  //       identifier: identifier,
-  //       productIdentifiers: scannedDataList,
-  //     );
-  //   }).toList();
-  //   PostBasketRequest postBasketRequest = PostBasketRequest(
-  //     orderId: orderId,
-  //     data: baskets,
-  //   );
-  //   final data = postBasketRequest.toJson();
-
-  //   try {
-  //     log(scannedDataList.toString(), name: "product scan response");
-  //     final response = await DioClient().request(
-  //         requestType: RequestType.postWithToken,
-  //         url: AppUrls.productPostDetail,
-  //         body: data);
-
-  //     if (response.statusCode == 200 || response.statusCode == 201) {
-  //       log("SUccessfully posted basket data", name: "basket data response");
-  //       scannedDataList.clear();
-  //       notifyListeners();
-  //       return true;
-  //     } else {
-  //       print('Error getting order details: ${response.statusCode}');
-  //       return false;
-  //     }
-  //   } catch (e) {
-  //     print('Error getting order details: $e');
-  //     _error = 'Failed to load order details: $e';
-  //     notifyListeners();
-  //     return false;
-  //   }
-  // }
   Future<bool> productPost(int orderId) async {
     List<Basket> baskets = basketDataList.map((identifier) {
       return Basket(
@@ -492,6 +455,8 @@ class OrderProvider extends ChangeNotifier {
   }
 
   updateProductList(String? data) async {
+    addProductTagToBasket(bucketData, data ?? '');
+
     if (data != null) {
       if (scannedDataList.contains(data)) {
         showToast("Product Already Scanned");
@@ -506,7 +471,7 @@ class OrderProvider extends ChangeNotifier {
     if (data != null) {
       log("sssssssss $data");
 
-      // bucketData = data;
+      bucketData = data;
 
       if (basketDataList.contains(data)) {
         showToast("Basket Already Scanned");
@@ -520,12 +485,12 @@ class OrderProvider extends ChangeNotifier {
 
   clearBasket() async {
     try {
-      var url = AppUrls.basketClearUrl.replaceAll("id", basketDataList.first);
+      var url = AppUrls.basketClearUrl.replaceAll("id", bucketData);
       await DioClient().request(
         requestType: RequestType.postWithToken,
         url: url,
       );
-      basketDataList.clear();
+      // basketDataList.clear();
     } catch (e) {
       return e;
     }

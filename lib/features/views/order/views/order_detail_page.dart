@@ -45,7 +45,7 @@ class _OrderDetailsState extends State<OrderDetails> {
       canPop: false,
       onPopInvokedWithResult: (did, result) async {
         if (did) return;
-        Provider.of<OrderProvider>(context, listen: false).initState();
+        // Provider.of<OrderProvider>(context, listen: false).initState(0);
         navigatePop(context);
       },
       child: Scaffold(
@@ -54,7 +54,7 @@ class _OrderDetailsState extends State<OrderDetails> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Provider.of<OrderProvider>(context, listen: false).initState();
+              // Provider.of<OrderProvider>(context, listen: false).initState(0);
               navigatePop(context);
             },
           ),
