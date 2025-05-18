@@ -1,6 +1,6 @@
 echo "Building your app"
 
-flutter build apk --no-tree-shake-icons --release --split-per-abi
+flutter build apk --no-tree-shake-icons --release 
 
 mkdir -p ./gen/
 

@@ -51,6 +51,8 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // final stockProvider = Provider.of<StockProvider>(context, listen: true);
+
     return Consumer<HomeProvider>(builder: (context, homeProvider, child) {
       if (homeProvider.isOnline) {
         Provider.of<StockProvider>(context, listen: false)
@@ -117,8 +119,10 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                         extra: {
                           'scanCarton': true,
                         }).then((value) {
+                      debugger();
                       log('Scan Carton Value: $value');
                       if (value != null) {
+                        debugger();
                         Provider.of<StockProvider>(context, listen: false)
                             .onScanCarton(context, value);
                       }
@@ -141,11 +145,11 @@ class LowStockCard extends StatelessWidget {
   final VoidCallback? callback;
 
   const LowStockCard({
-    Key? key,
+    super.key,
     required this.model,
     required this.primaryColor,
     this.callback,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

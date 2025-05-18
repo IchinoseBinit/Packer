@@ -1,5 +1,4 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -8,14 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -57,7 +53,6 @@ class _LowStockScannerState extends State<LowStockScanner> {
   var _flash = false;
 
   checkQr(String code) {
-   
     controller?.stop();
 
     HapticFeedback.heavyImpact();
@@ -216,10 +211,10 @@ class _LowStockScannerState extends State<LowStockScanner> {
                   barcodes.barcodes.first.rawValue.toString(),
                 );
                 return;
-              }else{
+              } else {
                 Provider.of<StockProvider>(context, listen: false)
-                    .checkBasketQr(context,
-                  controller,barcodes.barcodes.first.rawValue.toString());
+                    .checkBasketQr(context, controller,
+                        barcodes.barcodes.first.rawValue.toString());
               }
             },
           ),
@@ -235,7 +230,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
             top: 8.h * 6,
             right: 40.w * 3,
             child: Text(
-             widget.forProduct ? 'Product Scanner' : 'Basket Scanner',
+              widget.forProduct ? 'Product Scanner' : 'Basket Scanner',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,

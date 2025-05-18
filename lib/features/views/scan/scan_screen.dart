@@ -81,6 +81,7 @@ class _ScanScreenState extends State<ScanScreen> {
     if (widget.scanCarton){
       controller?.start();
       navigatePop(context, code);
+      // navigate(context, route: NavigationConstants.scanRackRoute)
       return;
     }
 

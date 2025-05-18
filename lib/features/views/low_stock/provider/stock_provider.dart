@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -91,6 +92,8 @@ class StockProvider extends ChangeNotifier {
 
   void onScanCarton(BuildContext context, String code) async {
     try {
+      // debugger();
+
       showLoading(context);
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
@@ -270,7 +273,7 @@ class StockProvider extends ChangeNotifier {
       }
     } catch (e) {
       showToast(e.toString());
-    } 
+    }
   }
 
   void _handleInvalidQR(
@@ -354,6 +357,7 @@ class StockProvider extends ChangeNotifier {
 
   void updateRack(BuildContext context, String code, int productId) async {
     try {
+      debugger();
       showToast("Updating rack...");
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
@@ -367,6 +371,7 @@ class StockProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        debugger();
         showToast("Rack updated successfully");
         WidgetsBinding.instance.addPostFrameCallback((_) {
           navigateAndRemoveAll(context,
@@ -374,9 +379,61 @@ class StockProvider extends ChangeNotifier {
         });
       } else {
         showToast('Failed to update rack');
+        // navigateAndRemoveAll(context,
+        //     route: NavigationConstants.dashboardRoute);
       }
     } catch (ex) {
       showToast(ex.toString());
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              SizedBox(width: 8),
+              Text(
+                "Product Availability Failed",
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                    ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Do you want to scan again?"),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog
+                      navigate(context,
+                          route: NavigationConstants.scanRackRoute,
+                          extra: {
+                            "cartonProduct": true,
+                            'message': "Assign a rack",
+                          });
+                    },
+                    child: Text("Yes"),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog
+                      navigate(context,
+                          route: NavigationConstants.dashboardRoute);
+                    },
+                    child: Text("No"),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      );
     }
   }
 }
