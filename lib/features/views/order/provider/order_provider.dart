@@ -54,7 +54,7 @@ class OrderProvider extends ChangeNotifier {
   get isAvailable => _isAvailable;
   bool showButton = false;
   bool isChecked = false;
-  // num remainingquantity = 0;
+  num remainingquantity = 0;
 
   void addProductTagToBasket(String basketId, String productTag) {
     if (!scannedDataPerBasket.containsKey(basketId)) {
@@ -165,15 +165,14 @@ class OrderProvider extends ChangeNotifier {
     debugger();
     for (var element in _orderDetails?.productDetails ?? []) {
       print("ssssssssssss: ${element.id}");
-      var quantity = element.quantity;
 
       if (element.id == cartItemId) {
-        if (element.itemScanCount == quantity) {
+        if (element.itemScanCount == element.quantity) {
           showToast("Item already scanned");
           return false;
         }
         element.itemScanCount++;
-        if (element.itemScanCount == quantity) {
+        if (element.itemScanCount == element.quantity) {
           scanMessage = null;
           showToast("Item scanned successfully");
 
@@ -184,8 +183,7 @@ class OrderProvider extends ChangeNotifier {
         } else {
           scanMessage =
               "Scan ${element.quantity - element.itemScanCount} more ${element.productName}";
-          // remainingquantity = element.quantity - element.itemScanCount;
-          element.quantity--;
+          remainingquantity = element.quantity - element.itemScanCount;
 
           notifyListeners();
         }

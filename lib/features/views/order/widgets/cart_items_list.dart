@@ -91,6 +91,7 @@ class _ItemWidgetState extends State<ItemWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // debugger();
     // final quantity =
     // Provider.of<OrderProvider>(context, listen: false).remainingquantity;
     // Determine the colors based on the status
@@ -171,7 +172,7 @@ class _ItemWidgetState extends State<ItemWidget> {
                         ),
                   ),
                   Text(
-                    "${widget.productItems.compartment} ",
+                    "${widget.productItems.rackName} ",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: text2Color, // Set text color based on status
                         ),
@@ -193,7 +194,7 @@ class _ItemWidgetState extends State<ItemWidget> {
                     height: 4.h,
                   ),
                   // Text(
-                  //   productItems.productCompartment,
+                  //   widget.productItems.rackName,
                   //   style: TextStyle(
                   //     fontSize: 12.sp,
                   //     fontWeight: FontWeight.bold,
