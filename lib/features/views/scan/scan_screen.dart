@@ -9,9 +9,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -28,7 +30,6 @@ class ScanScreen extends StatefulWidget {
     this.scanCarton = false,
     this.forBasket = false,
     this.message = "",
-
   });
 
   final bool isfromCartItem;
@@ -78,10 +79,11 @@ class _ScanScreenState extends State<ScanScreen> {
     log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
-    if (widget.scanCarton){
+    if (widget.scanCarton) {
       controller?.start();
+
       navigatePop(context, code);
-      // navigate(context, route: NavigationConstants.scanRackRoute)
+
       return;
     }
 
@@ -113,8 +115,6 @@ class _ScanScreenState extends State<ScanScreen> {
       controller?.start();
     }
   }
-
- 
 
   @override
   void dispose() {
@@ -250,17 +250,13 @@ class _ScanScreenState extends State<ScanScreen> {
               }
               if (widget.checkIdentifier) {
                 Provider.of<PackerTransferProvider>(context, listen: false)
-                    .checkIdentifier(
-                        context,
-                        controller,
+                    .checkIdentifier(context, controller,
                         barcodes.barcodes.first.rawValue.toString());
                 return;
               }
               if (widget.forBasket) {
                 Provider.of<PackerTransferProvider>(context, listen: false)
-                    .checkBasketQr(
-                        context,
-                        controller,
+                    .checkBasketQr(context, controller,
                         barcodes.barcodes.first.rawValue.toString());
                 return;
               }
@@ -283,6 +279,30 @@ class _ScanScreenState extends State<ScanScreen> {
               icon: const Icon(
                 Icons.arrow_back,
                 color: Colors.white,
+              ),
+            ),
+          ),
+
+          Positioned(
+            top: 32.h * 6,
+            left: 4.w * 3,
+            right: 4.w * 3,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16.w,
+                vertical: 8.h,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Scan the Carton code',
+                style: TextStyle(
+                  color: AppColors.backgroundColor,
+                  fontSize: 16.sp,
+                ),
               ),
             ),
           ),
@@ -372,7 +392,8 @@ class _ScanScreenState extends State<ScanScreen> {
           Consumer<PackerTransferProvider>(
             builder: (context, provider, child) {
               return Visibility(
-                visible: widget.isFromPackerTransfer && provider.scanMessage != null,
+                visible:
+                    widget.isFromPackerTransfer && provider.scanMessage != null,
                 child: Positioned(
                   top: 32.h * 6,
                   left: 4.w * 3,

@@ -119,10 +119,10 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                         extra: {
                           'scanCarton': true,
                         }).then((value) {
-                      debugger();
+                      // debugger();
                       log('Scan Carton Value: $value');
                       if (value != null) {
-                        debugger();
+                        // debugger();
                         Provider.of<StockProvider>(context, listen: false)
                             .onScanCarton(context, value);
                       }

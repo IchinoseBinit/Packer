@@ -19,13 +19,13 @@ import 'package:provider/provider.dart';
 
 class RackScanScreen extends StatefulWidget {
   const RackScanScreen({
-    Key? key,
+    super.key,
     required this.rack,
     required this.productId,
     this.updateRack = false,
     this.cartonProduct = false,
     this.message = "",
-  }) : super(key: key);
+  });
 
   final String rack;
   final int productId;
@@ -76,7 +76,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
     if (widget.cartonProduct) {
       Provider.of<StockProvider>(context, listen: false)
           .scanRack(context, controller, code);
-          return;
+      return;
     }
 
     showLoading(context);
@@ -85,9 +85,8 @@ class _RackScanScreenState extends State<RackScanScreen> {
     if (widget.updateRack) {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .updateRack(context, code, widget.productId);
-          return;
+      return;
     }
-    
 
     if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
       Provider.of<PackerTransferProvider>(context, listen: false)
@@ -252,53 +251,53 @@ class _RackScanScreenState extends State<RackScanScreen> {
           ),
           // TODO: i want this in center of width
           if (widget.rack.isNotEmpty)
-          Positioned(
-            top: 32.h * 6,
-            left: 4.w * 3,
-            right: 4.w * 3,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 8.h,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Scan the rack "${widget.rack}" code',
-                style: TextStyle(
-                  color: AppColors.backgroundColor,
-                  fontSize: 12.sp,
+            Positioned(
+              top: 32.h * 6,
+              left: 4.w * 3,
+              right: 4.w * 3,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Scan the rack "${widget.rack}" code',
+                  style: TextStyle(
+                    color: AppColors.backgroundColor,
+                    fontSize: 16.sp,
+                  ),
                 ),
               ),
             ),
-          ),
           if (widget.message.isNotEmpty)
-          Positioned(
-            top: 32.h * 6,
-            left: 4.w * 3,
-            right: 4.w * 3,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 8.h,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                widget.message,
-                style: TextStyle(
-                  color: AppColors.backgroundColor,
-                  fontSize: 12.sp,
+            Positioned(
+              top: 32.h * 6,
+              left: 4.w * 3,
+              right: 4.w * 3,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  widget.message,
+                  style: TextStyle(
+                    color: AppColors.backgroundColor,
+                    fontSize: 16.sp,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

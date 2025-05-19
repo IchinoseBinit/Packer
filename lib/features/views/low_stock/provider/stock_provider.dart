@@ -93,7 +93,6 @@ class StockProvider extends ChangeNotifier {
   void onScanCarton(BuildContext context, String code) async {
     try {
       // debugger();
-
       showLoading(context);
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
@@ -104,21 +103,23 @@ class StockProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         cartonModel = CartonModel.fromJson(response.data);
         if (cartonModel != null && cartonModel!.rackName.isEmpty) {
-          showYesNo(context).then((value) {
-            if (value == true) {
-              navigate(context,
-                  route: NavigationConstants.scanRackRoute,
-                  extra: {
-                    'cartonProduct': true,
-                    'message': '${cartonModel?.productName} - Assign a rack',
-                  });
-            }
-          });
-        } else {
+          // showYesNo(context).then((value) {
+          // if (value == true) {
           navigate(context, route: NavigationConstants.scanRackRoute, extra: {
-            "cartonProduct": true,
-            'rack': cartonModel?.rackName,
+            'cartonProduct': true,
+            'message': '${cartonModel?.productName} - Assign a rack',
           });
+          // }
+          // });
+        } else {
+          navigate(
+            context,
+            route: NavigationConstants.scanRackRoute,
+            extra: {
+              "cartonProduct": true,
+              'rack': cartonModel?.rackName,
+            },
+          );
         }
       } else {
         showToast("No data found");
@@ -357,7 +358,7 @@ class StockProvider extends ChangeNotifier {
 
   void updateRack(BuildContext context, String code, int productId) async {
     try {
-      debugger();
+      // debugger();
       showToast("Updating rack...");
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
@@ -412,10 +413,9 @@ class StockProvider extends ChangeNotifier {
                     onPressed: () {
                       Navigator.of(context).pop(); // Close dialog
                       navigate(context,
-                          route: NavigationConstants.scanRackRoute,
+                          route: NavigationConstants.qrScanScreenRoute,
                           extra: {
-                            "cartonProduct": true,
-                            'message': "Assign a rack",
+                            'scanCarton': true,
                           });
                     },
                     child: Text("Yes"),
