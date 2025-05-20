@@ -5,6 +5,7 @@ class AppUrls {
 
   static const String _productiodomainnUrl = "dropit.com.np";
   static const String _stagingdomainURL = "13.211.205.215:8000";
+  // static const String _stagingdomainURL = "dropit.com.np";
 
   static final String _baseUrl = EnvironmentConfig.when(
     production: _productionUrl,

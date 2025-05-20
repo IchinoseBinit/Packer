@@ -337,6 +337,7 @@ class StockProvider extends ChangeNotifier {
 
   void scanRack(
       BuildContext context, MobileScannerController? controller, String code) {
+    // debugger();
     if (cartonModel != null) {
       if (cartonModel!.rackName.isEmpty) {
         updateRack(context, code, cartonModel!.productId);
@@ -372,7 +373,7 @@ class StockProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        debugger();
+        // debugger();
         showToast("Rack updated successfully");
         WidgetsBinding.instance.addPostFrameCallback((_) {
           navigateAndRemoveAll(context,
