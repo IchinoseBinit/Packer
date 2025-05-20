@@ -99,16 +99,21 @@ class StockProvider extends ChangeNotifier {
         url: AppUrls.cartonInfoUrl.replaceAll(':id', code),
       );
       log("Carton Info: ${response.statusCode}");
-      removeLoading(context);
+
+      if (context.mounted) {
+        removeLoading(context);
+      }
       if (response.statusCode == 200) {
         cartonModel = CartonModel.fromJson(response.data);
         if (cartonModel != null && cartonModel!.rackName.isEmpty) {
           // showYesNo(context).then((value) {
           // if (value == true) {
-          navigate(context, route: NavigationConstants.scanRackRoute, extra: {
-            'cartonProduct': true,
-            'message': '${cartonModel?.productName} - Assign a rack',
-          });
+          if (context.mounted) {
+            navigate(context, route: NavigationConstants.scanRackRoute, extra: {
+              'cartonProduct': true,
+              'message': '${cartonModel?.productName} - Assign a rack',
+            });
+          }
           // }
           // });
         } else {

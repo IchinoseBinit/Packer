@@ -48,14 +48,13 @@ class _RackScanScreenState extends State<RackScanScreen> {
     }
   }
 
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-
   MobileScannerController? controller;
 
   @override
   void initState() {
     super.initState();
     controller = MobileScannerController();
+    controller?.start();
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   if (widget.isfromCartItem) {
     //     Provider.of<OrderProvider>(context, listen: false)
@@ -67,8 +66,6 @@ class _RackScanScreenState extends State<RackScanScreen> {
   var _flash = false;
 
   checkQr(String code) {
-    controller?.stop();
-
     log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
@@ -85,10 +82,14 @@ class _RackScanScreenState extends State<RackScanScreen> {
     if (widget.updateRack) {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .updateRack(context, code, widget.productId);
+      controller?.stop();
+
       return;
     }
 
     if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
+      controller?.stop();
+
       Provider.of<PackerTransferProvider>(context, listen: false)
           .initScanMessage(widget.productId);
       navigateReplacement(context,
@@ -201,104 +202,116 @@ class _RackScanScreenState extends State<RackScanScreen> {
       width: 200,
       height: 200,
     );
-    return Scaffold(
-      body: Stack(
-        children: [
-          // QRView(
-          //   key: qrKey,
-          //   onQRViewCreated: (qrController) {
-          //     cameraController = qrController;
-          //     qrController.scannedDataStream.listen((scanData) {
-          //       if (scanData.code != null) {
-          //         checkQr(scanData.code!);
-          //       }
-          //     });
-          //   },
-          //   overlay: QrScannerOverlayShape(
-          //     borderColor: AppColors.primaryColor,
-          //   ),
-          // ),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          dispose();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            // QRView(
+            //   key: qrKey,
+            //   onQRViewCreated: (qrController) {
+            //     cameraController = qrController;
+            //     qrController.scannedDataStream.listen((scanData) {
+            //       if (scanData.code != null) {
+            //         checkQr(scanData.code!);
+            //       }
+            //     });
+            //   },
+            //   overlay: QrScannerOverlayShape(
+            //     borderColor: AppColors.primaryColor,
+            //   ),
+            // ),
 
-          MobileScanner(
-            fit: BoxFit.cover,
-            scanWindow: scanWindow,
-            controller: controller,
-            errorBuilder: (context, error, child) {
-              return ScannerErrorWidget(error: error);
-            },
-            onDetect: (barcodes) {
-              checkQr(barcodes.barcodes.first.rawValue.toString());
-            },
-          ),
-          _buildBarcodeOverlay(),
-          _buildScanWindow(scanWindow),
+            MobileScanner(
+              fit: BoxFit.cover,
+              scanWindow: scanWindow,
+              controller: controller,
+              errorBuilder: (context, error, child) {
+                print(error);
+                debugger();
 
-          Positioned(
-            child: buildFlash(),
-            top: 8.h * 6,
-            right: 4.w * 3,
-          ),
-          Positioned(
-            top: 8.h * 6,
-            left: 4.w * 3,
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
+                return ScannerErrorWidget(error: error);
+              },
+              onDetect: (barcodes) {
+                checkQr(barcodes.barcodes.first.rawValue.toString());
+              },
+            ),
+
+            _buildBarcodeOverlay(),
+            _buildScanWindow(scanWindow),
+
+            Positioned(
+              child: buildFlash(),
+              top: 8.h * 6,
+              right: 4.w * 3,
+            ),
+            Positioned(
+              top: 8.h * 6,
+              left: 4.w * 3,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-          // TODO: i want this in center of width
-          if (widget.rack.isNotEmpty)
-            Positioned(
-              top: 32.h * 6,
-              left: 4.w * 3,
-              right: 4.w * 3,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'Scan the rack "${widget.rack}" code',
-                  style: TextStyle(
-                    color: AppColors.backgroundColor,
-                    fontSize: 16.sp,
+            // TODO: i want this in center of width
+            if (widget.rack.isNotEmpty)
+              Positioned(
+                top: 32.h * 6,
+                left: 4.w * 3,
+                right: 4.w * 3,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Scan the rack "${widget.rack}" code',
+                    style: TextStyle(
+                      color: AppColors.backgroundColor,
+                      fontSize: 16.sp,
+                    ),
                   ),
                 ),
               ),
-            ),
-          if (widget.message.isNotEmpty)
-            Positioned(
-              top: 32.h * 6,
-              left: 4.w * 3,
-              right: 4.w * 3,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  widget.message,
-                  style: TextStyle(
-                    color: AppColors.backgroundColor,
-                    fontSize: 16.sp,
+            if (widget.message.isNotEmpty)
+              Positioned(
+                top: 32.h * 6,
+                left: 4.w * 3,
+                right: 4.w * 3,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    widget.message,
+                    style: TextStyle(
+                      color: AppColors.backgroundColor,
+                      fontSize: 16.sp,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

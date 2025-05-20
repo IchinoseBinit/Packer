@@ -55,8 +55,6 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-
   MobileScannerController? controller;
 
   @override
@@ -80,8 +78,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
     HapticFeedback.heavyImpact();
     if (widget.scanCarton) {
-      controller?.start();
-
+      controller?.dispose();
       navigatePop(context, code);
 
       return;
