@@ -118,11 +118,9 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                         route: NavigationConstants.qrScanScreenRoute,
                         extra: {
                           'scanCarton': true,
-                        }).then((value) {
-                      // debugger();
+                        }).then((value) { 
                       log('Scan Carton Value: $value');
                       if (value != null) {
-                        // debugger();
                         Provider.of<StockProvider>(context, listen: false)
                             .onScanCarton(context, value);
                       }
