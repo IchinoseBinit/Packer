@@ -71,7 +71,6 @@ class _RackScanScreenState extends State<RackScanScreen> {
     HapticFeedback.heavyImpact();
 
     if (widget.cartonProduct) {
-      // debugger();
       Provider.of<StockProvider>(context, listen: false)
           .scanRack(context, controller, code);
       return;

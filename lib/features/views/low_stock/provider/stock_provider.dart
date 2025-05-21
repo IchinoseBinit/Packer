@@ -14,6 +14,7 @@ import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
+import 'package:packer/features/views/navigation/navigation_page.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
@@ -350,6 +351,8 @@ class StockProvider extends ChangeNotifier {
           .toLowerCase()
           .contains(cartonModel!.rackName.toLowerCase())) {
         showToast("Rack scanned successfully");
+        controller?.dispose();
+        // navigatePop(context);
         navigate(context, route: NavigationConstants.dashboardRoute);
       } else {
         controller?.start();
