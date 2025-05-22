@@ -351,9 +351,10 @@ class StockProvider extends ChangeNotifier {
           .toLowerCase()
           .contains(cartonModel!.rackName.toLowerCase())) {
         showToast("Rack scanned successfully");
-        controller?.dispose();
-        // navigatePop(context);
-        navigate(context, route: NavigationConstants.dashboardRoute);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigateReplacement(context,
+              route: NavigationConstants.dashboardRoute);
+        });
       } else {
         controller?.start();
 

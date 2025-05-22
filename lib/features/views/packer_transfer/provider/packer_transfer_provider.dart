@@ -128,7 +128,7 @@ class PackerTransferProvider extends ChangeNotifier {
       notifyListeners();
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
-      navigateReplacement(context, route: NavigationConstants.basketListRoute);
+      navigateAndRemoveAll(context, route: NavigationConstants.basketListRoute);
       return;
     }
 
@@ -276,7 +276,7 @@ class PackerTransferProvider extends ChangeNotifier {
             extra: {"rack": item.rack, "productId": item.product});
         return;
       }
-      showYesNo(context).then((value) {
+       showYesNo(context).then((value) {
         if (value == true) {
           navigate(
             context,
@@ -355,7 +355,8 @@ class PackerTransferProvider extends ChangeNotifier {
           body: {
             "product_id": productId,
             "unit_tags": scanTagsList,
-            if (role != "packer") "basket_identifier": selectedBasketModel?.identifier,
+            if (role != "packer")
+              "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
@@ -412,7 +413,7 @@ class PackerTransferProvider extends ChangeNotifier {
     } catch (ex) {
       showToast(ex.toString());
       removeLoading(context);
-    } 
+    }
   }
 
   // complete transfer

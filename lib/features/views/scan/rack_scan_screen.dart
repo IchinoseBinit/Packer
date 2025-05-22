@@ -67,6 +67,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
   checkQr(String code) {
     log(code, name: "qr code data");
+    debugger();
 
     HapticFeedback.heavyImpact();
 
@@ -83,6 +84,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .updateRack(context, code, widget.productId);
       controller?.stop();
+      removeLoading(context);
 
       return;
     }
