@@ -50,6 +50,11 @@ class ProfileScreen extends StatelessWidget {
       'title': 'Transaction History',
       'screen': 'transaction_history',
     },
+    {
+      'icon': Icons.inventory,
+      'title': 'Inventory Items',
+      'screen': 'transfer_list',
+    },
   ];
 
   ProfileScreen({super.key});
