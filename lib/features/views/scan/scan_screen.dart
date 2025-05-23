@@ -349,7 +349,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Scan the identifier code',
+                  'Scan the Inventory Transfer code',
                   style: TextStyle(
                     color: AppColors.backgroundColor,
                     fontSize: 16.sp,

@@ -128,7 +128,7 @@ class PackerTransferProvider extends ChangeNotifier {
       notifyListeners();
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
-      navigateAndRemoveAll(context, route: NavigationConstants.basketListRoute);
+      navigateReplacement(context, route: NavigationConstants.basketListRoute);
       return;
     }
 
@@ -378,7 +378,7 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  void updateRack(BuildContext context, String code, int productId) async {
+  Future<void> updateRack(BuildContext context, String code, int productId) async {
     try {
       showLoading(context);
       final url = AppUrls.updateRackUrl;
