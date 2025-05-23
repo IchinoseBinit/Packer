@@ -15,26 +15,25 @@ class BasketList extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
-          navigatePop(context);
-          Provider.of<PackerTransferProvider>(context, listen: false)
-              .fetchTransferList(context);
+          return;
         }
+        navigatePop(context);
+        Provider.of<PackerTransferProvider>(context, listen: false)
+            .fetchTransferList(context);
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Basket List"),
           centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Provider.of<PackerTransferProvider>(context, listen: false)
-                  .fetchTransferList(context);
-              // navigate(context, route: NavigationConstants.dashboardRoute);
-            },
-          ),
+          
         ),
         body: Consumer<PackerTransferProvider>(
           builder: (context, provider, child) {
+            if (provider.selectedTransferModelLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
             if (provider.selectedTransferModel?.baskets == null) {
               return const Center(
                 child: CircularProgressIndicator(),

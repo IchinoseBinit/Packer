@@ -50,6 +50,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
   MobileScannerController? controller;
 
+  var hasScanned = false;
   @override
   void initState() {
     super.initState();
@@ -65,35 +66,40 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
   var _flash = false;
 
-  checkQr(String code) async {
+  checkQr(String code) async{
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     log(code, name: "qr code data");
-    debugger();
 
     HapticFeedback.heavyImpact();
 
     if (widget.cartonProduct) {
       Provider.of<StockProvider>(context, listen: false)
           .scanRack(context, controller, code);
+          hasScanned = false;
       return;
     }
 
-    showLoading(context);
 
     // updateRack
     if (widget.updateRack) {
       await Provider.of<PackerTransferProvider>(context, listen: false)
           .updateRack(context, code, widget.productId);
-      // controller?.stop();
-      removeLoading(context);
+      controller?.stop();
+      hasScanned = false;
 
       return;
     }
 
     if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
+      showLoading(context);
       controller?.stop();
 
       Provider.of<PackerTransferProvider>(context, listen: false)
           .initScanMessage(widget.productId);
+          hasScanned = false;
       navigateReplacement(context,
           route: NavigationConstants.qrScanScreenRoute,
           extra: {
@@ -103,6 +109,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
       removeLoading(context);
     } else {
+      hasScanned = false;
       removeLoading(context);
       ShowAlertDialog(
         body: const Text("Invalid QR"),
@@ -234,8 +241,6 @@ class _RackScanScreenState extends State<RackScanScreen> {
               scanWindow: scanWindow,
               controller: controller,
               errorBuilder: (context, error, child) {
-                print(error);
-                debugger();
 
                 return ScannerErrorWidget(error: error);
               },
