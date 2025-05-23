@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -14,7 +15,7 @@ class BasketList extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
-              navigatePop(context);
+          navigatePop(context);
           Provider.of<PackerTransferProvider>(context, listen: false)
               .fetchTransferList(context);
         }
@@ -28,6 +29,7 @@ class BasketList extends StatelessWidget {
             onPressed: () {
               Provider.of<PackerTransferProvider>(context, listen: false)
                   .fetchTransferList(context);
+              // navigate(context, route: NavigationConstants.dashboardRoute);
             },
           ),
         ),
@@ -74,12 +76,12 @@ class BasketCard extends StatelessWidget {
   final VoidCallback? callback;
 
   const BasketCard({
-    Key? key,
+    super.key,
     required this.index,
     required this.model,
     required this.primaryColor,
     this.callback,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

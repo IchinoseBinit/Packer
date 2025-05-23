@@ -128,7 +128,7 @@ class PackerTransferProvider extends ChangeNotifier {
       notifyListeners();
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
-      navigateAndRemoveAll(context, route: NavigationConstants.basketListRoute);
+      navigate(context, route: NavigationConstants.basketListRoute);
       return;
     }
 
@@ -276,7 +276,7 @@ class PackerTransferProvider extends ChangeNotifier {
             extra: {"rack": item.rack, "productId": item.product});
         return;
       }
-       showYesNo(context).then((value) {
+      showYesNo(context).then((value) {
         if (value == true) {
           navigate(
             context,
@@ -378,7 +378,8 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  void updateRack(BuildContext context, String code, int productId) async {
+  Future<void> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
       showLoading(context);
       final url = AppUrls.updateRackUrl;
@@ -391,7 +392,6 @@ class PackerTransferProvider extends ChangeNotifier {
           // "store_id": "selectedTransferModel?.storeId",
         },
       );
-      removeLoading(context);
       if (response.statusCode == 200) {
         for (var element
             in selectedTransferModel?.items ?? <TransferItemModel>[]) {
@@ -412,7 +412,6 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } catch (ex) {
       showToast(ex.toString());
-      removeLoading(context);
     }
   }
 
