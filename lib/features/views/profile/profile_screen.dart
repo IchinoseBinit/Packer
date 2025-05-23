@@ -63,15 +63,15 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     double myToolBarHeight = 150.h;
     return Consumer<HomeProvider>(builder: (context, value, child) {
-      if (value.user.role == UserRole.manager) {
-        if (otherInfoData.length <= 2) {
-          otherInfoData.add({
-            'icon': Icons.transform,
-            'title': 'Transfer Items',
-            'screen': 'transfer_list',
-          });
-        }
-      }
+      // if (value.user.role == UserRole.manager) {
+      //   if (otherInfoData.length <= 2) {
+      //     otherInfoData.add({
+      //       'icon': Icons.transform,
+      //       'title': 'Transfer Items',
+      //       'screen': 'transfer_list',
+      //     });
+      //   }
+      // }
       return Scaffold(
         appBar: AppBar(
           title: Container(
