@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
@@ -18,6 +21,8 @@ class OrderDetails extends StatefulWidget {
 
 class _OrderDetailsState extends State<OrderDetails> {
   late Future<void> future;
+
+  bool isFull = false;
 
   @override
   void initState() {

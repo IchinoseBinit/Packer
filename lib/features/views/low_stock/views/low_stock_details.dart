@@ -55,7 +55,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
               },
               icon: Icon(
                 Icons.shopping_cart,
-                color: AppColors.splashNewBackgroundColor,
+                color: AppColors.cartTextColor,
               ),
             ),
           ],

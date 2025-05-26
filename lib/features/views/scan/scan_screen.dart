@@ -76,7 +76,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   var _flash = false;
 
-  checkQr(String code) {
+  checkQr(String code) async {
     if (hasScanned) {
       return;
     }
@@ -104,10 +104,6 @@ class _ScanScreenState extends State<ScanScreen> {
 
       // navigatePop(context, code);
 
-    if (widget.scanCarton){
-      controller?.start();
-      hasScanned = false;
-      navigatePop(context, code);
       return;
     }
 
