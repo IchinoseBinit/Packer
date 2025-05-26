@@ -375,7 +375,8 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateRack(BuildContext context, String code, int productId) async {
+  Future<void> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
       showLoading(context);
       final url = AppUrls.updateRackUrl;
@@ -397,6 +398,7 @@ class PackerTransferProvider extends ChangeNotifier {
         }
         Provider.of<PackerTransferProvider>(context, listen: false)
             .initScanMessage(productId);
+        removeLoading(context);
         navigateReplacement(context,
             route: NavigationConstants.qrScanScreenRoute,
             extra: {
@@ -404,9 +406,11 @@ class PackerTransferProvider extends ChangeNotifier {
               "productId": productId,
             });
       } else {
+        removeLoading(context);
         showToast('Failed to update rack');
       }
     } catch (ex) {
+      removeLoading(context);
       showToast(ex.toString());
     }
   }
