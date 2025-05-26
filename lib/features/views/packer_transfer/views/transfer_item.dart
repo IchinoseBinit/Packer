@@ -54,7 +54,7 @@ class TransferItemsList extends StatelessWidget {
               SizedBox(height: 8.h),
               Expanded(
                 child: ListView.separated(
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(16.w),
                   shrinkWrap: true,
                   itemCount: provider.selectedTransferModel!.items?.length ?? 0,
