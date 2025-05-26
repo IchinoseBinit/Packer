@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -13,27 +14,26 @@ class BasketList extends StatelessWidget {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-              navigatePop(context);
-          Provider.of<PackerTransferProvider>(context, listen: false)
-              .fetchTransferList(context);
-        
+        if (didPop) {
+          return;
+        }
+        navigatePop(context);
+        Provider.of<PackerTransferProvider>(context, listen: false)
+            .fetchTransferList(context);
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Basket List"),
           centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              navigatePop(context);
-              Provider.of<PackerTransferProvider>(context, listen: false)
-                  .fetchTransferList(context);
-            },
-          ),
+          
         ),
         body: Consumer<PackerTransferProvider>(
           builder: (context, provider, child) {
+            if (provider.selectedTransferModelLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
             if (provider.selectedTransferModel?.baskets == null) {
               return const Center(
                 child: CircularProgressIndicator(),
@@ -75,12 +75,12 @@ class BasketCard extends StatelessWidget {
   final VoidCallback? callback;
 
   const BasketCard({
-    Key? key,
+    super.key,
     required this.index,
     required this.model,
     required this.primaryColor,
     this.callback,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

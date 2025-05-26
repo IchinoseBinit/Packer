@@ -5,11 +5,11 @@ class AppUrls {
 
   // static const String _domainUrl = "192.168.1.73:8000";
   // static const String _domainUrl = "192.168.100.183:8000";
-  static const String _baseUrl = "http://$_domainUrl";
+  // static const String _baseUrl = "http://$_domainUrl";
 
   // static const String _domainUrl = "dropit.com.np";
   // static const String _baseUrl = "https://$_domainUrl";
-  // static const String _baseUrl = "https://dropit.com.np";
+  static const String _baseUrl = "https://dropit.com.np";
 
   static const String imageUrl = _baseUrl;
 

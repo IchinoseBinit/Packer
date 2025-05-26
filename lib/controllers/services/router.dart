@@ -31,6 +31,7 @@ import 'package:packer/features/views/scan/rack_scan_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
+import 'package:packer/features/views/widgets/after_delivery.dart';
 
 class AppRouter {
   static late GoRouter router;
@@ -244,6 +245,14 @@ class AppRouter {
                 path: NavigationConstants.transferDetailsRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const TransferItemsList();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.afterDeliveryRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const DeliveredPage(
+                    noOfItems: 1,
+                  );
                 },
               ),
             ]),

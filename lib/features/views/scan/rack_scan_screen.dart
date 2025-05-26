@@ -53,6 +53,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
   MobileScannerController? controller;
 
+  var hasScanned = false;
   @override
   void initState() {
     super.initState();
@@ -67,9 +68,11 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
   var _flash = false;
 
-  checkQr(String code) async {
-    controller?.stop();
-
+  checkQr(String code) async{
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
@@ -77,18 +80,18 @@ class _RackScanScreenState extends State<RackScanScreen> {
     if (widget.cartonProduct) {
       Provider.of<StockProvider>(context, listen: false)
           .scanRack(context, controller, code);
+          hasScanned = false;
       return;
     }
 
 
     // updateRack
     if (widget.updateRack) {
-      final value =
-          await Provider.of<PackerTransferProvider>(context, listen: false)
-              .updateRack(context, code, widget.productId);
-      if (!value) {
-        controller?.start();
-      }
+      await Provider.of<PackerTransferProvider>(context, listen: false)
+          .updateRack(context, code, widget.productId);
+      controller?.stop();
+      hasScanned = false;
+
       return;
     }
 
@@ -96,8 +99,12 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
 
     if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
+      showLoading(context);
+      controller?.stop();
+
       Provider.of<PackerTransferProvider>(context, listen: false)
           .initScanMessage(widget.productId);
+          hasScanned = false;
       navigateReplacement(context,
           route: NavigationConstants.qrScanScreenRoute,
           extra: {
@@ -107,6 +114,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
       removeLoading(context);
     } else {
+      hasScanned = false;
       removeLoading(context);
       ShowAlertDialog(
         body: const Text("Invalid QR"),
@@ -226,19 +234,21 @@ class _RackScanScreenState extends State<RackScanScreen> {
           //   ),
           // ),
 
-          MobileScanner(
-            fit: BoxFit.cover,
-            scanWindow: scanWindow,
-            controller: controller,
-            errorBuilder: (context, error, child) {
-              return ScannerErrorWidget(error: error);
-            },
-            onDetect: (barcodes) {
-              checkQr(barcodes.barcodes.first.rawValue.toString());
-            },
-          ),
-          _buildBarcodeOverlay(),
-          _buildScanWindow(scanWindow),
+            MobileScanner(
+              fit: BoxFit.cover,
+              scanWindow: scanWindow,
+              controller: controller,
+              errorBuilder: (context, error, child) {
+
+                return ScannerErrorWidget(error: error);
+              },
+              onDetect: (barcodes) {
+                checkQr(barcodes.barcodes.first.rawValue.toString());
+              },
+            ),
+
+            _buildBarcodeOverlay(),
+            _buildScanWindow(scanWindow),
 
           Positioned(
             child: buildFlash(),
@@ -310,3 +320,4 @@ class _RackScanScreenState extends State<RackScanScreen> {
     );
   }
 }
+

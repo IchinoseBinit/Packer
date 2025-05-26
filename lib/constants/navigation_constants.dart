@@ -37,4 +37,7 @@ class NavigationConstants {
   static const String lowStockRoute = 'low_stock';
   static const String lowStockDetailRoute = 'low_stock_detail';
   static const String lowStockScannerRoute = 'low_stock_scanner';
+
+  // after_delivery
+  static const String afterDeliveryRoute = 'after_delivery';
 }

@@ -40,6 +40,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
     }
   }
 
+  bool hasScanned = false;
+
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
 
   MobileScannerController? controller;
@@ -57,6 +59,10 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   var _flash = false;
 
   checkQr(String code) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "Product qr code data");
@@ -76,15 +82,17 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         Provider.of<OrderProvider>(context, listen: false)
             .scanCountOrder(productId);
         print('ssssssssssssss   :    $productId');
-        
+
         Provider.of<OrderProvider>(context, listen: false)
             .updateProductList(code);
         removeLoading(context);
+        hasScanned = false;
         Navigator.pop(context);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
         print(ex.toString());
+        hasScanned = false;
       }
     } else {
       removeLoading(context);
@@ -96,6 +104,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 

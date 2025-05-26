@@ -35,6 +35,7 @@ class BucketScanScreen extends StatefulWidget {
 
 class _BucketScanScreenState extends State<BucketScanScreen> {
   String data = "";
+  bool hasScanned = false;
   @override
   void reassemble() {
     super.reassemble();
@@ -59,6 +60,10 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
   var _flash = false;
 
   checkQr(String code, String orderId) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     log(orderId, name: "order id:");
     // data = code;
     // setState(() {
@@ -77,6 +82,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
       try {
         Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(code);
+        hasScanned = false;
 
         try {
           Provider.of<OrderProvider>(context, listen: false).clearBasket();
@@ -93,6 +99,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
         removeLoading(context);
         showToast(ex.toString());
         print(ex.toString());
+        hasScanned = false;
       }
     } else {
       removeLoading(context);
@@ -104,6 +111,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 

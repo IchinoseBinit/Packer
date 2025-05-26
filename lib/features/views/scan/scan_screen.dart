@@ -44,6 +44,8 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> {
+  bool hasScanned = false;
+
   @override
   void reassemble() {
     super.reassemble();
@@ -73,6 +75,10 @@ class _ScanScreenState extends State<ScanScreen> {
   var _flash = false;
 
   checkQr(String code) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -80,6 +86,7 @@ class _ScanScreenState extends State<ScanScreen> {
     HapticFeedback.heavyImpact();
     if (widget.scanCarton){
       controller?.start();
+      hasScanned = false;
       navigatePop(context, code);
       return;
     }
@@ -93,11 +100,13 @@ class _ScanScreenState extends State<ScanScreen> {
         Provider.of<HomeProvider>(context, listen: false)
             .updateAvailability(topicName: topicName);
         removeLoading(context);
+        hasScanned = false;
         Navigator.pop(context);
         showToast("joined the waiting list");
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
@@ -110,6 +119,7 @@ class _ScanScreenState extends State<ScanScreen> {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 
@@ -333,7 +343,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Scan the identifier code',
+                  'Scan the Inventory Transfer code',
                   style: TextStyle(
                     color: AppColors.backgroundColor,
                     fontSize: 12.sp,

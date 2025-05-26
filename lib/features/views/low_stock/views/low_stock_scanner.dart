@@ -46,6 +46,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
 
   MobileScannerController? controller;
+  bool hasScanned = false;
 
   @override
   void initState() {
@@ -57,6 +58,10 @@ class _LowStockScannerState extends State<LowStockScanner> {
   var _flash = false;
 
   checkQr(String code) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
    
     controller?.stop();
 
@@ -68,6 +73,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
       try {
         Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(code);
+            hasScanned = false;
 
         try {
           Provider.of<OrderProvider>(context, listen: false).clearBasket();
@@ -78,12 +84,14 @@ class _LowStockScannerState extends State<LowStockScanner> {
         removeLoading(context);
         Navigator.pop(context);
         showToast("basket available");
+        hasScanned = false;
         // navigate(context,
         //     route: NavigationConstants.orderDetailsRoute, extra: orderId);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
         print(ex.toString());
+        hasScanned = false;
       }
     } else {
       removeLoading(context);
@@ -95,6 +103,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 

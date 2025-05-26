@@ -27,6 +27,7 @@ class PackerTransferProvider extends ChangeNotifier {
   String? role;
 
   List<String> scanTagsList = [];
+  bool hasScanned = false;
 
   void setRole(UserRole value) {
     role = value.name;
@@ -115,6 +116,10 @@ class PackerTransferProvider extends ChangeNotifier {
   // check identifier
   checkIdentifier(
       BuildContext context, MobileScannerController? controller, String code) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -129,10 +134,12 @@ class PackerTransferProvider extends ChangeNotifier {
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
       navigateReplacement(context, route: NavigationConstants.basketListRoute);
+      hasScanned = false;
       return;
     }
 
     _handleInvalidQR(context, controller);
+    hasScanned = false;
   }
 
   bool scanCountOrder(int cartItemId) {
@@ -164,6 +171,10 @@ class PackerTransferProvider extends ChangeNotifier {
 
   checkItemQr(BuildContext context, MobileScannerController? controller,
       String code, int productId) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -176,6 +187,7 @@ class PackerTransferProvider extends ChangeNotifier {
       final prodId = int.tryParse(code.split('-').first) ?? 0;
       if (prodId != productId) {
         _handleInvalidQR(context, controller);
+        hasScanned = false;
         return;
       }
 
@@ -184,6 +196,7 @@ class PackerTransferProvider extends ChangeNotifier {
           removeLoading(context);
           showToast("Tag already scanned");
           controller?.start();
+          hasScanned = false;
           return;
         }
         if (role != "packer") {
@@ -193,27 +206,34 @@ class PackerTransferProvider extends ChangeNotifier {
           );
           if (item != null && (item.tags?.contains(code) ?? false)) {
             scanTagsList.add(code);
+            hasScanned = false;
           } else {
             _handleInvalidQR(context, controller);
+            hasScanned = false;
             return;
           }
         } else {
           scanTagsList.add(code);
+          hasScanned = false;
         }
         final isScanned = scanCountOrder(prodId);
         removeLoading(context);
         if (isScanned) {
           postScannedTags(context, productId);
+          hasScanned = false;
         } else {
           controller?.start();
+          hasScanned = false;
         }
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
         print(ex.toString());
+        hasScanned = false;
       }
     } else {
       _handleInvalidQR(context, controller);
+      hasScanned = false;
     }
   }
 
@@ -228,6 +248,10 @@ class PackerTransferProvider extends ChangeNotifier {
 
   checkBasketQr(
       BuildContext context, MobileScannerController? controller, String code) {
+    if (hasScanned) {
+      return;
+    }
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -246,9 +270,11 @@ class PackerTransferProvider extends ChangeNotifier {
       fetchBasketDetails(code);
       navigateReplacement(context,
           route: NavigationConstants.transferDetailsRoute);
+      hasScanned = false;
       return;
     }
     _handleInvalidQR(context, controller);
+    hasScanned = false;
   }
 
   void _handleInvalidQR(
@@ -384,8 +410,7 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRack(
-      BuildContext context, String code, int productId) async {
+  Future<bool> updateRack(BuildContext context, String code, int productId) async {
     try {
       showLoading(context);
       final url = AppUrls.updateRackUrl;
@@ -397,9 +422,6 @@ class PackerTransferProvider extends ChangeNotifier {
           "product_id": productId,
         },
       );
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        removeLoading(context);
-      });
       if (response.statusCode == 200) {
         for (var element
             in selectedTransferModel?.items ?? <TransferItemModel>[]) {
@@ -424,10 +446,7 @@ class PackerTransferProvider extends ChangeNotifier {
         return false;
       }
     } catch (ex) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        removeLoading(context);
-        showToast(ex.toString());
-      });
+      showToast(ex.toString());
       return false;
     }
   }
