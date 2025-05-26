@@ -70,14 +70,12 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
           trailingSvgAsset: AppAssets.bell_icon,
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    await Provider.of<StockProvider>(context, listen: false)
-                        .fetchLowStockProducts();
-                  },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
                   child: Consumer<StockProvider>(
                     builder: (context, value, child) {
                       if (value.isLoading) {
@@ -91,38 +89,34 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                         );
                       } else {
                         return ListView.builder(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.w, vertical: 16.h),
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: value.lowStockList.length,
                           itemBuilder: (context, index) {
                             return LowStockCard(
-                              model: value.lowStockList[index],
-                              primaryColor: Theme.of(context).primaryColor,
-                              callback: () {
-                                Provider.of<StockProvider>(context,
-                                        listen: false)
-                                    .onDetailsTaped(
-                                        context, value.lowStockList[index]);
-                              },
-                            );
+                                model: value.lowStockList[index],
+                                primaryColor: Theme.of(context).primaryColor,
+                                callback: () {
+                                  Provider.of<StockProvider>(context,
+                                          listen: false)
+                                      .onDetailsTaped(
+                                          context, value.lowStockList[index]);
+                                });
                           },
                         );
                       }
                     },
                   ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 20.h),
-                child: GeneralElevatedButton(
+                SizedBox(height: 20.h),
+                GeneralElevatedButton(
                   title: 'Scan Carton',
                   onPressed: () {
-                    navigate(
-                      context,
-                      route: NavigationConstants.qrScanScreenRoute,
-                      extra: {'scanCarton': true},
-                    ).then((value) {
+                    navigate(context,
+                        route: NavigationConstants.qrScanScreenRoute,
+                        extra: {
+                          'scanCarton': true,
+                        }).then((value) { 
                       log('Scan Carton Value: $value');
                       if (value != null) {
                         Provider.of<StockProvider>(context, listen: false)
@@ -131,8 +125,9 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                     });
                   },
                 ),
-              ),
-            ],
+                SizedBox(height: 20.h),
+              ],
+            ),
           ),
         ),
       );

@@ -10,6 +10,18 @@
             "type": "dart"
         },
         {
+            "name": "packer (PROD) Release",
+            "request": "launch",
+            "flutterMode": "release",
+            "type": "dart",
+            "args": [
+                
+                "--target",
+                "lib/main.dart",
+                "--dart-define=APIType=production"
+            ]
+        },
+        {
             "name": "packer (profile mode)",
             "request": "launch",
             "type": "dart",
