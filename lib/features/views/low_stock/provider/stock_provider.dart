@@ -320,12 +320,10 @@ class StockProvider extends ChangeNotifier {
       // }
 
       showToast("Transferred Successfully");
-      navigatePop(context);
       lowStockList.remove(selectedModel);
       notifyListeners();
-      if (lowStockList.isEmpty) {
-        fetchLowStockProducts();
-      }
+      navigatePop(context);
+      fetchLowStockProducts();
     } catch (e) {
       showToast(e.toString());
     }
