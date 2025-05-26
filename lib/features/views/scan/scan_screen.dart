@@ -12,6 +12,7 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -28,7 +29,7 @@ class ScanScreen extends StatefulWidget {
     this.scanCarton = false,
     this.forBasket = false,
     this.message = "",
-
+    this.isLowStockCarton = false,
   });
 
   final bool isfromCartItem;
@@ -38,6 +39,7 @@ class ScanScreen extends StatefulWidget {
   final bool scanCarton;
   final bool forBasket;
   final String message;
+  final bool isLowStockCarton;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -84,6 +86,24 @@ class _ScanScreenState extends State<ScanScreen> {
     log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
+    if (widget.scanCarton) {
+      if (code.isNotEmpty) {
+        bool? val;
+        if (widget.isLowStockCarton) {
+          val = await Provider.of<StockProvider>(context, listen: false)
+              .lowStockCartonScan(context, code);
+
+        } else {
+          val = await Provider.of<StockProvider>(context, listen: false)
+              .onScanCarton(context, code);
+        }
+        if (val == false) {
+          controller?.start();
+        }
+      }
+
+      // navigatePop(context, code);
+
     if (widget.scanCarton){
       controller?.start();
       hasScanned = false;

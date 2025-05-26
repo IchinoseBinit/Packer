@@ -1,8 +1,13 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -14,16 +19,14 @@ import 'package:provider/provider.dart';
 
 class LowStockDetails extends StatefulWidget {
   const LowStockDetails({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<LowStockDetails> createState() => _LowStockDetailsState();
 }
 
 class _LowStockDetailsState extends State<LowStockDetails> {
-
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -36,7 +39,6 @@ class _LowStockDetailsState extends State<LowStockDetails> {
       },
       child: Scaffold(
         appBar: AppBar(
-          centerTitle: true,
           title: const Text('Low Stock Details'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -45,9 +47,20 @@ class _LowStockDetailsState extends State<LowStockDetails> {
               navigatePop(context);
             },
           ),
+          actions: [
+            IconButton(
+              onPressed: () {
+                navigate(context,
+                    route: NavigationConstants.lowStockScannerRoute);
+              },
+              icon: Icon(
+                Icons.shopping_cart,
+                color: AppColors.splashNewBackgroundColor,
+              ),
+            ),
+          ],
         ),
         body: Consumer<StockProvider>(
-          
           builder: (context, state, child) {
             final model = state.selectedModel ?? LowStockModel();
             return SafeArea(
@@ -63,26 +76,33 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     // 20.h
                     SizedBox(height: 20.h),
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: model.products.length,
-                        itemBuilder: (context, index) {
-                          final product = model.products[index];
-                          return GestureDetector(
-                            onTap: () {
-                              if (state.checkScanCount(product.productId)) {
-                                return;
-                              } 
-                              state.onProductDetailsTaped(context, product);
-                            },
-                            child: ItemWidget(
-                              model: product,
-                              status: state.checkScanCount(product.productId)
-                                  ? ItemStatus.done
-                                  : ItemStatus.remaining,
-                              quantity: state.getScanCount(product.productId),
-                            ),
-                          );
+                      child: RefreshIndicator(
+                        onRefresh: () {
+                          return Provider.of<StockProvider>(context,
+                                  listen: false)
+                              .fetchLowStockProducts();
                         },
+                        child: ListView.builder(
+                          itemCount: model.products.length,
+                          itemBuilder: (context, index) {
+                            final product = model.products[index];
+                            return GestureDetector(
+                              onTap: () {
+                                if (state.checkScanCount(product.productId)) {
+                                  return;
+                                }
+                                showToast("Scan Carton First");
+                              },
+                              child: ItemWidget(
+                                model: product,
+                                status: state.checkScanCount(product.productId)
+                                    ? ItemStatus.done
+                                    : ItemStatus.remaining,
+                                quantity: state.getScanCount(product.productId),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     // 20.h
@@ -90,19 +110,24 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     state.showCompleteButton()
                         ? GeneralElevatedButton(
                             onPressed: () {
+                              // debugger();
+
                               state.transferBasket(context);
                             },
                             title: "Complete",
                           )
-                        : Center(
-                          child: Text(
-                              "Please scan all the items to complete the transfer.",
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.primaryColor,
-                                  ),
-                                  textAlign: TextAlign.center,
-                            ),
-                        ),
+                        : GeneralElevatedButton(
+                            title: "Scan Carton",
+                            onPressed: () {
+                              navigate(
+                                context,
+                                route: NavigationConstants.qrScanScreenRoute,
+                                extra: {
+                                  'scanCarton': true,
+                                  'isLowStockCarton': true,
+                                },
+                              );
+                            }),
                     // 20.h
                     SizedBox(height: 20.h),
                   ],

@@ -6,15 +6,20 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class StockProvider extends ChangeNotifier {
   List<LowStockModel> lowStockList = [];
@@ -61,7 +66,7 @@ class StockProvider extends ChangeNotifier {
     return 0;
   }
 
-  void fetchLowStockProducts() async {
+  Future<void> fetchLowStockProducts() async {
     try {
       isLoading = true;
       isError = false;
@@ -90,9 +95,12 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  void onScanCarton(BuildContext context, String code) async {
+  Future callCartonInfoApi(BuildContext context, String code) async {
     try {
       showLoading(context);
+      if (!code.contains("carton")) {
+        throw "Invalid Carton QR";
+      }
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.cartonInfoUrl.replaceAll(':id', code),
@@ -101,25 +109,106 @@ class StockProvider extends ChangeNotifier {
       removeLoading(context);
       if (response.statusCode == 200) {
         cartonModel = CartonModel.fromJson(response.data);
-        if (cartonModel != null && cartonModel!.rackName.isEmpty) {
-          showYesNo(context).then((value) {
-            if (value == true) {
-              navigate(context,
-                  route: NavigationConstants.scanRackRoute,
-                  extra: {
-                    'cartonProduct': true,
-                    'message': '${cartonModel?.productName} - Assign a rack',
-                  });
-            }
-          });
-        } else {
-          navigate(context, route: NavigationConstants.scanRackRoute, extra: {
-            "cartonProduct": true,
-            'rack': cartonModel?.rackName,
-          });
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future onScanCarton(BuildContext context, String code) async {
+    try {
+      await callCartonInfoApi(context, code);
+
+      if (cartonModel != null && cartonModel!.rackName.isEmpty) {
+        if (context.mounted) {
+          navigateReplacement(context,
+              route: NavigationConstants.scanRackRoute,
+              extra: {
+                'cartonProduct': true,
+                'message': '${cartonModel?.productName} - Assign a rack',
+              });
         }
       } else {
-        showToast("No data found");
+        navigateReplacement(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "cartonProduct": true,
+            'rack': cartonModel?.rackName,
+          },
+        );
+      }
+    } catch (e) {
+      showToast(e.toString());
+      removeLoading(context);
+      return false;
+    }
+  }
+
+  Future lowStockCartonScan(BuildContext context, String code) async {
+    try {
+      await callCartonInfoApi(context, code);
+
+      if (cartonModel != null) {
+        final matchedModel = selectedModel?.products.firstWhereOrNull(
+            (element) => element.productId == cartonModel!.productId);
+
+        if (matchedModel != null) {
+          if (matchedModel.productId == cartonModel!.productId) {
+            if (checkScanCount(matchedModel.productId)) {
+              return;
+            }
+            onProductDetailsTaped(context, matchedModel);
+          }
+        } else {
+          showToast("No Matching Product found");
+          return false;
+        }
+      } else {
+        showToast("No Matching Carton found");
+        return false;
+      }
+    } catch (e) {
+      showToast(e.toString());
+      removeLoading(context);
+      return false;
+    }
+  }
+
+  void verifyCarton(BuildContext context, String code, String productId) async {
+    try {
+      showLoading(context);
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        body: {
+          "unique_identifier": code,
+          "product_id": productId,
+        },
+        url: AppUrls.verifyCartonUrl,
+      );
+      log("Carton Info: ${response.statusCode}");
+
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      if (response.statusCode == 200) {
+        if (lowStockList.isNotEmpty) {
+          final matchedModel = lowStockList.firstWhere(
+            (element) => element.products.any(
+              (product) => product.productId.toString() == productId,
+            ),
+          );
+          if (matchedModel.products.isNotEmpty) {
+            log("CartonfffffffffffInfo: $productId");
+
+            navigate(context,
+                route: NavigationConstants.productqrScreenRoute,
+                extra: {
+                  'cartItem': true,
+                  'productId': productId.toInt(),
+                });
+          }
+        }
       }
     } catch (e) {
       showToast(e.toString());
@@ -143,7 +232,7 @@ class StockProvider extends ChangeNotifier {
     scannedList = [];
     selectedProduct = model;
     scanMessage = "Scan ${model.quantity} ${model.productName} ";
-    navigate(
+    navigateReplacement(
       context,
       route: NavigationConstants.lowStockScannerRoute,
       extra: {"forProduct": true},
@@ -284,10 +373,8 @@ class StockProvider extends ChangeNotifier {
       showToast("Transferred Successfully");
       lowStockList.remove(selectedModel);
       notifyListeners();
-      if (lowStockList.isEmpty) {
-        fetchLowStockProducts();
-      }
       navigatePop(context);
+      fetchLowStockProducts();
     } catch (e) {
       showToast(e.toString());
     }
@@ -332,18 +419,15 @@ class StockProvider extends ChangeNotifier {
   Future<bool?> showYesNo(BuildContext context) {
     return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: const Text("Confirmation"),
-          content: const Text("Do you want to assign a rack?"),
+          content: const Text("Assign a rack?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("No"),
-            ),
-            TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Yes"),
+              child: const Text("Ok"),
             ),
           ],
         );

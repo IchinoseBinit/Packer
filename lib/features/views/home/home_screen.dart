@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<HomeProvider>(context);
+    final provider = Provider.of<HomeProvider>(context, listen: false);
     return Scaffold(
       appBar: GeneralAppBar(
         needLeading: false,

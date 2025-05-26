@@ -213,6 +213,7 @@ class AppRouter {
                     productId: args['productId'] ?? 0,
                     message: args['message'] ?? '',
                     forBasket: args['forBasket'] ?? false,
+                    isLowStockCarton: args['isLowStockCarton'] ?? false,
                   );
                 },
               ),

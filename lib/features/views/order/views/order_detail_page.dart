@@ -54,6 +54,27 @@ class _OrderDetailsState extends State<OrderDetails> {
               navigatePop(context);
             },
           ),
+          actions: [
+            if (isFull)
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: InkWell(
+                  onTap: () {
+                    navigate(context,
+                        route: NavigationConstants.bucketqrScreenRoute,
+                        extra: widget.orderId);
+                  },
+                  child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        size: 24.sp,
+                        color: AppColors.primaryColor,
+                      )),
+                ),
+              )
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: fetchOrderDetails,

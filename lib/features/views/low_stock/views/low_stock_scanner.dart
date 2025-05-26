@@ -285,7 +285,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
                       provider.scanMessage,
                       style: TextStyle(
                         color: AppColors.backgroundColor,
-                        fontSize: 12.sp,
+                        fontSize: 16.sp,
                       ),
                     ),
                   ),

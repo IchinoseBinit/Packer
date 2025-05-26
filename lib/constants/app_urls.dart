@@ -1,111 +1,131 @@
+import 'package:packer/enum/environment_config.dart';
+
 class AppUrls {
-  //static const String _baseUrl = "http://192.168.1.98:8000/categories";
+  //static  String _baseUrl = "http://192.168.1.98:8000/categories";
 
-  static const String _domainUrl = "13.211.205.215:8000";
+  static  final String _productionDomainnUrl = "dropit.com.np";
+  static  final String _stagingdomainURL = "13.211.205.215:8000";
+  // static  String _stagingdomainURL = "dropit.com.np";
 
-  // static const String _domainUrl = "192.168.1.73:8000";
-  // static const String _domainUrl = "192.168.100.183:8000";
-  // static const String _baseUrl = "http://$_domainUrl";
+  static final String _baseUrl = EnvironmentConfig.when(
+    production: _productionUrl,
+    staging: _stagingURL,
+  );
 
-  // static const String _domainUrl = "dropit.com.np";
-  // static const String _baseUrl = "https://$_domainUrl";
-  static const String _baseUrl = "https://dropit.com.np";
+  static  final String _productionUrl = "https://$_productionDomainnUrl";
+  static  final String _stagingURL = "http://$_stagingdomainURL";
 
-  static const String imageUrl = _baseUrl;
+  static final String baseUrl = EnvironmentConfig.when(
+    production: _productionUrl,
+    staging: _stagingURL,
+  );
 
-  static const String _authUrl = "$_baseUrl/auth";
+  // static  String _domainUrl = "13.211.205.215:8000";
 
-  // static const String registerUrl = "$_authUrl/register";
-  static const String loginUrl = "$_authUrl/api/token/";
-  static const String verifyOtpUrl = "$_authUrl/verify-otp";
-  static const String refreshTokenUrl = "$_authUrl/verify-otp/refresh";
-  static const String logoutUrl = "$_authUrl/logout";
+  // static  String _domainUrl = "192.168.1.73:8000";
+  // static  String _domainUrl = "192.168.100.183:8000";
+  // static  String _baseUrl = "http://$_domainUrl";
+
+  // static  String _domainUrl = "dropit.com.np";
+  // static  String _baseUrl = "https://$_domainUrl";
+  // static  String _baseUrl = "https://dropit.com.np";
+
+  static String imageUrl = _baseUrl;
+
+  static  final String _authUrl = "$_baseUrl/auth";
+
+  // static  String registerUrl = "$_authUrl/register";
+  static  String loginUrl = "$_authUrl/api/token/";
+  static  String verifyOtpUrl = "$_authUrl/verify-otp";
+  static  String refreshTokenUrl = "$_authUrl/verify-otp/refresh";
+  static  String logoutUrl = "$_authUrl/logout";
 
   // Category
-  static const String categoryUrl = "$_baseUrl/categories";
-  static const String subcategoryUrl = "$_baseUrl/subcategories";
-  static const String productUrl = "$_baseUrl/products";
-  //static const String productImageUrl = "$_baseUrl/products/image"; productimage/
-  static const String productImageUrl = "$_baseUrl/product/productimage";
+  static  String categoryUrl = "$_baseUrl/categories";
+  static  String subcategoryUrl = "$_baseUrl/subcategories";
+  static  String productUrl = "$_baseUrl/products";
+  //static  String productImageUrl = "$_baseUrl/products/image"; productimage/
+  static  String productImageUrl = "$_baseUrl/product/productimage";
   //http://13.211.205.215:8000/admin/product/productimage/
-  static const String cartUrl = "$_baseUrl/cart-items";
-  // static const String increamentCartUrl = "$_baseUrl/cart-items";
+  static  String cartUrl = "$_baseUrl/cart-items";
+  // static  String increamentCartUrl = "$_baseUrl/cart-items";
 
   //login api path
-  static const String loginUrldemo = "$_authUrl/api/token/";
+  static  String loginUrldemo = "$_authUrl/api/token/";
 
-  static const String _packerUrl = "$_baseUrl/staff/packer";
+  static  final String _packerUrl = "$_baseUrl/staff/packer";
 
-  static const String orderUrl = "$_baseUrl/orders";
+  static  String orderUrl = "$_baseUrl/orders";
 
-  static const String orderDetailsUrl = "$orderUrl/id/rider-detail";
-  static const String acknowledgeOrderUrl = "$_baseUrl/staff/orders";
-  static const String billOrderUrl = "$orderUrl/id/bill";
+  static  String orderDetailsUrl = "$orderUrl/id/rider-detail";
+  static  String acknowledgeOrderUrl = "$_baseUrl/staff/orders";
+  static  String billOrderUrl = "$orderUrl/id/bill";
   //
-  static const String orderQrImageUrl = "$orderUrl/view-qr";
-  static const String homeImageUrl = "$orderUrl/id/home-image";
+  static  String orderQrImageUrl = "$orderUrl/view-qr";
+  static  String homeImageUrl = "$orderUrl/id/home-image";
 
-  static const String productPostDetail = "$orderUrl/basket-order/";
+  static  String productPostDetail = "$orderUrl/basket-order/";
 
-  static const String packerOnlineStatus =
+  static  String packerOnlineStatus =
       "$_baseUrl/staff/packer/online-status/";
-  static const String packerSummaryUrl = "$_packerUrl/summary/";
-  static const String packerStoreLocationUrl = "$_packerUrl/store-location";
+  static  String packerSummaryUrl = "$_packerUrl/summary/";
+  static  String packerStoreLocationUrl = "$_packerUrl/store-location";
 
-  static const String packerAvailability =
+  static  String packerAvailability =
       "$_baseUrl/staff/packer/availability/";
 
-  static const String getOrdersByStatusUrl = "$orderUrl/get-order?status=";
-  static const String getLatestOrdersUrl = "$orderUrl/get-order";
-  static const String getUnsettledOrdersUrl = "$_packerUrl/unsettled-orders";
-  static const String createSettlementRequestUrl =
+  static  String getOrdersByStatusUrl = "$orderUrl/get-order?status=";
+  static  String getLatestOrdersUrl = "$orderUrl/get-order";
+  static  String getUnsettledOrdersUrl = "$_packerUrl/unsettled-orders";
+  static  String createSettlementRequestUrl =
       "$_packerUrl/create-settlement-request";
-  static const String orderSummaryUrl = "$_packerUrl/weekly-summary/";
-  static const String dailySummaryUrl = "$_packerUrl/order-view/";
+  static  String orderSummaryUrl = "$_packerUrl/weekly-summary/";
+  static  String dailySummaryUrl = "$_packerUrl/order-view/";
 
-  static const String fcmTokenUrl = "$_baseUrl/notification/register-device";
+  static  String fcmTokenUrl = "$_baseUrl/notification/register-device";
 
   // packer_transfer
-  static const String packerTransferUrl = "$_baseUrl/packer/transfers/";
-  static const String packerTransferDetailsUrl =
+  static  String packerTransferUrl = "$_baseUrl/packer/transfers/";
+  static  String packerTransferDetailsUrl =
       "$_baseUrl/packer/transfers/id/";
   // scan-unit
-  static const String scanUnitUrl = "$_baseUrl/packer/transfers/id/scan-units/";
+  static  String scanUnitUrl = "$_baseUrl/packer/transfers/id/scan-units/";
   // complete
-  static const String completeTransferUrl =
+  static  String completeTransferUrl =
       "$_baseUrl/packer/transfers/id/complete/";
   // low-stock
-  static const String lowStockUrl = "$_baseUrl/packer/low-stock-products/";
+  static  String lowStockUrl = "$_baseUrl/packer/low-stock-products/";
 
   // manager_transfer
-  static const String managerTransferUrl = "$_baseUrl/store/transfers/";
-  static const String managerTransferDetailsUrl =
+  static  String managerTransferUrl = "$_baseUrl/store/transfers/";
+  static  String managerTransferDetailsUrl =
       "$_baseUrl/store/transfers/id/";
   // verify-units
-  static const String verifyUnitsUrl =
+  static  String verifyUnitsUrl =
       "$_baseUrl/store/transfers/id/verify-units/";
   // updateRackUrl
-  static const String updateRackUrl =
+  static  String updateRackUrl =
       "$_baseUrl/update-product-availabilty-rack/";
   // accept
-  static const String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
+  static  String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
 
-  static const String basketClearUrl = "$_baseUrl/basket/id/clear/";
+  static  String basketClearUrl = "$_baseUrl/basket/id/clear/";
 
   // staff/scan-basket
-  static const String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
+  static  String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
 
   // add-products
-  static const String addProductsUrl = "$_baseUrl/staff/add-products/";
+  static  String addProductsUrl = "$_baseUrl/staff/add-products/";
   // transfer-basket-inventory/
-  static const String transferBasketInventoryUrl =
+  static  String transferBasketInventoryUrl =
       "$_baseUrl/staff/transfer-basket-inventory/";
 
+  // carton_info/<str:carton_identifier>/
+  static String cartonInfoUrl = "$_baseUrl/carton_info/:id/";
 
-      // carton_info/<str:carton_identifier>/
-  static const String cartonInfoUrl = "$_baseUrl/carton_info/:id/";
+  static String verifyCartonUrl = "$_baseUrl/packer/verify-carton/";
 
 
   // /basket/<str:identifier>/
-  static const String basketUrl = "$_baseUrl/basket/:id/";
+  static  String basketUrl = "$_baseUrl/basket/:id/";
 }
