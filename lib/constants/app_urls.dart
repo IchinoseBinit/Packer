@@ -3,7 +3,7 @@ import 'package:packer/enum/environment_config.dart';
 class AppUrls {
   //static const String _baseUrl = "http://192.168.1.98:8000/categories";
 
-  static const String _productiodomainnUrl = "dropit.com.np";
+  static const String _productionDomainnUrl = "dropit.com.np";
   static const String _stagingdomainURL = "13.211.205.215:8000";
   // static const String _stagingdomainURL = "dropit.com.np";
 
@@ -12,7 +12,7 @@ class AppUrls {
     staging: _stagingURL,
   );
 
-  static const String _productionUrl = "https://$_productiodomainnUrl";
+  static const String _productionUrl = "https://$_productionDomainnUrl";
   static const String _stagingURL = "http://$_stagingdomainURL";
 
   static final String baseUrl = EnvironmentConfig.when(
@@ -115,6 +115,9 @@ class AppUrls {
 
   // carton_info/<str:carton_identifier>/
   static String cartonInfoUrl = "$_baseUrl/carton_info/:id/";
+
+    static String verifyCartonUrl = "$_baseUrl/packer/verify-carton/";
+
 
   // /basket/<str:identifier>/
   static String basketUrl = "$_baseUrl/basket/:id/";

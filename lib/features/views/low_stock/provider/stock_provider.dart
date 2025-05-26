@@ -7,16 +7,19 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
-import 'package:packer/features/views/navigation/navigation_page.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class StockProvider extends ChangeNotifier {
   List<LowStockModel> lowStockList = [];
@@ -62,7 +65,7 @@ class StockProvider extends ChangeNotifier {
     return 0;
   }
 
-  void fetchLowStockProducts() async {
+  Future<void> fetchLowStockProducts() async {
     try {
       isLoading = true;
       isError = false;
@@ -93,7 +96,7 @@ class StockProvider extends ChangeNotifier {
 
   void onScanCarton(BuildContext context, String code) async {
     try {
-      // debugger();
+      debugger();
       showLoading(context);
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
@@ -104,9 +107,15 @@ class StockProvider extends ChangeNotifier {
       if (context.mounted) {
         removeLoading(context);
       }
+
       if (response.statusCode == 200) {
+        final home = Provider.of<HomeProvider>(context, listen: false);
+
         cartonModel = CartonModel.fromJson(response.data);
-        if (cartonModel != null && cartonModel!.rackName.isEmpty) {
+
+        if (home.packerSummary?.storeType.contains("main") == true) {
+          verifyCarton(context, code, cartonModel!.productId.toString());
+        } else if (cartonModel != null && cartonModel!.rackName.isEmpty) {
           // showYesNo(context).then((value) {
           // if (value == true) {
           if (context.mounted) {
@@ -136,6 +145,48 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
+  void verifyCarton(BuildContext context, String code, String productId) async {
+    try {
+      debugger();
+      showLoading(context);
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        body: {
+          "unique_identifier": code,
+          "product_id": productId,
+        },
+        url: AppUrls.verifyCartonUrl,
+      );
+      log("Carton Info: ${response.statusCode}");
+
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      if (response.statusCode == 200) {
+        if (lowStockList.isNotEmpty) {
+          final matchedModel = lowStockList.firstWhere(
+            (element) => element.products.any(
+              (product) => product.productId.toString() == productId,
+            ),
+          );
+          if (matchedModel.products.isNotEmpty) {
+            log("CartonfffffffffffInfo: $productId");
+
+            navigate(context,
+                route: NavigationConstants.productqrScreenRoute,
+                extra: {
+                  'cartItem': true,
+                  'productId': productId.toInt(),
+                });
+          }
+        }
+      }
+    } catch (e) {
+      showToast(e.toString());
+      removeLoading(context);
+    }
+  }
+
   void onDetailsTaped(
     BuildContext context,
     LowStockModel lowStockModel,
@@ -149,14 +200,11 @@ class StockProvider extends ChangeNotifier {
   }
 
   void onProductDetailsTaped(BuildContext context, ProductModel model) {
+    // debugger();
     scannedList = [];
     selectedProduct = model;
     scanMessage = "Scan ${model.quantity} ${model.productName} ";
-    navigate(
-      context,
-      route: NavigationConstants.lowStockScannerRoute,
-      extra: {"forProduct": true},
-    );
+    showToast("Scan carton first");
   }
 
   void checkBasketQr(BuildContext context, MobileScannerController? controller,

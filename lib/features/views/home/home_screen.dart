@@ -47,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<HomeProvider>(context, listen: false);
-    final stockProvider = Provider.of<StockProvider>(context, listen: true);
     return Scaffold(
       appBar: GeneralAppBar(
         needLeading: false,

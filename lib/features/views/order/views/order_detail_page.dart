@@ -68,24 +68,14 @@ class _OrderDetailsState extends State<OrderDetails> {
                         route: NavigationConstants.bucketqrScreenRoute,
                         extra: widget.orderId);
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black, width: 1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Padding(
+                  child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 2),
-                      child: Text("Add basket",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
-                              ?.copyWith(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppColors.primaryColor)),
-                    ),
-                  ),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        size: 24.sp,
+                        color: AppColors.primaryColor,
+                      )),
                 ),
               )
           ],

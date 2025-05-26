@@ -162,7 +162,7 @@ class OrderProvider extends ChangeNotifier {
   bool scanCountOrder(
     int cartItemId,
   ) {
-    debugger();
+    // debugger();
     for (var element in _orderDetails?.productDetails ?? []) {
       print("ssssssssssss: ${element.id}");
 
@@ -464,6 +464,8 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  
+  
   updateBucketData(String? data) async {
     // debugger();
     if (data != null) {
