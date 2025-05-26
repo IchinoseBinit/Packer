@@ -116,7 +116,7 @@ class AppUrls {
   // carton_info/<str:carton_identifier>/
   static String cartonInfoUrl = "$_baseUrl/carton_info/:id/";
 
-    static String verifyCartonUrl = "$_baseUrl/packer/verify-carton/";
+  static String verifyCartonUrl = "$_baseUrl/packer/verify-carton/";
 
 
   // /basket/<str:identifier>/

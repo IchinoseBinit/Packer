@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -90,7 +91,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                 if (state.checkScanCount(product.productId)) {
                                   return;
                                 }
-                                state.onProductDetailsTaped(context, product);
+                                showToast("Scan Carton First");
                               },
                               child: ItemWidget(
                                 model: product,
@@ -121,16 +122,11 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                               navigate(
                                 context,
                                 route: NavigationConstants.qrScanScreenRoute,
-                                extra: {'scanCarton': true},
-                              ).then((value) {
-                                log('Scan Carton Value: $value');
-                                if (value != null) {
-                                  Provider.of<StockProvider>(context,
-                                          listen: false)
-                                      .onScanCarton(context, value);
-                                }
-                                if (value) {}
-                              });
+                                extra: {
+                                  'scanCarton': true,
+                                  'isLowStockCarton': true,
+                                },
+                              );
                             }),
                     // 20.h
                     SizedBox(height: 20.h),

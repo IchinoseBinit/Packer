@@ -7,6 +7,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -94,10 +95,13 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  void onScanCarton(BuildContext context, String code) async {
+  Future callCartonInfoApi(BuildContext context, String code) async {
     try {
-      debugger();
+      // debugger();
       showLoading(context);
+      if (!code.contains("carton")) {
+        throw "Invalid Carton QR";
+      }
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.cartonInfoUrl.replaceAll(':id', code),
@@ -107,47 +111,76 @@ class StockProvider extends ChangeNotifier {
       if (context.mounted) {
         removeLoading(context);
       }
-
       if (response.statusCode == 200) {
-        final home = Provider.of<HomeProvider>(context, listen: false);
-
         cartonModel = CartonModel.fromJson(response.data);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 
-        if (home.packerSummary?.storeType.contains("main") == true) {
-          verifyCarton(context, code, cartonModel!.productId.toString());
-        } else if (cartonModel != null && cartonModel!.rackName.isEmpty) {
-          // showYesNo(context).then((value) {
-          // if (value == true) {
-          if (context.mounted) {
-            navigate(context, route: NavigationConstants.scanRackRoute, extra: {
-              'cartonProduct': true,
-              'message': '${cartonModel?.productName} - Assign a rack',
-            });
-          }
-          // }
-          // });
-        } else {
-          navigate(
-            context,
-            route: NavigationConstants.scanRackRoute,
-            extra: {
-              "cartonProduct": true,
-              'rack': cartonModel?.rackName,
-            },
-          );
+  Future onScanCarton(BuildContext context, String code) async {
+    try {
+      await callCartonInfoApi(context, code);
+
+      if (cartonModel != null && cartonModel!.rackName.isEmpty) {
+        if (context.mounted) {
+          navigateReplacement(context,
+              route: NavigationConstants.scanRackRoute,
+              extra: {
+                'cartonProduct': true,
+                'message': '${cartonModel?.productName} - Assign a rack',
+              });
         }
       } else {
-        showToast("No data found");
+        navigateReplacement(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "cartonProduct": true,
+            'rack': cartonModel?.rackName,
+          },
+        );
       }
     } catch (e) {
       showToast(e.toString());
       removeLoading(context);
+      return false;
+    }
+  }
+
+  Future lowStockCartonScan(BuildContext context, String code) async {
+    try {
+      await callCartonInfoApi(context, code);
+
+      if (cartonModel != null) {
+        final matchedModel = selectedModel?.products.firstWhereOrNull(
+            (element) => element.productId == cartonModel!.productId);
+
+        if (matchedModel != null) {
+          if (matchedModel.productId == cartonModel!.productId) {
+            if (checkScanCount(matchedModel.productId)) {
+              return;
+            }
+            onProductDetailsTaped(context, matchedModel);
+          }
+        } else {
+          showToast("No Matching Product found");
+          return false;
+        }
+      } else {
+        showToast("No Matching Carton found");
+        return false;
+      }
+    } catch (e) {
+      showToast(e.toString());
+      removeLoading(context);
+      return false;
     }
   }
 
   void verifyCarton(BuildContext context, String code, String productId) async {
     try {
-      debugger();
       showLoading(context);
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
@@ -200,11 +233,14 @@ class StockProvider extends ChangeNotifier {
   }
 
   void onProductDetailsTaped(BuildContext context, ProductModel model) {
-    // debugger();
     scannedList = [];
     selectedProduct = model;
     scanMessage = "Scan ${model.quantity} ${model.productName} ";
-    showToast("Scan carton first");
+    navigateReplacement(
+      context,
+      route: NavigationConstants.lowStockScannerRoute,
+      extra: {"forProduct": true},
+    );
   }
 
   void checkBasketQr(BuildContext context, MobileScannerController? controller,
