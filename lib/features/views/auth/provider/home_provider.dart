@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -16,7 +17,6 @@ import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
-import 'package:vibration/vibration.dart';
 
 class HomeProvider with ChangeNotifier {
   User? _user;
@@ -230,11 +230,7 @@ class HomeProvider with ChangeNotifier {
   void toggleOnlineStatus({bool isFromWarehouse = false}) async {
     isOnline = !isOnline;
     if (!isOnline) {
-      if (await Vibration.hasVibrator() != null) {
-        Vibration.vibrate(
-          duration: 500,
-        );
-      }
+      HapticFeedback.heavyImpact();
     }
     notifyListeners();
     await updatepackerStatus(isOnline);

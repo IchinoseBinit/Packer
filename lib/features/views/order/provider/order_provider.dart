@@ -40,6 +40,7 @@ class OrderProvider extends ChangeNotifier {
   String? scanMessage;
   UnsettledOrders? unsettledOrders;
   List<OrderNotification> latestOrder = [];
+  bool hasScanned = false;
 
   set isAvailable(val) {
     _isAvailable = val;
@@ -117,6 +118,8 @@ class OrderProvider extends ChangeNotifier {
     MobileScannerController? controller,
     String code,
   ) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -132,6 +135,7 @@ class OrderProvider extends ChangeNotifier {
         final isScanned = scanCountOrder(prodId);
 
         updateProductList(code);
+        hasScanned = false;
         if (isScanned) {
           removeLoading(context);
           Navigator.pop(context);
@@ -144,6 +148,7 @@ class OrderProvider extends ChangeNotifier {
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
@@ -156,6 +161,7 @@ class OrderProvider extends ChangeNotifier {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 

@@ -28,6 +28,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   List<String> scanTagsList = [];
 
+  bool hasScanned = false;
+
   void setRole(UserRole value) {
     role = value.name;
   }
@@ -115,6 +117,8 @@ class PackerTransferProvider extends ChangeNotifier {
   // check identifier
   checkIdentifier(
       BuildContext context, MobileScannerController? controller, String code) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -124,15 +128,18 @@ class PackerTransferProvider extends ChangeNotifier {
     showLoading(context);
 
     if (selectedTransferModel?.identifier.toString() == code) {
+
       scanTagsList.clear();
       notifyListeners();
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
       navigateReplacement(context, route: NavigationConstants.basketListRoute);
+      hasScanned = false;
       return;
     }
 
     _handleInvalidQR(context, controller);
+    hasScanned = false;
   }
 
   bool scanCountOrder(int cartItemId) {
@@ -164,6 +171,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   checkItemQr(BuildContext context, MobileScannerController? controller,
       String code, int productId) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -175,6 +184,7 @@ class PackerTransferProvider extends ChangeNotifier {
     if (code.contains(productId.toString())) {
       final prodId = int.tryParse(code.split('-').first) ?? 0;
       if (prodId != productId) {
+        hasScanned = false;
         _handleInvalidQR(context, controller);
         return;
       }
@@ -207,14 +217,17 @@ class PackerTransferProvider extends ChangeNotifier {
         } else {
           controller?.start();
         }
+        hasScanned = false;
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
       _handleInvalidQR(context, controller);
     }
+    hasScanned = false;
   }
 
   onBasketScanTapped(BuildContext context, BasketModel basket) {
@@ -228,6 +241,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   checkBasketQr(
       BuildContext context, MobileScannerController? controller, String code) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -246,9 +261,11 @@ class PackerTransferProvider extends ChangeNotifier {
       fetchBasketDetails(code);
       navigateReplacement(context,
           route: NavigationConstants.transferDetailsRoute);
+      hasScanned = false;
       return;
     }
     _handleInvalidQR(context, controller);
+    hasScanned = false;
   }
 
   void _handleInvalidQR(

@@ -32,6 +32,7 @@ class ProductScannerScreen extends StatefulWidget {
 }
 
 class _ProductScannerScreenState extends State<ProductScannerScreen> {
+  bool hasScanned = false;
   @override
   void reassemble() {
     super.reassemble();
@@ -60,6 +61,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   var _flash = false;
 
   checkQr(String code) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "Product qr code data");
@@ -80,10 +83,12 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         Provider.of<OrderProvider>(context, listen: false)
             .updateProductList(code);
         removeLoading(context);
+        hasScanned = false;
         Navigator.pop(context);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
@@ -96,6 +101,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 
