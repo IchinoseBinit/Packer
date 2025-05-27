@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -244,7 +245,7 @@ class PackerTransferProvider extends ChangeNotifier {
     hasScanned = true;
     controller?.stop();
 
-    log(code, name: "qr code data");
+    log(code, name: "Basket qr code data");
 
     HapticFeedback.heavyImpact();
 
@@ -261,6 +262,15 @@ class PackerTransferProvider extends ChangeNotifier {
       navigateReplacement(context,
           route: NavigationConstants.transferDetailsRoute);
       hasScanned = false;
+      return;
+    }
+    else if (selectedTransferModel?.baskets?.any((basket) =>
+            basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
+        false) {
+      removeLoading(context);
+      fetchBasketDetails(code);
+      navigateReplacement(context,
+          route: NavigationConstants.transferDetailsRoute);
       return;
     }
     _handleInvalidQR(context, controller);
@@ -408,7 +418,9 @@ class PackerTransferProvider extends ChangeNotifier {
         for (var element
             in selectedTransferModel?.items ?? <TransferItemModel>[]) {
           if (element.product == productId) {
-            element.rack = code;
+            final rack = response.data['rack'].toString().toStringConversion();
+
+            element.rack = rack;
           }
         }
         Provider.of<PackerTransferProvider>(context, listen: false)

@@ -55,7 +55,7 @@ class TransferItemsList extends StatelessWidget {
               SizedBox(height: 8.h),
               Expanded(
                 child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.all(16.w),
                   shrinkWrap: true,
                   itemCount: provider.selectedTransferModel!.items?.length ?? 0,
@@ -199,7 +199,7 @@ class TransferItemWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: .3.sw,
+                  width: .55.sw,
                   child: Text(
                     transferItem.productName ?? "Unknown",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -212,6 +212,7 @@ class TransferItemWidget extends StatelessWidget {
                 if (transferItem.rack != null && transferItem.rack!.isNotEmpty)
                   RichText(
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                     text: TextSpan(
                       text: "Rack: ",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -221,11 +222,13 @@ class TransferItemWidget extends StatelessWidget {
                       children: <TextSpan>[
                         TextSpan(
                           text: transferItem.rack,
-                          style:
-                              Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                    color: text1Color,
-                                    fontSize: 14.sp,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                color: text1Color,
+                                fontSize: 14.sp,
+                              ),
                         ),
                       ],
                     ),
@@ -240,7 +243,6 @@ class TransferItemWidget extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          
           if (status == ItemStatus.remaining) ...[
             Container(
               margin: EdgeInsets.symmetric(horizontal: 8.w),

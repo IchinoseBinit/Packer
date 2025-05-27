@@ -39,8 +39,6 @@ class _OrderDetailsState extends State<OrderDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final isFull = Provider.of<OrderProvider>(context, listen: true).isChecked;
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (did, result) async {
@@ -59,25 +57,55 @@ class _OrderDetailsState extends State<OrderDetails> {
             },
           ),
           actions: [
-            if (isFull)
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: InkWell(
-                  onTap: () {
-                    navigate(context,
-                        route: NavigationConstants.bucketqrScreenRoute,
-                        extra: widget.orderId);
-                  },
-                  child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 2),
-                      child: Icon(
-                        Icons.shopping_cart,
-                        size: 24.sp,
-                        color: AppColors.primaryColor,
-                      )),
-                ),
-              )
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: InkWell(
+                onTap: () {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text(
+                            'Do you want to add another basket?',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('No'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                navigate(context,
+                                    route:
+                                        NavigationConstants.bucketqrScreenRoute,
+                                    extra: widget.orderId);
+                              },
+                              child: const Text('Yes'),
+                            ),
+                          ],
+                        );
+                      });
+                },
+                child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Icon(
+                      Icons.shopping_cart,
+                      size: 24.sp,
+                      color: AppColors.primaryColor,
+                    )),
+              ),
+            )
           ],
         ),
         body: RefreshIndicator(

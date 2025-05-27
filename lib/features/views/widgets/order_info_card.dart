@@ -55,27 +55,6 @@ class _OrderInfoCardState extends State<OrderInfoCard> {
                 // ),
               ],
             ),
-            SizedBox(
-              child: Row(
-                children: [
-                  Checkbox(
-                      value: ischecked,
-                      onChanged: (value) {
-                        setState(() {
-                          ischecked = value ?? false;
-                        });
-                        // debugger();
-                        Provider.of<OrderProvider>(context, listen: false)
-                            .toggle(value!);
-                        // _ischecked = value!;
-                      }),
-                  Text(
-                    "is filled",
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
