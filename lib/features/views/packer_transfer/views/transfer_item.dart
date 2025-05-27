@@ -179,7 +179,7 @@ class TransferItemWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  width: .3.sw,
+                  width: .55.sw,
                   child: Text(
                     transferItem.productName ?? "Unknown",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -192,6 +192,7 @@ class TransferItemWidget extends StatelessWidget {
                 if (transferItem.rack != null && transferItem.rack!.isNotEmpty)
                   RichText(
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                     text: TextSpan(
                       text: "Rack: ",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(

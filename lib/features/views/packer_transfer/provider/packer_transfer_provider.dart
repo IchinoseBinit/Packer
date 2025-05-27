@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -317,18 +318,15 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<bool?> showYesNo(BuildContext context) {
     return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: const Text("Confirmation"),
-          content: const Text("Do you want to assign a rack?"),
+          content: const Text("Assign a rack?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("No"),
-            ),
-            TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Yes"),
+              child: const Text("OK"),
             ),
           ],
         );
@@ -378,7 +376,8 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateRack(BuildContext context, String code, int productId) async {
+  Future<void> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
       showLoading(context);
       final url = AppUrls.updateRackUrl;
@@ -395,11 +394,14 @@ class PackerTransferProvider extends ChangeNotifier {
         for (var element
             in selectedTransferModel?.items ?? <TransferItemModel>[]) {
           if (element.product == productId) {
-            element.rack = code;
+            final rack = response.data['rack'].toString().toStringConversion();
+
+            element.rack = rack;
           }
         }
         Provider.of<PackerTransferProvider>(context, listen: false)
             .initScanMessage(productId);
+        removeLoading(context);
         navigateReplacement(context,
             route: NavigationConstants.qrScanScreenRoute,
             extra: {
@@ -407,9 +409,11 @@ class PackerTransferProvider extends ChangeNotifier {
               "productId": productId,
             });
       } else {
+        removeLoading(context);
         showToast('Failed to update rack');
       }
     } catch (ex) {
+      removeLoading(context);
       showToast(ex.toString());
     }
   }

@@ -48,6 +48,7 @@ class _TransferListState extends State<TransferList> {
               return ListView.builder(
                 itemCount: transferList.length,
                 padding: EdgeInsets.all(16.w),
+                primary: false,
                 itemBuilder: (context, index) {
                   final data = transferList[index];
                   return TransferNotificationCard(

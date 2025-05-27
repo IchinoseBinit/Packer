@@ -404,18 +404,15 @@ class StockProvider extends ChangeNotifier {
   Future<bool?> showYesNo(BuildContext context) {
     return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: const Text("Confirmation"),
-          content: const Text("Do you want to assign a rack?"),
+          content: const Text("Assign a rack?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("No"),
-            ),
-            TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Yes"),
+              child: const Text("Ok"),
             ),
           ],
         );
