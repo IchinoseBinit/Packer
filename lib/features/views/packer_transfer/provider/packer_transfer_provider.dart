@@ -271,6 +271,7 @@ class PackerTransferProvider extends ChangeNotifier {
       fetchBasketDetails(code);
       navigateReplacement(context,
           route: NavigationConstants.transferDetailsRoute);
+          hasScanned = false;
       return;
     }
     _handleInvalidQR(context, controller);
