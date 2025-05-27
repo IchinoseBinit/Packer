@@ -60,6 +60,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   var _flash = false;
 
   checkQr(String code) {
+    debugger();
     controller?.stop();
 
     log(code, name: "Product qr code data");

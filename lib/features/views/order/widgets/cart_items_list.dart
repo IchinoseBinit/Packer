@@ -34,10 +34,14 @@ class CartItemsList extends StatelessWidget {
                 return InkWell(
                   highlightColor: Colors.transparent,
                   onTap: () {
+                    // debugger();
+
                     log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.id}");
                     if (state.checkItem(cartItem.id)) {
                       return;
                     }
+                    log(cartItem.id.toString());
+
                     navigate(context,
                         route: NavigationConstants.productqrScreenRoute,
                         extra: {

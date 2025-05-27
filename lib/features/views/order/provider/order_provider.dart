@@ -77,13 +77,13 @@ class OrderProvider extends ChangeNotifier {
 
   void initState() {
     scannedDataList.clear();
-    isChecked = false;
     showButton = false;
     // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
   }
 
   // check by item id in scan list with required quantity
   bool checkItem(int productId) {
+    // debugger();
     for (ProductDetails element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
         // get from scanned data list split by -
@@ -262,6 +262,7 @@ class OrderProvider extends ChangeNotifier {
 
   Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
     try {
+      // debugger();
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: "${AppUrls.acknowledgeOrderUrl}/$orderId/acknowledge-packer/",
@@ -464,8 +465,6 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  
-  
   updateBucketData(String? data) async {
     // debugger();
     if (data != null) {

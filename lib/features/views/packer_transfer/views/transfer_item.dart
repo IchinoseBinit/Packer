@@ -54,7 +54,7 @@ class TransferItemsList extends StatelessWidget {
               SizedBox(height: 8.h),
               Expanded(
                 child: ListView.separated(
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.all(16.w),
                   shrinkWrap: true,
                   itemCount: provider.selectedTransferModel!.items?.length ?? 0,
@@ -201,11 +201,13 @@ class TransferItemWidget extends StatelessWidget {
                       children: <TextSpan>[
                         TextSpan(
                           text: transferItem.rack,
-                          style:
-                              Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                    color: text1Color,
-                                    fontSize: 14.sp,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                color: text1Color,
+                                fontSize: 14.sp,
+                              ),
                         ),
                       ],
                     ),
@@ -220,7 +222,6 @@ class TransferItemWidget extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          
           if (status == ItemStatus.remaining) ...[
             Container(
               margin: EdgeInsets.symmetric(horizontal: 8.w),
