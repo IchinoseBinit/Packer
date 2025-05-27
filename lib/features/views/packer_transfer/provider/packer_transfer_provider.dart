@@ -231,7 +231,7 @@ class PackerTransferProvider extends ChangeNotifier {
       BuildContext context, MobileScannerController? controller, String code) {
     controller?.stop();
 
-    log(code, name: "qr code data");
+    log(code, name: "Basket qr code data");
 
     HapticFeedback.heavyImpact();
 
@@ -243,6 +243,15 @@ class PackerTransferProvider extends ChangeNotifier {
         false) {
       scanTagsList.clear();
       notifyListeners();
+      removeLoading(context);
+      fetchBasketDetails(code);
+      navigateReplacement(context,
+          route: NavigationConstants.transferDetailsRoute);
+      return;
+    }
+    else if (selectedTransferModel?.baskets?.any((basket) =>
+            basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
+        false) {
       removeLoading(context);
       fetchBasketDetails(code);
       navigateReplacement(context,

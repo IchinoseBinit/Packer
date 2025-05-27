@@ -4,6 +4,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
 class BasketList extends StatelessWidget {
@@ -25,7 +26,6 @@ class BasketList extends StatelessWidget {
         appBar: AppBar(
           title: const Text("Basket List"),
           centerTitle: true,
-          
         ),
         body: Consumer<PackerTransferProvider>(
           builder: (context, provider, child) {
@@ -44,22 +44,37 @@ class BasketList extends StatelessWidget {
                 child: Text("No baskets available"),
               );
             }
-            return ListView.builder(
-              itemCount: provider.selectedTransferModel?.baskets?.length,
-              padding: EdgeInsets.all(16.w),
-              itemBuilder: (context, index) {
-                final data = provider.selectedTransferModel!.baskets![index];
-                return BasketCard(
-                  index: index + 1,
-                  model: data,
-                  primaryColor: Theme.of(context).primaryColor,
-                  callback: () {
-                    // Handle item tap
-                    Provider.of<PackerTransferProvider>(context, listen: false)
-                        .onBasketScanTapped(context, data);
+            return Column(
+              children: [
+                ListView.builder(
+                  itemCount: provider.selectedTransferModel?.baskets?.length,
+                  padding: EdgeInsets.all(16.w),
+                  itemBuilder: (context, index) {
+                    final data =
+                        provider.selectedTransferModel!.baskets![index];
+                    return BasketCard(
+                      index: index + 1,
+                      model: data,
+                      primaryColor: Theme.of(context).primaryColor,
+                      callback: () {
+                        // Handle item tap
+                        Provider.of<PackerTransferProvider>(context,
+                                listen: false)
+                            .onBasketScanTapped(context, data);
+                      },
+                    );
                   },
-                );
-              },
+                ),
+                GeneralElevatedButton(
+                    title: "Scan Basket",
+                    onPressed: () {
+                      navigate(
+                        context,
+                        route: NavigationConstants.qrScanScreenRoute,
+                        extra: {"forBasket": true},
+                      );
+                    })
+              ],
             );
           },
         ),
