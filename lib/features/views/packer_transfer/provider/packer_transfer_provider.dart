@@ -30,8 +30,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   bool hasScanned = false;
 
-  void setRole(UserRole value) {
-    role = value.name;
+  void setRole(String value) {
+    role = value;
   }
 
   void initScanMessage(int id) {
@@ -60,17 +60,17 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   void onDetailsTaped(BuildContext context, TransferModel data) {
-    if (role != "packer") {
-      selectedTransferModel = data;
-      navigate(
-        context,
-        route: NavigationConstants.qrScanScreenRoute,
-        extra: {
-          "checkIdentifier": true,
-          "productId": data.id ?? 0,
-        },
-      );
-      return;
+    if (role?.contains("main") == false) {
+    selectedTransferModel = data;
+    navigate(
+      context,
+      route: NavigationConstants.qrScanScreenRoute,
+      extra: {
+        "checkIdentifier": true,
+        "productId": data.id ?? 0,
+      },
+    );
+    return;
     }
     fetchTransferDetails(data.id ?? 0);
     navigate(context, route: NavigationConstants.transferDetailsRoute);
@@ -80,7 +80,7 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       transferListLoading = true;
       transferList.clear();
-      final url = role == "packer"
+      final url = role?.contains("main") == true
           ? AppUrls.packerTransferUrl
           : AppUrls.managerTransferUrl;
       final response = await DioClient()
@@ -128,7 +128,6 @@ class PackerTransferProvider extends ChangeNotifier {
     showLoading(context);
 
     if (selectedTransferModel?.identifier.toString() == code) {
-
       scanTagsList.clear();
       notifyListeners();
       removeLoading(context);
@@ -196,17 +195,17 @@ class PackerTransferProvider extends ChangeNotifier {
           controller?.start();
           return;
         }
-        if (role != "packer") {
-          final item = selectedTransferModel?.items?.firstWhere(
-            (element) => element.product == productId,
-            orElse: () => TransferItemModel(),
-          );
-          if (item != null && (item.tags?.contains(code) ?? false)) {
-            scanTagsList.add(code);
-          } else {
-            _handleInvalidQR(context, controller);
-            return;
-          }
+        if (role?.contains("main") == false) {
+        final item = selectedTransferModel?.items?.firstWhere(
+          (element) => element.product == productId,
+          orElse: () => TransferItemModel(),
+        );
+        if (item != null && (item.tags?.contains(code) ?? false)) {
+          scanTagsList.add(code);
+        } else {
+          _handleInvalidQR(context, controller);
+          return;
+        }
         } else {
           scanTagsList.add(code);
         }
@@ -286,7 +285,7 @@ class PackerTransferProvider extends ChangeNotifier {
       showToast("Item not found");
       return;
     }
-    if (role == "manager") {
+    if (role?.contains("main") == false) {
       if (item.rack != null && item.rack!.isNotEmpty) {
         navigate(context,
             route: NavigationConstants.scanRackRoute,
@@ -355,7 +354,7 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       showLoading(context);
       final url =
-          role == "packer" ? AppUrls.scanUnitUrl : AppUrls.verifyUnitsUrl;
+          role?.contains("main") == true ? AppUrls.scanUnitUrl : AppUrls.verifyUnitsUrl;
       final urlValue =
           url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
       if (scanTagsList.isEmpty) {
@@ -369,8 +368,7 @@ class PackerTransferProvider extends ChangeNotifier {
           body: {
             "product_id": productId,
             "unit_tags": scanTagsList,
-            if (role != "packer")
-              "basket_identifier": selectedBasketModel?.identifier,
+            if (role?.contains("main") == false) "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
@@ -441,7 +439,7 @@ class PackerTransferProvider extends ChangeNotifier {
         showToast('Transfer ID is null');
         return;
       }
-      final url = role == "packer"
+      final url = role?.contains("main") == true
           ? AppUrls.completeTransferUrl
           : AppUrls.acceptTransferUrl;
       final response = await DioClient().request(
@@ -494,7 +492,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<void> fetchTransferDetails(int id) async {
     try {
       selectedTransferModelLoading = true;
-      final url = role == "packer"
+      final url = role?.contains("main") == true
           ? AppUrls.packerTransferDetailsUrl
           : AppUrls.managerTransferDetailsUrl;
       final urlValue = url.replaceAll('id', id.toString());

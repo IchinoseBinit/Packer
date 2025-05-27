@@ -61,7 +61,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
     if (hasScanned) return;
     hasScanned = true;
     log(orderId, name: "order id:");
-  
+
     controller?.stop();
 
     log(code, name: "bucket qr code data");
@@ -75,14 +75,14 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
         Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(code);
 
-       
-
         removeLoading(context);
         Navigator.pop(context);
         showToast("basket available");
         navigate(context,
             route: NavigationConstants.orderDetailsRoute, extra: orderId);
-            hasScanned = false;
+        Provider.of<OrderProvider>(context, listen: false).initState();
+
+        hasScanned = false;
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());

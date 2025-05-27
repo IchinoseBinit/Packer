@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -141,7 +142,7 @@ class _ItemWidgetState extends State<ItemWidget> {
                   borderRadius: BorderRadius.circular(8),
                   child: widget.productItems.imageUrl.isNotEmpty
                       ? Image.network(
-                          "http://13.211.205.215:8000${widget.productItems.imageUrl}",
+                          "${AppUrls.imageUrl}${widget.productItems.imageUrl}",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),

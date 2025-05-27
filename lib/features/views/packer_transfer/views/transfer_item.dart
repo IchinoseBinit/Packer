@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/app_urls.dart';
 
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -172,6 +173,25 @@ class TransferItemWidget extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                height: 60.h,
+                width: 60.h,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: transferItem.productImage.isNotEmpty
+                      ? Image.network(
+                          "${AppUrls.imageUrl}${transferItem.productImage}",
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported),
+                        )
+                      : const Icon(Icons.image_not_supported),
+                ),
+              ),
           SizedBox(width: 8.w),
           Expanded(
             child: Column(

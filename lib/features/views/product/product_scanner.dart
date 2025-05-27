@@ -24,7 +24,7 @@ class ProductScannerScreen extends StatefulWidget {
   });
 
   final bool isfromCartItem;
-  final List<int>? productId;
+  final int? productId;
   // final int index;
 
   @override
@@ -50,11 +50,10 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<OrderProvider>(context, listen: false).initState();
     controller = MobileScannerController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<OrderProvider>(context, listen: false)
-          .initScanMessage(widget.productId?.first ?? 0);
+          .initScanMessage(widget.productId ?? 0);
     });
   }
 
@@ -77,7 +76,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
         final productId = int.tryParse(code.split("-").first) ?? 0;
         Provider.of<OrderProvider>(context, listen: false)
-            .scanCountOrder(productId);
+            .scanCountOrder(productId, code);
         print('ssssssssssssss   : $productId');
 
         Provider.of<OrderProvider>(context, listen: false)
@@ -206,10 +205,11 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
             },
             onDetect: (barcodes) {
               if (widget.isfromCartItem) {
-                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
+                Provider.of<OrderProvider>(context, listen: false).checkCartItemQr(
                   context,
                   controller,
                   barcodes.barcodes.first.rawValue.toString(),
+                  widget.productId ?? 0,
                 );
                 return;
               }

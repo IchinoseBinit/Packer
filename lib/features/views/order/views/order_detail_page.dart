@@ -25,7 +25,6 @@ class _OrderDetailsState extends State<OrderDetails> {
   void initState() {
     super.initState();
     future = fetchOrderDetails();
-    Provider.of<OrderProvider>(context, listen: false).initState();
   }
 
   Future<void> fetchOrderDetails() async {
@@ -36,6 +35,7 @@ class _OrderDetailsState extends State<OrderDetails> {
       print('Error fetching order details: $error');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
