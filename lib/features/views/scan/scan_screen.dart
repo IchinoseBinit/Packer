@@ -84,7 +84,6 @@ class _ScanScreenState extends State<ScanScreen> {
         if (widget.isLowStockCarton) {
           val = await Provider.of<StockProvider>(context, listen: false)
               .lowStockCartonScan(context, code);
-
         } else {
           val = await Provider.of<StockProvider>(context, listen: false)
               .onScanCarton(context, code);
@@ -269,7 +268,14 @@ class _ScanScreenState extends State<ScanScreen> {
               if (widget.forBasket) {
                 Provider.of<PackerTransferProvider>(context, listen: false)
                     .checkBasketQr(context, controller,
-                        barcodes.barcodes.first.rawValue.toString());
+                        barcodes.barcodes.first.rawValue.toString(), false);
+
+                return;
+              }
+              if (widget.forBasket && widget.isFromPackerTransfer) {
+                Provider.of<PackerTransferProvider>(context, listen: false)
+                    .checkBasketQr(context, controller,
+                        barcodes.barcodes.first.rawValue.toString(), true);
                 return;
               }
               checkQr(barcodes.barcodes.first.rawValue.toString());

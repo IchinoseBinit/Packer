@@ -227,8 +227,8 @@ class PackerTransferProvider extends ChangeNotifier {
     });
   }
 
-  checkBasketQr(
-      BuildContext context, MobileScannerController? controller, String code) {
+  checkBasketQr(BuildContext context, MobileScannerController? controller,
+      String code, bool? forTransfer) async {
     controller?.stop();
 
     log(code, name: "Basket qr code data");
@@ -249,14 +249,16 @@ class PackerTransferProvider extends ChangeNotifier {
           route: NavigationConstants.transferDetailsRoute);
       return;
     }
-    else if (selectedTransferModel?.baskets?.any((basket) =>
-            basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
-        false) {
-      removeLoading(context);
-      fetchBasketDetails(code);
-      navigateReplacement(context,
-          route: NavigationConstants.transferDetailsRoute);
-      return;
+    if (forTransfer!) {
+      if (selectedTransferModel?.baskets?.any((basket) =>
+              basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
+          false) {
+        removeLoading(context);
+        fetchBasketDetails(code);
+        navigateReplacement(context,
+            route: NavigationConstants.transferDetailsRoute);
+        return;
+      }
     }
     _handleInvalidQR(context, controller);
   }

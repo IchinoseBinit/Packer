@@ -65,13 +65,14 @@ class BasketList extends StatelessWidget {
                     );
                   },
                 ),
+                Spacer(),
                 GeneralElevatedButton(
                     title: "Scan Basket",
                     onPressed: () {
                       navigate(
                         context,
                         route: NavigationConstants.qrScanScreenRoute,
-                        extra: {"forBasket": true},
+                        extra: {"forBasket": true, "forTransfer": true},
                       );
                     })
               ],
