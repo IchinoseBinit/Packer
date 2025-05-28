@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -144,7 +145,7 @@ class _ItemWidgetState extends State<ItemWidget> {
                   borderRadius: BorderRadius.circular(8),
                   child: widget.productItems.imageUrl.isNotEmpty
                       ? Image.network(
-                          "http://13.211.205.215:8000${widget.productItems.imageUrl}",
+                          "${AppUrls.baseUrl}${widget.productItems.imageUrl}",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),
@@ -174,25 +175,17 @@ class _ItemWidgetState extends State<ItemWidget> {
                           color: text2Color, // Set text color based on status
                         ),
                   ),
-                  Row(
-                    children: [
-                      Text(
-                        "Rack: ",
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color:
-                                  text2Color, // Set text color based on status
-                            ),
-                      ),
-                      SizedBox(width: 2.w),
-                      Text(
-                        "${widget.productItems.rackName} ",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: text1Color,
-                              fontWeight:
-                                  FontWeight.bold, // Bold text for rack name
-                            ),
-                      )
-                    ],
+                  SizedBox(
+                    width: .3.sw,
+                    child: Text(
+                      widget.productItems.rackName,
+                      maxLines: 3,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: text1Color,
+                            fontWeight:
+                                FontWeight.bold, // Bold text for rack name
+                          ),
+                    ),
                   )
                 ],
               ),
