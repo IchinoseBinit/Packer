@@ -103,7 +103,6 @@ class _ScanScreenState extends State<ScanScreen> {
     }
 
     if (widget.forBasket) {
-      debugger();
       if (code.isNotEmpty) {
         Future<void> val;
         if (widget.isFromPackerTransfer) {
@@ -271,7 +270,6 @@ class _ScanScreenState extends State<ScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              debugger();
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
                   context,

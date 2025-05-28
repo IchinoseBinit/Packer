@@ -31,8 +31,10 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
 
   void startTimer() {
     timer = Timer.periodic(Duration(minutes: 5), (timer) {
-      Provider.of<StockProvider>(context, listen: false)
-          .fetchLowStockProducts();
+      if (mounted) {
+        Provider.of<StockProvider>(context, listen: false)
+            .fetchLowStockProducts();
+      }
     });
   }
 

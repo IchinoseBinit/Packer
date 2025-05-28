@@ -13,6 +13,7 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/demo.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -35,6 +36,24 @@ class StockProvider extends ChangeNotifier {
   bool hasScanned = false;
 
   String basketId = "";
+  List<String> rackNameList = [];
+  Map<String, List<ProductModel>> rackProductMap = {};
+
+  void initRackProductMap() {
+    rackNameList.clear();
+    rackProductMap.clear();
+
+    selectedModel?.products.forEach((element) {
+      if (!rackNameList.contains(element.rackName)) {
+        rackNameList.add(element.rackName);
+      }
+
+      rackProductMap.putIfAbsent(element.rackName, () => []);
+      rackProductMap[element.rackName]!.add(element);
+    });
+
+    rackNameList.sort((a, b) => a.compareTo(b));
+  }
 
   // reset
   void reset() {
@@ -43,6 +62,8 @@ class StockProvider extends ChangeNotifier {
     isError = false;
     errorMessage = "";
     scanMessage = "";
+    rackNameList = [];
+    rackProductMap = {};
   }
 
   bool checkScanCount(int productId) {
@@ -73,6 +94,11 @@ class StockProvider extends ChangeNotifier {
       isError = false;
       errorMessage = "";
       FirebaseAPI().cancelScheduledNotification();
+      // for demo
+      // await Future.delayed(const Duration(seconds: 2));
+      // for (var item in demoData) {
+      //   lowStockList.add(LowStockModel.fromJson(item));
+      // }
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.lowStockUrl,
@@ -226,6 +252,7 @@ class StockProvider extends ChangeNotifier {
     LowStockModel lowStockModel,
   ) {
     selectedModel = lowStockModel;
+    initRackProductMap();
     basketId = "";
     navigate(
       context,
@@ -342,6 +369,7 @@ class StockProvider extends ChangeNotifier {
         body: {
           "store_id": selectedModel?.storeId,
           "product_units": scannedList,
+          "basket_identifier": basketId,
         },
       );
       if (response.statusCode == 200) {

@@ -29,6 +29,11 @@ class LowStockDetails extends StatefulWidget {
 
 class _LowStockDetailsState extends State<LowStockDetails> {
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
@@ -85,23 +90,43 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                               .fetchLowStockProducts();
                         },
                         child: ListView.builder(
-                          itemCount: model.products.length,
+                          itemCount: state.rackNameList.length,
                           itemBuilder: (context, index) {
-                            final product = model.products[index];
-                            return GestureDetector(
-                              onTap: () {
-                                if (state.checkScanCount(product.productId)) {
-                                  return;
-                                }
-                                showToast("Scan Carton First");
-                              },
-                              child: ItemWidget(
-                                model: product,
-                                status: state.checkScanCount(product.productId)
-                                    ? ItemStatus.done
-                                    : ItemStatus.remaining,
-                                quantity: state.getScanCount(product.productId),
-                              ),
+                            final rackName = state.rackNameList[index];
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Text(rackName),
+                                RichText(text: TextSpan(children: [
+                                  TextSpan(text: "Rack Name: ", style: Theme.of(context).textTheme.labelLarge),
+                                  TextSpan(text: rackName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    fontSize: 16.sp,
+                                  )),
+                                ])),
+                                // 8.h
+                                SizedBox(height: 8.h),
+                                if (state.rackProductMap[rackName] != null)
+                                ...state.rackProductMap[rackName]!.map(
+                                  (product) => GestureDetector(
+                                    onTap: () {
+                                      if (state
+                                          .checkScanCount(product.productId)) {
+                                        return;
+                                      }
+                                      showToast("Scan Carton First");
+                                    },
+                                    child: ItemWidget(
+                                      model: product,
+                                      status: state
+                                              .checkScanCount(product.productId)
+                                          ? ItemStatus.done
+                                          : ItemStatus.remaining,
+                                      quantity:
+                                          state.getScanCount(product.productId),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -131,7 +156,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                               );
                             }),
                     // 20.h
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 8.h),
                   ],
                 ),
               ),
@@ -184,24 +209,24 @@ class ItemWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                height: 60.h,
-                width: 60.h,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: model.imageUrl.isNotEmpty
-                      ? Image.network(
-                          "${AppUrls.imageUrl}${model.imageUrl}",
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image_not_supported),
-                        )
-                      : const Icon(Icons.image_not_supported),
-                ),
-              ),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            height: 60.h,
+            width: 60.h,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: model.imageUrl.isNotEmpty
+                  ? Image.network(
+                      "${AppUrls.imageUrl}${model.imageUrl}",
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.image_not_supported),
+                    )
+                  : const Icon(Icons.image_not_supported),
+            ),
+          ),
           SizedBox(width: 8.w),
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -218,26 +243,26 @@ class ItemWidget extends StatelessWidget {
                   textAlign: TextAlign.start,
                 ),
               ),
-              if (model.rackName.isNotEmpty)
-                RichText(
-                  text: TextSpan(
-                    text: "Rack: ",
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: text2Color,
-                          fontSize: 14.sp,
-                        ),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: model.rackName,
-                        style:
-                            Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                  color: text1Color,
-                                  fontSize: 14.sp,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
+              // if (model.rackName.isNotEmpty)
+              //   RichText(
+              //     text: TextSpan(
+              //       text: "Rack: ",
+              //       style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              //             color: text2Color,
+              //             fontSize: 14.sp,
+              //           ),
+              //       children: <TextSpan>[
+              //         TextSpan(
+              //           text: model.rackName,
+              //           style:
+              //               Theme.of(context).textTheme.headlineLarge?.copyWith(
+              //                     color: text1Color,
+              //                     fontSize: 14.sp,
+              //                   ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
               Text(
                 "Quantity: ${model.quantity}",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
