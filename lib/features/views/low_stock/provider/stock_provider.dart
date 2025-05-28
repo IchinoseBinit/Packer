@@ -260,7 +260,7 @@ class StockProvider extends ChangeNotifier {
         basketId = code;
         navigateReplacement(context,
             route: NavigationConstants.lowStockDetailRoute);
-            hasScanned = false;
+        hasScanned = false;
       } else {
         controller?.start();
         hasScanned = false;

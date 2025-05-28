@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -46,7 +48,7 @@ class BasketList extends StatelessWidget {
             }
             return Column(
               children: [
-                Expanded( 
+                Expanded(
                   child: ListView.builder(
                     itemCount: provider.selectedTransferModel?.baskets?.length,
                     padding: EdgeInsets.all(16.w),
@@ -71,10 +73,11 @@ class BasketList extends StatelessWidget {
                 GeneralElevatedButton(
                     title: "Scan Basket",
                     onPressed: () {
+                      debugger();
                       navigate(
                         context,
                         route: NavigationConstants.qrScanScreenRoute,
-                        extra: {"forBasket": true, "forTransfer": true},
+                        extra: {"forBasket": true, "forTranfer": true},
                       );
                     })
               ],

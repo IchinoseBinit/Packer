@@ -102,6 +102,28 @@ class _ScanScreenState extends State<ScanScreen> {
       return;
     }
 
+    if (widget.forBasket) {
+      debugger();
+      if (code.isNotEmpty) {
+        Future<void> val;
+        if (widget.isFromPackerTransfer) {
+          val = Provider.of<PackerTransferProvider>(context, listen: false)
+              .checkBasketQr(context, controller, code, true);
+        } else {
+          val = Provider.of<PackerTransferProvider>(context, listen: false)
+              .checkBasketQr(context, controller, code, false);
+        }
+        if (val == false) {
+          controller?.start();
+        }
+      }
+      hasScanned = false;
+
+      // navigatePop(context, code);
+
+      return;
+    }
+
     showLoading(context);
 
     if (code.contains('topicName')) {
@@ -249,6 +271,7 @@ class _ScanScreenState extends State<ScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
+              debugger();
               if (widget.isfromCartItem) {
                 Provider.of<OrderProvider>(context, listen: false).checkItemQr(
                   context,
@@ -257,7 +280,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 );
                 return;
               }
-              if (widget.isFromPackerTransfer) {
+              if (widget.isFromPackerTransfer && widget.forBasket == false) {
                 Provider.of<PackerTransferProvider>(context, listen: false)
                     .checkItemQr(
                         context,
@@ -272,19 +295,19 @@ class _ScanScreenState extends State<ScanScreen> {
                         barcodes.barcodes.first.rawValue.toString());
                 return;
               }
-              if (widget.forBasket && !widget.isFromPackerTransfer) {
-                Provider.of<PackerTransferProvider>(context, listen: false)
-                    .checkBasketQr(context, controller,
-                        barcodes.barcodes.first.rawValue.toString(), false);
+              // if (widget.forBasket) {
+              //   Provider.of<PackerTransferProvider>(context, listen: false)
+              //       .checkBasketQr(context, controller,
+              //           barcodes.barcodes.first.rawValue.toString(), false);
 
-                return;
-              }
-              if (widget.forBasket && widget.isFromPackerTransfer) {
-                Provider.of<PackerTransferProvider>(context, listen: false)
-                    .checkBasketQr(context, controller,
-                        barcodes.barcodes.first.rawValue.toString(), true);
-                return;
-              }
+              //   return;
+              // }
+              // if (widget.forBasket && widget.isFromPackerTransfer) {
+              //   Provider.of<PackerTransferProvider>(context, listen: false)
+              //       .checkBasketQr(context, controller,
+              //           barcodes.barcodes.first.rawValue.toString(), true);
+              //   return;
+              // }
               checkQr(barcodes.barcodes.first.rawValue.toString());
             },
           ),
@@ -313,23 +336,22 @@ class _ScanScreenState extends State<ScanScreen> {
             left: 4.w * 3,
             right: 4.w * 3,
             child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 8.h,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Scan the Carton code',
-                style: TextStyle(
-                  color: AppColors.backgroundColor,
-                  fontSize: 16.sp,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
                 ),
-              ),
-            ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Scan the Carton code',
+                  style: TextStyle(
+                    color: AppColors.backgroundColor,
+                    fontSize: 16.sp,
+                  ),
+                )),
           ),
           // TODO: i want this in center of width
           Consumer<OrderProvider>(
@@ -380,6 +402,32 @@ class _ScanScreenState extends State<ScanScreen> {
                 alignment: Alignment.center,
                 child: Text(
                   'Scan the Inventory Transfer code',
+                  style: TextStyle(
+                    color: AppColors.backgroundColor,
+                    fontSize: 16.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Visibility(
+            visible: widget.isFromPackerTransfer,
+            child: Positioned(
+              top: 32.h * 6,
+              left: 4.w * 3,
+              right: 4.w * 3,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  'Scan the basket code',
                   style: TextStyle(
                     color: AppColors.backgroundColor,
                     fontSize: 16.sp,
