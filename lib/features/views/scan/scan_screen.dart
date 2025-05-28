@@ -265,7 +265,7 @@ class _ScanScreenState extends State<ScanScreen> {
                         barcodes.barcodes.first.rawValue.toString());
                 return;
               }
-              if (widget.forBasket) {
+              if (widget.forBasket && !widget.isFromPackerTransfer) {
                 Provider.of<PackerTransferProvider>(context, listen: false)
                     .checkBasketQr(context, controller,
                         barcodes.barcodes.first.rawValue.toString(), false);
