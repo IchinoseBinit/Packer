@@ -136,6 +136,10 @@ class HomeProvider with ChangeNotifier {
       final List<dynamic> data = response.data;
       latestOrder =
           data.map((order) => OrderNotification.fromJson(order)).toList();
+
+      if (latestOrder.isEmpty) {
+        fetchCreatedOrders();
+      }
       isLoading = false;
 
       notifyListeners();
