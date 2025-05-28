@@ -62,16 +62,16 @@ class PackerTransferProvider extends ChangeNotifier {
 
   void onDetailsTaped(BuildContext context, TransferModel data) {
     if (role?.contains("main") == false) {
-    selectedTransferModel = data;
-    navigate(
-      context,
-      route: NavigationConstants.qrScanScreenRoute,
-      extra: {
-        "checkIdentifier": true,
-        "productId": data.id ?? 0,
-      },
-    );
-    return;
+      selectedTransferModel = data;
+      navigate(
+        context,
+        route: NavigationConstants.qrScanScreenRoute,
+        extra: {
+          "checkIdentifier": true,
+          "productId": data.id ?? 0,
+        },
+      );
+      return;
     }
     fetchTransferDetails(data.id ?? 0);
     navigate(context, route: NavigationConstants.transferDetailsRoute);
@@ -197,16 +197,16 @@ class PackerTransferProvider extends ChangeNotifier {
           return;
         }
         if (role?.contains("main") == false) {
-        final item = selectedTransferModel?.items?.firstWhere(
-          (element) => element.product == productId,
-          orElse: () => TransferItemModel(),
-        );
-        if (item != null && (item.tags?.contains(code) ?? false)) {
-          scanTagsList.add(code);
-        } else {
-          _handleInvalidQR(context, controller);
-          return;
-        }
+          final item = selectedTransferModel?.items?.firstWhere(
+            (element) => element.product == productId,
+            orElse: () => TransferItemModel(),
+          );
+          if (item != null && (item.tags?.contains(code) ?? false)) {
+            scanTagsList.add(code);
+          } else {
+            _handleInvalidQR(context, controller);
+            return;
+          }
         } else {
           scanTagsList.add(code);
         }
@@ -240,7 +240,7 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   checkBasketQr(BuildContext context, MobileScannerController? controller,
-      String code, bool? forTransfer) async {
+      String code, bool forTransfer) async {
     if (hasScanned) return;
     hasScanned = true;
     controller?.stop();
@@ -264,15 +264,17 @@ class PackerTransferProvider extends ChangeNotifier {
       hasScanned = false;
       return;
     }
-    else if (selectedTransferModel?.baskets?.any((basket) =>
-            basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
-        false) {
-      removeLoading(context);
-      fetchBasketDetails(code);
-      navigateReplacement(context,
-          route: NavigationConstants.transferDetailsRoute);
-          hasScanned = false;
-      return;
+    if (forTransfer) {
+      if (selectedTransferModel?.baskets?.any((basket) =>
+              basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
+          false) {
+        removeLoading(context);
+        fetchBasketDetails(code);
+        navigateReplacement(context,
+            route: NavigationConstants.transferDetailsRoute);
+        hasScanned = false;
+        return;
+      }
     }
     _handleInvalidQR(context, controller);
     hasScanned = false;
@@ -364,8 +366,9 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<void> postScannedTags(BuildContext context, int productId) async {
     try {
       showLoading(context);
-      final url =
-          role?.contains("main") == true ? AppUrls.scanUnitUrl : AppUrls.verifyUnitsUrl;
+      final url = role?.contains("main") == true
+          ? AppUrls.scanUnitUrl
+          : AppUrls.verifyUnitsUrl;
       final urlValue =
           url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
       if (scanTagsList.isEmpty) {
@@ -379,7 +382,8 @@ class PackerTransferProvider extends ChangeNotifier {
           body: {
             "product_id": productId,
             "unit_tags": scanTagsList,
-            if (role?.contains("main") == false) "basket_identifier": selectedBasketModel?.identifier,
+            if (role?.contains("main") == false)
+              "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
