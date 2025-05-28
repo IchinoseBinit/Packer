@@ -46,24 +46,26 @@ class BasketList extends StatelessWidget {
             }
             return Column(
               children: [
-                ListView.builder(
-                  itemCount: provider.selectedTransferModel?.baskets?.length,
-                  padding: EdgeInsets.all(16.w),
-                  itemBuilder: (context, index) {
-                    final data =
-                        provider.selectedTransferModel!.baskets![index];
-                    return BasketCard(
-                      index: index + 1,
-                      model: data,
-                      primaryColor: Theme.of(context).primaryColor,
-                      callback: () {
-                        // Handle item tap
-                        Provider.of<PackerTransferProvider>(context,
-                                listen: false)
-                            .onBasketScanTapped(context, data);
-                      },
-                    );
-                  },
+                Expanded( 
+                  child: ListView.builder(
+                    itemCount: provider.selectedTransferModel?.baskets?.length,
+                    padding: EdgeInsets.all(16.w),
+                    itemBuilder: (context, index) {
+                      final data =
+                          provider.selectedTransferModel!.baskets![index];
+                      return BasketCard(
+                        index: index + 1,
+                        model: data,
+                        primaryColor: Theme.of(context).primaryColor,
+                        callback: () {
+                          // Handle item tap
+                          Provider.of<PackerTransferProvider>(context,
+                                  listen: false)
+                              .onBasketScanTapped(context, data);
+                        },
+                      );
+                    },
+                  ),
                 ),
                 Spacer(),
                 GeneralElevatedButton(

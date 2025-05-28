@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -50,11 +51,6 @@ class ProfileScreen extends StatelessWidget {
       'title': 'Transaction History',
       'screen': 'transaction_history',
     },
-    {
-      'icon': Icons.inventory,
-      'title': 'Inventory Items',
-      'screen': 'transfer_list',
-    },
   ];
 
   ProfileScreen({super.key});
@@ -63,15 +59,19 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     double myToolBarHeight = 150.h;
     return Consumer<HomeProvider>(builder: (context, value, child) {
-      // if (value.user.role == UserRole.manager) {
-      //   if (otherInfoData.length <= 2) {
-      //     otherInfoData.add({
-      //       'icon': Icons.transform,
-      //       'title': 'Transfer Items',
-      //       'screen': 'transfer_list',
-      //     });
-      //   }
-      // }
+      Provider.of<PackerTransferProvider>(context, listen: false)
+          .setRole(value.packerSummary?.storeType ?? "");
+      if (value.packerSummary?.storeType.contains("main") == false) {
+        if (otherInfoData.length <= 2) {
+          otherInfoData.add(
+            {
+              'icon': Icons.inventory,
+              'title': 'Inventory Items',
+              'screen': 'transfer_list',
+            },
+          );
+        }
+      }
       return Scaffold(
         appBar: AppBar(
           title: Container(

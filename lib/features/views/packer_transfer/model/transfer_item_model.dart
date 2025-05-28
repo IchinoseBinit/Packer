@@ -7,6 +7,7 @@ class TransferItemModel {
   int? id;
   int? product;
   String? productName;
+  late String productImage;
   int? quantity;
   String? status;
   int itemScanCount;
@@ -17,6 +18,7 @@ class TransferItemModel {
     this.id,
     this.product,
     this.productName,
+    this.productImage = "",
     this.quantity,
     this.status,
     this.rack,
@@ -29,6 +31,7 @@ class TransferItemModel {
       'id': id,
       'product': product,
       'productName': productName,
+      'productImage': productImage,
       'quantity': quantity,
       'status': status,
       'itemScanCount': itemScanCount,
@@ -42,6 +45,7 @@ class TransferItemModel {
       id: map['id'].toString().toInt(),
       product: map['product_id'].toString().toInt(),
       productName: map['product_name'].toString().toString(),
+      productImage: map['product_image'].toString().toString(),
       quantity: map['quantity'].toString().toInt(),
       status: map['status'].toString().toStringConversion(),
       rack: map['rack'].toString().toStringConversion(),

@@ -4,7 +4,8 @@ class AppUrls {
   //static const String _baseUrl = "http://192.168.1.98:8000/categories";
 
   static const String _productionDomainnUrl = "dropit.com.np";
-  static const String _stagingdomainURL = "13.211.205.215:8000";
+  // static const String _stagingdomainURL = "13.211.205.215:8000";
+  static const String _stagingdomainURL = "192.168.100.78:8000";
   // static const String _stagingdomainURL = "dropit.com.np";
 
   static final String _baseUrl = EnvironmentConfig.when(

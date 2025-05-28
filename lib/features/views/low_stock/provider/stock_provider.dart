@@ -32,6 +32,10 @@ class StockProvider extends ChangeNotifier {
   List<String> scannedList = [];
   ProductModel? selectedProduct;
 
+  bool hasScanned = false;
+
+  String basketId = "";
+
   // reset
   void reset() {
     scannedList = [];
@@ -222,6 +226,7 @@ class StockProvider extends ChangeNotifier {
     LowStockModel lowStockModel,
   ) {
     selectedModel = lowStockModel;
+    basketId = "";
     navigate(
       context,
       route: NavigationConstants.lowStockScannerRoute,
@@ -242,6 +247,8 @@ class StockProvider extends ChangeNotifier {
 
   void checkBasketQr(BuildContext context, MobileScannerController? controller,
       String code) async {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
     scanMessage = "";
     notifyListeners();
@@ -250,20 +257,26 @@ class StockProvider extends ChangeNotifier {
     try {
       final value = await postBasketCode(context, code);
       if (value) {
+        basketId = code;
         navigateReplacement(context,
             route: NavigationConstants.lowStockDetailRoute);
+            hasScanned = false;
       } else {
         controller?.start();
+        hasScanned = false;
         return;
       }
     } catch (e) {
       _handleInvalidQR(context, controller);
+      hasScanned = false;
       return;
     }
   }
 
   void checkItemQr(BuildContext context, MobileScannerController? controller,
       String code) async {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
     HapticFeedback.heavyImpact();
 
@@ -271,16 +284,19 @@ class StockProvider extends ChangeNotifier {
       if (scannedList.contains(code)) {
         showToast("Tag Already scanned");
         controller?.start();
+        hasScanned = false;
         return;
       }
       if (selectedProduct?.quantity == scannedList.length) {
         showToast("Product already scanned");
         controller?.start();
+        hasScanned = false;
         return;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
         showToast("Invalid QR");
         controller?.start();
+        hasScanned = false;
         return;
       }
       scannedList.add(code);
@@ -297,8 +313,10 @@ class StockProvider extends ChangeNotifier {
       } else {
         controller?.start();
       }
+      hasScanned = false;
     } catch (e) {
       _handleInvalidQR(context, controller);
+      hasScanned = false;
       return;
     }
   }
@@ -419,6 +437,8 @@ class StockProvider extends ChangeNotifier {
 
   void scanRack(
       BuildContext context, MobileScannerController? controller, String code) {
+    if (hasScanned) return;
+    hasScanned = true;
     // debugger();
     if (cartonModel != null) {
       if (cartonModel!.rackName.isEmpty) {
@@ -427,6 +447,7 @@ class StockProvider extends ChangeNotifier {
           .toLowerCase()
           .contains(cartonModel!.rackName.toLowerCase())) {
         showToast("Rack scanned successfully");
+        hasScanned = false;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           navigateReplacement(context,
               route: NavigationConstants.dashboardRoute);
@@ -435,10 +456,12 @@ class StockProvider extends ChangeNotifier {
         controller?.start();
 
         showToast("Invalid rack");
+        hasScanned = false;
       }
     } else {
       showToast("No data found");
       navigatePop(context);
+      hasScanned = false;
     }
   }
 

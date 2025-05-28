@@ -4,6 +4,7 @@ class ProductModel {
   late int id;
   late int productId;
   late String productName;
+  late String imageUrl;
   late int quantity;
   late String size;
   late String measurement;
@@ -15,6 +16,7 @@ class ProductModel {
     id = json['id'].toString().toInt();
     productId = json['product_id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
+    imageUrl = json['product_image'].toString().toStringConversion();
     quantity = json['quantity'].toString().toInt();
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();

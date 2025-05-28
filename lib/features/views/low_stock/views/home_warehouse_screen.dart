@@ -118,7 +118,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                         route: NavigationConstants.qrScanScreenRoute,
                         extra: {
                           'scanCarton': true,
-                        }).then((value) { 
+                        }).then((value) {
                       log('Scan Carton Value: $value');
                       if (value != null) {
                         Provider.of<StockProvider>(context, listen: false)
@@ -141,12 +141,14 @@ class LowStockCard extends StatelessWidget {
   final LowStockModel model;
   final Color primaryColor;
   final VoidCallback? callback;
+  final String basketId;
 
   const LowStockCard({
     super.key,
     required this.model,
     required this.primaryColor,
     this.callback,
+    this.basketId = "",
   });
 
   @override
@@ -188,6 +190,15 @@ class LowStockCard extends StatelessWidget {
                             .bodyMedium
                             ?.copyWith(color: Colors.grey[700]),
                       ),
+                      if (basketId.isNotEmpty) ...[
+                        Text(
+                          'Basket ID: $basketId',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.grey[700],
+                                  ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

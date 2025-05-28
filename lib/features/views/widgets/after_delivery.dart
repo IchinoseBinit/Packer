@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/features/views/widgets/product_item_list.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:slider_button/slider_button.dart';
+// import 'package:slider_button/slider_button.dart';
 import 'package:svg_flutter/svg_flutter.dart';
 
 class DeliveredPage extends StatelessWidget {
@@ -100,37 +100,37 @@ class DeliveredPage extends StatelessWidget {
             ),
             ProductItemList(),
             SizedBox(height: 10.h),
-            SliderButton(
-              width: 330.w,
-              action: () async {
-                context.go("/thank_you");
-              },
-              label: Text(
-                "Mark as delivered.",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge!
-                    .copyWith(color: Colors.white),
-              ),
-              radius: 0.0,
-              baseColor: AppColors.backgroundColor,
-              backgroundColor: AppColors.primaryColor,
-              icon: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.red,
-                    size: 30.sp,
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.red,
-                    size: 30.sp,
-                  ),
-                ],
-              ),
-            ),
+            // SliderButton(
+            //   width: 330.w,
+            //   action: () async {
+            //     context.go("/thank_you");
+            //   },
+            //   label: Text(
+            //     "Mark as delivered.",
+            //     style: Theme.of(context)
+            //         .textTheme
+            //         .bodyLarge!
+            //         .copyWith(color: Colors.white),
+            //   ),
+            //   radius: 0.0,
+            //   baseColor: AppColors.backgroundColor,
+            //   backgroundColor: AppColors.primaryColor,
+            //   icon: Row(
+            //     mainAxisAlignment: MainAxisAlignment.center,
+            //     children: [
+            //       Icon(
+            //         Icons.arrow_forward_ios,
+            //         color: Colors.red,
+            //         size: 30.sp,
+            //       ),
+            //       Icon(
+            //         Icons.arrow_forward_ios,
+            //         color: Colors.red,
+            //         size: 30.sp,
+            //       ),
+            //     ],
+            //   ),
+            // ),
           ],
         ),
       ),
