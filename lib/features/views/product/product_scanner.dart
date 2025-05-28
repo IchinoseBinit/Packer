@@ -24,7 +24,7 @@ class ProductScannerScreen extends StatefulWidget {
   });
 
   final bool isfromCartItem;
-  final List<int>? productId;
+  final int? productId;
   // final int index;
 
   @override
@@ -32,6 +32,7 @@ class ProductScannerScreen extends StatefulWidget {
 }
 
 class _ProductScannerScreenState extends State<ProductScannerScreen> {
+  bool hasScanned = false;
   @override
   void reassemble() {
     super.reassemble();
@@ -49,18 +50,18 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<OrderProvider>(context, listen: false).initState();
     controller = MobileScannerController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<OrderProvider>(context, listen: false)
-          .initScanMessage(widget.productId?.first ?? 0);
+          .initScanMessage(widget.productId ?? 0);
     });
   }
 
   var _flash = false;
 
   checkQr(String code) {
-    debugger();
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "Product qr code data");
@@ -75,16 +76,18 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
 
         final productId = int.tryParse(code.split("-").first) ?? 0;
         Provider.of<OrderProvider>(context, listen: false)
-            .scanCountOrder(productId);
+            .scanCountOrder(productId, code);
         print('ssssssssssssss   : $productId');
 
         Provider.of<OrderProvider>(context, listen: false)
             .updateProductList(code);
         removeLoading(context);
+        hasScanned = false;
         Navigator.pop(context);
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
@@ -97,6 +100,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 
@@ -201,10 +205,11 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
             },
             onDetect: (barcodes) {
               if (widget.isfromCartItem) {
-                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
+                Provider.of<OrderProvider>(context, listen: false).checkCartItemQr(
                   context,
                   controller,
                   barcodes.barcodes.first.rawValue.toString(),
+                  widget.productId ?? 0,
                 );
                 return;
               }

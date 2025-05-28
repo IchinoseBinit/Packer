@@ -5,6 +5,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -30,12 +31,12 @@ class _LowStockDetailsState extends State<LowStockDetails> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          // Handle the pop event
-          Provider.of<StockProvider>(context, listen: false).reset();
-          navigatePop(context);
-        }
+        if (didPop) return;
+        // Handle the pop event
+        Provider.of<StockProvider>(context, listen: false).reset();
+        navigatePop(context);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -71,6 +72,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                   children: [
                     LowStockCard(
                       model: model,
+                      basketId: state.basketId,
                       primaryColor: Theme.of(context).primaryColor,
                     ),
                     // 20.h
@@ -181,6 +183,25 @@ class ItemWidget extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Container(
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                height: 60.h,
+                width: 60.h,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: model.imageUrl.isNotEmpty
+                      ? Image.network(
+                          "${AppUrls.imageUrl}${model.imageUrl}",
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported),
+                        )
+                      : const Icon(Icons.image_not_supported),
+                ),
+              ),
           SizedBox(width: 8.w),
           Column(
             mainAxisAlignment: MainAxisAlignment.start,

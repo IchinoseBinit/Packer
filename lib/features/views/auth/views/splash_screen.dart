@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -37,8 +37,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   .readKey(key: SecureStorageConstants.refreshTokenKey))
               .toString();
 
-          // Get the current location
-          Position currentPosition = await _getCurrentLocation();
 
           await Provider.of<HomeProvider>(context, listen: false)
               .fetchpackerSummary();
@@ -86,32 +84,6 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const Spacer(),
             Text(
-              "Nepal's First Quick-Commerce.",
+              "Packer App",
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

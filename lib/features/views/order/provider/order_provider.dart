@@ -40,6 +40,7 @@ class OrderProvider extends ChangeNotifier {
   String? scanMessage;
   UnsettledOrders? unsettledOrders;
   List<OrderNotification> latestOrder = [];
+  bool hasScanned = false;
 
   set isAvailable(val) {
     _isAvailable = val;
@@ -61,6 +62,15 @@ class OrderProvider extends ChangeNotifier {
       scannedDataPerBasket[basketId] = [];
     }
     scannedDataPerBasket[basketId]!.add(productTag);
+  }
+
+  bool allCartItemScanned(){
+    for (ProductDetails element in _orderDetails?.productDetails ?? []) {
+      if (element.quantity != countScannedItem(element.id)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   var hasUploadedHomeImage = false;
@@ -98,6 +108,13 @@ class OrderProvider extends ChangeNotifier {
     return false;
   }
 
+  int countScannedItem(int productId) {
+    final scannedLength = scannedDataList
+        .where((item) => item.startsWith(productId.toString()))
+        .length;
+    return scannedLength;
+  }
+
   void initScanMessage(int productId) {
     if (kDebugMode) {
       showToast('Item Id: $productId');
@@ -112,11 +129,77 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+
+  checkCartItemQr(
+    BuildContext context,
+    MobileScannerController? controller,
+    String code,
+    int productId,
+  ) {
+    if (hasScanned) return;
+    hasScanned = true;
+    controller?.stop();
+
+    log(code, name: "qr code data $productId cart item");
+
+    HapticFeedback.vibrate();
+
+    showLoading(context);
+
+    if (code.contains('-')) {
+      final prodId = int.tryParse(code.split('-').first) ?? 0;
+
+      if (prodId != productId) {
+        _handleInvalidQR(context, controller);
+        hasScanned = false;
+        return;
+      }
+
+      try {
+        final isScanned = scanCountOrder(prodId, code);
+        // updateProductList(code);
+        hasScanned = false;
+        if (isScanned) {
+          removeLoading(context);
+          Navigator.pop(context);
+        } else {
+          removeLoading(context);
+          controller?.start();
+        }
+      } catch (ex) {
+        removeLoading(context);
+        showToast(ex.toString());
+        hasScanned = false;
+        print(ex.toString());
+      }
+      
+    } else{
+      _handleInvalidQR(context, controller);
+      hasScanned = false;
+    }
+  }
+
+  void _handleInvalidQR(
+    BuildContext context,
+    MobileScannerController? controller,
+  ) {
+    removeLoading(context);
+    ShowAlertDialog(
+      body: const Text("Invalid QR"),
+      okFunc: () {
+        Navigator.pop(context);
+        controller?.start();
+      },
+    ).showAlertDialog(context);
+  }
+
   checkItemQr(
     BuildContext context,
     MobileScannerController? controller,
     String code,
   ) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -129,9 +212,10 @@ class OrderProvider extends ChangeNotifier {
       final prodId = int.tryParse(code.split('-').first) ?? 0;
 
       try {
-        final isScanned = scanCountOrder(prodId);
+        final isScanned = scanCountOrder(prodId, code);
 
         updateProductList(code);
+        hasScanned = false;
         if (isScanned) {
           removeLoading(context);
           Navigator.pop(context);
@@ -144,6 +228,7 @@ class OrderProvider extends ChangeNotifier {
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
@@ -156,23 +241,25 @@ class OrderProvider extends ChangeNotifier {
         },
       ).showAlertDialog(context);
       controller?.start();
+      hasScanned = false;
     }
   }
 
   bool scanCountOrder(
     int cartItemId,
+    String code,
   ) {
     // debugger();
-    for (var element in _orderDetails?.productDetails ?? []) {
+    for (var element in _orderDetails?.productDetails ?? <ProductDetails>[]) {
       print("ssssssssssss: ${element.id}");
 
       if (element.id == cartItemId) {
-        if (element.itemScanCount == element.quantity) {
+        if (scannedDataList.contains(code)) {
           showToast("Item already scanned");
           return false;
         }
-        element.itemScanCount++;
-        if (element.itemScanCount == element.quantity) {
+        updateProductList(code);
+        if (countScannedItem(cartItemId) == element.quantity) {
           scanMessage = null;
           showToast("Item scanned successfully");
 
@@ -182,10 +269,8 @@ class OrderProvider extends ChangeNotifier {
           return true;
         } else {
           scanMessage =
-              "Scan ${element.quantity - element.itemScanCount} more ${element.productName}";
-          remainingquantity = element.quantity - element.itemScanCount;
-
-          notifyListeners();
+              "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
+          remainingquantity = (element.quantity ?? 0) - countScannedItem(cartItemId);
         }
         notifyListeners();
         return false;
@@ -460,7 +545,7 @@ class OrderProvider extends ChangeNotifier {
       if (scannedDataList.contains(data)) {
         showToast("Product Already Scanned");
       } else {
-        return addList(data);
+        addList(data);
       }
     }
   }

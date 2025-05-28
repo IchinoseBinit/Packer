@@ -109,7 +109,7 @@ class AppRouter {
                   // final index = state.extra as int? ?? 0;
 
                   return ProductScannerScreen(
-                    productId: [productId],
+                    productId: productId,
                     isfromCartItem: true,
                     // index: index,
 

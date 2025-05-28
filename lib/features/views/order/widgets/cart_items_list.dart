@@ -145,7 +145,7 @@ class _ItemWidgetState extends State<ItemWidget> {
                   borderRadius: BorderRadius.circular(8),
                   child: widget.productItems.imageUrl.isNotEmpty
                       ? Image.network(
-                          "${AppUrls.baseUrl}${widget.productItems.imageUrl}",
+                          "${AppUrls.imageUrl}${widget.productItems.imageUrl}",
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(Icons.image_not_supported),

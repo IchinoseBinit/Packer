@@ -57,6 +57,7 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   MobileScannerController? controller;
+  bool hasScanned = false;
 
   @override
   void initState() {
@@ -73,6 +74,8 @@ class _ScanScreenState extends State<ScanScreen> {
   var _flash = false;
 
   checkQr(String code) async {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -92,6 +95,7 @@ class _ScanScreenState extends State<ScanScreen> {
           controller?.start();
         }
       }
+      hasScanned = false;
 
       // navigatePop(context, code);
 
@@ -107,15 +111,18 @@ class _ScanScreenState extends State<ScanScreen> {
         Provider.of<HomeProvider>(context, listen: false)
             .updateAvailability(topicName: topicName);
         removeLoading(context);
+        hasScanned = false;
         Navigator.pop(context);
         showToast("joined the waiting list");
       } catch (ex) {
         removeLoading(context);
+        hasScanned = false;
         showToast(ex.toString());
         print(ex.toString());
       }
     } else {
       removeLoading(context);
+      hasScanned = false;
       ShowAlertDialog(
         body: const Text("Invalid QR"),
         okFunc: () {

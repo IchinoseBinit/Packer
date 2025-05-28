@@ -29,8 +29,10 @@ class PackerTransferProvider extends ChangeNotifier {
 
   List<String> scanTagsList = [];
 
-  void setRole(UserRole value) {
-    role = value.name;
+  bool hasScanned = false;
+
+  void setRole(String value) {
+    role = value;
   }
 
   void initScanMessage(int id) {
@@ -59,17 +61,17 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   void onDetailsTaped(BuildContext context, TransferModel data) {
-    if (role != "packer") {
-      selectedTransferModel = data;
-      navigate(
-        context,
-        route: NavigationConstants.qrScanScreenRoute,
-        extra: {
-          "checkIdentifier": true,
-          "productId": data.id ?? 0,
-        },
-      );
-      return;
+    if (role?.contains("main") == false) {
+    selectedTransferModel = data;
+    navigate(
+      context,
+      route: NavigationConstants.qrScanScreenRoute,
+      extra: {
+        "checkIdentifier": true,
+        "productId": data.id ?? 0,
+      },
+    );
+    return;
     }
     fetchTransferDetails(data.id ?? 0);
     navigate(context, route: NavigationConstants.transferDetailsRoute);
@@ -79,7 +81,7 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       transferListLoading = true;
       transferList.clear();
-      final url = role == "packer"
+      final url = role?.contains("main") == true
           ? AppUrls.packerTransferUrl
           : AppUrls.managerTransferUrl;
       final response = await DioClient()
@@ -116,6 +118,8 @@ class PackerTransferProvider extends ChangeNotifier {
   // check identifier
   checkIdentifier(
       BuildContext context, MobileScannerController? controller, String code) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -130,10 +134,12 @@ class PackerTransferProvider extends ChangeNotifier {
       removeLoading(context);
       fetchTransferDetails(selectedTransferModel?.id ?? 0);
       navigateReplacement(context, route: NavigationConstants.basketListRoute);
+      hasScanned = false;
       return;
     }
 
     _handleInvalidQR(context, controller);
+    hasScanned = false;
   }
 
   bool scanCountOrder(int cartItemId) {
@@ -165,6 +171,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   checkItemQr(BuildContext context, MobileScannerController? controller,
       String code, int productId) {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "qr code data");
@@ -176,6 +184,7 @@ class PackerTransferProvider extends ChangeNotifier {
     if (code.contains(productId.toString())) {
       final prodId = int.tryParse(code.split('-').first) ?? 0;
       if (prodId != productId) {
+        hasScanned = false;
         _handleInvalidQR(context, controller);
         return;
       }
@@ -187,17 +196,17 @@ class PackerTransferProvider extends ChangeNotifier {
           controller?.start();
           return;
         }
-        if (role != "packer") {
-          final item = selectedTransferModel?.items?.firstWhere(
-            (element) => element.product == productId,
-            orElse: () => TransferItemModel(),
-          );
-          if (item != null && (item.tags?.contains(code) ?? false)) {
-            scanTagsList.add(code);
-          } else {
-            _handleInvalidQR(context, controller);
-            return;
-          }
+        if (role?.contains("main") == false) {
+        final item = selectedTransferModel?.items?.firstWhere(
+          (element) => element.product == productId,
+          orElse: () => TransferItemModel(),
+        );
+        if (item != null && (item.tags?.contains(code) ?? false)) {
+          scanTagsList.add(code);
+        } else {
+          _handleInvalidQR(context, controller);
+          return;
+        }
         } else {
           scanTagsList.add(code);
         }
@@ -208,14 +217,17 @@ class PackerTransferProvider extends ChangeNotifier {
         } else {
           controller?.start();
         }
+        hasScanned = false;
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
+        hasScanned = false;
         print(ex.toString());
       }
     } else {
       _handleInvalidQR(context, controller);
     }
+    hasScanned = false;
   }
 
   onBasketScanTapped(BuildContext context, BasketModel basket) {
@@ -229,6 +241,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   checkBasketQr(BuildContext context, MobileScannerController? controller,
       String code, bool? forTransfer) async {
+    if (hasScanned) return;
+    hasScanned = true;
     controller?.stop();
 
     log(code, name: "Basket qr code data");
@@ -247,20 +261,21 @@ class PackerTransferProvider extends ChangeNotifier {
       fetchBasketDetails(code);
       navigateReplacement(context,
           route: NavigationConstants.transferDetailsRoute);
+      hasScanned = false;
       return;
     }
-    if (forTransfer!) {
-      if (selectedTransferModel?.baskets?.any((basket) =>
-              basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
-          false) {
-        removeLoading(context);
-        fetchBasketDetails(code);
-        navigateReplacement(context,
-            route: NavigationConstants.transferDetailsRoute);
-        return;
-      }
+    else if (selectedTransferModel?.baskets?.any((basket) =>
+            basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
+        false) {
+      removeLoading(context);
+      fetchBasketDetails(code);
+      navigateReplacement(context,
+          route: NavigationConstants.transferDetailsRoute);
+          hasScanned = false;
+      return;
     }
     _handleInvalidQR(context, controller);
+    hasScanned = false;
   }
 
   void _handleInvalidQR(
@@ -281,7 +296,7 @@ class PackerTransferProvider extends ChangeNotifier {
       showToast("Item not found");
       return;
     }
-    if (role == "manager") {
+    if (role?.contains("main") == false) {
       if (item.rack != null && item.rack!.isNotEmpty) {
         navigate(context,
             route: NavigationConstants.scanRackRoute,
@@ -350,7 +365,7 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       showLoading(context);
       final url =
-          role == "packer" ? AppUrls.scanUnitUrl : AppUrls.verifyUnitsUrl;
+          role?.contains("main") == true ? AppUrls.scanUnitUrl : AppUrls.verifyUnitsUrl;
       final urlValue =
           url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
       if (scanTagsList.isEmpty) {
@@ -364,8 +379,7 @@ class PackerTransferProvider extends ChangeNotifier {
           body: {
             "product_id": productId,
             "unit_tags": scanTagsList,
-            if (role != "packer")
-              "basket_identifier": selectedBasketModel?.identifier,
+            if (role?.contains("main") == false) "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
@@ -438,7 +452,7 @@ class PackerTransferProvider extends ChangeNotifier {
         showToast('Transfer ID is null');
         return;
       }
-      final url = role == "packer"
+      final url = role?.contains("main") == true
           ? AppUrls.completeTransferUrl
           : AppUrls.acceptTransferUrl;
       final response = await DioClient().request(
@@ -491,7 +505,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<void> fetchTransferDetails(int id) async {
     try {
       selectedTransferModelLoading = true;
-      final url = role == "packer"
+      final url = role?.contains("main") == true
           ? AppUrls.packerTransferDetailsUrl
           : AppUrls.managerTransferDetailsUrl;
       final urlValue = url.replaceAll('id', id.toString());

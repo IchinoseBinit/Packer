@@ -49,7 +49,7 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
         ),
         (status != OrderStatusType.completed &&
                 status != OrderStatusType.cancelled &&
-                showButton)
+                orderProvider.allCartItemScanned())
             ? Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: 12.w,

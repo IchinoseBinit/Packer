@@ -21,9 +21,6 @@ class _TransferListState extends State<TransferList> {
         title: const Text('Transfer List'),
       ),
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
-        Provider.of<PackerTransferProvider>(context, listen: false)
-            .setRole(provider.user.role);
-        print("user role: ${provider.user.role}");
 
         return FutureBuilder(
             future: Provider.of<PackerTransferProvider>(context, listen: false)
