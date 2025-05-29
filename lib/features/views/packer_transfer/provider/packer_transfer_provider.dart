@@ -268,8 +268,12 @@ class PackerTransferProvider extends ChangeNotifier {
       if (selectedTransferModel?.baskets?.any((basket) =>
               basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
           false) {
+        selectedBasketModel = selectedTransferModel?.baskets?.firstWhere(
+          (basket) =>
+              basket.identifier.toLowerCase().contains(code.toLowerCase()),
+        );
         removeLoading(context);
-        fetchBasketDetails(code);
+        fetchBasketDetails(selectedBasketModel?.identifier ?? "");
         navigateReplacement(context,
             route: NavigationConstants.transferDetailsRoute);
         hasScanned = false;
@@ -462,6 +466,9 @@ class PackerTransferProvider extends ChangeNotifier {
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: url.replaceAll('id', id.toString()),
+        body: {
+          "basket_identifier": selectedBasketModel?.identifier,
+        }
       );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
