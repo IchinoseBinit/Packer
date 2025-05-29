@@ -174,24 +174,24 @@ class TransferItemWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                height: 60.h,
-                width: 60.h,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: transferItem.productImage.isNotEmpty
-                      ? Image.network(
-                          "${AppUrls.imageUrl}${transferItem.productImage}",
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image_not_supported),
-                        )
-                      : const Icon(Icons.image_not_supported),
-                ),
-              ),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            height: 60.h,
+            width: 60.h,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: transferItem.productImage.isNotEmpty
+                  ? Image.network(
+                      "${AppUrls.imageUrl}${transferItem.productImage}",
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.image_not_supported),
+                    )
+                  : const Icon(Icons.image_not_supported),
+            ),
+          ),
           SizedBox(width: 8.w),
           Expanded(
             child: Column(
@@ -238,6 +238,22 @@ class TransferItemWidget extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: text2Color,
                       ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      "Size: ${transferItem.size ?? 'N/A'}",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: text2Color,
+                          ),
+                    ),
+                    Text(
+                      " ${transferItem.measurement ?? ''}",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: text2Color,
+                          ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -12,6 +12,9 @@ class TransferItemModel {
   String? status;
   int itemScanCount;
   String? rack;
+  double? size;
+  String? measurement;
+
   List<String>? tags;
 
   TransferItemModel({
@@ -22,6 +25,8 @@ class TransferItemModel {
     this.quantity,
     this.status,
     this.rack,
+    this.size,
+    this.measurement,
     this.itemScanCount = 0,
     this.tags,
   });
@@ -37,6 +42,8 @@ class TransferItemModel {
       'itemScanCount': itemScanCount,
       'tags': tags,
       'rack': rack,
+      'size': size,
+      'measurement': measurement,
     };
   }
 
@@ -49,11 +56,12 @@ class TransferItemModel {
       quantity: map['quantity'].toString().toInt(),
       status: map['status'].toString().toStringConversion(),
       rack: map['rack'].toString().toStringConversion(),
-      itemScanCount:
-          map['item_scan_count'].toString().toInt() ,
+      size: map['size'].toString().toDouble(),
+      measurement: map['measurement'].toString().toStringConversion(),
+      itemScanCount: map['item_scan_count'].toString().toInt(),
       tags: map['unit_tags'] != null
-          ? List<String>.from(
-              (map['unit_tags'] as List<dynamic>).map<String>((x) => x as String))
+          ? List<String>.from((map['unit_tags'] as List<dynamic>)
+              .map<String>((x) => x as String))
           : null,
     );
   }

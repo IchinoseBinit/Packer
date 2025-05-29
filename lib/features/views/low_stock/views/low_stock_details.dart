@@ -97,35 +97,45 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Text(rackName),
-                                RichText(text: TextSpan(children: [
-                                  TextSpan(text: "Rack Name: ", style: Theme.of(context).textTheme.labelLarge),
-                                  TextSpan(text: rackName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    fontSize: 16.sp,
-                                  )),
+                                RichText(
+                                    text: TextSpan(children: [
+                                  TextSpan(
+                                      text: "Rack Name: ",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge),
+                                  TextSpan(
+                                      text: rackName,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                            fontSize: 16.sp,
+                                          )),
                                 ])),
                                 // 8.h
                                 SizedBox(height: 8.h),
                                 if (state.rackProductMap[rackName] != null)
-                                ...state.rackProductMap[rackName]!.map(
-                                  (product) => GestureDetector(
-                                    onTap: () {
-                                      if (state
-                                          .checkScanCount(product.productId)) {
-                                        return;
-                                      }
-                                      showToast("Scan Carton First");
-                                    },
-                                    child: ItemWidget(
-                                      model: product,
-                                      status: state
-                                              .checkScanCount(product.productId)
-                                          ? ItemStatus.done
-                                          : ItemStatus.remaining,
-                                      quantity:
-                                          state.getScanCount(product.productId),
+                                  ...state.rackProductMap[rackName]!.map(
+                                    (product) => GestureDetector(
+                                      onTap: () {
+                                        if (state.checkScanCount(
+                                            product.productId)) {
+                                          return;
+                                        }
+                                        showToast("Scan Carton First");
+                                      },
+                                      child: ItemWidget(
+                                        model: product,
+                                        status: state.checkScanCount(
+                                                product.productId)
+                                            ? ItemStatus.done
+                                            : ItemStatus.remaining,
+                                        quantity: state
+                                            .getScanCount(product.productId),
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             );
                           },
@@ -275,6 +285,12 @@ class ItemWidget extends StatelessWidget {
                       color: text2Color,
                     ),
               ),
+              // Text(
+              //   "${model.size} ${model.measurement}",
+              //   style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              //         color: text2Color,
+              //       ),
+              // ),
             ],
           ),
           const Spacer(),
