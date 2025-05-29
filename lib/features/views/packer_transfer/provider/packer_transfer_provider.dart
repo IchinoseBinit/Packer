@@ -35,6 +35,11 @@ class PackerTransferProvider extends ChangeNotifier {
     role = value;
   }
 
+  resetHasScanned() {
+    hasScanned = false;
+    
+  }
+
   void initScanMessage(int id) {
     for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
       if (element.product == id) {
@@ -193,6 +198,7 @@ class PackerTransferProvider extends ChangeNotifier {
         if (scanTagsList.contains(code)) {
           removeLoading(context);
           showToast("Tag already scanned");
+          hasScanned = false;
           controller?.start();
           return;
         }
@@ -288,10 +294,12 @@ class PackerTransferProvider extends ChangeNotifier {
       BuildContext context, MobileScannerController? controller) {
     removeLoading(context);
     ShowAlertDialog(
+      disableBackground: true,
       body: const Text("Invalid QR"),
       okFunc: () {
         Navigator.pop(context);
         controller?.start();
+        hasScanned = false;
       },
     ).showAlertDialog(context);
   }
@@ -464,12 +472,11 @@ class PackerTransferProvider extends ChangeNotifier {
           ? AppUrls.completeTransferUrl
           : AppUrls.acceptTransferUrl;
       final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url.replaceAll('id', id.toString()),
-        body: {
-          "basket_identifier": selectedBasketModel?.identifier,
-        }
-      );
+          requestType: RequestType.postWithToken,
+          url: url.replaceAll('id', id.toString()),
+          body: {
+            "basket_identifier": selectedBasketModel?.identifier,
+          });
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
