@@ -285,12 +285,6 @@ class ItemWidget extends StatelessWidget {
                       color: text2Color,
                     ),
               ),
-              // Text(
-              //   "${model.size} ${model.measurement}",
-              //   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              //         color: text2Color,
-              //       ),
-              // ),
             ],
           ),
           const Spacer(),
