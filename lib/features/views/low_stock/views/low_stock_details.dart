@@ -16,6 +16,7 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 class LowStockDetails extends StatefulWidget {
@@ -56,8 +57,17 @@ class _LowStockDetailsState extends State<LowStockDetails> {
           actions: [
             IconButton(
               onPressed: () {
-                navigate(context,
-                    route: NavigationConstants.lowStockScannerRoute);
+                ShowAlertDialog(
+                    title: "Do you want to scan a new Basket?",
+                    okFunc: () {
+                      navigate(context,
+                          route: NavigationConstants.lowStockScannerRoute);
+                    },
+                    needCancel: true,
+                    cancelTitle: "Cancel",
+                    cancelFunc: () {
+                      navigatePop(context);
+                    }).showAlertDialog(context);
               },
               icon: Icon(
                 Icons.shopping_cart,

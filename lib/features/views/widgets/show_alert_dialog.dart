@@ -78,8 +78,9 @@ class ShowAlertDialog {
               top: 20,
               bottom: 16,
             ),
-      contentPadding:
-          noPadding ? EdgeInsets.zero : const EdgeInsets.only(
+      contentPadding: noPadding
+          ? EdgeInsets.zero
+          : const EdgeInsets.only(
               left: 20,
               right: 20,
               bottom: 16,
