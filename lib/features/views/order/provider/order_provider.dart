@@ -406,6 +406,7 @@ class OrderProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
         scannedDataPerBasket.clear();
+        
         notifyListeners();
         return true;
       } else {
@@ -569,10 +570,13 @@ class OrderProvider extends ChangeNotifier {
 
   clearBasket() async {
     try {
-      var url = AppUrls.basketClearUrl.replaceAll("id", bucketData);
+      var url = AppUrls.basketClearUrl;
       await DioClient().request(
         requestType: RequestType.postWithToken,
         url: url,
+        body: {
+          "basket_id": bucketData,
+        }
       );
       // basketDataList.clear();
     } catch (e) {
