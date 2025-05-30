@@ -66,7 +66,7 @@ class _RackScanScreenState extends State<RackScanScreen> {
 
   var _flash = false;
 
-  checkQr(String code) async{
+  checkQr(String code) async {
     if (hasScanned) {
       return;
     }
@@ -76,46 +76,41 @@ class _RackScanScreenState extends State<RackScanScreen> {
     HapticFeedback.heavyImpact();
 
     if (widget.cartonProduct) {
+      hasScanned = false;
       Provider.of<StockProvider>(context, listen: false)
           .scanRack(context, controller, code);
-          hasScanned = false;
       return;
     }
 
-
     // updateRack
     if (widget.updateRack) {
+      hasScanned = false;
       await Provider.of<PackerTransferProvider>(context, listen: false)
           .updateRack(context, code, widget.productId);
       controller?.stop();
-      hasScanned = false;
 
       return;
     }
 
     if (code.toLowerCase().contains(widget.rack.toLowerCase())) {
-      showLoading(context);
       controller?.stop();
 
       Provider.of<PackerTransferProvider>(context, listen: false)
           .initScanMessage(widget.productId);
-          hasScanned = false;
+      hasScanned = false;
       navigateReplacement(context,
           route: NavigationConstants.qrScanScreenRoute,
           extra: {
             "forTranfer": true,
             "productId": widget.productId,
           });
-
-      removeLoading(context);
     } else {
-      hasScanned = false;
-      removeLoading(context);
       ShowAlertDialog(
         body: const Text("Invalid QR"),
         okFunc: () {
           Navigator.pop(context);
           controller?.start();
+          hasScanned = false;
         },
       ).showAlertDialog(context);
       controller?.start();
@@ -241,7 +236,6 @@ class _RackScanScreenState extends State<RackScanScreen> {
               scanWindow: scanWindow,
               controller: controller,
               errorBuilder: (context, error, child) {
-
                 return ScannerErrorWidget(error: error);
               },
               onDetect: (barcodes) {
@@ -323,4 +317,3 @@ class _RackScanScreenState extends State<RackScanScreen> {
     );
   }
 }
-

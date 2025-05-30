@@ -95,6 +95,7 @@ class ShowAlertDialog {
 
     await showDialog(
       context: context,
+      barrierDismissible: !disableBackground,
       builder: (BuildContext context) {
         return PopScope(
           canPop: true,

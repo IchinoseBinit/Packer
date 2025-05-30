@@ -69,11 +69,15 @@ class _ScanScreenState extends State<ScanScreen> {
             .initScanMessage(widget.productId ?? 0);
       }
     });
+    Provider.of<PackerTransferProvider>(context, listen: false).resetHasScanned();
   }
 
   var _flash = false;
 
   checkQr(String code) async {
+
+    debugger();
+    print(hasScanned);
     if (hasScanned) return;
     hasScanned = true;
     controller?.stop();
