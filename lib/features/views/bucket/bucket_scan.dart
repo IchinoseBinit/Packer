@@ -57,7 +57,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
   var _flash = false;
 
-  checkQr(String code, String orderId) {
+  checkQr(String code, String orderId) async {
     if (hasScanned) return;
     hasScanned = true;
     log(orderId, name: "order id:");
@@ -76,7 +76,8 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
             .updateBucketData(code);
 
         try {
-          Provider.of<OrderProvider>(context, listen: false).clearBasket();
+          await Provider.of<OrderProvider>(context, listen: false)
+              .clearBasket();
         } catch (ex) {
           debugPrint(ex.toString());
         }
