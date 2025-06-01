@@ -76,7 +76,6 @@ class _ScanScreenState extends State<ScanScreen> {
 
   checkQr(String code) async {
 
-    debugger();
     print(hasScanned);
     if (hasScanned) return;
     hasScanned = true;

@@ -36,6 +36,13 @@ class OrderListWidget extends StatelessWidget {
                     callback:
                         getCallbackFunction(context, orderItem: orderItem),
                   );
+                case OrderStatusType.packed:
+                  return NotificationOrderCard(
+                    orderItem: orderItem,
+                    primaryColor: AppColors.primaryColor,
+                    callback:
+                        getCallbackFunction(context, orderItem: orderItem),
+                  );
                 case OrderStatusType.packerAssigned:
                   return NotificationOrderCard(
                     orderItem: orderItem,
