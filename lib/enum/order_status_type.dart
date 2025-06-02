@@ -1,5 +1,6 @@
 enum OrderStatusType {
   created,
+  packed,
   packerAssigned,
   picked,
   completed,
@@ -21,7 +22,30 @@ enum OrderStatusType {
         return 'cancelled';
       case OrderStatusType.billing:
         return 'billing';
+      case OrderStatusType.packed:
+        return 'packed';
       // Default to 'created' if the value is not recognized
+    }
+  }
+
+  static OrderStatusType fromString(String status) {
+    switch (status) {
+      case 'created':
+        return OrderStatusType.created;
+      case 'packer_assigned':
+        return OrderStatusType.packerAssigned;
+      case 'picked':
+        return OrderStatusType.picked;
+      case 'completed':
+        return OrderStatusType.completed;
+      case 'cancelled':
+        return OrderStatusType.cancelled;
+      case 'billing':
+        return OrderStatusType.billing;
+      case 'packed':
+        return OrderStatusType.packed;
+      default:
+        throw ArgumentError('Unknown status type: $status');
     }
   }
 }
@@ -41,6 +65,8 @@ extension StatusTypeExtension on OrderStatusType {
         return "Cancelled";
       case OrderStatusType.billing:
         return "Billed";
+      case OrderStatusType.packed:
+        return "Packed";
     }
   }
 
@@ -58,6 +84,8 @@ extension StatusTypeExtension on OrderStatusType {
         return "Cancelled";
       case OrderStatusType.billing:
         return "Billed";
+      case OrderStatusType.packed:
+        return "Packed";
     }
   }
 
@@ -75,6 +103,8 @@ extension StatusTypeExtension on OrderStatusType {
         return OrderStatusType.cancelled;
       case 'billing':
         return OrderStatusType.billing;
+      case 'packed':
+        return OrderStatusType.packed;
       default:
         throw ArgumentError('Unknown status type: $status');
     }
@@ -94,6 +124,8 @@ extension StatusTypeExtension on OrderStatusType {
         return "Cancelled";
       case OrderStatusType.billing:
         return "Order Refunded";
+      case OrderStatusType.packed:
+        return "Packed";
       default:
         return "Unknown Order";
     }

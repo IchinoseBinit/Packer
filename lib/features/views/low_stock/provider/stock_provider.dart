@@ -31,6 +31,7 @@ class StockProvider extends ChangeNotifier {
   LowStockModel? selectedModel;
   CartonModel? cartonModel;
   List<String> scannedList = [];
+  List<int> completeProductId = [];
   ProductModel? selectedProduct;
 
   bool hasScanned = false;
@@ -181,7 +182,9 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              return;
+              showToast("Already Scanned");
+              removeLoading(context);
+              return false;
             }
             onProductDetailsTaped(context, matchedModel);
           }
@@ -377,6 +380,7 @@ class StockProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200) {
+        completeProductId.add(selectedProduct?.productId ?? 0);
         showToast("Scanned Successfully");
         return true;
       } else {

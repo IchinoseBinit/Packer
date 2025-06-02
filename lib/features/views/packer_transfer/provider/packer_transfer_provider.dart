@@ -37,7 +37,6 @@ class PackerTransferProvider extends ChangeNotifier {
 
   resetHasScanned() {
     hasScanned = false;
-    
   }
 
   void initScanMessage(int id) {
@@ -419,8 +418,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   Future<void> updateRack(
       BuildContext context, String code, int productId) async {
+    showLoading(context);
     try {
-      showLoading(context);
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
@@ -428,7 +427,6 @@ class PackerTransferProvider extends ChangeNotifier {
         body: {
           "rack_identifier": code,
           "product_id": productId,
-          // "store_id": "selectedTransferModel?.storeId",
         },
       );
       if (response.statusCode == 200) {
@@ -436,26 +434,28 @@ class PackerTransferProvider extends ChangeNotifier {
             in selectedTransferModel?.items ?? <TransferItemModel>[]) {
           if (element.product == productId) {
             final rack = response.data['rack'].toString().toStringConversion();
-
             element.rack = rack;
           }
         }
         Provider.of<PackerTransferProvider>(context, listen: false)
             .initScanMessage(productId);
-        removeLoading(context);
-        navigateReplacement(context,
-            route: NavigationConstants.qrScanScreenRoute,
-            extra: {
-              "forTranfer": true,
-              "productId": productId,
-            });
+
+        // move navigation after loading is removed
+        navigateReplacement(
+          context,
+          route: NavigationConstants.qrScanScreenRoute,
+          extra: {
+            "forTranfer": true,
+            "productId": productId,
+          },
+        );
       } else {
-        removeLoading(context);
         showToast('Failed to update rack');
       }
     } catch (ex) {
-      removeLoading(context);
       showToast(ex.toString());
+    } finally {
+      removeLoading(context);
     }
   }
 

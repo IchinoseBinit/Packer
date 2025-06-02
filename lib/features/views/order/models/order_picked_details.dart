@@ -1,5 +1,6 @@
 // import 'package:galli_vector_package/galli_vector_package.dart';
 
+import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/order/models/user_info.dart';
 
@@ -7,7 +8,7 @@ import '../../../../controllers/extensions/string_extension.dart';
 
 class OrderPickedDetails {
   late final int id;
-  late final String status;
+  late final OrderStatusType status;
   late final String additionalInfo;
   late final double total;
   late final UserInfo userInfo;
@@ -27,7 +28,7 @@ class OrderPickedDetails {
   OrderPickedDetails.fromJson(Map<String, dynamic> json) {
     final data = json['data'];
     id = data['id'].toString().toInt();
-    status = data['status'].toString().toStringConversion();
+    status = OrderStatusType.fromString(data['status'].toString().toStringConversion());
     additionalInfo = data['additional_info'].toString().toStringConversion();
     total = data['total'].toString().toDouble();
     userInfo = UserInfo.fromJson(data['user_info']);
