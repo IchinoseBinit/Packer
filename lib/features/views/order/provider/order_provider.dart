@@ -64,7 +64,7 @@ class OrderProvider extends ChangeNotifier {
     scannedDataPerBasket[basketId]!.add(productTag);
   }
 
-  bool allCartItemScanned(){
+  bool allCartItemScanned() {
     for (ProductDetails element in _orderDetails?.productDetails ?? []) {
       if (element.quantity != countScannedItem(element.id)) {
         return false;
@@ -129,7 +129,6 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-
   checkCartItemQr(
     BuildContext context,
     MobileScannerController? controller,
@@ -172,8 +171,7 @@ class OrderProvider extends ChangeNotifier {
         hasScanned = false;
         print(ex.toString());
       }
-      
-    } else{
+    } else {
       _handleInvalidQR(context, controller);
       hasScanned = false;
     }
@@ -270,7 +268,8 @@ class OrderProvider extends ChangeNotifier {
         } else {
           scanMessage =
               "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
-          remainingquantity = (element.quantity ?? 0) - countScannedItem(cartItemId);
+          remainingquantity =
+              (element.quantity ?? 0) - countScannedItem(cartItemId);
         }
         notifyListeners();
         return false;
@@ -379,6 +378,7 @@ class OrderProvider extends ChangeNotifier {
   }
 
   Future<bool> productPost(int orderId) async {
+    debugger();
     List<Basket> baskets = basketDataList.map((identifier) {
       return Basket(
         identifier: identifier,
