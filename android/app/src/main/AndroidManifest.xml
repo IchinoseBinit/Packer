@@ -27,6 +27,7 @@
         android:name="${applicationName}"
         android:allowBackup="false"
         android:fullBackupContent="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/launcher_icon">
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyBLmktse9KvDBkVEWr5P8GnBXU0EM8trik" />

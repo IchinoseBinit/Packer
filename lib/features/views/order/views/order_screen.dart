@@ -49,6 +49,7 @@ class OrderScreenState extends State<OrderScreen> {
                     final orderItem = provider.orders[index];
                     switch (orderItem.status) {
                       case OrderStatusType.packerAssigned:
+                      case OrderStatusType.packed:
                       case OrderStatusType.picked:
                       case OrderStatusType.completed:
                       case OrderStatusType.cancelled:

@@ -2,11 +2,12 @@
 
 
 import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/order/models/user_info.dart';
 
 class CompletedOrderDetails {
   late final int id;
-  late final String status;
+  late final OrderStatusType status;
   late final double total;
   late final UserInfo user_info;
   late final String name;
@@ -22,7 +23,7 @@ class CompletedOrderDetails {
   CompletedOrderDetails.fromJson(Map<String, dynamic> obj) {
     final json = obj['data'];
     id = json['id'].toString().toInt();
-    status = json['status'].toString().toStringConversion();
+    status = OrderStatusType.fromString(json['status'].toString().toStringConversion());
     total = json['total'].toString().toDouble();
     user_info = UserInfo.fromJson(json['user_info']);
     // customer = Info.fromJson(json['customer']);

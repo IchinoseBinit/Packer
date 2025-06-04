@@ -70,12 +70,6 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                     )
                         .then((value) {
                       removeLoading(context);
-                      try {
-                        Provider.of<OrderProvider>(context, listen: false)
-                            .clearBasket();
-                      } catch (ex) {
-                        debugPrint(ex.toString());
-                      }
 
                       Provider.of<HomeProvider>(context, listen: false)
                           .fetchLatestOrders();

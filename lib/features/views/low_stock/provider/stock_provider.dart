@@ -31,6 +31,7 @@ class StockProvider extends ChangeNotifier {
   LowStockModel? selectedModel;
   CartonModel? cartonModel;
   List<String> scannedList = [];
+  List<int> completeProductId = [];
   ProductModel? selectedProduct;
 
   bool hasScanned = false;
@@ -67,15 +68,9 @@ class StockProvider extends ChangeNotifier {
   }
 
   bool checkScanCount(int productId) {
-    for (ProductModel element in selectedModel?.products ?? []) {
-      if (element.productId == productId) {
-        // get from scanned data list split by -
-        if (element.scannedCount == element.quantity) {
-          return true;
-        }
-      }
-    }
-    return false;
+    final prod = selectedModel?.products
+        .firstWhere((element) => element.productId == productId);
+    return prod?.scannedCount == prod?.quantity;
   }
 
   int getScanCount(int productId) {
@@ -187,7 +182,9 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              return;
+              showToast("Already Scanned");
+              removeLoading(context);
+              return false;
             }
             onProductDetailsTaped(context, matchedModel);
           }
@@ -327,19 +324,29 @@ class StockProvider extends ChangeNotifier {
         return;
       }
       scannedList.add(code);
-      for (ProductModel element in selectedModel?.products ?? []) {
-        if (element.productId == selectedProduct?.productId) {
-          element.scannedCount++;
-        }
+
+      final selProduct = selectedModel?.products.indexWhere(
+          (element) => element.productId == selectedProduct?.productId);
+      if (selProduct != null && selProduct >= 0) {
+        selectedModel?.products[selProduct].scannedCount++;
       }
+
       scanMessage =
           "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
-      notifyListeners();
       if (scannedList.length == selectedProduct?.quantity) {
-        postScannedTags(context);
+        final response = await postScannedTags(context);
+        if (response) {
+          controller?.start();
+        } else {
+          if (selProduct != null && selProduct >= 0) {
+            selectedModel?.products[selProduct].scannedCount = 0;
+          }
+          controller?.start();
+        }
       } else {
         controller?.start();
       }
+      notifyListeners();
       hasScanned = false;
     } catch (e) {
       _handleInvalidQR(context, controller);
@@ -360,7 +367,7 @@ class StockProvider extends ChangeNotifier {
     return true;
   }
 
-  void postScannedTags(BuildContext context) async {
+  Future<bool> postScannedTags(BuildContext context) async {
     try {
       showLoading(context);
       final response = await DioClient().request(
@@ -373,16 +380,22 @@ class StockProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200) {
+        completeProductId.add(selectedProduct?.productId ?? 0);
         showToast("Scanned Successfully");
+        return true;
       } else {
         showToast("Failed to scan basket");
+        return false;
       }
     } catch (e) {
       showToast(e.toString());
+      scannedList.clear();
+      return false;
     } finally {
       removeLoading(context);
       navigatePop(context);
       scannedList = [];
+      return false;
     }
   }
 

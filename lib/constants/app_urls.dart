@@ -105,7 +105,7 @@ class AppUrls {
   // accept
   static String acceptTransferUrl = "$_baseUrl/store/transfers/id/accept/";
 
-  static String basketClearUrl = "$_baseUrl/basket/id/clear/";
+  static String basketClearUrl = "$orderUrl/clear-basket/";
 
   // staff/scan-basket
   static String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
