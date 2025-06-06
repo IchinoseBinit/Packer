@@ -17,6 +17,8 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
+
+@Deprecated("Use BasketScanScreen instead")
 class BucketScanScreen extends StatefulWidget {
   const BucketScanScreen({
     super.key,
@@ -221,14 +223,14 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              if (widget.isfromCartItem) {
-                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                  context,
-                  controller,
-                  barcodes.barcodes.first.rawValue.toString(),
-                );
-                return;
-              }
+              // if (widget.isfromCartItem) {
+              //   Provider.of<OrderProvider>(context, listen: false).checkItemQr(
+              //     context,
+              //     controller,
+              //     barcodes.barcodes.first.rawValue.toString(),
+              //   );
+              //   return;
+              // }
               checkQr(
                   barcodes.barcodes.first.rawValue.toString(), widget.orderId!);
             },
@@ -263,37 +265,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
               ),
             ),
           ),
-          // TODO: i want this in center of width
-          Consumer<OrderProvider>(
-            builder: (context, provider, child) {
-              return Visibility(
-                visible: widget.isfromCartItem && provider.scanMessage != null,
-                child: Positioned(
-                  top: 32.h * 6,
-                  left: 4.w * 3,
-                  right: 4.w * 3,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      provider.scanMessage ?? "",
-                      style: TextStyle(
-                        color: AppColors.backgroundColor,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          
         ],
       ),
     );

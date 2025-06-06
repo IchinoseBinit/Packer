@@ -1,0 +1,223 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:provider/provider.dart';
+
+abstract class BaseScanScreen extends StatefulWidget {
+  final String scanTitle;
+  final bool showFlash;
+  final bool showBackButton;
+
+  const BaseScanScreen({
+    super.key,
+    required this.scanTitle,
+    this.showFlash = true,
+    this.showBackButton = true,
+  });
+
+  // also add onscreen created
+  void onScreenCreated(BuildContext context);
+
+  @override
+  State<BaseScanScreen> createState() => _BaseScanScreenState();
+
+  Future<void> onCodeDetected(
+      BuildContext context, String code, MobileScannerController controller);
+  void onDispose(MobileScannerController controller);
+}
+
+class _BaseScanScreenState extends State<BaseScanScreen> {
+  MobileScannerController? controller;
+  bool _flash = false;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = MobileScannerController();
+    widget.onScreenCreated(context);
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (Platform.isAndroid) {
+      controller?.stop();
+    } else if (Platform.isIOS) {
+      controller?.start();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.onDispose(controller!);
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scanWindow = Rect.fromCenter(
+      center: MediaQuery.sizeOf(context).center(Offset.zero),
+      width: 200,
+      height: 200,
+    );
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          MobileScanner(
+            fit: BoxFit.cover,
+            scanWindow: scanWindow,
+            controller: controller,
+            errorBuilder: (context, error, child) =>
+                ScannerErrorWidget(error: error),
+            onDetect: (barcodes) async {
+              final code = barcodes.barcodes.first.rawValue ?? '';
+              await widget.onCodeDetected(context, code, controller!);
+            },
+          ),
+          _buildScanWindow(scanWindow),
+          if (widget.showFlash)
+            Positioned(
+              top: 8.h * 6,
+              right: 4.w * 3,
+              child: _buildFlashButton(),
+            ),
+          Positioned(
+            top: 8.h * 8,
+            right: 40.w * 3,
+            child: Text(
+              widget.scanTitle,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.backgroundColor),
+            ),
+          ),
+          if (widget.showBackButton)
+            Positioned(
+              top: 8.h * 6,
+              left: 4.w * 3,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          Consumer<ScanMessageProvider>(
+            builder: (_, provider, __) {
+              if (provider.message.isEmpty) return const SizedBox();
+              return Positioned(
+                top: 8.h * 20,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    provider.message,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              );
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlashButton() {
+    return IconButton(
+      onPressed: () async {
+        await controller?.toggleTorch();
+        setState(() => _flash = !_flash);
+      },
+      icon:
+          Icon(_flash ? Icons.flash_off : Icons.flash_on, color: Colors.white),
+    );
+  }
+
+  Widget _buildScanWindow(Rect scanWindow) {
+    return ValueListenableBuilder(
+      valueListenable: controller!,
+      builder: (context, value, child) {
+        if (!value.isInitialized ||
+            !value.isRunning ||
+            value.error != null ||
+            value.size.isEmpty) {
+          return const SizedBox();
+        }
+        return CustomPaint(painter: ScannerOverlay(scanWindow));
+      },
+    );
+  }
+}
+
+class ScannerOverlay extends CustomPainter {
+  final Rect scanWindow;
+
+  ScannerOverlay(this.scanWindow);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPath = Path()..addRect(Rect.largest);
+    final cutoutPath = Path()..addRect(scanWindow);
+    final backgroundPaint = Paint()
+      ..color = Colors.black.withOpacity(0.5)
+      ..style = PaintingStyle.fill
+      ..blendMode = BlendMode.dstOut;
+    canvas.drawPath(
+        Path.combine(PathOperation.difference, backgroundPath, cutoutPath),
+        backgroundPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class ScannerErrorWidget extends StatelessWidget {
+  final MobileScannerException error;
+
+  const ScannerErrorWidget({super.key, required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    String errorMessage;
+    switch (error.errorCode) {
+      case MobileScannerErrorCode.controllerUninitialized:
+        errorMessage = 'Controller not ready.';
+      case MobileScannerErrorCode.permissionDenied:
+        errorMessage = 'Permission denied';
+      case MobileScannerErrorCode.unsupported:
+        errorMessage = 'Scanning is unsupported on this device';
+      default:
+        errorMessage = 'Generic Error';
+    }
+
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            Text(errorMessage, style: const TextStyle(color: Colors.white)),
+            Text(error.errorDetails?.message ?? '',
+                style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+}

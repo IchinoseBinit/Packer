@@ -1,9 +1,13 @@
+import 'dart:developer';
+
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:provider/provider.dart';
 
 class NotificationUtils {
   static AwesomeNotifications awesomeNotification = AwesomeNotifications();
@@ -44,11 +48,19 @@ class NotificationUtils {
         AppRouter.router.pop();
       }
 
-      navigateWithRouter(
+      final result = await navigateWithRouter(
         AppRouter.router,
-        route: NavigationConstants.bucketqrScreenRoute,
-        extra: orderId,
+        route: NavigationConstants.basketScanScreenRoute,
+        extra: {
+          'forOrder': true,
+        },
       );
+      if (result ?? false) {
+        log("result from basket scan screen $result", name: "Accept Order");
+
+        navigateWithRouter(AppRouter.router,
+            route: NavigationConstants.orderDetailsRoute, extra: orderId);
+      }
     }
   }
 

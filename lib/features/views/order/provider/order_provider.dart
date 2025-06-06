@@ -17,6 +17,7 @@ import 'package:packer/features/views/order/models/order_completed_details.dart'
 import 'package:packer/features/views/order/models/order_picked_details.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/models/unsettled_orders.dart';
+import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -37,7 +38,6 @@ class OrderProvider extends ChangeNotifier {
   OrderDetailModel? get orderDetails => _orderDetails; // Change getter type
   String? get error => _error;
   var isLoading = false;
-  String? scanMessage;
   UnsettledOrders? unsettledOrders;
   List<OrderNotification> latestOrder = [];
   bool hasScanned = false;
@@ -46,16 +46,14 @@ class OrderProvider extends ChangeNotifier {
     _isAvailable = val;
   }
 
-  String bucketData = "";
-  List<String> basketDataList = [];
-  Map<String, List<String>> scannedDataPerBasket = {};
-
-  List<String> scannedDataList = [];
+  String bucketData = ""; // current basket code
+  List<String> basketDataList = []; // stores basket codes
+  Map<String, List<String>> scannedDataPerBasket =
+      {}; // map product tag with basket code
+  List<String> scannedDataList =
+      []; // stores all scanned product tags for all baskets
 
   get isAvailable => _isAvailable;
-  bool showButton = false;
-  bool isChecked = false;
-  num remainingquantity = 0;
 
   void addProductTagToBasket(String basketId, String productTag) {
     if (!scannedDataPerBasket.containsKey(basketId)) {
@@ -64,7 +62,7 @@ class OrderProvider extends ChangeNotifier {
     scannedDataPerBasket[basketId]!.add(productTag);
   }
 
-  bool allCartItemScanned(){
+  bool allCartItemScanned() {
     for (ProductDetails element in _orderDetails?.productDetails ?? []) {
       if (element.quantity != countScannedItem(element.id)) {
         return false;
@@ -87,8 +85,14 @@ class OrderProvider extends ChangeNotifier {
 
   void initState() {
     scannedDataList.clear();
-    showButton = false;
     // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
+  }
+
+  // UPDATED
+  void resetState() {
+    basketDataList.clear();
+    scannedDataPerBasket.clear();
+    scannedDataList.clear();
   }
 
   // check by item id in scan list with required quantity
@@ -108,6 +112,7 @@ class OrderProvider extends ChangeNotifier {
     return false;
   }
 
+  // UPDATED
   int countScannedItem(int productId) {
     final scannedLength = scannedDataList
         .where((item) => item.startsWith(productId.toString()))
@@ -115,169 +120,40 @@ class OrderProvider extends ChangeNotifier {
     return scannedLength;
   }
 
-  void initScanMessage(int productId) {
-    if (kDebugMode) {
-      showToast('Item Id: $productId');
-    }
+
+  // UPDATED
+  String scanProductMessage(int productId) {
+    log("Message Product Id: $productId");
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
-        scanMessage =
-            "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
-        notifyListeners();
-        return;
+        return "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
       }
     }
+    return "";
   }
 
-
-  checkCartItemQr(
-    BuildContext context,
-    MobileScannerController? controller,
-    String code,
-    int productId,
-  ) {
-    if (hasScanned) return;
-    hasScanned = true;
-    controller?.stop();
-
-    log(code, name: "qr code data $productId cart item");
-
-    HapticFeedback.vibrate();
-
-    showLoading(context);
-
-    if (code.contains('-')) {
-      final prodId = int.tryParse(code.split('-').first) ?? 0;
-
-      if (prodId != productId) {
-        _handleInvalidQR(context, controller);
-        hasScanned = false;
-        return;
-      }
-
-      try {
-        final isScanned = scanCountOrder(prodId, code);
-        // updateProductList(code);
-        hasScanned = false;
-        if (isScanned) {
-          removeLoading(context);
-          Navigator.pop(context);
-        } else {
-          removeLoading(context);
-          controller?.start();
-        }
-      } catch (ex) {
-        removeLoading(context);
-        showToast(ex.toString());
-        hasScanned = false;
-        print(ex.toString());
-      }
-      
-    } else{
-      _handleInvalidQR(context, controller);
-      hasScanned = false;
-    }
-  }
-
-  void _handleInvalidQR(
-    BuildContext context,
-    MobileScannerController? controller,
-  ) {
-    removeLoading(context);
-    ShowAlertDialog(
-      body: const Text("Invalid QR"),
-      okFunc: () {
-        Navigator.pop(context);
-        controller?.start();
-      },
-    ).showAlertDialog(context);
-  }
-
-  checkItemQr(
-    BuildContext context,
-    MobileScannerController? controller,
-    String code,
-  ) {
-    if (hasScanned) return;
-    hasScanned = true;
-    controller?.stop();
-
-    log(code, name: "qr code data");
-
-    HapticFeedback.heavyImpact();
-
-    showLoading(context);
-
-    if (code.contains('-')) {
-      final prodId = int.tryParse(code.split('-').first) ?? 0;
-
-      try {
-        final isScanned = scanCountOrder(prodId, code);
-
-        updateProductList(code);
-        hasScanned = false;
-        if (isScanned) {
-          removeLoading(context);
-          Navigator.pop(context);
-        } else {
-          removeLoading(context);
-          controller?.start();
-        }
-        // onBackPressed();
-        // showToast("joined the waiting list");
-      } catch (ex) {
-        removeLoading(context);
-        showToast(ex.toString());
-        hasScanned = false;
-        print(ex.toString());
-      }
-    } else {
-      removeLoading(context);
-      ShowAlertDialog(
-        body: const Text("Invalid QR"),
-        okFunc: () {
-          Navigator.pop(context);
-          controller?.start();
-        },
-      ).showAlertDialog(context);
-      controller?.start();
-      hasScanned = false;
-    }
-  }
-
-  bool scanCountOrder(
-    int cartItemId,
-    String code,
-  ) {
-    // debugger();
-    for (var element in _orderDetails?.productDetails ?? <ProductDetails>[]) {
-      print("ssssssssssss: ${element.id}");
-
+  // UPDATED
+  bool scanProduct(BuildContext context, int cartItemId, String code) {
+    for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          showToast("Item already scanned");
+          showToast("QR: $code already scanned");
           return false;
         }
         updateProductList(code);
         if (countScannedItem(cartItemId) == element.quantity) {
-          scanMessage = null;
           showToast("Item scanned successfully");
-
-          showButton = true;
-
           notifyListeners();
           return true;
         } else {
-          scanMessage =
+          final scanMessage =
               "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
-          remainingquantity = (element.quantity ?? 0) - countScannedItem(cartItemId);
+          Provider.of<ScanMessageProvider>(context, listen: false)
+              .setMessage(scanMessage);
+          return false;
         }
-        notifyListeners();
-        return false;
       }
     }
-    showToast("Item not found");
-    notifyListeners();
     return false;
   }
 
@@ -392,59 +268,35 @@ class OrderProvider extends ChangeNotifier {
       data: baskets,
     );
 
-    final data = postBasketRequest.toJson();
-
     try {
-      log(data.toString(), name: "productPost body data");
+      log(postBasketRequest.toJson().toString(), name: "productPost body data");
 
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.productPostDetail,
-        body: data,
+        body: postBasketRequest.toJson(),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
-        scannedDataPerBasket.clear();
-        
+        resetState();
         notifyListeners();
         return true;
       } else {
-        print('Error posting basket data: ${response.statusCode}');
+        showToast("Failed to post basket data");
+        log('Error posting basket data: ${response.statusCode}',
+            name: "basket data response");
         return false;
       }
     } catch (e) {
-      print('Error posting basket data: $e');
-      _error = 'Failed to post basket data: $e';
+      log('Error posting basket data: $e', name: "basket data response");
+      showToast(e.toString());
       notifyListeners();
       return false;
     }
   }
 
-  Future getBilledOrder(String orderId) async {
-    orderPickedDetails = null;
-    try {
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.billOrderUrl.replaceFirst("id", orderId),
-      );
-
-      if (response.statusCode == 200) {
-        orderPickedDetails = OrderPickedDetails.fromJson(response.data);
-        hasUploadedHomeImage = false;
-        notifyListeners();
-        print(
-            "__________________________________________________________________________________");
-        print(orderPickedDetails);
-        return true;
-      } else {
-        throw response.data;
-      }
-    } catch (ex) {
-      orderPickedDetails = null;
-      return ex;
-    }
-  }
+ 
 
   Future fetchUnsettledOrders() async {
     try {
@@ -531,62 +383,56 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  void addList(String data) {
-    scannedDataList.add(data);
-
-    print(scannedDataList);
-
-    notifyListeners();
-  }
-
+  // UPDATED
   updateProductList(String? data) async {
-    addProductTagToBasket(bucketData, data ?? '');
-
     if (data != null) {
-      if (scannedDataList.contains(data)) {
-        showToast("Product Already Scanned");
-      } else {
-        addList(data);
-      }
+      addProductTagToBasket(bucketData, data);
+      scannedDataList.add(data);
+      notifyListeners();
+      log("Updated scanned data list $scannedDataList",
+          name: "scanned data list");
     }
   }
 
-  updateBucketData(String? data) async {
-    // debugger();
+  // UPDATED and flow fixed
+  Future<bool> updateBucketData(String? data) async {
     if (data != null) {
-      log("sssssssss $data");
+      log("Basket code scanned from order acknowledge $data");
 
       bucketData = data;
 
       if (basketDataList.contains(data)) {
         showToast("Basket Already Scanned");
-      } else {
-        basketDataList.add(data);
-        log("basket listtttt $basketDataList");
-        notifyListeners();
+        return false;
       }
+
+      // not mandatory just to clear previous basket data
+      await clearBasket();
+
+      basketDataList.add(data);
+      log("basket code list $basketDataList");
+      notifyListeners();
+      return true;
     }
+    return false;
   }
 
-  clearBasket() async {
+  // UPDATED and flow fixed
+  Future<bool> clearBasket() async {
     try {
       var url = AppUrls.basketClearUrl;
-      await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url,
-        body: {
-          "basket_id": bucketData,
-        }
-      );
-      // basketDataList.clear();
+      final response = await DioClient()
+          .request(requestType: RequestType.postWithToken, url: url, body: {
+        "basket_id": bucketData,
+      });
+      if (response.statusCode == 200) {
+        return true;
+      }
+      return false;
     } catch (e) {
-      return e;
+      return false;
     }
   }
 
-  toggle(bool value) {
-    // debugger();
-    isChecked = value;
-    notifyListeners();
-  }
+  
 }

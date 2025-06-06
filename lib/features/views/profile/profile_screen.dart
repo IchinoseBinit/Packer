@@ -16,11 +16,11 @@ import 'package:packer/constants/navigation_constants.dart';
 
 class ProfileScreen extends StatelessWidget {
   final List<Map<String, dynamic>> personalInfoData = [
-    {
-      'icon': Icons.lock_clock,
-      'title': 'Shift',
-      "screen": 'shifts',
-    },
+    // {
+    //   'icon': Icons.lock_clock,
+    //   'title': 'Shift',
+    //   "screen": 'shifts',
+    // },
     {
       'icon': Icons.history,
       'title': 'Documents',
@@ -39,15 +39,20 @@ class ProfileScreen extends StatelessWidget {
   ];
 
   List<Map<String, dynamic>> otherInfoData = [
+    // {
+    //   'icon': Icons.notifications,
+    //   'title': 'Notification',
+    //   'screen': 'notification',
+    // },
+    // {
+    //   'icon': Icons.history,
+    //   'title': 'Transaction History',
+    //   'screen': 'transaction_history',
+    // },
     {
-      'icon': Icons.notifications,
-      'title': 'Notification',
-      'screen': 'notification',
-    },
-    {
-      'icon': Icons.history,
-      'title': 'Transaction History',
-      'screen': 'transaction_history',
+      'icon': Icons.restaurant_menu_outlined,
+      'title': 'Menu Stock Verification',
+      'screen': NavigationConstants.stockVerificationRoute,
     },
   ];
 
@@ -60,7 +65,7 @@ class ProfileScreen extends StatelessWidget {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .setRole(value.packerSummary?.storeType ?? "");
       if (value.packerSummary?.storeType.contains("main") == false) {
-        if (otherInfoData.length <= 2) {
+        if (otherInfoData.length <= 1) {
           otherInfoData.add(
             {
               'icon': Icons.inventory,

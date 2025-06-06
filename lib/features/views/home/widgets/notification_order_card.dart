@@ -1,9 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:provider/provider.dart';
 
 class NotificationOrderCard extends StatelessWidget {
   final OrderNotification orderItem;
@@ -75,29 +79,35 @@ class NotificationOrderCard extends StatelessWidget {
             SizedBox(height: 12.h),
             Align(
               alignment: Alignment.centerRight,
-              child: InkWell(
-                onTap: () {
-                  callback();
-                },
-                child: GestureDetector(
-                  onTap: () {
+              child: GestureDetector(
+                onTap: () async {
+                  final result = await navigate(context,
+                      route: NavigationConstants.basketScanScreenRoute,
+                      extra: {
+                        'forOrder': true,
+                      });
+                  log("result from basket scan screen $result",
+                      name: "Order Detials");
+                  if ((result ?? false) && context.mounted) {
                     navigate(context,
-                        route: NavigationConstants.bucketqrScreenRoute,
+                        route: NavigationConstants.orderDetailsRoute,
                         extra: orderItem.orderId);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                    child: Text(
-                      'Details',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white,
-                          ),
-                    ),
+                    Provider.of<OrderProvider>(context, listen: false)
+                        .initState();
+                  }
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  child: Text(
+                    'Details',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white,
+                        ),
                   ),
                 ),
               ),

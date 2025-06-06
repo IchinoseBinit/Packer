@@ -31,7 +31,6 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
     final status = widget.order.data.status;
-    final showButton = orderProvider.showButton;
 
     return Column(
       children: [
@@ -64,18 +63,20 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                     final parsedOrderId =
                         int.tryParse(widget.order.data.id.toString()) ?? 0;
 
-                    Provider.of<OrderProvider>(context, listen: false)
-                        .productPost(
+                    final success =
+                        await Provider.of<OrderProvider>(context, listen: false)
+                            .productPost(
                       parsedOrderId,
-                    )
-                        .then((value) {
+                    );
+                    if (context.mounted) {
                       removeLoading(context);
-
+                    }
+                    if (success && context.mounted) {
                       Provider.of<HomeProvider>(context, listen: false)
                           .fetchLatestOrders();
                       navigateAndRemoveAll(context,
                           route: NavigationConstants.dashboardRoute);
-                    });
+                    }
                   },
                   title: 'Bill this order',
                 ),

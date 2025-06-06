@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +14,8 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
+
+@Deprecated("use cartItem scanner")
 class ProductScannerScreen extends StatefulWidget {
   const ProductScannerScreen({
     super.key,
@@ -52,8 +53,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
     super.initState();
     controller = MobileScannerController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<OrderProvider>(context, listen: false)
-          .initScanMessage(widget.productId ?? 0);
+      // Provider.of<OrderProvider>(context, listen: false)
+      //     .initScanMessage(widget.productId ?? 0);
     });
   }
 
@@ -75,8 +76,8 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         showToast("Product Scanned Successfully");
 
         final productId = int.tryParse(code.split("-").first) ?? 0;
-        Provider.of<OrderProvider>(context, listen: false)
-            .scanCountOrder(productId, code);
+        // Provider.of<OrderProvider>(context, listen: false)
+        //     .scanCountOrder(productId, code);
         print('ssssssssssssss   : $productId');
 
         Provider.of<OrderProvider>(context, listen: false)
@@ -204,16 +205,16 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              if (widget.isfromCartItem) {
-                Provider.of<OrderProvider>(context, listen: false).checkCartItemQr(
-                  context,
-                  controller,
-                  barcodes.barcodes.first.rawValue.toString(),
-                  widget.productId ?? 0,
-                );
-                return;
-              }
-              checkQr(barcodes.barcodes.first.rawValue.toString());
+              // if (widget.isfromCartItem) {
+              //   Provider.of<OrderProvider>(context, listen: false).checkCartItemQr(
+              //     context,
+              //     controller,
+              //     barcodes.barcodes.first.rawValue.toString(),
+              //     widget.productId ?? 0,
+              //   );
+              //   return;
+              // }
+              // checkQr(barcodes.barcodes.first.rawValue.toString());
             },
           ),
           _buildBarcodeOverlay(),
@@ -234,36 +235,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
               ),
             ),
           ),
-          Consumer<OrderProvider>(
-            builder: (context, provider, child) {
-              return Visibility(
-                visible: widget.isfromCartItem && provider.scanMessage != null,
-                child: Positioned(
-                  top: 32.h * 6,
-                  left: 4.w * 3,
-                  right: 4.w * 3,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      provider.scanMessage ?? "",
-                      style: TextStyle(
-                        color: AppColors.backgroundColor,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          
         ],
       ),
     );

@@ -103,7 +103,7 @@ class ProductDetails {
     quantity = json['quantity'].toString().toInt();
     imageUrl = json['product_image'].toString().toStringConversion();
     _size = json['size'].toString().toDouble();
-    rackName = json['rack'].toString().toString();
+    rackName = json['rack'].toString().toStringConversion();
     productCompartment = json['product_compartment'].toString().toString();
 
     measurement = json['measurement'].toString().toStringConversion();

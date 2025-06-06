@@ -15,6 +15,8 @@ import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
+import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
@@ -135,6 +137,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => PackerTransferProvider()),
         ChangeNotifierProvider(create: (_) => StockProvider()),
+        ChangeNotifierProvider(create: (_) => ScanMessageProvider()),
+        ChangeNotifierProvider(create: (_) => StockVerificationProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

@@ -44,11 +44,9 @@ class CartItemsList extends StatelessWidget {
                     log(cartItem.id.toString());
 
                     navigate(context,
-                        route: NavigationConstants.productqrScreenRoute,
+                        route: NavigationConstants.cartItemScanScreenRoute,
                         extra: {
-                          'cartItem': true,
                           'productId': cartItem.id,
-                          // 'index': cartIndex,
                         });
                   },
                   child: ItemWidget(
@@ -175,11 +173,12 @@ class _ItemWidgetState extends State<ItemWidget> {
                           color: text2Color, // Set text color based on status
                         ),
                   ),
-                  SizedBox(
-                    width: .3.sw,
-                    child: Text(
-                      widget.productItems.rackName,
-                      maxLines: 3,
+                  if (widget.productItems.rackName.isNotEmpty)
+                    SizedBox(
+                      width: .3.sw,
+                      child: Text(
+                        widget.productItems.rackName,
+                        maxLines: 3,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: text1Color,
                             fontWeight:
