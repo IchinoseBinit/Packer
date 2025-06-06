@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -25,11 +27,13 @@ class StockVerificationProvider extends ChangeNotifier {
         requestType: RequestType.getWithToken,
         url: AppUrls.getStockItemsUrl,
       );
-      stockItems =
-          response.data.map((e) => StockItemModel.fromJson(e)).toList();
+      stockItems = (response.data as List)
+          .map((e) => StockItemModel.fromJson(e))
+          .toList();
       isLoading = false;
       notifyListeners();
     } catch (e) {
+      log("Error while getting value $e");
       isLoading = false;
       notifyListeners();
     }
@@ -38,20 +42,22 @@ class StockVerificationProvider extends ChangeNotifier {
   Future<void> onItemTap(BuildContext context, StockItemModel item) async {
     selectedStockItem = item;
     if (selectedStockItem != null) {
-      if (selectedStockItem!.rackName != null) {
+      if (selectedStockItem!.rackName.isNotEmpty) {
         final result = await navigate(context,
             route: NavigationConstants.scanRackRoute,
             extra: {
               "rack": selectedStockItem!.rackName,
               "productId": selectedStockItem!.productId
             });
+
         if (result ?? false) {
           // sacn product
           final scanResults = await navigate(context,
               route: NavigationConstants.productScanScreenRoute,
               extra: {
                 "productId": selectedStockItem!.productId,
-                "productUnits": selectedStockItem!.productUnits
+                "productUnits": selectedStockItem!.productUnits,
+                "fromStockVerification": true,
               });
           if (scanResults ?? false) {
             // sacn product
@@ -73,39 +79,41 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   // onScanProduct
-  Future<bool> onScanProduct(
-      BuildContext context, int productId, String code) async {
+  bool onScanProduct(
+      BuildContext context, int productId, String code) {
     if (selectedStockItem?.productId == productId) {
-      if (selectedStockItem!.productUnits.contains(code)) {
-        if (scannedUnits.contains(code)) {
-          return false;
-        } else {
-          scannedUnits.add(code);
-        }
+      if (scannedUnits.contains(code)) {
+        return false;
+      } else {
+        scannedUnits.add(code);
       }
       // check for the remaining or not
-      if (scannedUnits.length == selectedStockItem!.productUnits.length) {
-        final result = await onVerify(context, productId, scannedUnits);
-        return result;
+      var scanMessage = "";
+      if (scannedUnits.length >= selectedStockItem!.productUnits.length) {
+        scanMessage = "Scanned ${scannedUnits.length} units";
       } else {
-        final scanMessage =
+        scanMessage =
             "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
-        Provider.of<ScanMessageProvider>(context, listen: false)
-            .setMessage(scanMessage);
       }
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(scanMessage);
+      return true;
     }
     return false;
   }
 
-  Future<bool> onVerify(
-      BuildContext context, int productId, List<String> productUnits) async {
+  Future<bool> onVerify(int productId, List<String> productUnits) async {
     try {
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.stockVerificationUrl,
-        body: {"product": productId, "product_units": productUnits},
+        body: {
+          "product": productId,
+          "product_units": productUnits,
+          "planned_quantity": selectedStockItem!.plannedQuantity,
+        },
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       }
       return false;

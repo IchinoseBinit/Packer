@@ -21,21 +21,21 @@ class ProfileScreen extends StatelessWidget {
     //   'title': 'Shift',
     //   "screen": 'shifts',
     // },
-    {
-      'icon': Icons.history,
-      'title': 'Documents',
-      'screen': NavigationConstants.documentListScreenRoute,
-    },
-    {
-      'icon': Icons.shopping_cart,
-      'title': 'COD Settlement',
-      'screen': NavigationConstants.unsettledOrdersRoute,
-    },
-    {
-      'icon': Icons.summarize,
-      'title': 'Summary',
-      'screen': NavigationConstants.weeklySummaryRoute,
-    },
+    // {
+    //   'icon': Icons.history,
+    //   'title': 'Documents',
+    //   'screen': NavigationConstants.documentListScreenRoute,
+    // },
+    // {
+    //   'icon': Icons.shopping_cart,
+    //   'title': 'COD Settlement',
+    //   'screen': NavigationConstants.unsettledOrdersRoute,
+    // },
+    // {
+    //   'icon': Icons.summarize,
+    //   'title': 'Summary',
+    //   'screen': NavigationConstants.weeklySummaryRoute,
+    // },
   ];
 
   List<Map<String, dynamic>> otherInfoData = [
@@ -104,38 +104,6 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 SizedBox(height: 10),
                 Text(
-                  "Your Information",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w100,
-                    color: Colors.grey,
-                  ),
-                ),
-                SizedBox(height: 10),
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: personalInfoData.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      onTap: () {
-                        print(personalInfoData[index]['screen']);
-                        navigate(context,
-                            route: personalInfoData[index]['screen']);
-                      },
-                      titleTextStyle: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16.sp,
-                      ),
-                      iconColor: AppColors.primaryColor,
-                      leading: Icon(personalInfoData[index]['icon']),
-                      title: Text(personalInfoData[index]['title']),
-                      trailing: Icon(Icons.chevron_right),
-                    );
-                  },
-                ),
-                SizedBox(height: 10),
-                Text(
                   "Other Information",
                   style: TextStyle(
                     fontSize: 18,
@@ -166,7 +134,7 @@ class ProfileScreen extends StatelessWidget {
                   },
                 ),
                 SizedBox(
-                  height: 10,
+                  height: .4.sh,
                 ),
                 Center(
                   child: Column(
@@ -195,13 +163,13 @@ class ProfileScreen extends StatelessWidget {
                           child: Text('Logout'),
                         ),
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        'VERSION 21.2.2',
-                        style: TextStyle(
-                          color: Colors.grey,
-                        ),
-                      ),
+                      // SizedBox(height: 10),
+                      // Text(
+                      //   'VERSION 21.2.2',
+                      //   style: TextStyle(
+                      //     color: Colors.grey,
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),

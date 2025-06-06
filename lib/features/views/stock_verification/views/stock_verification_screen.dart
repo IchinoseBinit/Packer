@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
-import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/features/views/order/models/cart_item.dart';
+
 import '/constants/app_colors.dart';
 
 class StockVerificationScreen extends StatefulWidget {
@@ -26,6 +26,7 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.fillColor,
       appBar: AppBar(
         title: const Text('Stock Verification'),
       ),
@@ -36,33 +37,39 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
             child: CircularProgressIndicator(),
           );
         }
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: provider.stockItems.length,
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    onTap: () {
-                      Provider.of<StockVerificationProvider>(context,
-                              listen: false)
-                          .onItemTap(context, provider.stockItems[index]);
-                    },
-                    child: StockItemWidget(
-                      cartItem: provider.stockItems[index],
-                    ),
-                  );
-                },
+        return Padding(
+          padding: AppConstants.padding,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.separated(
+                  separatorBuilder: (context, index) {
+                    return SizedBox(height: 8.h);
+                  },
+                  itemCount: provider.stockItems.length,
+                  itemBuilder: (context, index) {
+                    return InkWell(
+                      onTap: () {
+                        Provider.of<StockVerificationProvider>(context,
+                                listen: false)
+                            .onItemTap(context, provider.stockItems[index]);
+                      },
+                      child: StockItemWidget(
+                        cartItem: provider.stockItems[index],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            // 16.h
-            // const SizedBox(height: 16),
-            // Padding(
-            //   padding: EdgeInsets.symmetric(horizontal: 16),
-            //   child:
-            //       GeneralElevatedButton(onPressed: () {}, title: 'Verify',),
-            // )
-          ],
+              // 16.h
+              // const SizedBox(height: 16),
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 16),
+              //   child:
+              //       GeneralElevatedButton(onPressed: () {}, title: 'Verify',),
+              // )
+            ],
+          ),
         );
       }),
     );
@@ -78,7 +85,19 @@ class StockItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final text2Color = const Color(0xFF7D7C7C);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 2,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,6 +149,29 @@ class StockItemWidget extends StatelessWidget {
                           color: AppColors.homeScreenDimTextColor,
                         ),
                   ),
+                  if (cartItem.rackName.isNotEmpty)
+                    RichText(
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      text: TextSpan(
+                        text: "Rack: ",
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: text2Color,
+                              fontSize: 14.sp,
+                            ),
+                        children: <TextSpan>[
+                          TextSpan(
+                            text: cartItem.rackName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge
+                                ?.copyWith(
+                                  fontSize: 14.sp,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ],

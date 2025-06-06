@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -52,30 +55,29 @@ class ProductScanScreen extends BaseScanScreen {
         return;
       }
 
-      showLoading(context);
+      debugger();
 
       if (fromStockVerification) {
-       final result = await Provider.of<StockVerificationProvider>(context, listen: false)
-            .onScanProduct(context, productId, code);
+        final result =
+            Provider.of<StockVerificationProvider>(context, listen: false)
+                .onScanProduct(context, productId, code);
         if ((result) && context.mounted) {
-          removeLoading(context);
-          Navigator.pop(context, true);
-        }else if (context.mounted) {
+          navigatePop(context, true);
+        } else if (context.mounted) {
           handleInvalidCode(context, controller);
         }
-      } else
-
-      if (fromTransfer) {
-       final result = await Provider.of<PackerTransferProvider>(context, listen: false)
-            .scanProduct(context, productId, code);
+      } else if (fromTransfer) {
+        showLoading(context);
+        final result =
+            await Provider.of<PackerTransferProvider>(context, listen: false)
+                .scanProduct(context, productId, code);
         if ((result) && context.mounted) {
           removeLoading(context);
           Navigator.pop(context, true);
-        }else if (context.mounted) {
+        } else if (context.mounted) {
           handleInvalidCode(context, controller);
         }
       }
-      
     } catch (e) {
       handleInvalidCode(context, controller);
     }

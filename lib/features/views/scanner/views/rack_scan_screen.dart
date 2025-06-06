@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -41,10 +45,12 @@ class RackScanScreen extends BaseScanScreen {
 
       controller.stop();
       HapticFeedback.heavyImpact();
-      showLoading(context);
 
       if (forCarton) {
-        final result = await Provider.of<StockProvider>(context, listen: false).onScanCarton(context, code);
+        showLoading(context);
+
+        final result = await Provider.of<StockProvider>(context, listen: false)
+            .onScanCarton(context, code);
         if (result && context.mounted) {
           removeLoading(context);
           Navigator.pop(context, true);
@@ -54,12 +60,14 @@ class RackScanScreen extends BaseScanScreen {
           controller.start();
         }
       }
-
 
       if (rackCode == null && context.mounted) {
         // update rack
-        final result = await Provider.of<PackerTransferProvider>(context, listen: false)
-            .updateRack(context, code, productId);
+        showLoading(context);
+
+        final result =
+            await Provider.of<PackerTransferProvider>(context, listen: false)
+                .updateRack(context, code, productId);
         if (result && context.mounted) {
           removeLoading(context);
           Navigator.pop(context, true);
@@ -70,9 +78,12 @@ class RackScanScreen extends BaseScanScreen {
         }
       }
 
-      if (rackCode == code && context.mounted) {
-        Navigator.pop(context, true);
+      if (code.contains(rackCode ?? '') && context.mounted) {
+        hasScanned = false;
+        navigatePop(context, true);
+        controller.dispose();
       } else if (context.mounted) {
+        showToast("Invalid QR");
         hasScanned = false;
         controller.start();
       }
