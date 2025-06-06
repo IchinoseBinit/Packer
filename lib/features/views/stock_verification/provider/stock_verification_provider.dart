@@ -102,6 +102,9 @@ class StockVerificationProvider extends ChangeNotifier {
     return false;
   }
 
+  // This should only be called when the button on the ui is clicked.
+  // The button would only be visible when the scanned units are equal to the product units.
+  // The person can scan other units as well but the button would not be visible.
   Future<bool> onVerify(int productId, List<String> productUnits) async {
     try {
       final response = await DioClient().request(
