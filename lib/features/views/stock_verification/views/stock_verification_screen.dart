@@ -56,12 +56,12 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
               ),
             ),
             // 16.h
-            const SizedBox(height: 16),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child:
-                  GeneralElevatedButton(onPressed: () {}, title: 'Verify',),
-            )
+            // const SizedBox(height: 16),
+            // Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 16),
+            //   child:
+            //       GeneralElevatedButton(onPressed: () {}, title: 'Verify',),
+            // )
           ],
         );
       }),
