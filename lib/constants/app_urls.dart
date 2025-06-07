@@ -125,7 +125,8 @@ class AppUrls {
   static String basketUrl = "$_baseUrl/basket/:id/";
 
   // getStockItemsUrl :/stores/products/
-  static String getStockItemsUrl = "$_baseUrl/stores/products/";
+  static String getStoreUrl = "$_baseUrl/stores/";
+  static String getStockItemsUrl = "$_baseUrl/stores/products/?store_id=value";
   static String stockVerificationUrl = "$_baseUrl/stores/stock-verifications/";
 
 }

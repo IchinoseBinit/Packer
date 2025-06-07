@@ -27,6 +27,9 @@ abstract class BaseScanScreen extends StatefulWidget {
   Future<void> onCodeDetected(
       BuildContext context, String code, MobileScannerController controller);
   void onDispose(MobileScannerController controller);
+
+  Widget? buildFloatingButton(BuildContext context,
+      MobileScannerController controller);
 }
 
 class _BaseScanScreenState extends State<BaseScanScreen> {
@@ -66,6 +69,8 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
     );
 
     return Scaffold(
+      floatingActionButton: widget.buildFloatingButton(context, controller!),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: Stack(
         children: [
           MobileScanner(

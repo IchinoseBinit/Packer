@@ -260,7 +260,7 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.stockVerificationRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return const StockVerificationScreen();
+                  return StockVerificationScreen(storeId: state.extra as String);
                 },
               ),
               GoRoute(

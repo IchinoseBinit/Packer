@@ -31,7 +31,7 @@ class ShowAlertDialog {
   VoidCallback? cancelFunc;
   VoidCallback? okFunc;
 
-  Future showAlertDialog(BuildContext context) async {
+  Future<bool?> showAlertDialog(BuildContext context) async {
     Widget okButton = TextButton(
       onPressed: okFunc,
       child: Text(
@@ -93,7 +93,7 @@ class ShowAlertDialog {
             ],
     );
 
-    await showDialog(
+    final result = await showDialog(
       context: context,
       barrierDismissible: !disableBackground,
       builder: (BuildContext context) {
@@ -103,5 +103,6 @@ class ShowAlertDialog {
         );
       },
     );
+    return result;
   }
 }

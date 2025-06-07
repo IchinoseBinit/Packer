@@ -33,6 +33,10 @@ class HomeProvider with ChangeNotifier {
     _user = null;
   }
 
+  isAuditUser() {
+    return user.role == UserRole.audit;
+  }
+
   bool isOnline = false;
   bool _isAvailable = false;
   bool isOrder = true;

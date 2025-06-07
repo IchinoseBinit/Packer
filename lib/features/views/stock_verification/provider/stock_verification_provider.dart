@@ -8,6 +8,7 @@ import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
+import 'package:packer/features/views/stock_verification/model/store_model.dart';
 import 'package:provider/provider.dart';
 
 class StockVerificationProvider extends ChangeNotifier {
@@ -19,13 +20,34 @@ class StockVerificationProvider extends ChangeNotifier {
 
   List<String> scannedUnits = [];
 
+  List<Store> storeList = [];
+
+  Future<void> fetchStores() async {
+    try {
+      if (storeList.isNotEmpty) {
+        return;
+      }
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.getStoreUrl,
+      );
+      storeList =
+          (response.data as List).map((e) => Store.fromJson(e)).toList();
+
+      notifyListeners();
+    } catch (e) {
+      log("Error while getting value $e");
+      notifyListeners();
+    }
+  }
+
   // fetch
-  Future<void> fetchStockItems() async {
+  Future<void> fetchStockItems(String storeId) async {
     try {
       isLoading = true;
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
-        url: AppUrls.getStockItemsUrl,
+        url: AppUrls.getStockItemsUrl.replaceAll("value", storeId),
       );
       stockItems = (response.data as List)
           .map((e) => StockItemModel.fromJson(e))
@@ -41,6 +63,7 @@ class StockVerificationProvider extends ChangeNotifier {
 
   Future<void> onItemTap(BuildContext context, StockItemModel item) async {
     selectedStockItem = item;
+    scannedUnits.clear();
     if (selectedStockItem != null) {
       if (selectedStockItem!.rackName.isNotEmpty) {
         final result = await navigate(context,
@@ -79,24 +102,39 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   // onScanProduct
-  bool onScanProduct(
-      BuildContext context, int productId, String code) {
+  bool onScanProduct(BuildContext context, int productId, String code,
+      {bool fromStockVerification = false}) {
     if (selectedStockItem?.productId == productId) {
       if (scannedUnits.contains(code)) {
         return false;
       } else {
         scannedUnits.add(code);
       }
-      // check for the remaining or not
-      var scanMessage = "";
-      if (scannedUnits.length >= selectedStockItem!.productUnits.length) {
-        scanMessage = "Scanned ${scannedUnits.length} units";
+
+      if (fromStockVerification) {
+        final quantity = scannedUnits.length;
+
+        var message = "Scan Product Code";
+        if (quantity > 0) {
+          message += " Scanned $quantity units";
+        }
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(message);
       } else {
-        scanMessage =
-            "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
+        // check for the remaining or not
+        var scanMessage = "";
+        if (scannedUnits.length >= selectedStockItem!.productUnits.length) {
+          scanMessage = "Scanned ${scannedUnits.length} units";
+        } else {
+          scanMessage =
+              "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
+        }
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(scanMessage);
       }
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(scanMessage);
+
+      notifyListeners();
+
       return true;
     }
     return false;
@@ -117,6 +155,8 @@ class StockVerificationProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
+        stockItems.remove(selectedStockItem!);
+        notifyListeners();
         return true;
       }
       return false;

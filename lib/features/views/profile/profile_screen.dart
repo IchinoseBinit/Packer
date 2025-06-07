@@ -49,11 +49,6 @@ class ProfileScreen extends StatelessWidget {
     //   'title': 'Transaction History',
     //   'screen': 'transaction_history',
     // },
-    {
-      'icon': Icons.restaurant_menu_outlined,
-      'title': 'Menu Stock Verification',
-      'screen': NavigationConstants.stockVerificationRoute,
-    },
   ];
 
   ProfileScreen({super.key});

@@ -8,7 +8,8 @@ import 'package:provider/provider.dart';
 import '/constants/app_colors.dart';
 
 class StockVerificationScreen extends StatefulWidget {
-  const StockVerificationScreen({super.key});
+  const StockVerificationScreen({super.key, required this.storeId});
+  final String storeId;
 
   @override
   State<StockVerificationScreen> createState() =>
@@ -20,7 +21,7 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
   void initState() {
     super.initState();
     Provider.of<StockVerificationProvider>(context, listen: false)
-        .fetchStockItems();
+        .fetchStockItems(widget.storeId);
   }
 
   @override
@@ -41,6 +42,28 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
           padding: AppConstants.padding,
           child: Column(
             children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 2,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'Products Remaining: ${provider.stockItems.length}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              SizedBox(height: 16.h),
               Expanded(
                 child: ListView.separated(
                   separatorBuilder: (context, index) {
@@ -61,6 +84,7 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
                   },
                 ),
               ),
+              
               // 16.h
               // const SizedBox(height: 16),
               // Padding(

@@ -27,6 +27,13 @@ class IdentifierScanScreen extends BaseScanScreen {
         .setMessage("Scan Inventory Code");
   }
 
+
+  @override
+  Widget? buildFloatingButton(BuildContext context,
+      MobileScannerController controller) {
+    return SizedBox.shrink();
+  }
+
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {

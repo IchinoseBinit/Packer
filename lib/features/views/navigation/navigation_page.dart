@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,6 +10,8 @@ import 'package:packer/features/views/home/home_screen.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/views/order_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
+import 'package:packer/features/views/stock_verification/views/stock_verification_screen.dart';
+import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:svg_flutter/svg.dart';
@@ -39,9 +43,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
     // TODO: implement initState
     super.initState();
     final home =Provider.of<HomeProvider>(context, listen: false);
-    if (home.packerSummary?.storeType.contains("main") == true) {
+    if (home.isAuditUser()) {
+      widgets[0] = StoreSelectionScreen();
+    } else if (home.packerSummary?.storeType.contains("main") == true) {
       widgets[0] = HomeWarehouseScreen();
-    }
+    } 
   }
 
   @override

@@ -37,6 +37,12 @@ class RackScanScreen extends BaseScanScreen {
   }
 
   @override
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
+    return SizedBox.shrink();
+  }
+
+  @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
     try {

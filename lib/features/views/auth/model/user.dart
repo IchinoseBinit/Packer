@@ -18,7 +18,7 @@ class User {
 }
 
 enum UserRole {
-  packer, rider, manager;
+  packer, rider, manager, audit;
 
   // from string
   static UserRole fromString(String role) {
@@ -29,6 +29,8 @@ enum UserRole {
         return UserRole.rider;
       case 'manager':
         return UserRole.manager;
+      case 'audit':
+        return UserRole.audit;
       default:
         throw Exception('Invalid user role');
     }
