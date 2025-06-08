@@ -60,7 +60,7 @@ class ProfileScreen extends StatelessWidget {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .setRole(value.packerSummary?.storeType ?? "");
       if (value.packerSummary?.storeType.contains("main") == false) {
-        if (otherInfoData.length <= 1) {
+        if (otherInfoData.isEmpty) {
           otherInfoData.add(
             {
               'icon': Icons.inventory,

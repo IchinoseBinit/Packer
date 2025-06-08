@@ -62,7 +62,7 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   void onDetailsTaped(BuildContext context, TransferModel data) async {
-    if (role?.contains("main") == true) {
+    if (role?.contains("main") == false) {
       selectedTransferModel = data;
       final navigateResult = await navigate(
         context,
@@ -179,6 +179,7 @@ class PackerTransferProvider extends ChangeNotifier {
     notifyListeners();
     navigate(context, route: NavigationConstants.basketScanScreenRoute, extra: {
       "forOrder": false,
+      "basketCode": basket?.identifier,
     });
   }
 

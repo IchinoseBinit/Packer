@@ -52,6 +52,11 @@ class RackScanScreen extends BaseScanScreen {
       controller.stop();
       HapticFeedback.heavyImpact();
 
+      if (!code.contains("rack")) {
+        handleInvalidCode(context, controller);
+        return;
+      }
+
       if (forCarton) {
         showLoading(context);
 

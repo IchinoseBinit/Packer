@@ -21,6 +21,7 @@ class StockVerificationProvider extends ChangeNotifier {
   StockItemModel? selectedStockItem;
 
   List<String> scannedUnits = [];
+  Store? selectedStore;
 
   List<Store> storeList = [];
 
@@ -175,6 +176,7 @@ class StockVerificationProvider extends ChangeNotifier {
           "product": productId,
           "product_units": productUnits,
           "planned_quantity": selectedStockItem!.plannedQuantity,
+          "store_id": selectedStore?.id,
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {

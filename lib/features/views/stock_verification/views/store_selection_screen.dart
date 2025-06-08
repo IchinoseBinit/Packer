@@ -40,6 +40,7 @@ class StoreSelectionScreen extends StatelessWidget {
                   return StoreCard(
                   storeName: store.name,
                   onPressed: () {
+                    Provider.of<StockVerificationProvider>(context, listen: false).selectedStore = store;
                     navigate(
                       context,
                       route: NavigationConstants.stockVerificationRoute,

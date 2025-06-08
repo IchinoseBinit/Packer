@@ -62,7 +62,6 @@ class _LowStockScannerState extends State<LowStockScanner> {
       controller?.stop();
 
       HapticFeedback.heavyImpact();
-      showLoading(context);
 
       if (widget.forProduct) {
         final value = await Provider.of<StockProvider>(context, listen: false)
@@ -71,11 +70,9 @@ class _LowStockScannerState extends State<LowStockScanner> {
           code,
         );
         if (value && mounted) {
-          removeLoading(context);
           Navigator.pop(context);
           hasScanned = false;
         } else if (mounted) {
-          removeLoading(context);
           controller?.start();
           hasScanned = false;
         }
@@ -83,7 +80,6 @@ class _LowStockScannerState extends State<LowStockScanner> {
         final value = await Provider.of<StockProvider>(context, listen: false)
             .checkBasketQr(context, code);
         if (value && mounted) {
-          removeLoading(context);
           hasScanned = false;
           navigateReplacement(context,
               route: NavigationConstants.lowStockDetailRoute);
@@ -97,7 +93,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
   }
 
   void handleInvalidQr() {
-    removeLoading(context);
+    // removeLoading(context);
     ShowAlertDialog(
       body: const Text("Invalid QR"),
       okFunc: () {

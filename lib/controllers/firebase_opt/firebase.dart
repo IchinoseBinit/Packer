@@ -112,7 +112,7 @@ class FirebaseAPI {
   Future<void> unsubscribepackerStatus() async {
     try {
       await _firebaseMessaging.unsubscribeFromTopic(topicName);
-    } on Exception catch (e) {
+    }   catch (e) {
       // TODO
     }
   }

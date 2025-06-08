@@ -270,9 +270,7 @@ class StockProvider extends ChangeNotifier {
     );
   }
 
-   Future<bool> checkBasketQr(BuildContext context, 
-      String code) async {
-   
+  Future<bool> checkBasketQr(BuildContext context, String code) async {
     scanMessage = "";
     notifyListeners();
     HapticFeedback.heavyImpact();
@@ -281,7 +279,7 @@ class StockProvider extends ChangeNotifier {
       final value = await postBasketCode(context, code);
       if (value) {
         basketId = code;
-       return true;
+        return true;
       } else {
         return false;
       }
@@ -290,9 +288,7 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> checkItemQr(BuildContext context, 
-      String code) async {
-
+  Future<bool> checkItemQr(BuildContext context, String code) async {
     try {
       if (scannedList.contains(code)) {
         showToast("Tag Already scanned");
@@ -309,27 +305,28 @@ class StockProvider extends ChangeNotifier {
       }
       scannedList.add(code);
 
-      final selProduct = selectedModel?.products.indexWhere(
-          (element) => element.productId == selectedProduct?.productId);
-      if (selProduct != null && selProduct >= 0) {
-        selectedModel?.products[selProduct].scannedCount++;
-      }
+      // final selProduct = selectedModel?.products.indexWhere(
+      //     (element) => element.productId == selectedProduct?.productId);
+      // if (selProduct != null && selProduct >= 0) {
+      //   selectedModel?.products[selProduct].scannedCount++;
+      // }
+        selectedProduct!.scannedCount++;
+        scanMessage =
+            "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
 
-      scanMessage =
-          "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
       if (scannedList.length == selectedProduct?.quantity) {
         final response = await postScannedTags(context);
         if (response) {
           return true;
         } else {
-          if (selProduct != null && selProduct >= 0) {
-            selectedModel?.products[selProduct].scannedCount = 0;
+          if (selectedProduct != null) {
+            selectedProduct!.scannedCount = 0;
           }
           return false;
         }
       }
       notifyListeners();
-      return true;
+      return false;
     } catch (e) {
       showToast(e.toString());
       return false;
