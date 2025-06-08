@@ -101,19 +101,30 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
                         ])),
                         SizedBox(height: 8.h),
                         if (provider.rackProductMap[rackName] != null)
-                          ...provider.rackProductMap[rackName]!.map(
-                            (e) => InkWell(
-                              onTap: () {
-                                Provider.of<StockVerificationProvider>(context,
-                                        listen: false)
-                                    .onItemTap(context, e);
-                              },
-                              child: StockItemWidget(
-                                cartItem: e,
-                              ),
-                            ),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: provider.rackProductMap[rackName]!.length,
+                            separatorBuilder: (context, index) {
+                              return SizedBox(height: 8.h);
+                            },
+                            itemBuilder: (context, index) {
+                              final item =
+                                  provider.rackProductMap[rackName]![index];
+                              return InkWell(
+                                onTap: () {
+                                  Provider.of<StockVerificationProvider>(
+                                          context,
+                                          listen: false)
+                                      .onItemTap(context, item);
+                                },
+                                child: StockItemWidget(
+                                  cartItem: item,
+                                ),
+                              );
+                            },
                           ),
-                        
+
                         // 8.h
                         SizedBox(height: 8.h),
                       ],

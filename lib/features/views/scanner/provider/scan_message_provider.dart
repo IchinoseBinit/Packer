@@ -7,6 +7,7 @@ class ScanMessageProvider extends ChangeNotifier {
 
   setMessage(String message) {
     this.message = message;
+    notifyListeners();
   }
 
   // dispose

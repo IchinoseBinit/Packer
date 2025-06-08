@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
@@ -89,7 +90,14 @@ class RackScanScreen extends BaseScanScreen {
 
         if (context.mounted) removeLoading(context);
         if (result && context.mounted) {
-          navigatePop(context, true);
+           navigateReplacement(
+          context,
+          route: NavigationConstants.productScanScreenRoute,
+          extra: {
+            "forTransfer": true,
+            "productId": productId,
+          },
+        );
         } else {
           if (context.mounted) await controller.start();
         }

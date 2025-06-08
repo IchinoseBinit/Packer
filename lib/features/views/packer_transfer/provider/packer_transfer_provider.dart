@@ -256,28 +256,40 @@ class PackerTransferProvider extends ChangeNotifier {
         }
         return;
       }
-      showYesNo(context).then((value) {
-        if (value == true && context.mounted) {
-          navigate(
+      showYesNo(context).then((value) async {
+        final result = await navigate(
             context,
             route: NavigationConstants.scanRackRoute,
             extra: {
               "productId": item.product,
             },
           );
+        //    if (result == true && context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(scanMessage);
+        //   // navigate(
+        //   //   context,
+        //   //   route: NavigationConstants.productScanScreenRoute,
+        //   //   extra: {
+        //   //     "forTransfer": true,
+        //   //     "productId": item.product,
+        //   //   },
+          
+        //   // );
+        // }
           return;
-        } else if (context.mounted) {
-          Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(scanMessage);
-          navigate(
-            context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "forTransfer": true,
-              "productId": item.product,
-            },
-          );
-        }
+        // } else if (context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(scanMessage);
+        //   navigate(
+        //     context,
+        //     route: NavigationConstants.productScanScreenRoute,
+        //     extra: {
+        //       "forTransfer": true,
+        //       "productId": item.product,
+        //     },
+        //   );
+        // }
       });
     } else {
       Provider.of<ScanMessageProvider>(context, listen: false)
@@ -381,14 +393,7 @@ class PackerTransferProvider extends ChangeNotifier {
       if (response.statusCode == 200 && context.mounted) {
         updateRackOnModel(productId, code);
         // move navigation after loading is removed
-        navigateReplacement(
-          context,
-          route: NavigationConstants.qrScanScreenRoute,
-          extra: {
-            "forTransfer": true,
-            "productId": productId,
-          },
-        );
+       
         return true;
       } else {
         showToast('Failed to update rack');
