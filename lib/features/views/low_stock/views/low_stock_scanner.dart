@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:provider/provider.dart';
@@ -53,51 +55,58 @@ class _LowStockScannerState extends State<LowStockScanner> {
 
   var _flash = false;
 
-  checkQr(String code) {
-    if (hasScanned) return;
-    hasScanned = true;
-    controller?.stop();
+  checkQr(String code) async {
+    try {
+      if (hasScanned) return;
+      hasScanned = true;
+      controller?.stop();
 
-    HapticFeedback.heavyImpact();
+      HapticFeedback.heavyImpact();
+      showLoading(context);
 
-    showLoading(context);
-
-    if (code.toLowerCase().contains("basket")) {
-      try {
-        Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(code);
-
-        try {
-          Provider.of<OrderProvider>(context, listen: false).clearBasket();
-        } catch (ex) {
-          debugPrint(ex.toString());
-        }
-
-        removeLoading(context);
-        Navigator.pop(context);
-        hasScanned = false;
-
-        showToast("basket available");
-        // navigate(context,
-        //     route: NavigationConstants.orderDetailsRoute, extra: orderId);
-      } catch (ex) {
-        removeLoading(context);
-        showToast(ex.toString());
-        hasScanned = false;
-        print(ex.toString());
-      }
-    } else {
-      removeLoading(context);
-      ShowAlertDialog(
-        body: const Text("Invalid QR"),
-        okFunc: () {
+      if (widget.forProduct) {
+        final value = await Provider.of<StockProvider>(context, listen: false)
+            .checkItemQr(
+          context,
+          code,
+        );
+        if (value && mounted) {
+          removeLoading(context);
           Navigator.pop(context);
+          hasScanned = false;
+        } else if (mounted) {
+          removeLoading(context);
           controller?.start();
-        },
-      ).showAlertDialog(context);
-      controller?.start();
-      hasScanned = false;
+          hasScanned = false;
+        }
+      } else {
+        final value = await Provider.of<StockProvider>(context, listen: false)
+            .checkBasketQr(context, code);
+        if (value && mounted) {
+          removeLoading(context);
+          hasScanned = false;
+          navigateReplacement(context,
+              route: NavigationConstants.lowStockDetailRoute);
+        } else if (mounted) {
+          handleInvalidQr();
+        }
+      }
+    } catch (e) {
+      handleInvalidQr();
     }
+  }
+
+  void handleInvalidQr() {
+    removeLoading(context);
+    ShowAlertDialog(
+      body: const Text("Invalid QR"),
+      okFunc: () {
+        Navigator.pop(context);
+        controller?.start();
+      },
+    ).showAlertDialog(context);
+    controller?.start();
+    hasScanned = false;
   }
 
   @override
@@ -211,23 +220,12 @@ class _LowStockScannerState extends State<LowStockScanner> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              if (widget.forProduct) {
-                Provider.of<StockProvider>(context, listen: false).checkItemQr(
-                  context,
-                  controller,
-                  barcodes.barcodes.first.rawValue.toString(),
-                );
-                return;
-              } else {
-                Provider.of<StockProvider>(context, listen: false)
-                    .checkBasketQr(context, controller,
-                        barcodes.barcodes.first.rawValue.toString());
-              }
+              final code = barcodes.barcodes.first.rawValue.toString();
+              checkQr(code);
             },
           ),
           _buildBarcodeOverlay(),
           _buildScanWindow(scanWindow),
-
           Positioned(
             child: buildFlash(),
             top: 8.h * 6,
@@ -255,7 +253,6 @@ class _LowStockScannerState extends State<LowStockScanner> {
               ),
             ),
           ),
-          // TODO: i want this in center of width
           Consumer<StockProvider>(
             builder: (context, provider, child) {
               return Visibility(

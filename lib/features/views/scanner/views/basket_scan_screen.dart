@@ -61,6 +61,7 @@ class BasketScanScreen extends BaseScanScreen {
 
       // check if qr code is basket
       if (!code.toLowerCase().contains("basket")) {
+        hasScanned = false;
         handleInvalidCode(context, controller);
         return;
       }
@@ -71,6 +72,7 @@ class BasketScanScreen extends BaseScanScreen {
             .updateBucketData(code);
         if (result && context.mounted) {
           removeLoading(context);
+          hasScanned = false;
           Navigator.pop(context, true);
         } else if (context.mounted) {
           removeLoading(context);
@@ -81,6 +83,7 @@ class BasketScanScreen extends BaseScanScreen {
         final result = Provider.of<PackerTransferProvider>(context, listen: false)
             .scanBasketCode(context, code);
         if (result && context.mounted) {
+          hasScanned = false;
           removeLoading(context);
           navigateReplacement(context,
               route: NavigationConstants.transferDetailsRoute);

@@ -270,11 +270,9 @@ class StockProvider extends ChangeNotifier {
     );
   }
 
-  void checkBasketQr(BuildContext context, MobileScannerController? controller,
+   Future<bool> checkBasketQr(BuildContext context, 
       String code) async {
-    if (hasScanned) return;
-    hasScanned = true;
-    controller?.stop();
+   
     scanMessage = "";
     notifyListeners();
     HapticFeedback.heavyImpact();
@@ -283,46 +281,31 @@ class StockProvider extends ChangeNotifier {
       final value = await postBasketCode(context, code);
       if (value) {
         basketId = code;
-        navigateReplacement(context,
-            route: NavigationConstants.lowStockDetailRoute);
-        hasScanned = false;
+       return true;
       } else {
-        controller?.start();
-        hasScanned = false;
-        return;
+        return false;
       }
     } catch (e) {
-      _handleInvalidQR(context, controller);
-      hasScanned = false;
-      return;
+      return false;
     }
   }
 
-  void checkItemQr(BuildContext context, MobileScannerController? controller,
+  Future<bool> checkItemQr(BuildContext context, 
       String code) async {
-    if (hasScanned) return;
-    hasScanned = true;
-    controller?.stop();
-    HapticFeedback.heavyImpact();
 
     try {
       if (scannedList.contains(code)) {
         showToast("Tag Already scanned");
-        controller?.start();
-        hasScanned = false;
-        return;
+
+        return false;
       }
       if (selectedProduct?.quantity == scannedList.length) {
         showToast("Product already scanned");
-        controller?.start();
-        hasScanned = false;
-        return;
+        return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
         showToast("Invalid QR");
-        controller?.start();
-        hasScanned = false;
-        return;
+        return false;
       }
       scannedList.add(code);
 
@@ -337,22 +320,19 @@ class StockProvider extends ChangeNotifier {
       if (scannedList.length == selectedProduct?.quantity) {
         final response = await postScannedTags(context);
         if (response) {
-          controller?.start();
+          return true;
         } else {
           if (selProduct != null && selProduct >= 0) {
             selectedModel?.products[selProduct].scannedCount = 0;
           }
-          controller?.start();
+          return false;
         }
-      } else {
-        controller?.start();
       }
       notifyListeners();
-      hasScanned = false;
+      return true;
     } catch (e) {
-      _handleInvalidQR(context, controller);
-      hasScanned = false;
-      return;
+      showToast(e.toString());
+      return false;
     }
   }
 

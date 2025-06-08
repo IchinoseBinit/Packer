@@ -15,12 +15,33 @@ class StockVerificationProvider extends ChangeNotifier {
   bool isLoading = false;
 
   List<StockItemModel> stockItems = [];
+  List<String> rackList = [];
+  Map<String, List<StockItemModel>> rackProductMap = {};
 
   StockItemModel? selectedStockItem;
 
   List<String> scannedUnits = [];
 
   List<Store> storeList = [];
+
+  void arrangeStockItems() {
+    rackList.clear();
+    rackProductMap.clear();
+    for (var element in stockItems) {
+      if (!rackList.contains(element.rackName)) {
+        rackList.add(element.rackName);
+      }
+      if (rackProductMap.containsKey(element.rackName)) {
+        rackProductMap[element.rackName]!.add(element);
+      } else {
+        rackProductMap[element.rackName] = [element];
+      }
+    }
+
+    // sort
+    rackList.sort((a, b) => a.compareTo(b));
+    notifyListeners();
+  }
 
   Future<void> fetchStores() async {
     try {
@@ -45,6 +66,8 @@ class StockVerificationProvider extends ChangeNotifier {
   Future<void> fetchStockItems(String storeId) async {
     try {
       isLoading = true;
+      rackList.clear();
+      rackProductMap.clear();
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.getStockItemsUrl.replaceAll("value", storeId),
@@ -53,7 +76,7 @@ class StockVerificationProvider extends ChangeNotifier {
           .map((e) => StockItemModel.fromJson(e))
           .toList();
       isLoading = false;
-      notifyListeners();
+      arrangeStockItems();
     } catch (e) {
       log("Error while getting value $e");
       isLoading = false;

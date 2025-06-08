@@ -69,22 +69,50 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
                   separatorBuilder: (context, index) {
                     return SizedBox(height: 8.h);
                   },
-                  itemCount: provider.stockItems.length,
+                  itemCount: provider.rackList.length,
                   itemBuilder: (context, index) {
-                    return InkWell(
-                      onTap: () {
-                        Provider.of<StockVerificationProvider>(context,
-                                listen: false)
-                            .onItemTap(context, provider.stockItems[index]);
-                      },
-                      child: StockItemWidget(
-                        cartItem: provider.stockItems[index],
-                      ),
+                    final rackName = provider.rackList[index];
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                            text: TextSpan(children: [
+                          TextSpan(
+                              text: "Rack Name: ",
+                              style: Theme.of(context).textTheme.labelLarge),
+                          TextSpan(
+                              text: rackName,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontSize: 16.sp,
+                                  )),
+                        ])),
+                        SizedBox(height: 8.h),
+                        if (provider.rackProductMap[rackName] != null)
+                          ...provider.rackProductMap[rackName]!.map(
+                            (e) => InkWell(
+                              onTap: () {
+                                Provider.of<StockVerificationProvider>(context,
+                                        listen: false)
+                                    .onItemTap(context, e);
+                              },
+                              child: StockItemWidget(
+                                cartItem: e,
+                              ),
+                            ),
+                          ),
+                        
+                        // 8.h
+                        SizedBox(height: 8.h),
+                      ],
                     );
                   },
                 ),
               ),
-              
+
               // 16.h
               // const SizedBox(height: 16),
               // Padding(

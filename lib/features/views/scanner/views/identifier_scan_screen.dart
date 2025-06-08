@@ -45,6 +45,7 @@ class IdentifierScanScreen extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       if (identifier == code) {
+        hasScanned = false;
         Navigator.pop(context, true);
       } else if (context.mounted) {
         hasScanned = false;

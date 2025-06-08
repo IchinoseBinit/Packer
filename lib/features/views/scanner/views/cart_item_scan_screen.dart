@@ -57,6 +57,7 @@ class CartItemScanScreen extends BaseScanScreen {
       final result = Provider.of<OrderProvider>(context, listen: false)
           .scanProduct(context, productId, code);
       if (result && context.mounted) {
+        hasScanned = false;
         removeLoading(context);
         Navigator.pop(context, true);
       } else if (context.mounted) {
