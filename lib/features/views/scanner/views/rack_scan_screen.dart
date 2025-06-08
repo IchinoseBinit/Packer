@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -8,16 +6,16 @@ import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
-import 'base_scan_screen.dart';
 
 class RackScanScreen extends BaseScanScreen {
   final String? rackCode;
   final int productId;
-  bool hasScanned = false;
-  bool forCarton = false;
+  final bool forCarton;
 
   RackScanScreen({
     super.key,
@@ -30,6 +28,8 @@ class RackScanScreen extends BaseScanScreen {
           showBackButton: true,
         );
 
+  bool _isProcessing = false;
+
   @override
   void onScreenCreated(BuildContext context) {
     Provider.of<ScanMessageProvider>(context, listen: false)
@@ -39,87 +39,84 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   }
 
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
-    try {
-      if (hasScanned) return;
-      hasScanned = true;
+    if (_isProcessing) return;
+    _isProcessing = true;
 
-      controller.stop();
+    try {
+      await controller.stop();
       HapticFeedback.heavyImpact();
 
       if (!code.contains("rack")) {
-        handleInvalidCode(context, controller);
+        handleInvalidCode(context, controller, code);
         return;
       }
 
-      if (forCarton) {
-        showLoading(context);
+      if (rackCode != null) {
+        if (code.contains(rackCode!)) {
+          await controller.dispose();
+          if (context.mounted) {
+            navigatePop(context, true);
+          }
+          showToast("Rack scanned successfully");
+        } else {
+          if (context.mounted) handleInvalidCode(context, controller, code);
+        }
+      } else if (forCarton) {
+        if (context.mounted) showLoading(context);
 
         final result = await Provider.of<StockProvider>(context, listen: false)
-            .onScanCarton(context, code);
-        if (result && context.mounted) {
-          removeLoading(context);
-          Navigator.pop(context, true);
-        } else if (context.mounted) {
-          removeLoading(context);
-          hasScanned = false;
-          controller.start();
-        }
-      }
+            .updateRack(context, code, productId);
 
-      if (rackCode == null && context.mounted) {
-        // update rack
+        if (context.mounted) removeLoading(context);
+        if (result && context.mounted) {
+          navigatePop(context, true);
+          showToast("Rack Assigned successfully");
+        } else {
+          if (context.mounted) await controller.start();
+        }
+      } else if (context.mounted) {
         showLoading(context);
 
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
                 .updateRack(context, code, productId);
-        if (result && context.mounted) {
-          removeLoading(context);
-          Navigator.pop(context, true);
-        } else if (context.mounted) {
-          removeLoading(context);
-          hasScanned = false;
-          controller.start();
-        }
-      }
 
-      if (code.contains(rackCode ?? '') && context.mounted) {
-        hasScanned = false;
-        navigatePop(context, true);
-        controller.dispose();
-      } else if (context.mounted) {
-        showToast("Invalid QR");
-        hasScanned = false;
-        controller.start();
+        if (context.mounted) removeLoading(context);
+        if (result && context.mounted) {
+          navigatePop(context, true);
+        } else {
+          if (context.mounted) await controller.start();
+        }
       }
     } catch (e) {
       if (context.mounted) {
-        handleInvalidCode(context, controller);
+        handleInvalidCode(context, controller, code);
       }
+    } finally {
+      _isProcessing = false;
     }
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller) {
+      BuildContext context, MobileScannerController controller, String code) {
     ShowAlertDialog(
       disableBackground: true,
-      body: const Text("Invalid QR"),
+      body: Text("Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);
         controller.start();
       },
     ).showAlertDialog(context);
-    hasScanned = false;
   }
 
   @override
   void onDispose(MobileScannerController controller) {
-    // Any cleanup specific to cart item scanning
+    // Optional cleanup
   }
 }

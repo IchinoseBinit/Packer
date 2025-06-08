@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -9,65 +13,63 @@ import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 import 'base_scan_screen.dart';
 
-class CartItemScanScreen extends BaseScanScreen {
-  final int productId;
-  bool hasScanned = false;
-
-  CartItemScanScreen({
-    super.key,
-    required this.productId,
-  }) : super(
-          scanTitle: 'Product Scanner',
+class CartonScanScreen extends BaseScanScreen {
+  CartonScanScreen({super.key})
+      : super(
+          scanTitle: 'Carton Scanner',
           showFlash: true,
           showBackButton: true,
         );
 
+  bool _isProcessing = false;
+
   @override
   void onScreenCreated(BuildContext context) {
-    final message = Provider.of<OrderProvider>(context, listen: false)
-        .scanProductMessage(productId);
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(message);
+        .setMessage("Scan Carton Code");
   }
 
   @override
-  Widget? buildFloatingButton(BuildContext context,
-      MobileScannerController controller) {
-    return SizedBox.shrink();
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
+    return const SizedBox.shrink();
   }
-
 
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
+    if (_isProcessing) return;
+    _isProcessing = true;
+
     try {
-      if (hasScanned) return;
-      hasScanned = true;
-
-      controller.stop();
+      await controller.stop();
       HapticFeedback.heavyImpact();
-      showLoading(context);
 
-      // split code to get product id
-      final prodId = int.tryParse(code.split('-').first) ?? 0;
-      if (prodId != productId) {
-        handleInvalidCode(context, controller, code);
+      showLoading(context);
+      log("Carton Code: $code");
+
+      if (!code.toLowerCase().contains("carton")) {
+        if (context.mounted) {
+          handleInvalidCode(context, controller, code);
+        }
         return;
       }
 
-      final result = Provider.of<OrderProvider>(context, listen: false)
-          .scanProduct(context, productId, code);
-      if (result && context.mounted) {
-        hasScanned = false;
-        removeLoading(context);
-        Navigator.pop(context, true);
+      final result = await Provider.of<StockProvider>(context, listen: false)
+          .onScanCarton(context, code);
+
+      if (!result && context.mounted) {
+        handleInvalidCode(context, controller, code);
       } else if (context.mounted) {
         removeLoading(context);
-        hasScanned = false;
-        controller.start();
+        // Optionally navigate back or show success message
       }
     } catch (e) {
-      handleInvalidCode(context, controller, code);
+      if (context.mounted) {
+        handleInvalidCode(context, controller, code);
+      }
+    } finally {
+      _isProcessing = false;
     }
   }
 
@@ -77,16 +79,15 @@ class CartItemScanScreen extends BaseScanScreen {
     ShowAlertDialog(
       disableBackground: true,
       body: Text("Invalid QR ${detectQrMessage(code)}"),
-      okFunc: () {
-        Navigator.pop(context);
-        controller.start();
+      okFunc: () async {
+        navigatePop(context);
+        await controller.start();
       },
     ).showAlertDialog(context);
-    hasScanned = false;
   }
 
   @override
   void onDispose(MobileScannerController controller) {
-    // Any cleanup specific to cart item scanning
+    // Cleanup if needed
   }
 }

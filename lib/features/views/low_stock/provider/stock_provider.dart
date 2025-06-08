@@ -19,6 +19,7 @@ import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:packer/utils/qr_message.dart';
 
 class StockProvider extends ChangeNotifier {
   List<LowStockModel> lowStockList = [];
@@ -141,6 +142,32 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
+  // update rack
+  Future<bool> updateRack(BuildContext context, String code, int productId) async {
+    try {
+      final url = AppUrls.updateRackUrl;
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+        body: {
+          "rack_identifier": code,
+          "product_id": productId,
+        },
+      );
+      if (response.statusCode == 200 && context.mounted) {
+        navigateReplacement(context,
+            route: NavigationConstants.dashboardRoute);
+        return true;
+      } else {
+        showToast('Failed to update rack');
+        return false;
+      }
+    } catch (ex) {
+      showToast(ex.toString());
+      return false;
+    }
+  }
+
   Future onScanCarton(BuildContext context, String code) async {
     try {
       await callCartonInfoApi(context, code);
@@ -149,13 +176,14 @@ class StockProvider extends ChangeNotifier {
         if (context.mounted) {
           final result = await navigateReplacement(context,
               route: NavigationConstants.scanRackRoute,
-              extra: {'forCarton': true});
+              extra: {'forCarton': true, 'productId': cartonModel!.productId});
           if (result ?? false) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               navigateReplacement(context,
                   route: NavigationConstants.dashboardRoute);
             });
           }
+          return true;
         }
       } else if (context.mounted) {
         navigateReplacement(
@@ -165,6 +193,7 @@ class StockProvider extends ChangeNotifier {
             'rack': cartonModel?.rackName,
           },
         );
+        return true;
       }
     } catch (e) {
       showToast(e.toString());
@@ -300,7 +329,7 @@ class StockProvider extends ChangeNotifier {
         return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        showToast("Invalid QR");
+        showToast("Invalid QR ${detectQrMessage(code)}");
         return false;
       }
       scannedList.add(code);
@@ -478,85 +507,85 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateRack(
-      BuildContext context, String code, int productId) async {
-    try {
-      final url = AppUrls.updateRackUrl;
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url,
-        body: {
-          "rack_identifier": code,
-          "product_id": productId,
-        },
-      );
+  // Future<bool> updateRack(
+  //     BuildContext context, String code, int productId) async {
+  //   try {
+  //     final url = AppUrls.updateRackUrl;
+  //     final response = await DioClient().request(
+  //       requestType: RequestType.postWithToken,
+  //       url: url,
+  //       body: {
+  //         "rack_identifier": code,
+  //         "product_id": productId,
+  //       },
+  //     );
 
-      if (response.statusCode == 200) {
-        // debugger();
-        showToast("Rack updated successfully");
-        // WidgetsBinding.instance.addPostFrameCallback((_) {
-        //   navigateAndRemoveAll(context,
-        //       route: NavigationConstants.dashboardRoute);
-        // });
-        return true;
-      } else {
-        showToast('Failed to update rack');
-        return false;
-        // navigateAndRemoveAll(context,
-        //     route: NavigationConstants.dashboardRoute);
-      }
-    } catch (ex) {
-      showToast(ex.toString());
-      return false;
-      // showDialog(
-      //   context: context,
-      //   builder: (context) => AlertDialog(
-      //     title: Row(
-      //       children: [
-      //         Icon(Icons.error, color: Colors.red),
-      //         SizedBox(width: 8),
-      //         Text(
-      //           "Product Availability Failed",
-      //           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-      //                 fontSize: 12.sp,
-      //                 fontWeight: FontWeight.w400,
-      //               ),
-      //         ),
-      //       ],
-      //     ),
-      //     content: Column(
-      //       mainAxisSize: MainAxisSize.min,
-      //       children: [
-      //         Text("Do you want to scan again?"),
-      //         SizedBox(height: 20),
-      //         Row(
-      //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      //           children: [
-      //             TextButton(
-      //               onPressed: () {
-      //                 Navigator.of(context).pop(); // Close dialog
-      //                 navigate(context,
-      //                     route: NavigationConstants.qrScanScreenRoute,
-      //                     extra: {
-      //                       'scanCarton': true,
-      //                     });
-      //               },
-      //               child: Text("Yes"),
-      //             ),
-      //             TextButton(
-      //               onPressed: () {
-      //                 Navigator.of(context).pop(); // Close dialog
-      //                 navigate(context,
-      //                     route: NavigationConstants.dashboardRoute);
-      //               },
-      //               child: Text("No"),
-      //             ),
-      //           ],
-      //         )
-      //       ],
-      //     ),
-      //   ),
-      // );
-    }
-  }
+  //     if (response.statusCode == 200) {
+  //       // debugger();
+  //       showToast("Rack updated successfully");
+  //       // WidgetsBinding.instance.addPostFrameCallback((_) {
+  //       //   navigateAndRemoveAll(context,
+  //       //       route: NavigationConstants.dashboardRoute);
+  //       // });
+  //       return true;
+  //     } else {
+  //       showToast('Failed to update rack');
+  //       return false;
+  //       // navigateAndRemoveAll(context,
+  //       //     route: NavigationConstants.dashboardRoute);
+  //     }
+  //   } catch (ex) {
+  //     showToast(ex.toString());
+  //     return false;
+  //     // showDialog(
+  //     //   context: context,
+  //     //   builder: (context) => AlertDialog(
+  //     //     title: Row(
+  //     //       children: [
+  //     //         Icon(Icons.error, color: Colors.red),
+  //     //         SizedBox(width: 8),
+  //     //         Text(
+  //     //           "Product Availability Failed",
+  //     //           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+  //     //                 fontSize: 12.sp,
+  //     //                 fontWeight: FontWeight.w400,
+  //     //               ),
+  //     //         ),
+  //     //       ],
+  //     //     ),
+  //     //     content: Column(
+  //     //       mainAxisSize: MainAxisSize.min,
+  //     //       children: [
+  //     //         Text("Do you want to scan again?"),
+  //     //         SizedBox(height: 20),
+  //     //         Row(
+  //     //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //     //           children: [
+  //     //             TextButton(
+  //     //               onPressed: () {
+  //     //                 Navigator.of(context).pop(); // Close dialog
+  //     //                 navigate(context,
+  //     //                     route: NavigationConstants.qrScanScreenRoute,
+  //     //                     extra: {
+  //     //                       'scanCarton': true,
+  //     //                     });
+  //     //               },
+  //     //               child: Text("Yes"),
+  //     //             ),
+  //     //             TextButton(
+  //     //               onPressed: () {
+  //     //                 Navigator.of(context).pop(); // Close dialog
+  //     //                 navigate(context,
+  //     //                     route: NavigationConstants.dashboardRoute);
+  //     //               },
+  //     //               child: Text("No"),
+  //     //             ),
+  //     //           ],
+  //     //         )
+  //     //       ],
+  //     //     ),
+  //     //   ),
+  //     // );
+  //   }
+  // }
 }

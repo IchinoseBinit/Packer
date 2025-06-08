@@ -5,6 +5,7 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 import 'base_scan_screen.dart';
 
@@ -48,19 +49,18 @@ class IdentifierScanScreen extends BaseScanScreen {
         hasScanned = false;
         Navigator.pop(context, true);
       } else if (context.mounted) {
-        hasScanned = false;
-        controller.start();
+        handleInvalidCode(context, controller, code);
       }
     } catch (e) {
-      handleInvalidCode(context, controller);
+      handleInvalidCode(context, controller, code);
     }
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller) {
+      BuildContext context, MobileScannerController controller, String code) {
     ShowAlertDialog(
       disableBackground: true,
-      body: const Text("Invalid QR"),
+      body: Text("Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);
         controller.start();

@@ -17,6 +17,7 @@ import 'package:packer/features/views/packer_transfer/model/transfer_model.dart'
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
 class PackerTransferProvider extends ChangeNotifier {
@@ -145,19 +146,28 @@ class PackerTransferProvider extends ChangeNotifier {
 
       return false;
     }
+
+    final item = selectedTransferModel?.items?.firstWhere(
+      (element) => element.product == productId,
+      orElse: () => TransferItemModel(),
+    );
     if (role?.contains("main") == false) {
-      final item = selectedTransferModel?.items?.firstWhere(
-        (element) => element.product == productId,
-        orElse: () => TransferItemModel(),
-      );
       if (item != null && (item.tags?.contains(code) ?? false)) {
         scanTagsList.add(code);
+        final scanMessage =
+            "Scan ${(item.quantity ?? 0) - item.itemScanCount} more ${item.productName}";
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(scanMessage);
       } else {
-        showToast("Invalid QR");
+        showToast("Invalid QR ${detectQrMessage(code)}");
         return false;
       }
     } else {
       scanTagsList.add(code);
+      final scanMessage =
+          "Scan ${(item?.quantity ?? 0) - (item?.itemScanCount ?? 0)} more ${item?.productName}";
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(scanMessage);
     }
     final isScanned = scanCountOrder(context, productId);
     if (isScanned) {
@@ -165,6 +175,8 @@ class PackerTransferProvider extends ChangeNotifier {
       if (success) {
         return true;
       } else {
+        removeScanTags(productId);
+        item?.itemScanCount = 0;
         showToast("Failed to submit scan tag");
         scanTagsList.clear();
         notifyListeners();
@@ -172,6 +184,13 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     }
     return false;
+  }
+
+  // remove particular productid scan tags
+  void removeScanTags(int productId) {
+    scanTagsList
+        .removeWhere((element) => element.contains(productId.toString()));
+    notifyListeners();
   }
 
   onBasketScanTapped(BuildContext context, BasketModel? basket) {
@@ -212,7 +231,7 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   // itemTaped
-  void itemTaped(BuildContext context, TransferItemModel? item) {
+  Future<void> itemTaped(BuildContext context, TransferItemModel? item) async {
     if (item == null) {
       showToast("Item not found");
       return;
@@ -220,9 +239,21 @@ class PackerTransferProvider extends ChangeNotifier {
     final scanMessage = getScanMessage(item.product ?? 0);
     if (role?.contains("main") == false) {
       if (item.rack != null && item.rack!.isNotEmpty) {
-        navigate(context,
+        final result = await navigate(context,
             route: NavigationConstants.scanRackRoute,
             extra: {"rack": item.rack, "productId": item.product});
+        if (result == true && context.mounted) {
+          Provider.of<ScanMessageProvider>(context, listen: false)
+              .setMessage(scanMessage);
+          navigate(
+            context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              "forTransfer": true,
+              "productId": item.product,
+            },
+          );
+        }
         return;
       }
       showYesNo(context).then((value) {
@@ -242,7 +273,7 @@ class PackerTransferProvider extends ChangeNotifier {
             context,
             route: NavigationConstants.productScanScreenRoute,
             extra: {
-              "forTranfer": true,
+              "forTransfer": true,
               "productId": item.product,
             },
           );
@@ -255,7 +286,7 @@ class PackerTransferProvider extends ChangeNotifier {
         context,
         route: NavigationConstants.productScanScreenRoute,
         extra: {
-          "forTranfer": true,
+          "forTransfer": true,
           "productId": item.product,
         },
       );
@@ -354,7 +385,7 @@ class PackerTransferProvider extends ChangeNotifier {
           context,
           route: NavigationConstants.qrScanScreenRoute,
           extra: {
-            "forTranfer": true,
+            "forTransfer": true,
             "productId": productId,
           },
         );

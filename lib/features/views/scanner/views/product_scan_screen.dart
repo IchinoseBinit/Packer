@@ -11,6 +11,7 @@ import 'package:packer/features/views/stock_verification/provider/stock_verifica
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 import 'base_scan_screen.dart';
 
@@ -33,8 +34,10 @@ class ProductScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage("Scan Product Code");
+    if (!fromTransfer) {
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage("Scan Product Code");
+    }
   }
 
   bool isProcessing = false;
@@ -43,7 +46,11 @@ class ProductScanScreen extends BaseScanScreen {
   // list of scanned units
 
   @override
-  Widget? buildFloatingButton(BuildContext context, MobileScannerController controller) {
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
+    if (fromTransfer) {
+      return null;
+    }
     final provider = Provider.of<StockVerificationProvider>(context);
 
     return GeneralElevatedButton(
@@ -89,8 +96,7 @@ class ProductScanScreen extends BaseScanScreen {
             body: const Text("Verification failed. Try again."),
             okFunc: () {
               Navigator.pop(context);
-          controller.start();
-
+              controller.start();
             },
           ).showAlertDialog(context);
         }
@@ -112,7 +118,7 @@ class ProductScanScreen extends BaseScanScreen {
       // split code to get product id
       final prodId = int.tryParse(code.split('-').first) ?? 0;
       if (prodId != productId) {
-        handleInvalidCode(context, controller);
+        handleInvalidCode(context, controller, code);
         return;
       }
 
@@ -133,7 +139,7 @@ class ProductScanScreen extends BaseScanScreen {
           fromStockVerification: fromStockVerification,
         );
         if (!success && context.mounted) {
-          handleInvalidCode(context, controller);
+          handleInvalidCode(context, controller, code);
         } else {
           controller.start();
           hasScanned = false;
@@ -147,20 +153,22 @@ class ProductScanScreen extends BaseScanScreen {
           removeLoading(context);
           Navigator.pop(context, true);
         } else if (context.mounted) {
-          handleInvalidCode(context, controller);
+          removeLoading(context);
+          controller.start();
+          hasScanned = false;
         }
       }
     } catch (e) {
-      handleInvalidCode(context, controller);
+      handleInvalidCode(context, controller, code);
     }
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller,
+      BuildContext context, MobileScannerController controller, String code,
       [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
-      body: Text(message ?? "Invalid QR"),
+      body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);
         controller.start();

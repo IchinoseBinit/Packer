@@ -35,12 +35,22 @@ abstract class BaseScanScreen extends StatefulWidget {
 class _BaseScanScreenState extends State<BaseScanScreen> {
   MobileScannerController? controller;
   bool _flash = false;
+  bool hasScanned = false;
 
   @override
   void initState() {
     super.initState();
     controller = MobileScannerController();
+    controller?.start();
     widget.onScreenCreated(context);
+    controller!.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    // if start then has Scanned false
+    if (controller!.value.isRunning) {
+        hasScanned = false;
+    }
   }
 
   @override
@@ -81,6 +91,8 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
                 ScannerErrorWidget(error: error),
             onDetect: (barcodes) async {
               final code = barcodes.barcodes.first.rawValue ?? '';
+              if (hasScanned) return;
+              hasScanned = true;
               await widget.onCodeDetected(context, code, controller!);
             },
           ),

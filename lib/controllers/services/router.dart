@@ -31,6 +31,7 @@ import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
+import 'package:packer/features/views/scanner/views/carton_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
@@ -268,7 +269,7 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return BasketScanScreen(
-                    basketCode: args['basketCode'].toString(),
+                    basketCode: args['basketCode'],
                     forOrder: args['forOrder'] ?? false,
                   );
                 },
@@ -300,6 +301,12 @@ class AppRouter {
                     fromStockVerification: args['fromStockVerification'] ?? false,
                     fromTransfer: args['forTransfer'] ?? false,
                   );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.cartonScanScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return CartonScanScreen();
                 },
               ),
             ]),

@@ -11,6 +11,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
+import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -70,7 +71,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
           code,
         );
         if (value && mounted) {
-          Navigator.pop(context);
+          // Navigator.pop(context);
           hasScanned = false;
         } else if (mounted) {
           controller?.start();
@@ -84,18 +85,18 @@ class _LowStockScannerState extends State<LowStockScanner> {
           navigateReplacement(context,
               route: NavigationConstants.lowStockDetailRoute);
         } else if (mounted) {
-          handleInvalidQr();
+          handleInvalidQr(code);
         }
       }
     } catch (e) {
-      handleInvalidQr();
+      handleInvalidQr(code);
     }
   }
 
-  void handleInvalidQr() {
+  void handleInvalidQr(String code) {
     // removeLoading(context);
     ShowAlertDialog(
-      body: const Text("Invalid QR"),
+      body: Text("Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);
         controller?.start();

@@ -25,6 +25,11 @@ class StockVerificationProvider extends ChangeNotifier {
 
   List<Store> storeList = [];
 
+  void setSelectedStore(Store store) {
+    selectedStore = store;
+    notifyListeners();
+  }
+
   void arrangeStockItems() {
     rackList.clear();
     rackProductMap.clear();
