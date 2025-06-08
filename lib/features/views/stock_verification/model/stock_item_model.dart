@@ -35,7 +35,16 @@ class StockItemModel {
       rackName: json['rack_name'].toString().toStringConversion(),
       image: AppUrls.imageUrl + json['image'].toString().toStringConversion(),
       productUnits: List<String>.from(json['product_units']),
-
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StockItemModel &&
+          runtimeType == other.runtimeType &&
+          productId == other.productId;
+
+  @override
+  int get hashCode => productId.hashCode;
 }

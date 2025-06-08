@@ -74,6 +74,9 @@ class StockVerificationProvider extends ChangeNotifier {
       isLoading = true;
       rackList.clear();
       rackProductMap.clear();
+      notifyListeners();
+      await Future.delayed(const Duration(seconds: 0));
+
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.getStockItemsUrl.replaceAll("value", storeId),
@@ -81,8 +84,8 @@ class StockVerificationProvider extends ChangeNotifier {
       stockItems = (response.data as List)
           .map((e) => StockItemModel.fromJson(e))
           .toList();
-      isLoading = false;
       arrangeStockItems();
+      isLoading = false;
     } catch (e) {
       log("Error while getting value $e");
       isLoading = false;
@@ -185,13 +188,28 @@ class StockVerificationProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        stockItems.remove(selectedStockItem!);
-        notifyListeners();
+        removeStockItem(selectedStockItem!);
         return true;
       }
       return false;
     } catch (e) {
       return false;
+    }
+  }
+
+  void removeStockItem(StockItemModel item) {
+    final rackName = item.rackName;
+
+    if (rackProductMap.containsKey(rackName)) {
+      rackProductMap[rackName]!.remove(item);
+
+      // If no more items in this rack, remove rack from list and map
+      if (rackProductMap[rackName]!.isEmpty) {
+        rackProductMap.remove(rackName);
+        rackList.remove(rackName);
+      }
+
+      notifyListeners();
     }
   }
 }

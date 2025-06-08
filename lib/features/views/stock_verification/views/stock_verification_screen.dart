@@ -30,6 +30,15 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
       backgroundColor: AppColors.fillColor,
       appBar: AppBar(
         title: const Text('Stock Verification'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Provider.of<StockVerificationProvider>(context, listen: false)
+                  .fetchStockItems(widget.storeId);
+            },
+          ),
+        ],
       ),
       body: Consumer<StockVerificationProvider>(
           builder: (context, provider, child) {
