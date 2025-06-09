@@ -59,8 +59,8 @@ class ProfileScreen extends StatelessWidget {
     return Consumer<HomeProvider>(builder: (context, value, child) {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .setRole(value.packerSummary?.storeType ?? "");
-      if (value.packerSummary?.storeType.contains("main") == false) {
-        if (otherInfoData.isEmpty) {
+      if (otherInfoData.isEmpty) {
+        if (value.packerSummary?.storeType.contains("main") == false) {
           otherInfoData.add(
             {
               'icon': Icons.inventory,
@@ -69,6 +69,15 @@ class ProfileScreen extends StatelessWidget {
             },
           );
         }
+      }
+      if (value.isStoreManager()) {
+        otherInfoData.add(
+          {
+            'icon': Icons.domain_verification,
+            'title': 'Stock Verification',
+            'screen': NavigationConstants.storeSelectionRoute,
+          },
+        );
       }
       return Scaffold(
         appBar: AppBar(

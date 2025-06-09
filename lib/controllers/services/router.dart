@@ -36,6 +36,7 @@ import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart'
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
 import 'package:packer/features/views/stock_verification/views/stock_verification_screen.dart';
+import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
 
@@ -262,6 +263,12 @@ class AppRouter {
                 path: NavigationConstants.stockVerificationRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return StockVerificationScreen(storeId: state.extra as String);
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.storeSelectionRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return StoreSelectionScreen();
                 },
               ),
               GoRoute(

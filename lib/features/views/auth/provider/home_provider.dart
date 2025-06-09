@@ -33,8 +33,12 @@ class HomeProvider with ChangeNotifier {
     _user = null;
   }
 
-  isAuditUser() {
+  bool isAuditUser() {
     return user.role == UserRole.audit;
+  }
+
+  bool isStoreManager() {
+    return user.role == UserRole.manager;
   }
 
   bool isOnline = false;

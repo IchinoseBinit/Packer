@@ -39,7 +39,8 @@ class NavigationConstants {
   static const String lowStockScannerRoute = 'low_stock_scanner';
 
   // stock_verification
-  static const String stockVerificationRoute = 'stock_verification';
+  static const String stockVerificationRoute = 'stock_verification_screen';
+  static const String storeSelectionRoute = 'store_selection_screen';
 
 
   // basket scan screen
