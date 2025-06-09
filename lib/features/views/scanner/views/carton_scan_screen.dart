@@ -26,7 +26,7 @@ class CartonScanScreen extends BaseScanScreen {
   @override
   void onScreenCreated(BuildContext context) {
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage("Scan Carton Code");
+        .setMessage(context, "Scan Carton Code");
   }
 
   @override

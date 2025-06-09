@@ -15,43 +15,50 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 
 class ProfileScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> personalInfoData = [
-    // {
-    //   'icon': Icons.lock_clock,
-    //   'title': 'Shift',
-    //   "screen": 'shifts',
-    // },
-    // {
-    //   'icon': Icons.history,
-    //   'title': 'Documents',
-    //   'screen': NavigationConstants.documentListScreenRoute,
-    // },
-    // {
-    //   'icon': Icons.shopping_cart,
-    //   'title': 'COD Settlement',
-    //   'screen': NavigationConstants.unsettledOrdersRoute,
-    // },
-    // {
-    //   'icon': Icons.summarize,
-    //   'title': 'Summary',
-    //   'screen': NavigationConstants.weeklySummaryRoute,
-    // },
-  ];
+  final List<Map<String, dynamic>> personalInfoData = [];
 
-  List<Map<String, dynamic>> otherInfoData = [
-    // {
-    //   'icon': Icons.notifications,
-    //   'title': 'Notification',
-    //   'screen': 'notification',
-    // },
-    // {
-    //   'icon': Icons.history,
-    //   'title': 'Transaction History',
-    //   'screen': 'transaction_history',
-    // },
-  ];
+  final List<Map<String, dynamic>> otherInfoData = [];
 
   ProfileScreen({super.key});
+
+  void _prepareOtherInfoData(BuildContext context, HomeProvider value) {
+    // Add transfer_list screen only for non-main stores, if not already added
+    if (value.isMainStore() == false &&
+        !otherInfoData.any((e) => e['screen'] == NavigationConstants.transferListRoute)) {
+      otherInfoData.add({
+        'icon': Icons.inventory,
+        'title': 'Inventory Items',
+        'screen': NavigationConstants.transferListRoute,
+      });
+    }
+
+    // Add Stock Verification screen only if user is a store manager and not already added
+    if (value.isStoreManager() &&
+        !otherInfoData.any(
+            (e) => e['screen'] == NavigationConstants.storeSelectionRoute)) {
+      otherInfoData.add({
+        'icon': Icons.domain_verification,
+        'title': 'Stock Verification',
+        'screen': NavigationConstants.storeSelectionRoute,
+      });
+    }
+    if (value.isStoreManager() &&
+        !otherInfoData.any(
+            (e) => e['screen'] == NavigationConstants.rackUpdateScreenRoute)) {
+      otherInfoData.add({
+        'icon': Icons.folder,
+        'title': 'Rack Update',
+        'screen': NavigationConstants.rackUpdateScreenRoute,
+        'function': () {
+          if (value.isMainStore()){
+            navigate(context, route: NavigationConstants.cartonScanScreenRoute);
+          }else{
+            navigate(context, route: NavigationConstants.scanRackRoute);
+          }
+        },
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,26 +66,9 @@ class ProfileScreen extends StatelessWidget {
     return Consumer<HomeProvider>(builder: (context, value, child) {
       Provider.of<PackerTransferProvider>(context, listen: false)
           .setRole(value.packerSummary?.storeType ?? "");
-      if (otherInfoData.isEmpty) {
-        if (value.packerSummary?.storeType.contains("main") == false) {
-          otherInfoData.add(
-            {
-              'icon': Icons.inventory,
-              'title': 'Inventory Items',
-              'screen': 'transfer_list',
-            },
-          );
-        }
-      }
-      if (value.isStoreManager()) {
-        otherInfoData.add(
-          {
-            'icon': Icons.domain_verification,
-            'title': 'Stock Verification',
-            'screen': NavigationConstants.storeSelectionRoute,
-          },
-        );
-      }
+
+      _prepareOtherInfoData(context, value);
+
       return Scaffold(
         appBar: AppBar(
           title: Container(
@@ -118,12 +108,12 @@ class ProfileScreen extends StatelessWidget {
                 SizedBox(height: 10),
                 ListView.builder(
                   shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
                   itemCount: otherInfoData.length,
                   itemBuilder: (context, index) {
                     return ListTile(
                       onTap: () {
-                        navigate(context,
-                            route: otherInfoData[index]['screen']);
+                        navigate(context, route: otherInfoData[index]['screen']);
                       },
                       titleTextStyle: TextStyle(
                         color: Colors.black,
@@ -137,9 +127,7 @@ class ProfileScreen extends StatelessWidget {
                     );
                   },
                 ),
-                SizedBox(
-                  height: .4.sh,
-                ),
+                SizedBox(height: .4.sh),
                 Center(
                   child: Column(
                     children: [
@@ -155,11 +143,13 @@ class ProfileScreen extends StatelessWidget {
                                         listen: false)
                                     .resetUser();
                                 if (value is bool) {
-                                  navigateAndRemoveAll(context,
-                                      route: NavigationConstants.loginRoute);
+                                  navigateAndRemoveAll(
+                                      context,
+                                      route:
+                                          NavigationConstants.loginRoute);
                                 } else {
-                                  // Handle registration failure
-                                  ErrorHandler().errorHandler(context, value);
+                                  ErrorHandler()
+                                      .errorHandler(context, value);
                                 }
                               },
                             );
@@ -167,19 +157,10 @@ class ProfileScreen extends StatelessWidget {
                           child: Text('Logout'),
                         ),
                       ),
-                      // SizedBox(height: 10),
-                      // Text(
-                      //   'VERSION 21.2.2',
-                      //   style: TextStyle(
-                      //     color: Colors.grey,
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: 10,
-                ),
+                SizedBox(height: 10),
               ],
             ),
           ),

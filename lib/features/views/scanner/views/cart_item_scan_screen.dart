@@ -27,7 +27,7 @@ class CartItemScanScreen extends BaseScanScreen {
     final message = Provider.of<OrderProvider>(context, listen: false)
         .scanProductMessage(productId);
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(message);
+        .setMessage(context, message);
   }
 
   @override

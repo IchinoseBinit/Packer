@@ -35,7 +35,7 @@ class BasketScanScreen extends BaseScanScreen {
         ? "Scan Basket Code"
         : "Scan Basket: $basketCode";
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(message);
+        .setMessage(context, message);
   }
 
   @override

@@ -34,7 +34,7 @@ class RackScanScreen extends BaseScanScreen {
   @override
   void onScreenCreated(BuildContext context) {
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(rackCode == null ? "Assign a rack" : "Scan Rack $rackCode");
+        .setMessage(context, rackCode == null ? "Assign a rack" : "Scan Rack $rackCode");
   }
 
   @override

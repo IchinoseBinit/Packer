@@ -49,4 +49,7 @@ class NavigationConstants {
   static const String inventoryScanScreenRoute = 'inventory_scan_screen';
   static const String productScanScreenRoute = 'product_scan_screen';
   static const String cartonScanScreenRoute = 'carton_scan_screen';
+
+  // rack update screen
+  static const String rackUpdateScreenRoute = 'rack_update_screen';
 }

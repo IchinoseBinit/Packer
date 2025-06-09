@@ -143,7 +143,8 @@ class StockProvider extends ChangeNotifier {
   }
 
   // update rack
-  Future<bool> updateRack(BuildContext context, String code, int productId) async {
+  Future<bool> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
@@ -155,8 +156,7 @@ class StockProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200 && context.mounted) {
-        navigateReplacement(context,
-            route: NavigationConstants.dashboardRoute);
+        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
         return true;
       } else {
         showToast('Failed to update rack');
@@ -212,8 +212,14 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              showToast("Already Scanned");
               removeLoading(context);
+              ShowAlertDialog(
+                disableBackground: false,
+                body: Text("Already Scanned"),
+                okFunc: () {
+                 navigatePop(context);
+                },
+              ).showAlertDialog(context);
               return false;
             }
             onProductDetailsTaped(context, matchedModel);
@@ -339,9 +345,9 @@ class StockProvider extends ChangeNotifier {
       // if (selProduct != null && selProduct >= 0) {
       //   selectedModel?.products[selProduct].scannedCount++;
       // }
-        selectedProduct!.scannedCount++;
-        scanMessage =
-            "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
+      selectedProduct!.scannedCount++;
+      scanMessage =
+          "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
 
       if (scannedList.length == selectedProduct?.quantity) {
         final response = await postScannedTags(context);

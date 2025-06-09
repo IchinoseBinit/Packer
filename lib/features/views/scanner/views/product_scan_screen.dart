@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -36,7 +37,7 @@ class ProductScanScreen extends BaseScanScreen {
   void onScreenCreated(BuildContext context) {
     if (!fromTransfer) {
       Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage("Scan Product Code");
+          .setMessage(context, "Scan Product Code");
     }
   }
 
@@ -49,7 +50,14 @@ class ProductScanScreen extends BaseScanScreen {
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
     if (fromTransfer) {
-      return null;
+      return FloatingActionButton(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: () async {
+          Provider.of<PackerTransferProvider>(context, listen: false)
+              .showProductTags(context, productId);
+        },
+        child: const Icon(Icons.info, color: Colors.white),
+      );
     }
     final provider = Provider.of<StockVerificationProvider>(context);
 

@@ -32,63 +32,64 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
     final orderProvider = Provider.of<OrderProvider>(context);
     final status = widget.order.data.status;
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView(
-            padding: AppConstants.padding,
-            children: [
-              OrderInfoCard(data: widget.order),
-              CartItemsList(cartItems: widget.order.productDetails),
-              SizedBox(
-                height: 8.h,
-              ),
-            ],
+    return Padding(
+      padding: AppConstants.padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          OrderInfoCard(data: widget.order),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text("Items Ordered:"),
           ),
-        ),
-        (status != OrderStatusType.completed &&
-                status != OrderStatusType.cancelled &&
-                orderProvider.allCartItemScanned())
-            ? Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.w,
-                  vertical: 8.h,
-                ).copyWith(
-                  bottom: MediaQuery.of(context).padding.bottom + 20.h,
+          Expanded(child: CartItemsList(cartItems: widget.order.productDetails)),
+          SizedBox(
+            height: 8.h,
+          ),
+          (status != OrderStatusType.completed &&
+                  status != OrderStatusType.cancelled &&
+                  orderProvider.allCartItemScanned())
+              ? Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 8.h,
+                  ).copyWith(
+                    bottom: MediaQuery.of(context).padding.bottom + 20.h,
+                  ),
+                  child: GeneralElevatedButton(
+                    onPressed: () async {
+                      showLoading(context);
+      
+                      final parsedOrderId =
+                          int.tryParse(widget.order.data.id.toString()) ?? 0;
+      
+                      final success =
+                          await Provider.of<OrderProvider>(context, listen: false)
+                              .productPost(
+                        parsedOrderId,
+                      );
+                      if (context.mounted) {
+                        removeLoading(context);
+                      }
+                      if (success && context.mounted) {
+                        Provider.of<HomeProvider>(context, listen: false)
+                            .fetchLatestOrders();
+                        navigateAndRemoveAll(context,
+                            route: NavigationConstants.dashboardRoute);
+                      }
+                    },
+                    title: 'Bill this order',
+                  ),
+                )
+              : Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  child: GeneralElevatedButton(
+                    onPressed: () {},
+                    title: 'Scan all items',
+                  ),
                 ),
-                child: GeneralElevatedButton(
-                  onPressed: () async {
-                    showLoading(context);
-
-                    final parsedOrderId =
-                        int.tryParse(widget.order.data.id.toString()) ?? 0;
-
-                    final success =
-                        await Provider.of<OrderProvider>(context, listen: false)
-                            .productPost(
-                      parsedOrderId,
-                    );
-                    if (context.mounted) {
-                      removeLoading(context);
-                    }
-                    if (success && context.mounted) {
-                      Provider.of<HomeProvider>(context, listen: false)
-                          .fetchLatestOrders();
-                      navigateAndRemoveAll(context,
-                          route: NavigationConstants.dashboardRoute);
-                    }
-                  },
-                  title: 'Bill this order',
-                ),
-              )
-            : Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                child: GeneralElevatedButton(
-                  onPressed: () {},
-                  title: 'Scan all items',
-                ),
-              ),
-      ],
+        ],
+      ),
     );
   }
 }

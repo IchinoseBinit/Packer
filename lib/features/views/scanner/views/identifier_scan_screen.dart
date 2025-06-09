@@ -25,7 +25,7 @@ class IdentifierScanScreen extends BaseScanScreen {
   @override
   void onScreenCreated(BuildContext context) {
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage("Scan Inventory Code");
+        .setMessage(context, "Scan Inventory Code");
   }
 
 

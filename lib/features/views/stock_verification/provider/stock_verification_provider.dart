@@ -151,7 +151,7 @@ class StockVerificationProvider extends ChangeNotifier {
           message += " Scanned $quantity units";
         }
         Provider.of<ScanMessageProvider>(context, listen: false)
-            .setMessage(message);
+            .setMessage(context, message);
       } else {
         // check for the remaining or not
         var scanMessage = "";
@@ -162,7 +162,7 @@ class StockVerificationProvider extends ChangeNotifier {
               "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
         }
         Provider.of<ScanMessageProvider>(context, listen: false)
-            .setMessage(scanMessage);
+            .setMessage(context, scanMessage);
       }
 
       notifyListeners();

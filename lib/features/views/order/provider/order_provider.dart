@@ -46,6 +46,9 @@ class OrderProvider extends ChangeNotifier {
     _isAvailable = val;
   }
 
+  List<String> rackList = [];
+  Map<String, List<ProductDetails>> rackProductData = {};
+
   String bucketData = ""; // current basket code
   List<String> basketDataList = []; // stores basket codes
   Map<String, List<String>> scannedDataPerBasket =
@@ -93,6 +96,8 @@ class OrderProvider extends ChangeNotifier {
     basketDataList.clear();
     scannedDataPerBasket.clear();
     scannedDataList.clear();
+    rackProductData.clear();  
+    rackList.clear();
   }
 
   // check by item id in scan list with required quantity
@@ -149,7 +154,7 @@ class OrderProvider extends ChangeNotifier {
           final scanMessage =
               "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
           Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(scanMessage);
+              .setMessage(context, scanMessage);
           return false;
         }
       }
@@ -221,6 +226,25 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  void mapProductToRack() {
+    rackList.clear();
+    rackProductData.clear();
+    for (var element in _orderDetails?.productDetails ?? []) {
+      if (!rackList.contains(element.rackName)) {
+        rackList.add(element.rackName);
+      }
+      if (rackProductData.containsKey(element.rackName)) {
+        rackProductData[element.rackName]!.add(element);
+      } else {
+        rackProductData[element.rackName] = [element];
+      }
+    }
+
+    // sort
+    rackList.sort((a, b) => a.compareTo(b));
+    notifyListeners();
+  }
+
   Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
     try {
       // debugger();
@@ -231,6 +255,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         _orderDetails = OrderDetailModel.fromJson(response.data);
+        mapProductToRack();
 
         final notifications =
             Provider.of<HomeProvider>(context, listen: false).notifications;
