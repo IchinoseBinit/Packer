@@ -10,12 +10,14 @@ abstract class BaseScanScreen extends StatefulWidget {
   final String scanTitle;
   final bool showFlash;
   final bool showBackButton;
+  final FloatingActionButtonLocation floatingActionButtonLocation;
 
   const BaseScanScreen({
     super.key,
     required this.scanTitle,
     this.showFlash = true,
     this.showBackButton = true,
+    this.floatingActionButtonLocation = FloatingActionButtonLocation.centerFloat,
   });
 
   // also add onscreen created
@@ -80,7 +82,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
 
     return Scaffold(
       floatingActionButton: widget.buildFloatingButton(context, controller!),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: widget.floatingActionButtonLocation,
       body: Stack(
         children: [
           MobileScanner(

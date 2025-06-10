@@ -20,7 +20,7 @@ class UpdateRackScreen extends BaseScanScreen {
     super.key,
     this.productId,
   }) : super(
-          scanTitle: productId != null ? "Rack Scanner" : "Scanner",
+          scanTitle: productId != null ? "Rack Scanner" : "",
           showFlash: true,
           showBackButton: true,
         );

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -142,7 +143,7 @@ class OrderProvider extends ChangeNotifier {
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          showToast("QR: $code already scanned");
+          ErrorHandler.alertDialog(context, "QR: $code already scanned");
           return false;
         }
         updateProductList(code);
@@ -279,7 +280,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> productPost(int orderId) async {
+  Future<bool> productPost(BuildContext context, int orderId) async {
     List<Basket> baskets = basketDataList.map((identifier) {
       return Basket(
         identifier: identifier,
@@ -308,14 +309,14 @@ class OrderProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        showToast("Failed to post basket data");
+        ErrorHandler.alertDialog(context, "Failed to post basket data");
         log('Error posting basket data: ${response.statusCode}',
             name: "basket data response");
         return false;
       }
     } catch (e) {
       log('Error posting basket data: $e', name: "basket data response");
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       notifyListeners();
       return false;
     }
@@ -420,14 +421,14 @@ class OrderProvider extends ChangeNotifier {
   }
 
   // UPDATED and flow fixed
-  Future<bool> updateBucketData(String? data) async {
+  Future<bool> updateBucketData(BuildContext context, String? data) async {
     if (data != null) {
       log("Basket code scanned from order acknowledge $data");
 
       bucketData = data;
 
       if (basketDataList.contains(data)) {
-        showToast("Basket Already Scanned");
+        ErrorHandler.alertDialog(context, "Basket Already Scanned");
         return false;
       }
 

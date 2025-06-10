@@ -7,6 +7,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
@@ -159,11 +160,11 @@ class StockProvider extends ChangeNotifier {
         navigateReplacement(context, route: NavigationConstants.dashboardRoute);
         return true;
       } else {
-        showToast('Failed to update rack');
+        ErrorHandler.alertDialog(context, 'Failed to update rack');
         return false;
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
       return false;
     }
   }
@@ -196,7 +197,7 @@ class StockProvider extends ChangeNotifier {
         return true;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       return false;
     }
   }
@@ -225,15 +226,15 @@ class StockProvider extends ChangeNotifier {
             onProductDetailsTaped(context, matchedModel);
           }
         } else {
-          showToast("No Matching Product found");
+          ErrorHandler.alertDialog(context, "No Matching Product found");
           return false;
         }
       } else {
-        showToast("No Matching Carton found");
+        ErrorHandler.alertDialog(context, "No Matching Carton found");
         return false;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       removeLoading(context);
       return false;
     }
@@ -275,7 +276,7 @@ class StockProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       removeLoading(context);
     }
   }
@@ -326,16 +327,16 @@ class StockProvider extends ChangeNotifier {
   Future<bool> checkItemQr(BuildContext context, String code) async {
     try {
       if (scannedList.contains(code)) {
-        showToast("Tag Already scanned");
+        ErrorHandler.alertDialog(context, "Tag Already scanned");
 
         return false;
       }
       if (selectedProduct?.quantity == scannedList.length) {
-        showToast("Product already scanned");
+        ErrorHandler.alertDialog(context, "Product already scanned");
         return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        showToast("Invalid QR ${detectQrMessage(code)}");
+        ErrorHandler.alertDialog(context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
       scannedList.add(code);
@@ -363,7 +364,7 @@ class StockProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       return false;
     }
   }
@@ -397,11 +398,11 @@ class StockProvider extends ChangeNotifier {
         showToast("Scanned Successfully");
         return true;
       } else {
-        showToast("Failed to scan basket");
+        ErrorHandler.alertDialog(context, "Failed to scan basket");
         return false;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       scannedList.clear();
       return false;
     } finally {
@@ -429,7 +430,7 @@ class StockProvider extends ChangeNotifier {
       navigatePop(context);
       fetchLowStockProducts();
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
     }
   }
 
@@ -458,11 +459,11 @@ class StockProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         return true;
       } else {
-        showToast("Failed to scan basket");
+        ErrorHandler.alertDialog(context, "Failed to scan basket");
         return false;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       return false;
     } finally {
       removeLoading(context);
@@ -504,11 +505,11 @@ class StockProvider extends ChangeNotifier {
         // });
         return true;
       } else {
-        showToast("Invalid rack");
+        ErrorHandler.alertDialog(context, "Invalid rack");
         return false;
       }
     } else {
-      showToast("No data found");
+      ErrorHandler.alertDialog(context, "No data found");
       return false;
     }
   }

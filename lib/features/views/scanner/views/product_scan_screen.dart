@@ -31,6 +31,7 @@ class ProductScanScreen extends BaseScanScreen {
           scanTitle: 'Product Scanner',
           showFlash: true,
           showBackButton: true,
+          floatingActionButtonLocation: fromTransfer ? FloatingActionButtonLocation.endFloat : FloatingActionButtonLocation.centerFloat,
         );
 
   @override

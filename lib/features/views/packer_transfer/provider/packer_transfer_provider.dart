@@ -7,6 +7,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -105,10 +106,10 @@ class PackerTransferProvider extends ChangeNotifier {
         }
         notifyListeners();
       } else {
-        showToast('Failed to fetch transfer list');
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
     } finally {
       transferListLoading = false;
       notifyListeners();
@@ -119,7 +120,7 @@ class PackerTransferProvider extends ChangeNotifier {
     for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
       if (element.product == cartItemId) {
         if (element.itemScanCount == element.quantity) {
-          showToast("Item already scanned");
+          ErrorHandler.alertDialog(context, "Item already scanned");
           return false;
         }
 
@@ -138,20 +139,20 @@ class PackerTransferProvider extends ChangeNotifier {
         return false;
       }
     }
-    showToast("Item not found");
+    ErrorHandler.alertDialog(context, "Item not found");
     notifyListeners();
     return false;
   }
 
   // get tags completed or not (bool remaining)
-  List<String> getTagsRemaining(int productId, bool remaining) {
+  List<String> getTagsRemaining(BuildContext context, int productId, bool remaining) {
     final item = selectedTransferModel?.items?.firstWhere(
       (element) => element.product == productId,
       orElse: () => TransferItemModel(),
     );
 
     if (item == null || item.tags == null) {
-      showToast("Item not found");
+      // ErrorHandler.alertDialog(context, "Item not found");
       return [];
     }
 
@@ -171,11 +172,11 @@ class PackerTransferProvider extends ChangeNotifier {
       orElse: () => TransferItemModel(),
     );
     if (item == null) {
-      showToast("Item not found");
+      ErrorHandler.alertDialog(context, "Item not found");
       return;
     }
-    final remainingTags = getTagsRemaining(productId, true);
-    final completedTags = getTagsRemaining(productId, false);
+    final remainingTags = getTagsRemaining(context, productId, true);
+    final completedTags = getTagsRemaining(context, productId, false);
     // show modal bottom sheet
     showModalBottomSheet(
       context: context,
@@ -260,7 +261,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<bool> scanProduct(
       BuildContext context, int productId, String code) async {
     if (scanTagsList.contains(code)) {
-      showToast("Tag already scanned");
+      ErrorHandler.alertDialog(context, "Tag already scanned");
 
       return false;
     }
@@ -278,7 +279,7 @@ class PackerTransferProvider extends ChangeNotifier {
         Provider.of<ScanMessageProvider>(context, listen: false)
             .setMessage(context, scanMessage);
       } else {
-        showToast("Invalid QR ${detectQrMessage(code)}");
+        ErrorHandler.alertDialog(context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
     } else {
@@ -296,7 +297,7 @@ class PackerTransferProvider extends ChangeNotifier {
       } else {
         removeScanTags(productId);
         item?.itemScanCount = 0;
-        showToast("Failed to submit scan tag");
+        ErrorHandler.alertDialog(context, "Failed to submit scan tag");
         scanTagsList.clear();
         notifyListeners();
         return false;
@@ -332,7 +333,7 @@ class PackerTransferProvider extends ChangeNotifier {
               basket.identifier.toLowerCase().contains(code.toLowerCase()),
         );
         removeLoading(context);
-        fetchBasketDetails(selectedBasketModel?.identifier ?? "");
+        fetchBasketDetails(context, selectedBasketModel?.identifier ?? "");
         return true;
       }
     }
@@ -343,7 +344,7 @@ class PackerTransferProvider extends ChangeNotifier {
       scanTagsList.clear();
       notifyListeners();
       removeLoading(context);
-      fetchBasketDetails(code);
+      fetchBasketDetails(context, code);
       return true;
     }
     return false;
@@ -352,7 +353,7 @@ class PackerTransferProvider extends ChangeNotifier {
   // itemTaped
   Future<void> itemTaped(BuildContext context, TransferItemModel? item) async {
     if (item == null) {
-      showToast("Item not found");
+      ErrorHandler.alertDialog(context, "Item not found");
       return;
     }
     final scanMessage = getScanMessage(item.product ?? 0);
@@ -431,7 +432,7 @@ class PackerTransferProvider extends ChangeNotifier {
       final urlValue =
           url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
       if (scanTagsList.isEmpty) {
-        showToast('No tags to post');
+        ErrorHandler.alertDialog(context, 'No tags to post');
         removeLoading(context);
         return false;
       } else {
@@ -452,13 +453,13 @@ class PackerTransferProvider extends ChangeNotifier {
           removeLoading(context);
           return true;
         } else {
-          showToast('Failed to post tags');
+          ErrorHandler.alertDialog(context, 'Failed to post tags');
           removeLoading(context);
           return false;
         }
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
       removeLoading(context);
       return false;
     }
@@ -490,13 +491,17 @@ class PackerTransferProvider extends ChangeNotifier {
         updateRackOnModel(productId, code);
         // move navigation after loading is removed
 
+        // set message
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(context, getScanMessage(productId));
+
         return true;
       } else {
-        showToast('Failed to update rack');
+        ErrorHandler.alertDialog(context, 'Failed to update rack');
         return false;
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
       return false;
     }
   }
@@ -507,7 +512,7 @@ class PackerTransferProvider extends ChangeNotifier {
       showLoading(context);
       final id = selectedTransferModel?.id;
       if (id == null) {
-        showToast('Transfer ID is null');
+        ErrorHandler.alertDialog(context, 'Transfer ID is null');
         return;
       }
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
@@ -527,16 +532,16 @@ class PackerTransferProvider extends ChangeNotifier {
         );
         Navigator.pop(context);
       } else {
-        showToast('Failed to complete transfer');
+        ErrorHandler.alertDialog(context, 'Failed to complete transfer');
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
     } finally {
       removeLoading(context);
     }
   }
 
-  fetchBasketDetails(String code) async {
+  fetchBasketDetails(BuildContext context, String code) async {
     try {
       selectedTransferModelLoading = true;
       final url = AppUrls.basketUrl.replaceAll(':id', code);
@@ -552,10 +557,10 @@ class PackerTransferProvider extends ChangeNotifier {
           );
         }
       } else {
-        showToast('Failed to fetch basket details');
+        ErrorHandler.alertDialog(context, 'Failed to fetch basket details');
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
     } finally {
       selectedTransferModelLoading = false;
       notifyListeners();
@@ -579,10 +584,10 @@ class PackerTransferProvider extends ChangeNotifier {
         selectedTransferModel = TransferModel.fromMap(response.data);
         notifyListeners();
       } else {
-        showToast('Failed to fetch transfer details');
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
     } finally {
       selectedTransferModelLoading = false;
       notifyListeners();
