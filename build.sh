@@ -1,8 +1,8 @@
 echo "Building your app"
 
-flutter build apk --release --dart-define=APIType=production
+flutter build appbundle --release --dart-define=APIType=production
 
 mkdir -p ./gen/
 
-mv ./build/app/outputs/apk/release/app-release.apk ./gen/fasto-packer.apk
+mv ./build/app/outputs/bundle/release/app-release.aab ./gen/fasto-packer.aab
 

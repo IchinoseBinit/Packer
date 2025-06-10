@@ -10,6 +10,7 @@ import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
+import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
 import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -106,27 +107,19 @@ class AppRouter {
               //     );
               //   },
               // ),
-              // GoRoute(
-              //   path: NavigationConstants.productqrScreenRoute,
-              //   builder: (BuildContext context, GoRouterState state) {
-              //     final extra = state.extra as Map<String, dynamic>?;
+              GoRoute(
+                path: NavigationConstants.productqrScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>?;
 
-              //     // final bool cartItem = extra?['cartItem'] as bool;
-              //     final productId =
-              //         extra?['productId']; // Assuming it's int or string
+                  final productId =
+                      extra?['productId']; // Assuming it's int or string
 
-              //     // final index = state.extra as int? ?? 0;
-
-              //     return ProductScannerScreen(
-              //       productId: productId,
-              //       isfromCartItem: true,
-              //       // index: index,
-
-              //       // Ensure it's a list
-              //       // isfromCartItem: cartItem,
-              //     );
-              //   },
-              // ),
+                  return ProductScannerScreen(
+                    productId: productId,
+                  );
+                },
+              ),
               GoRoute(
                 path: NavigationConstants.photoSelectionRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -322,6 +315,12 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return UpdateRackScreen(productId: args['productId']);
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.productListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ProductListScreen();
                 },
               ),
             ]),

@@ -129,4 +129,9 @@ class AppUrls {
   static String getStockItemsUrl = "$_baseUrl/stores/products/?store_id=value";
   static String stockVerificationUrl = "$_baseUrl/stores/stock-verifications/";
 
+  // /product-availability-by-unit
+  static String productAvailabilityUrl = "$_baseUrl/product-availabilities/";
+  // product-unit-verification/
+  static String productUnitVerificationUrl = "$_baseUrl/product-unit-verification/";
+
 }

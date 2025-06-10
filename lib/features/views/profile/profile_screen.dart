@@ -24,7 +24,8 @@ class ProfileScreen extends StatelessWidget {
   void _prepareOtherInfoData(BuildContext context, HomeProvider value) {
     // Add transfer_list screen only for non-main stores, if not already added
     if (value.isMainStore() == false &&
-        !otherInfoData.any((e) => e['screen'] == NavigationConstants.transferListRoute)) {
+        !otherInfoData
+            .any((e) => e['screen'] == NavigationConstants.transferListRoute)) {
       otherInfoData.add({
         'icon': Icons.inventory,
         'title': 'Inventory Items',
@@ -49,13 +50,16 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.folder,
         'title': 'Rack Update',
         'screen': NavigationConstants.rackUpdateScreenRoute,
-        'function': () {
-          if (value.isMainStore()){
-            navigate(context, route: NavigationConstants.cartonScanScreenRoute);
-          }else{
-            navigate(context, route: NavigationConstants.scanRackRoute);
-          }
-        },
+      });
+    }
+    // productListScreenRoute
+    if (!value.isAuditUser() &&
+        !otherInfoData.any(
+            (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
+      otherInfoData.add({
+        'icon': Icons.list,
+        'title': 'Product List',
+        'screen': NavigationConstants.productListScreenRoute,
       });
     }
   }
@@ -113,7 +117,8 @@ class ProfileScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     return ListTile(
                       onTap: () {
-                        navigate(context, route: otherInfoData[index]['screen']);
+                        navigate(context,
+                            route: otherInfoData[index]['screen']);
                       },
                       titleTextStyle: TextStyle(
                         color: Colors.black,
@@ -143,13 +148,10 @@ class ProfileScreen extends StatelessWidget {
                                         listen: false)
                                     .resetUser();
                                 if (value is bool) {
-                                  navigateAndRemoveAll(
-                                      context,
-                                      route:
-                                          NavigationConstants.loginRoute);
+                                  navigateAndRemoveAll(context,
+                                      route: NavigationConstants.loginRoute);
                                 } else {
-                                  ErrorHandler()
-                                      .errorHandler(context, value);
+                                  ErrorHandler().errorHandler(context, value);
                                 }
                               },
                             );

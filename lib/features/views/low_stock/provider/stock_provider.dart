@@ -266,12 +266,7 @@ class StockProvider extends ChangeNotifier {
           if (matchedModel.products.isNotEmpty) {
             log("CartonfffffffffffInfo: $productId");
 
-            // navigate(context,
-            //     route: NavigationConstants.productqrScreenRoute,
-            //     extra: {
-            //       'cartItem': true,
-            //       'productId': productId.toInt(),
-            //     });
+            
           }
         }
       }
