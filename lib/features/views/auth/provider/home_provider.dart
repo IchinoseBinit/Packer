@@ -33,6 +33,19 @@ class HomeProvider with ChangeNotifier {
     _user = null;
   }
 
+  bool isAuditUser() {
+    return user.role == UserRole.audit;
+  }
+
+  bool isStoreManager() {
+    return user.role == UserRole.manager;
+  }
+
+  bool isMainStore() {
+    return packerSummary?.storeType.contains("main") ?? false;
+  }
+  
+
   bool isOnline = false;
   bool _isAvailable = false;
   bool isOrder = true;

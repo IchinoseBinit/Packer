@@ -45,6 +45,15 @@ class _OrderInfoCardState extends State<OrderInfoCard> {
                     style: Theme.of(context).textTheme.bodyMedium),
                 Text('Status: ${widget.data.data.status ?? ""}',
                     style: Theme.of(context).textTheme.bodyMedium),
+                Consumer<OrderProvider>(builder: (context, orderProvider, child) {
+                  if (orderProvider.bucketData.isNotEmpty) {
+                    return Text(
+                      'Basket: ${orderProvider.bucketData}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
                 // Text(
                 //   'Created: ${data.createdTimestamp != null ? DateFormatter().formatTimestamp(data.createdTimestamp!) : 'N/A'}',
                 //   style: Theme.of(context).textTheme.bodyMedium,

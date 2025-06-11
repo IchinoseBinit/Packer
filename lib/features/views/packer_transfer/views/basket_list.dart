@@ -77,11 +77,8 @@ class BasketList extends StatelessWidget {
             marginH: 16.w,
             title: "Scan Basket",
             onPressed: () {
-              navigate(
-                context,
-                route: NavigationConstants.qrScanScreenRoute,
-                extra: {"forBasket": true, "forTranfer": true},
-              );
+              Provider.of<PackerTransferProvider>(context, listen: false)
+                  .onBasketScanTapped(context, null);
             }),
       ),
     );

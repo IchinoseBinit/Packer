@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -19,51 +18,65 @@ class CartItemsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<OrderProvider>(
       builder: (context, state, child) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("Items Ordered:"),
-            ),
-            ListView.separated(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: cartItems.length,
-              itemBuilder: (context, cartIndex) {
-                final cartItem = cartItems[cartIndex];
-                return InkWell(
-                  highlightColor: Colors.transparent,
-                  onTap: () {
-                    // debugger();
+        return ListView.separated(
+          shrinkWrap: true, // ✅ FIX: Outer ListView needs shrinkWrap
+          itemCount: state.rackList.length,
+          itemBuilder: (context, index) {
+            final rack = state.rackList[index];
 
-                    log("Navigating to QR Scan Screen for ${cartItem.productName} and item id: ${cartItem.id}");
-                    if (state.checkItem(cartItem.id)) {
-                      return;
-                    }
-                    log(cartItem.id.toString());
-
-                    navigate(context,
-                        route: NavigationConstants.productqrScreenRoute,
-                        extra: {
-                          'cartItem': true,
-                          'productId': cartItem.id,
-                          // 'index': cartIndex,
-                        });
-                  },
-                  child: ItemWidget(
-                    productItems: cartItem,
-                    status: state.checkItem(cartItem.id)
-                        ? ItemStatus.done
-                        : ItemStatus.remaining,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "Rack Name: ",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      TextSpan(
+                        text: rack,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 16.sp),
+                      ),
+                    ],
                   ),
-                );
-              },
-              separatorBuilder: (context, index) {
-                return const SizedBox(height: 12);
-              },
-            ),
-          ],
+                ),
+                SizedBox(height: 8.h),
+                if (state.rackProductData[rack] != null)
+                  ListView.separated(
+                    shrinkWrap: true, // ✅ FIX: Inner ListView needs shrinkWrap
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.rackProductData[rack]!.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final product = state.rackProductData[rack]![index];
+                      final isDone = state.checkItem(product.id);
+
+                      return InkWell(
+                        highlightColor: Colors.transparent,
+                        onTap: () {
+                          log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
+                          if (isDone) return;
+
+                          navigate(
+                            context,
+                            route: NavigationConstants.cartItemScanScreenRoute,
+                            extra: {
+                              'productId': product.id,
+                            },
+                          );
+                        },
+                        child: ItemWidget(
+                          productItems: product,
+                          status: isDone ? ItemStatus.done : ItemStatus.remaining,
+                        ),
+                      );
+                    },
+                  )
+              ],
+            );
+          },
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
         );
       },
     );
@@ -74,59 +87,35 @@ class ItemWidget extends StatefulWidget {
   const ItemWidget({
     super.key,
     required this.productItems,
-    required this.status, // Add a status parameter
+    required this.status,
   });
 
   final ProductDetails productItems;
   final ItemStatus status;
+
   @override
   State<ItemWidget> createState() => _ItemWidgetState();
 }
 
 class _ItemWidgetState extends State<ItemWidget> {
-  // Enum to define the status
-  @override
-  void initState() {
-    super.initState();
-
-    // final provider =Provider.of<OrderProvider>(context, listen: false);
-    // final cartItemId= provider.orderPickedDetails!.cartItems[0].id;
-    // provider.scanCountOrder(cartItemId);
-  }
-
   @override
   Widget build(BuildContext context) {
-    // final quantity =
-    // Provider.of<OrderProvider>(context, listen: false).remainingquantity;
-    // Determine the colors based on the status
-    final backgroundColor = widget.status == ItemStatus.done
-        ? AppColors.green700 // Green border for "Done"
-        : Colors.transparent; // Light blue background for "Remaining"
-
-    final borderColor = widget.status == ItemStatus.done
-        ? AppColors.green700 // Green border for "Done"
-        : Color(0xffEAEAEA); // Blue border for "Remaining"
-
-    final text1Color = widget.status == ItemStatus.done
-        ? AppColors.backgroundColor // Green text for "Done"
-        : Colors.black; // Blue text for "Remaining"
-
-    final text2Color = widget.status == ItemStatus.done
-        ? AppColors.backgroundColor // Green text for "Done"
-        : const Color(0xFF7D7C7C); // Blue text for "Remaining"
-
-    final dividerColor = widget.status == ItemStatus.done
-        ? AppColors.backgroundColor // Green divider for "Done"
-        : Colors.black; // Light blue divider for "Remaining"
+    final backgroundColor =
+        widget.status == ItemStatus.done ? AppColors.green700 : Colors.transparent;
+    final borderColor =
+        widget.status == ItemStatus.done ? AppColors.green700 : const Color(0xffEAEAEA);
+    final text1Color =
+        widget.status == ItemStatus.done ? AppColors.backgroundColor : Colors.black;
+    final text2Color =
+        widget.status == ItemStatus.done ? AppColors.backgroundColor : const Color(0xFF7D7C7C);
+    final dividerColor =
+        widget.status == ItemStatus.done ? AppColors.backgroundColor : Colors.black;
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: backgroundColor, // Set background color based on status
-        border: Border.all(
-          width: 1.5,
-          color: borderColor, // Set border color based on status
-        ),
+        color: backgroundColor,
+        border: Border.all(width: 1.5, color: borderColor),
       ),
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -155,38 +144,37 @@ class _ItemWidgetState extends State<ItemWidget> {
               ),
               SizedBox(width: 8.w),
               Column(
-                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: .3.sw,
+                    width: 0.3.sw,
                     child: Text(
                       widget.productItems.productName,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: text1Color, // Set text color based on status
+                            color: text1Color,
                           ),
-                      textAlign: TextAlign.start,
                     ),
                   ),
                   Text(
                     "${widget.productItems.size} ${widget.productItems.measurement}",
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: text2Color, // Set text color based on status
+                          color: text2Color,
                         ),
                   ),
-                  SizedBox(
-                    width: .3.sw,
-                    child: Text(
-                      widget.productItems.rackName,
-                      maxLines: 3,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: text1Color,
-                            fontWeight:
-                                FontWeight.bold, // Bold text for rack name
-                          ),
-                    ),
-                  )
+                  if (widget.productItems.rackName.isNotEmpty)
+                    SizedBox(
+                      width: 0.3.sw,
+                      child: Text(
+                        widget.productItems.rackName,
+                        maxLines: 3,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: text1Color,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    )
                 ],
               ),
               const Spacer(),
@@ -195,22 +183,9 @@ class _ItemWidgetState extends State<ItemWidget> {
                 children: [
                   Text(
                     "Qty: ${widget.productItems.quantity}",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: text1Color, // Set text color based on status
-                    ),
+                    style: TextStyle(fontSize: 16.sp, color: text1Color),
                   ),
-                  SizedBox(
-                    height: 4.h,
-                  ),
-                  // Text(
-                  //   widget.productItems.rackName,
-                  //   style: TextStyle(
-                  //     fontSize: 12.sp,
-                  //     fontWeight: FontWeight.bold,
-                  //     color: text1Color, // Set text color based on status
-                  //   ),
-                  // ),
+                  SizedBox(height: 4.h),
                 ],
               ),
               if (widget.status == ItemStatus.remaining) ...[
@@ -218,14 +193,11 @@ class _ItemWidgetState extends State<ItemWidget> {
                   margin: EdgeInsets.symmetric(horizontal: 8.w),
                   height: 42.h,
                   width: 2.w,
-                  color: dividerColor, // Set divider color based on status
+                  color: dividerColor,
                 ),
                 Text(
                   "Remaining: ${widget.productItems.quantity! - widget.productItems.itemScanCount}",
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: text1Color, // Set text color based on status
-                  ),
+                  style: TextStyle(fontSize: 10.sp, color: text1Color),
                 ),
               ],
             ],
@@ -236,7 +208,6 @@ class _ItemWidgetState extends State<ItemWidget> {
   }
 }
 
-// Define an enum for the status
 enum ItemStatus {
   done,
   remaining,

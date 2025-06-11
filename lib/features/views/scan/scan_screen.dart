@@ -19,6 +19,8 @@ import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
+
+@Deprecated("Use other screens")
 class ScanScreen extends StatefulWidget {
   const ScanScreen({
     super.key,
@@ -65,8 +67,8 @@ class _ScanScreenState extends State<ScanScreen> {
     controller = MobileScannerController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.isfromCartItem) {
-        Provider.of<OrderProvider>(context, listen: false)
-            .initScanMessage(widget.productId ?? 0);
+        // Provider.of<OrderProvider>(context, listen: false)
+        //     .initScanMessage(widget.productId ?? 0);
       }
     });
     Provider.of<PackerTransferProvider>(context, listen: false).resetHasScanned();
@@ -108,15 +110,15 @@ class _ScanScreenState extends State<ScanScreen> {
       if (code.isNotEmpty) {
         Future<void> val;
         if (widget.isFromPackerTransfer) {
-          val = Provider.of<PackerTransferProvider>(context, listen: false)
-              .checkBasketQr(context, controller, code, true);
+          // val = Provider.of<PackerTransferProvider>(context, listen: false)
+          //     .checkBasketQr(context, controller, code, true);
         } else {
-          val = Provider.of<PackerTransferProvider>(context, listen: false)
-              .checkBasketQr(context, controller, code, false);
+          // val = Provider.of<PackerTransferProvider>(context, listen: false)
+          //     .checkBasketQr(context, controller, code, false);
         }
-        if (val == false) {
-          controller?.start();
-        }
+        // if (val == false) {
+        //   controller?.start();
+        // }
       }
       hasScanned = false;
 
@@ -272,29 +274,29 @@ class _ScanScreenState extends State<ScanScreen> {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {
-              if (widget.isfromCartItem) {
-                Provider.of<OrderProvider>(context, listen: false).checkItemQr(
-                  context,
-                  controller,
-                  barcodes.barcodes.first.rawValue.toString(),
-                );
-                return;
-              }
-              if (widget.isFromPackerTransfer && widget.forBasket == false) {
-                Provider.of<PackerTransferProvider>(context, listen: false)
-                    .checkItemQr(
-                        context,
-                        controller,
-                        barcodes.barcodes.first.rawValue.toString(),
-                        widget.productId ?? 0);
-                return;
-              }
-              if (widget.checkIdentifier) {
-                Provider.of<PackerTransferProvider>(context, listen: false)
-                    .checkIdentifier(context, controller,
-                        barcodes.barcodes.first.rawValue.toString());
-                return;
-              }
+              // if (widget.isfromCartItem) {
+              //   Provider.of<OrderProvider>(context, listen: false).checkItemQr(
+              //     context,
+              //     controller,
+              //     barcodes.barcodes.first.rawValue.toString(),
+              //   );
+              //   return;
+              // }
+              // if (widget.isFromPackerTransfer && widget.forBasket == false) {
+              //   Provider.of<PackerTransferProvider>(context, listen: false)
+              //       .checkItemQr(
+              //           context,
+              //           controller,
+              //           barcodes.barcodes.first.rawValue.toString(),
+              //           widget.productId ?? 0);
+              //   return;
+              // }
+              // if (widget.checkIdentifier) {
+                // Provider.of<PackerTransferProvider>(context, listen: false)
+                //     .checkIdentifier(context, controller,
+                //         barcodes.barcodes.first.rawValue.toString());
+                // return;
+              // }
               // if (widget.forBasket) {
               //   Provider.of<PackerTransferProvider>(context, listen: false)
               //       .checkBasketQr(context, controller,
@@ -353,37 +355,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
                 )),
           ),
-          // TODO: i want this in center of width
-          Consumer<OrderProvider>(
-            builder: (context, provider, child) {
-              return Visibility(
-                visible: widget.isfromCartItem && provider.scanMessage != null,
-                child: Positioned(
-                  top: 32.h * 6,
-                  left: 4.w * 3,
-                  right: 4.w * 3,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      provider.scanMessage ?? "",
-                      style: TextStyle(
-                        color: AppColors.backgroundColor,
-                        fontSize: 16.sp,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          
           Visibility(
             visible: widget.checkIdentifier,
             child: Positioned(

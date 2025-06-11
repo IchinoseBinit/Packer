@@ -116,17 +116,10 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                 GeneralElevatedButton(
                   title: 'Scan Carton',
                   onPressed: () {
-                    navigate(context,
-                        route: NavigationConstants.qrScanScreenRoute,
-                        extra: {
-                          'scanCarton': true,
-                        }).then((value) {
-                      log('Scan Carton Value: $value');
-                      if (value != null) {
-                        Provider.of<StockProvider>(context, listen: false)
-                            .onScanCarton(context, value);
-                      }
-                    });
+                    navigate(
+                      context,
+                      route: NavigationConstants.cartonScanScreenRoute,
+                    );
                   },
                 ),
                 SizedBox(height: 20.h),

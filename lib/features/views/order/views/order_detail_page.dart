@@ -36,6 +36,44 @@ class _OrderDetailsState extends State<OrderDetails> {
     }
   }
 
+  // ask on Pop 'do you want to exit packing this order?'
+  void askOnPop(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              'Do you want to exit packing this order?',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () {
+                  // reset order provider
+                  Provider.of<OrderProvider>(context, listen: false)
+                      .resetState();
+                  Navigator.of(context).pop();
+                  navigatePop(context);
+                },
+                child: const Text('Yes'),
+              ),
+            ],
+          );
+        });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +81,7 @@ class _OrderDetailsState extends State<OrderDetails> {
       canPop: false,
       onPopInvokedWithResult: (did, result) async {
         if (did) return;
-        // Provider.of<OrderProvider>(context, listen: false).initState(0);
-        navigatePop(context);
+        askOnPop(context);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -52,8 +89,7 @@ class _OrderDetailsState extends State<OrderDetails> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              // Provider.of<OrderProvider>(context, listen: false).initState(0);
-              navigatePop(context);
+              askOnPop(context);
             },
           ),
           actions: [
@@ -87,8 +123,10 @@ class _OrderDetailsState extends State<OrderDetails> {
                                 Navigator.of(context).pop();
                                 navigate(context,
                                     route:
-                                        NavigationConstants.bucketqrScreenRoute,
-                                    extra: widget.orderId);
+                                        NavigationConstants.basketScanScreenRoute,
+                                    extra: {
+                                      'forOrder': true,
+                                    });
                               },
                               child: const Text('Yes'),
                             ),
