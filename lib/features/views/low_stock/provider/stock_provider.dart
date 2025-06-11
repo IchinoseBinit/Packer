@@ -13,7 +13,6 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/demo.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
