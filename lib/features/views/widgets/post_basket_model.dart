@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Basket {
   final String identifier;
   final List<String> productIdentifiers;
@@ -15,13 +17,16 @@ class Basket {
 class PostBasketRequest {
   final int orderId;
   final List<Basket> data;
+  final String otp;
 
-  PostBasketRequest({required this.orderId, required this.data});
+  PostBasketRequest(
+      {required this.otp, required this.orderId, required this.data});
 
   Map<String, dynamic> toJson() {
     return {
       'order_id': orderId,
       'basket_data': data.map((basket) => basket.toJson()).toList(),
+      'otp': otp
     };
   }
 }

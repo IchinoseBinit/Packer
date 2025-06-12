@@ -280,7 +280,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> productPost(BuildContext context, int orderId) async {
+  Future<bool> productPost(BuildContext context, int orderId , String otp) async {
     List<Basket> baskets = basketDataList.map((identifier) {
       return Basket(
         identifier: identifier,
@@ -292,6 +292,7 @@ class OrderProvider extends ChangeNotifier {
     PostBasketRequest postBasketRequest = PostBasketRequest(
       orderId: orderId,
       data: baskets,
+      otp: otp,
     );
 
     try {

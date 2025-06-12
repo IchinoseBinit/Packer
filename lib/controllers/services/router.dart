@@ -9,6 +9,8 @@ import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
+import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
@@ -130,6 +132,20 @@ class AppRouter {
                 path: NavigationConstants.drivingLicenseScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const DrivingLicenseSelection();
+                },
+              ),
+
+              GoRoute(
+                path: NavigationConstants.otpScreen,
+                builder: (BuildContext context, GoRouterState state) {
+                  final order = state.extra as OrderDetailModel;
+
+                  // final map = state.extra as Map<String, dynamic>;
+                  // final order = map['order'] as OrderDetailModel;
+
+                  return OtpVerificationScreen(
+                    order: order,
+                  );
                 },
               ),
               GoRoute(
@@ -256,7 +272,8 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.stockVerificationRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return StockVerificationScreen(storeId: state.extra as String);
+                  return StockVerificationScreen(
+                      storeId: state.extra as String);
                 },
               ),
               GoRoute(
@@ -299,7 +316,8 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return ProductScanScreen(
                     productId: args['productId'] ?? 0,
-                    fromStockVerification: args['fromStockVerification'] ?? false,
+                    fromStockVerification:
+                        args['fromStockVerification'] ?? false,
                     fromTransfer: args['forTransfer'] ?? false,
                   );
                 },
