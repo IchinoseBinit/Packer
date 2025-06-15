@@ -1,3 +1,5 @@
+import 'package:packer/controllers/extensions/string_extension.dart';
+
 class CartonListModel {
   final int id;
   final String uniqueIdentifier;
@@ -13,9 +15,10 @@ class CartonListModel {
 
   factory CartonListModel.fromJson(Map<String, dynamic> json) {
     return CartonListModel(
-      id: json['id'],
-      uniqueIdentifier: json['unique_identifier'],
-      status: json['status'],
+      id: json['id'].toString().toInt(),
+      uniqueIdentifier:
+          json['unique_identifier'].toString().toStringConversion(),
+      status: json['status'].toString().toStringConversion(),
       createdAt: DateTime.parse(json['created_at']),
     );
   }

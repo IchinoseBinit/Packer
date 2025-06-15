@@ -103,9 +103,7 @@ class RackScanScreen extends BaseScanScreen {
           navigateReplacement(
             context,
             route: NavigationConstants.cartonListScreenRoute,
-            extra: {
-              productId,
-            },
+            extra: productId,
           );
         }
 

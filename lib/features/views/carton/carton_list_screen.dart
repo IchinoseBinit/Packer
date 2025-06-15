@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
@@ -10,6 +13,7 @@ class CartonListScreen extends StatelessWidget {
   const CartonListScreen({super.key, required this.productId});
 
   void initState(BuildContext context) {
+    debugger();
     Provider.of<StockProvider>(context, listen: false)
         .fetchCartonList(context, productId);
   }
@@ -32,7 +36,10 @@ class CartonListScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return ListView.builder(
+          return ListView.separated(
+            separatorBuilder: (context, index) => SizedBox(
+              height: 8.h,
+            ),
             itemCount: value.cartonList.length,
             itemBuilder: (context, index) {
               final carton = value.cartonList[index];
@@ -41,11 +48,17 @@ class CartonListScreen extends StatelessWidget {
                   navigate(context,
                       route: NavigationConstants.cartonScanScreenRoute);
                 },
-                // child:
-                // ListTile(
-                //   title: Text(carton.),
-                //   subtitle: Text('ID: ${carton.}'),
-                // ),
+                child: ListTile(
+                  title: Text(carton.uniqueIdentifier),
+                  subtitle: Text('ID: ${carton.id}'),
+                  trailing: Text(
+                    carton.status,
+                    style: TextStyle(
+                      color:
+                          carton.status == 'active' ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ),
               );
             },
           );
