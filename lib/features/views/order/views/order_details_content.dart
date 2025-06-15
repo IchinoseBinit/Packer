@@ -59,11 +59,31 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   ),
                   child: GeneralElevatedButton(
                     onPressed: () async {
-                      navigate(context,
-                          route: NavigationConstants.otpScreen,
-                          extra: {'order': widget.order});
-                      
+                      showLoading(context);
+
+                      final parsedOrderId =
+                          int.tryParse(widget.order.data.id.toString()) ?? 0;
+
+                      final success = await Provider.of<OrderProvider>(
+                        context,
+                        listen: false,
+                      ).productPost(context, parsedOrderId);
+
+                      if (!mounted) return;
+
+                      removeLoading(context);
+
+                      if (success) {
+                        Provider.of<HomeProvider>(context, listen: false)
+                            .fetchLatestOrders();
+
+                        navigateAndRemoveAll(
+                          context,
+                          route: NavigationConstants.dashboardRoute,
+                        );
+                      }
                     },
+
                     // },
                     title: 'Bill this order',
                   ),

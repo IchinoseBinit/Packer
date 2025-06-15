@@ -6,6 +6,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/model/store_model.dart';
@@ -60,6 +61,10 @@ class StockVerificationProvider extends ChangeNotifier {
       );
       storeList =
           (response.data as List).map((e) => Store.fromJson(e)).toList();
+      if (storeList.isNotEmpty) {
+      } else {
+        selectedStore = null;
+      }
 
       notifyListeners();
     } catch (e) {
@@ -95,6 +100,7 @@ class StockVerificationProvider extends ChangeNotifier {
 
   Future<void> onItemTap(BuildContext context, StockItemModel item) async {
     selectedStockItem = item;
+
     scannedUnits.clear();
     if (selectedStockItem != null) {
       if (selectedStockItem!.rackName.isNotEmpty) {
@@ -121,12 +127,14 @@ class StockVerificationProvider extends ChangeNotifier {
       } else {
         // scan product
         final result = await navigate(context,
-            route: NavigationConstants.productScanScreenRoute,
+            route: NavigationConstants.scanRackRoute,
             extra: {
               "productId": selectedStockItem!.productId,
-              "fromStockVerification": true,
             });
         if (result ?? false) {
+          // navigate(context, route: NavigationConstants.cartonListScreenRoute, extra: {
+          //   'product'
+          // })
           // sacn product
         }
       }

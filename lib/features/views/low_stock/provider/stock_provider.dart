@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -34,6 +36,7 @@ class StockProvider extends ChangeNotifier {
   List<String> scannedList = [];
   List<int> completeProductId = [];
   ProductModel? selectedProduct;
+  List<CartonListModel> cartonList = [];
 
   bool hasScanned = false;
 
@@ -217,7 +220,7 @@ class StockProvider extends ChangeNotifier {
                 disableBackground: false,
                 body: Text("Already Scanned"),
                 okFunc: () {
-                 navigatePop(context);
+                  navigatePop(context);
                 },
               ).showAlertDialog(context);
               return false;
@@ -264,14 +267,41 @@ class StockProvider extends ChangeNotifier {
           );
           if (matchedModel.products.isNotEmpty) {
             log("CartonfffffffffffInfo: $productId");
-
-            
           }
         }
       }
     } catch (e) {
       ErrorHandler.alertDialog(context, e.toString());
       removeLoading(context);
+    }
+  }
+
+  Future<void> fetchCartonList(BuildContext context, int productId) async {
+    debugger();
+    try {
+      final url = AppUrls.cartonListUrl
+          .replaceFirst('product_id', productId.toString());
+      log("Product ID: $productId");
+      log("Generated URL: $url");
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+
+      log("Response data: ${response.data}");
+
+      if (response.statusCode == 200) {
+        cartonList = (response.data as List)
+            .map((item) => CartonListModel.fromJson(item))
+            .toList();
+        log("Carton List: ${cartonList.length}");
+      } else {
+        return;
+      }
+    } catch (e) {
+      log('Error fetching carton list: $e');
+      rethrow;
     }
   }
 
@@ -330,7 +360,8 @@ class StockProvider extends ChangeNotifier {
         return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        ErrorHandler.alertDialog(context, "Invalid QR ${detectQrMessage(code)}");
+        ErrorHandler.alertDialog(
+            context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
       scannedList.add(code);

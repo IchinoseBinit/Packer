@@ -22,6 +22,7 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
     super.initState();
     Provider.of<StockVerificationProvider>(context, listen: false)
         .fetchStockItems(widget.storeId);
+        
   }
 
   @override
