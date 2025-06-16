@@ -27,6 +27,13 @@ class CommonProductModel {
     rackName = productAvailability.rackName;
     image = productAvailability.image;
     productUnits = productAvailability.productUnits;
+    id = productAvailability.productId;
+    quantity = 0;
+    size = "";
+    measurement = "";
+    scannedCount = 0;
+    productCompartment = "";
+    plannedQuantity = 0;
   }
 
   CommonProductModel.fromProductModel(ProductModel productModel) {
@@ -39,6 +46,8 @@ class CommonProductModel {
     size = productModel.size;
     measurement = productModel.measurement;
     scannedCount = productModel.scannedCount;
+    productCompartment = "";
+    plannedQuantity = 0;
   }
 
   CommonProductModel.fromProductDetails(ProductDetails productDetails) {
@@ -51,6 +60,7 @@ class CommonProductModel {
     measurement = productDetails.measurement;
     scannedCount = productDetails.itemScanCount;
     productCompartment = productDetails.productCompartment;
+    plannedQuantity = 0;
   }
 
   // TransferItemModel transferItemModel;
@@ -86,6 +96,8 @@ class CommonProductModel {
     measurement = stockItemModel.measurement;
     plannedQuantity = stockItemModel.plannedQuantity;
     productUnits = stockItemModel.productUnits;
+    scannedCount = 0;
+    productCompartment = "";
   }
     
     

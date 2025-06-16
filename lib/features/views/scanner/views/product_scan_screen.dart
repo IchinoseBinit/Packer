@@ -128,18 +128,19 @@ class ProductScanScreen extends BaseScanScreen {
       // split code to get product id
       final list = code.split('-');
       final prodId = int.tryParse(list.first) ?? 0;
-      if (cartonId != null) {
-        final splittedCartonId = int.tryParse(list[2]) ?? 0;
-        if (splittedCartonId != cartonId) {
-          handleInvalidCode(context, controller, code);
-          return;
-        }
-      } else if (prodId != productId) {
+      if (prodId != productId) {
         handleInvalidCode(context, controller, code);
         return;
       }
 
       if (fromStockVerification) {
+        if (cartonId != null) {
+          final splittedCartonId = int.tryParse(list[2]) ?? 0;
+          if (splittedCartonId != cartonId) {
+            handleInvalidCode(context, controller, code);
+            return;
+          }
+        }
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
 

@@ -88,6 +88,7 @@ class CartonListScreen extends StatelessWidget {
                             route: NavigationConstants.cartonScanScreenRoute,
                             extra: {
                               'cartonId': carton.id,
+                              'fromVerification': true,
                             });
                       },
                       child: Card(

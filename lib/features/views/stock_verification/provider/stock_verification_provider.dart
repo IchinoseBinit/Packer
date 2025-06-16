@@ -178,6 +178,24 @@ class StockVerificationProvider extends ChangeNotifier {
     }
   }
 
+  // onScanCarton
+  bool onScanCarton(BuildContext context, String code) {
+    if (selectedCarton != null) {
+      if (selectedCarton!.uniqueIdentifier.toLowerCase().contains(code.toLowerCase())) {
+        navigateReplacement(context, route: NavigationConstants.productScanScreenRoute, extra: {
+          "productId": selectedStockItem!.productId,
+          "productUnits": selectedStockItem!.productUnits,
+          "fromStockVerification": true,
+          'cartonId': selectedCarton!.id,
+        });
+        return true;
+      }
+    }
+    
+    return false;
+  }
+      
+
   // onScanProduct
   bool onScanProduct(BuildContext context, int productId, String code,
       {bool fromStockVerification = false}) {

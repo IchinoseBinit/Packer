@@ -109,24 +109,24 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
                         if (provider.rackProductMap[rackName] != null)
                           IntrinsicGridView.vertical(
                             columnCount: 2,
-                            verticalSpace: 12.w,
-                            horizontalSpace: 12.w,
+                            verticalSpace: 6.w,
+                            horizontalSpace: 6.w,
                             children: List.generate(
                               provider.rackProductMap[rackName]!.length,
                               (index) {
                                 final item =
                                     provider.rackProductMap[rackName]![index];
-                                return InkWell(
+                                    final width = (1.sw - 12.w- 32.w) /2;
+                                return ProductCard(
+                                  productModel: CommonProductModel.fromStockItemModel(item),
+                                  status: ItemStatus.remaining,
+                                  width: width,
                                   onTap: () {
-                                    Provider.of<StockVerificationProvider>(
+                                     Provider.of<StockVerificationProvider>(
                                             context,
                                             listen: false)
                                         .onItemTap(context, item);
                                   },
-                                  child: ProductCard(
-                                    productModel: CommonProductModel.fromStockItemModel(item),
-                                    status: ItemStatus.remaining,
-                                  ),
                                 );
                               },
                             ),

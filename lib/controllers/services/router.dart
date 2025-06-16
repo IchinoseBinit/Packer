@@ -334,7 +334,7 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
 
-                  return CartonScanScreen(cartonId: args['cartonId'] as int);
+                  return CartonScanScreen(cartonId: args['cartonId'] as int, fromVerification: args['fromVerification'] ?? false);
                 },
               ),
               GoRoute(

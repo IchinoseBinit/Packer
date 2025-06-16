@@ -7,6 +7,7 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -15,7 +16,8 @@ import 'base_scan_screen.dart';
 
 class CartonScanScreen extends BaseScanScreen {
   final int cartonId;
-  CartonScanScreen({super.key, required this.cartonId})
+  final bool fromVerification;
+  CartonScanScreen({super.key, required this.cartonId, this.fromVerification = false})
       : super(
           scanTitle: 'Carton Scanner',
           showFlash: true,
@@ -57,8 +59,15 @@ class CartonScanScreen extends BaseScanScreen {
       }
 
 
-      final result = await Provider.of<StockProvider>(context, listen: false)
+      bool result = false;
+      
+      if (!fromVerification && context.mounted) {
+        result = await Provider.of<StockProvider>(context, listen: false)
           .onScanCarton(context, code, cartonId: cartonId);
+      } else if (fromVerification && context.mounted) {
+        result = Provider.of<StockVerificationProvider>(context, listen: false)
+          .onScanCarton(context, code);
+      }
 
       if (!result && context.mounted) {
         handleInvalidCode(context, controller, code);
