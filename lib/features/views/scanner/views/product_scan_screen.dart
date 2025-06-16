@@ -195,6 +195,7 @@ class ProductScanScreen extends BaseScanScreen {
       okTitle: 'Scan the carton',
       okFunc: () {
         Navigator.pop(context);
+        controller.start();
         Provider.of<StockVerificationProvider>(context, listen: false)
             .getCartonInfo(context, cartonId, tag);
       },

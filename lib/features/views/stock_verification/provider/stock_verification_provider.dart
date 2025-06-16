@@ -190,15 +190,12 @@ class StockVerificationProvider extends ChangeNotifier {
           "store_id": selectedStore?.id,
         },
       );
-      if (context.mounted) {
-        if (response.statusCode == 200) {
-          getMessage(context, selectedStockItem!.productId);
-          return true;
-        } else {
-          return false;
-        }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        getMessage(context, selectedStockItem!.productId);
+        return true;
+      } else {
+        return false;
       }
-      return false;
     } catch (e) {
       rethrow;
     }
