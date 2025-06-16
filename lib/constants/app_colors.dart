@@ -8,6 +8,8 @@ class AppColors {
 
   static const Color splashBackgroundColor = Color(0xff630897);
   static const Color splashNewBackgroundColor = Color(0xffF01045);
+  static const homeScreenTopBgColor = Color(0xffFFD2D1);
+
 
   // blue500
 

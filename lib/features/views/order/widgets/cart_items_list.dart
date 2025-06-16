@@ -1,12 +1,15 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/product/model/common_product_model.dart';
+import 'package:packer/features/views/product/product_card.dart';
 import 'package:provider/provider.dart';
 
 class CartItemsList extends StatelessWidget {
@@ -36,24 +39,28 @@ class CartItemsList extends StatelessWidget {
                       ),
                       TextSpan(
                         text: rack,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 16.sp),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontSize: 16.sp),
                       ),
                     ],
                   ),
                 ),
                 SizedBox(height: 8.h),
                 if (state.rackProductData[rack] != null)
-                  ListView.separated(
-                    shrinkWrap: true, // ✅ FIX: Inner ListView needs shrinkWrap
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: state.rackProductData[rack]!.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 8),
-                    itemBuilder: (context, index) {
-                      final product = state.rackProductData[rack]![index];
+                  IntrinsicGridView.vertical(
+                    columnCount: 2,
+                    verticalSpace: 12.w,
+                    horizontalSpace: 12.w,
+                    children: List.generate(
+                      state.rackProductData[rack]!.length, (index) {
+                        final product = state.rackProductData[rack]![index];
                       final isDone = state.checkItem(product.id);
+                      final width = (1.sw - 12.w -32.w) /2;
 
-                      return InkWell(
-                        highlightColor: Colors.transparent,
+                      return ProductCard(
+                        width: width,
                         onTap: () {
                           log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
                           if (isDone) return;
@@ -66,12 +73,11 @@ class CartItemsList extends StatelessWidget {
                             },
                           );
                         },
-                        child: ItemWidget(
-                          productItems: product,
-                          status: isDone ? ItemStatus.done : ItemStatus.remaining,
-                        ),
+                        productModel:
+                            CommonProductModel.fromProductDetails(product),
+                        status: isDone ? ItemStatus.done : ItemStatus.remaining,
                       );
-                    },
+                      },),
                   )
               ],
             );
@@ -100,16 +106,21 @@ class ItemWidget extends StatefulWidget {
 class _ItemWidgetState extends State<ItemWidget> {
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        widget.status == ItemStatus.done ? AppColors.green700 : Colors.transparent;
-    final borderColor =
-        widget.status == ItemStatus.done ? AppColors.green700 : const Color(0xffEAEAEA);
-    final text1Color =
-        widget.status == ItemStatus.done ? AppColors.backgroundColor : Colors.black;
-    final text2Color =
-        widget.status == ItemStatus.done ? AppColors.backgroundColor : const Color(0xFF7D7C7C);
-    final dividerColor =
-        widget.status == ItemStatus.done ? AppColors.backgroundColor : Colors.black;
+    final backgroundColor = widget.status == ItemStatus.done
+        ? AppColors.green700
+        : Colors.transparent;
+    final borderColor = widget.status == ItemStatus.done
+        ? AppColors.green700
+        : const Color(0xffEAEAEA);
+    final text1Color = widget.status == ItemStatus.done
+        ? AppColors.backgroundColor
+        : Colors.black;
+    final text2Color = widget.status == ItemStatus.done
+        ? AppColors.backgroundColor
+        : const Color(0xFF7D7C7C);
+    final dividerColor = widget.status == ItemStatus.done
+        ? AppColors.backgroundColor
+        : Colors.black;
 
     return Container(
       decoration: BoxDecoration(

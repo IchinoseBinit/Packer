@@ -2,12 +2,16 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_urls.dart';
+import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
+import 'package:packer/features/views/product/model/common_product_model.dart';
+import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
@@ -53,38 +57,67 @@ class TransferItemsList extends StatelessWidget {
                 color: Color(0xffEAEAEA),
               ),
               SizedBox(height: 8.h),
-              Expanded(
-                child: ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.all(16.w),
-                  shrinkWrap: true,
-                  itemCount: provider.selectedTransferModel!.items?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final transferItem =
+              IntrinsicGridView.vertical(
+                columnCount: 2,
+                verticalSpace: 12.w,
+                horizontalSpace: 12.w,
+                children: List.generate(
+                  provider.selectedTransferModel!.items?.length ?? 0,
+                  (index) {
+                    final product =
                         provider.selectedTransferModel!.items?[index];
-
                     ItemStatus status =
-                        (transferItem?.itemScanCount == transferItem?.quantity)
+                        (product?.itemScanCount == product?.quantity)
                             ? ItemStatus.done
                             : ItemStatus.remaining;
+                    final width = (1.sw - 12.w - 32.w) / 2;
 
-                    return InkWell(
-                      highlightColor: Colors.transparent,
+                    return ProductCard(
+                      width: width,
                       onTap: () {
-                        log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
+                        log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product?.id}");
                         if (status == ItemStatus.done) return;
-                        provider.itemTaped(context, transferItem);
+                        provider.itemTaped(context, product);
                       },
-                      child: TransferItemWidget(
-                          transferItem: transferItem ?? TransferItemModel(),
-                          status: status),
+                      productModel:
+                          CommonProductModel.fromTransferItemModel(product!),
+                      status: status,
                     );
                   },
-                  separatorBuilder: (context, index) {
-                    return const SizedBox(height: 12);
-                  },
                 ),
-              ),
+              )
+
+              // Expanded(
+              //   child: ListView.separated(
+              //     physics: const BouncingScrollPhysics(),
+              //     padding: EdgeInsets.all(16.w),
+              //     shrinkWrap: true,
+              //     itemCount: provider.selectedTransferModel!.items?.length ?? 0,
+              //     itemBuilder: (context, index) {
+              //       final transferItem =
+              //           provider.selectedTransferModel!.items?[index];
+
+              //       ItemStatus status =
+              //           (transferItem?.itemScanCount == transferItem?.quantity)
+              //               ? ItemStatus.done
+              //               : ItemStatus.remaining;
+
+              //       return ProductCard(
+              //       onTap: () {
+              //         log("Navigating to QR Scan Screen for ${transferItem?.productName} and item id: ${transferItem?.id}");
+              //         if (status == ItemStatus.done) return;
+              //         provider.itemTaped(context, transferItem);
+              //       },
+              //         productModel: CommonProductModel.fromTransferItemModel(
+              //             transferItem ?? TransferItemModel()),
+              //         status: status,
+              //       );
+              //     },
+              //     separatorBuilder: (context, index) {
+              //       return const SizedBox(height: 12);
+              //     },
+              //   ),
+              // ),
             ],
           );
         },
@@ -278,9 +311,4 @@ class TransferItemWidget extends StatelessWidget {
       ),
     );
   }
-}
-
-enum ItemStatus {
-  done,
-  remaining,
 }

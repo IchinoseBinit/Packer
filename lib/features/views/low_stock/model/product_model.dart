@@ -1,3 +1,4 @@
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
 class ProductModel {
@@ -16,7 +17,7 @@ class ProductModel {
     id = json['id'].toString().toInt();
     productId = json['product_id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
-    imageUrl = json['product_image'].toString().toStringConversion();
+    imageUrl = AppUrls.imageUrl + json['product_image'].toString().toStringConversion();
     quantity = json['quantity'].toString().toInt();
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();

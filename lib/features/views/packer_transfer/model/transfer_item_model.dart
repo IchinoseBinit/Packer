@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
 class TransferItemModel {
@@ -52,7 +53,7 @@ class TransferItemModel {
       id: map['id'].toString().toInt(),
       product: map['product_id'].toString().toInt(),
       productName: map['product_name'].toString().toString(),
-      productImage: map['product_image'].toString().toString(),
+      productImage: AppUrls.imageUrl + map['product_image'].toString().toString(),
       quantity: map['quantity'].toString().toInt(),
       status: map['status'].toString().toStringConversion(),
       rack: map['rack'].toString().toStringConversion(),
