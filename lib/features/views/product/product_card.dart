@@ -1,12 +1,13 @@
+import 'dart:developer';
 import 'dart:ui';
 
-// import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
+import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:provider/provider.dart';
 
 class ProductCard extends StatefulWidget {
@@ -30,13 +31,27 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
+  late bool isPacked;
+  bool isAlreadyCounted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    isPacked = widget.productModel.isPacked(
+        widget.productModel.quantity, widget.productModel.scannedCount);
+    if (isPacked) {
+      Provider.of<ProductProvider>(context, listen: false).incrementPacked;
+      isAlreadyCounted = true;
+    }
+  }
+
+  @override
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
         widget.onTap?.call();
       },
-      // child: Stack(
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -45,13 +60,9 @@ class _ProductCardState extends State<ProductCard> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: widget.status == ItemStatus.remaining
-                    ? Colors.white
-                    : Colors.green,
+                color: Colors.white,
                 border: Border.all(
-                  color: widget.status == ItemStatus.remaining
-                      ? AppColors.homeScreenTopBgColor
-                      : Colors.green,
+                  color: AppColors.productCardBorderColor,
                   width: 1.0,
                 ),
               ),
@@ -75,10 +86,6 @@ class _ProductCardState extends State<ProductCard> {
                                       ),
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(8),
-                                        // gradient: LinearGradient(colors: [
-                                        //   AppColors.homeScreenTopBgColor.withAlpha(75),
-                                        //   AppColors.homeScreenTopBgColor,
-                                        // ]),
                                       ),
                                       child: Align(
                                         alignment: Alignment.center,
@@ -113,71 +120,116 @@ class _ProductCardState extends State<ProductCard> {
                   SizedBox(height: 4.h),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Row(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
-                          child: SizedBox(
-                            height: 42.h,
-                            child: Text(
-                              widget.productModel.productName,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.2,
-                                    color: widget.status == ItemStatus.remaining
-                                        ? Colors.black
-                                        : Colors.white,
-                                  ),
-                            ),
+                        SizedBox(
+                          child: Text(
+                            widget.productModel.productName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.2,
+                                  color: Colors.black,
+                                ),
                           ),
                         ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          widget.productModel.size != "0"
-                              ? "${widget.productModel.size} ${widget.productModel.measurement}"
-                              : "",
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: widget.status == ItemStatus.remaining
-                                        ? AppColors.homeScreenDimTextColor
-                                        : Colors.white,
-                                    fontSize: 9.sp,
+                        SizedBox(height: 8.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Qty: ${widget.productModel.quantity}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.homeScreenDimTextColor,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w400,
                                   ),
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              widget.productModel.size != "0"
+                                  ? "${widget.productModel.size} ${widget.productModel.measurement}"
+                                  : "",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.homeScreenDimTextColor,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  // 4.h
                   SizedBox(height: 4.h),
+
+                  /// Remaining or Packed badge
                   if (widget.status == ItemStatus.remaining)
-                    Container(
-                      height: 28.h,
-                      alignment: Alignment.center,
-                      child: Text(
-                        "Remaining: ${widget.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.red,
-                            ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Container(
+                        height: 30.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4.h),
+                          color: AppColors.cartTextColor,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Remaining: ${widget.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
                       ),
                     )
                   else
-                    Container(
-                      height: 28.h,
-                      alignment: Alignment.center,
-                      child: Text(
-                        "Done",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.white,
-                            ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 4),
+                      child: Container(
+                        height: 28.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4.h),
+                          color: AppColors.green700,
+                        ),
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle,
+                                  color: Colors.white, size: 16.sp),
+                              SizedBox(width: 4.w),
+                              Text(
+                                "Packed",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
 

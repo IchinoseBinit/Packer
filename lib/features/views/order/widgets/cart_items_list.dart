@@ -22,7 +22,7 @@ class CartItemsList extends StatelessWidget {
     return Consumer<OrderProvider>(
       builder: (context, state, child) {
         return ListView.separated(
-          shrinkWrap: true, // ✅ FIX: Outer ListView needs shrinkWrap
+          shrinkWrap: true,
           itemCount: state.rackList.length,
           itemBuilder: (context, index) {
             final rack = state.rackList[index];
@@ -35,14 +35,18 @@ class CartItemsList extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: "Rack Name: ",
-                        style: Theme.of(context).textTheme.labelLarge,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
                       ),
                       TextSpan(
                         text: rack,
                         style: Theme.of(context)
                             .textTheme
                             .headlineSmall
-                            ?.copyWith(fontSize: 16.sp),
+                            ?.copyWith(
+                                fontSize: 16.sp, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -54,30 +58,34 @@ class CartItemsList extends StatelessWidget {
                     verticalSpace: 12.w,
                     horizontalSpace: 12.w,
                     children: List.generate(
-                      state.rackProductData[rack]!.length, (index) {
+                      state.rackProductData[rack]!.length,
+                      (index) {
                         final product = state.rackProductData[rack]![index];
-                      final isDone = state.checkItem(product.id);
-                      final width = (1.sw - 12.w -32.w) /2;
+                        final isDone = state.checkItem(product.id);
+                        final width = (1.sw - 12.w - 32.w) / 2;
 
-                      return ProductCard(
-                        width: width,
-                        onTap: () {
-                          log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
-                          if (isDone) return;
+                        return ProductCard(
+                          width: width,
+                          onTap: () {
+                            log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
+                            if (isDone) return;
 
-                          navigate(
-                            context,
-                            route: NavigationConstants.cartItemScanScreenRoute,
-                            extra: {
-                              'productId': product.id,
-                            },
-                          );
-                        },
-                        productModel:
-                            CommonProductModel.fromProductDetails(product),
-                        status: isDone ? ItemStatus.done : ItemStatus.remaining,
-                      );
-                      },),
+                            navigate(
+                              context,
+                              route:
+                                  NavigationConstants.cartItemScanScreenRoute,
+                              extra: {
+                                'productId': product.id,
+                              },
+                            );
+                          },
+                          productModel:
+                              CommonProductModel.fromProductDetails(product),
+                          status:
+                              isDone ? ItemStatus.done : ItemStatus.remaining,
+                        );
+                      },
+                    ),
                   )
               ],
             );

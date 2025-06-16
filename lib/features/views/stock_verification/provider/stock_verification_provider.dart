@@ -218,7 +218,7 @@ class StockVerificationProvider extends ChangeNotifier {
               "productId": selectedStockItem!.productId
             });
 
-        if (context.mounted) {
+        if (context.mounted && result) {
           if (selectedStore?.isMainStore ?? false) {
             final cartonListResults = await navigate(
               context,

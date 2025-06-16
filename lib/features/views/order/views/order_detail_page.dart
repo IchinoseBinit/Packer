@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -44,10 +46,7 @@ class _OrderDetailsState extends State<OrderDetails> {
           return AlertDialog(
             title: Text(
               'Do you want to exit packing this order?',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -73,7 +72,6 @@ class _OrderDetailsState extends State<OrderDetails> {
           );
         });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -122,8 +120,8 @@ class _OrderDetailsState extends State<OrderDetails> {
                               onPressed: () {
                                 Navigator.of(context).pop();
                                 navigate(context,
-                                    route:
-                                        NavigationConstants.basketScanScreenRoute,
+                                    route: NavigationConstants
+                                        .basketScanScreenRoute,
                                     extra: {
                                       'forOrder': true,
                                     });

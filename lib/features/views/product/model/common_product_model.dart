@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -21,7 +23,8 @@ class CommonProductModel {
   late int plannedQuantity;
 
   // from productAvailability
-  CommonProductModel.fromProductAvailability(ProductAvailability productAvailability) {
+  CommonProductModel.fromProductAvailability(
+      ProductAvailability productAvailability) {
     productId = productAvailability.productId;
     productName = productAvailability.productName;
     rackName = productAvailability.rackName;
@@ -64,7 +67,8 @@ class CommonProductModel {
   }
 
   // TransferItemModel transferItemModel;
-  CommonProductModel.fromTransferItemModel(TransferItemModel transferItemModel) {
+  CommonProductModel.fromTransferItemModel(
+      TransferItemModel transferItemModel) {
     id = transferItemModel.id ?? 0;
     productId = transferItemModel.product ?? 0;
     productName = transferItemModel.productName ?? "";
@@ -99,11 +103,8 @@ class CommonProductModel {
     scannedCount = 0;
     productCompartment = "";
   }
-    
-    
 
-  
-
-
-
+  bool isPacked(int totalQty, int scannedQty) {
+    return scannedQty >= totalQty;
+  }
 }
