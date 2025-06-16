@@ -14,7 +14,8 @@ import 'package:provider/provider.dart';
 import 'base_scan_screen.dart';
 
 class CartonScanScreen extends BaseScanScreen {
-  CartonScanScreen({super.key})
+  final int cartonId;
+  CartonScanScreen({super.key, required this.cartonId})
       : super(
           scanTitle: 'Carton Scanner',
           showFlash: true,
@@ -55,8 +56,9 @@ class CartonScanScreen extends BaseScanScreen {
         return;
       }
 
+
       final result = await Provider.of<StockProvider>(context, listen: false)
-          .onScanCarton(context, code);
+          .onScanCarton(context, code, cartonId: cartonId);
 
       if (!result && context.mounted) {
         handleInvalidCode(context, controller, code);

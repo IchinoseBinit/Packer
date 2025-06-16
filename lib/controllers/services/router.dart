@@ -324,6 +324,7 @@ class AppRouter {
                     productId: args['productId'] ?? 0,
                     fromStockVerification:
                         args['fromStockVerification'] ?? false,
+                    cartonId: args['cartonId'],
                     fromTransfer: args['forTransfer'] ?? false,
                   );
                 },
@@ -331,7 +332,9 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.cartonScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return CartonScanScreen();
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+
+                  return CartonScanScreen(cartonId: args['cartonId'] as int);
                 },
               ),
               GoRoute(
