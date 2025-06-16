@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -8,14 +6,21 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:provider/provider.dart';
 
-class CartonListScreen extends StatelessWidget {
+class CartonListScreen extends StatefulWidget {
   final int productId;
+
   const CartonListScreen({super.key, required this.productId});
 
-  void initState(BuildContext context) {
-    debugger();
+  @override
+  State<CartonListScreen> createState() => _CartonListScreenState();
+}
+
+class _CartonListScreenState extends State<CartonListScreen> {
+  @override
+  void initState() {
+    super.initState();
     Provider.of<StockProvider>(context, listen: false)
-        .fetchCartonList(context, productId);
+        .fetchCartonList(context, widget.productId);
   }
 
   @override
@@ -33,13 +38,11 @@ class CartonListScreen extends StatelessWidget {
       body: Consumer<StockProvider>(
         builder: (context, value, child) {
           if (value.cartonList.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: Text('No cartons found.'));
           }
 
           return ListView.separated(
-            separatorBuilder: (context, index) => SizedBox(
-              height: 8.h,
-            ),
+            separatorBuilder: (context, index) => SizedBox(height: 6.h),
             itemCount: value.cartonList.length,
             itemBuilder: (context, index) {
               final carton = value.cartonList[index];
@@ -49,14 +52,21 @@ class CartonListScreen extends StatelessWidget {
                       route: NavigationConstants.cartonScanScreenRoute);
                 },
                 child: ListTile(
-                  title: Text(carton.uniqueIdentifier),
-                  subtitle: Text('ID: ${carton.id}'),
-                  trailing: Text(
-                    carton.status,
-                    style: TextStyle(
-                      color:
-                          carton.status == 'active' ? Colors.green : Colors.red,
-                    ),
+                  subtitle: Column(
+                    children: [
+                      Text(carton.uniqueIdentifier),
+                      SizedBox(height: 4.h),
+                      Text(
+                        carton.status,
+                      ),
+                    ],
+                  ),
+                  title: Text(
+                    'ID: ${carton.id}',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                 ),
               );

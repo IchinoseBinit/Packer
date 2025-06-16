@@ -277,7 +277,6 @@ class StockProvider extends ChangeNotifier {
   }
 
   Future<void> fetchCartonList(BuildContext context, int productId) async {
-    debugger();
     try {
       final url = AppUrls.cartonListUrl
           .replaceFirst('product_id', productId.toString());
