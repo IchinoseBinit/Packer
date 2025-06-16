@@ -17,8 +17,15 @@ import 'base_scan_screen.dart';
 class CartonScanScreen extends BaseScanScreen {
   final int cartonId;
   final bool fromVerification;
-  CartonScanScreen({super.key, required this.cartonId, this.fromVerification = false})
-      : super(
+  final String? cartonCode;
+  final String? tag;
+  CartonScanScreen({
+    super.key,
+    required this.cartonId,
+    this.fromVerification = false,
+    this.cartonCode,
+    this.tag,
+  }) : super(
           scanTitle: 'Carton Scanner',
           showFlash: true,
           showBackButton: true,
@@ -58,15 +65,19 @@ class CartonScanScreen extends BaseScanScreen {
         return;
       }
 
-
       bool result = false;
-      
-      if (!fromVerification && context.mounted) {
+      bool back = false;
+      if (cartonCode != null &&
+          code.toLowerCase() == cartonCode!.toLowerCase()) {
+        result = await Provider.of<StockVerificationProvider>(context, listen: false)
+            .singleVerification(context, cartonId, tag!);
+        back = true;
+      } else if (!fromVerification && context.mounted) {
         result = await Provider.of<StockProvider>(context, listen: false)
-          .onScanCarton(context, code, cartonId: cartonId);
+            .onScanCarton(context, code, cartonId: cartonId);
       } else if (fromVerification && context.mounted) {
         result = Provider.of<StockVerificationProvider>(context, listen: false)
-          .onScanCarton(context, code);
+            .onScanCarton(context, code, cartonId: cartonId);
       }
 
       if (!result && context.mounted) {
@@ -74,10 +85,13 @@ class CartonScanScreen extends BaseScanScreen {
       } else if (context.mounted) {
         removeLoading(context);
         // Optionally navigate back or show success message
+        if (back) {
+          navigatePop(context, true);
+        }
       }
     } catch (e) {
       if (context.mounted) {
-        handleInvalidCode(context, controller, code);
+        handleInvalidCode(context, controller, code, e.toString());
       }
     } finally {
       _isProcessing = false;
@@ -85,11 +99,11 @@ class CartonScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code) {
+      BuildContext context, MobileScannerController controller, String code, [String? message]) {
     removeLoading(context);
     ShowAlertDialog(
       disableBackground: true,
-      body: Text("Invalid QR ${detectQrMessage(code)}"),
+      body: Text(message ??  "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () async {
         navigatePop(context);
         await controller.start();

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/carton/model/carton_list_model.dart';
@@ -11,6 +14,7 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/model/store_model.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:provider/provider.dart';
 
 class StockVerificationProvider extends ChangeNotifier {
@@ -27,6 +31,8 @@ class StockVerificationProvider extends ChangeNotifier {
   CartonListModel? selectedCarton;
 
   List<Store> storeList = [];
+  // cartonList
+  List<CartonListModel> cartonList = [];
 
   void setSelectedStore(Store store) {
     selectedStore = store;
@@ -56,6 +62,29 @@ class StockVerificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> fetchCartonList(BuildContext context, int productId) async {
+    try {
+      final url = AppUrls.cartonListUrl
+          .replaceFirst('product_id', productId.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        cartonList = (response.data as List)
+            .map((item) => CartonListModel.fromJson(item))
+            .toList();
+      } else {
+        return;
+      }
+    } catch (e) {
+      log('Error fetching carton list: $e');
+      rethrow;
+    }
+  }
+
   Future<void> fetchStores() async {
     try {
       if (storeList.isNotEmpty) {
@@ -77,6 +106,15 @@ class StockVerificationProvider extends ChangeNotifier {
       log("Error while getting value $e");
       notifyListeners();
     }
+  }
+
+  void getMessage(BuildContext context, int productId) {
+    var message = "Scan Product Code";
+    if (scannedUnits.isNotEmpty) {
+      message += " Scanned ${scannedUnits.length} units";
+    }
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, message);
   }
 
   // fetch
@@ -101,6 +139,68 @@ class StockVerificationProvider extends ChangeNotifier {
       log("Error while getting value $e");
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> getCartonInfo(BuildContext context, int id, String tag) async {
+    try {
+      final url = AppUrls.cartonDetailUrl.replaceFirst(':id', id.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+      if (context.mounted) {
+        if (response.statusCode == 200) {
+          await navigate(context,
+              route: NavigationConstants.cartonScanScreenRoute,
+              extra: {
+                'cartonId': id,
+                'matchCode': true,
+                'code': response.data['unique_identifier']
+                    .toString()
+                    .toStringConversion(),
+                'tag': tag,
+              });
+        } else {
+          if (context.mounted) {
+            ErrorHandler.alertDialog(context, 'Failed to get carton info');
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ErrorHandler.alertDialog(context, e.toString());
+      }
+    }
+  }
+
+  // single verification
+  Future<bool> singleVerification(
+      BuildContext context, int id, String tag) async {
+    final url = AppUrls.singleUnitVerificationUrl;
+
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+        body: {
+          "carton_id": id,
+          "product_unit": tag,
+          "store_id": selectedStore?.id,
+        },
+      );
+      if (context.mounted) {
+        if (response.statusCode == 200) {
+          getMessage(context, selectedStockItem!.productId);
+          return true;
+        } else {
+          return false;
+        }
+      }
+      return false;
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -179,22 +279,51 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   // onScanCarton
-  bool onScanCarton(BuildContext context, String code) {
+  bool onScanCarton(BuildContext context, String code, {int? cartonId}) {
+    // scannedUnits.clear();
+    // if (cartonId != null) {
+    //   // Find the carton by ID
+    //   final carton = cartonList.firstWhereOrNull(
+    //     (carton) => carton.id == cartonId,
+    //   );
+
+    //   // Check if the carton exists and the code matches the unique identifier
+    //   if (carton != null &&
+    //       carton.uniqueIdentifier.toLowerCase().contains(code.toLowerCase())) {
+    //     // Proceed with your logic
+    //     selectedCarton = carton;
+    //     navigateReplacement(context,
+    //         route: NavigationConstants.productScanScreenRoute,
+    //         extra: {
+    //           "productId": selectedStockItem!.productId,
+    //           "productUnits": selectedStockItem!.productUnits,
+    //           "fromStockVerification": true,
+    //           'cartonId': selectedCarton!.id,
+    //         });
+    //     return true;
+    //   } else {
+    //     return false;
+    //   }
+    // }
+
     if (selectedCarton != null) {
-      if (selectedCarton!.uniqueIdentifier.toLowerCase().contains(code.toLowerCase())) {
-        navigateReplacement(context, route: NavigationConstants.productScanScreenRoute, extra: {
-          "productId": selectedStockItem!.productId,
-          "productUnits": selectedStockItem!.productUnits,
-          "fromStockVerification": true,
-          'cartonId': selectedCarton!.id,
-        });
+      if (selectedCarton!.uniqueIdentifier
+          .toLowerCase()
+          .contains(code.toLowerCase())) {
+        navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              "productId": selectedStockItem!.productId,
+              "productUnits": selectedStockItem!.productUnits,
+              "fromStockVerification": true,
+              'cartonId': selectedCarton!.id,
+            });
         return true;
       }
     }
-    
+
     return false;
   }
-      
 
   // onScanProduct
   bool onScanProduct(BuildContext context, int productId, String code,

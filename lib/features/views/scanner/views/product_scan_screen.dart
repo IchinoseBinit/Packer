@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
@@ -37,7 +39,10 @@ class ProductScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    if (!fromTransfer) {
+    if (fromStockVerification) {
+      Provider.of<StockVerificationProvider>(context, listen: false)
+          .getMessage(context, productId);
+    } else if (!fromTransfer) {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, "Scan Product Code");
     }
@@ -137,7 +142,7 @@ class ProductScanScreen extends BaseScanScreen {
         if (cartonId != null) {
           final splittedCartonId = int.tryParse(list[2]) ?? 0;
           if (splittedCartonId != cartonId) {
-            handleInvalidCode(context, controller, code);
+            handleInvalidCarton(context, controller, splittedCartonId, code);
             return;
           }
         }
@@ -179,6 +184,22 @@ class ProductScanScreen extends BaseScanScreen {
     } catch (e) {
       handleInvalidCode(context, controller, code);
     }
+  }
+
+  void handleInvalidCarton(BuildContext context,
+      MobileScannerController controller, int cartonId, String tag,
+      [String? message]) {
+    ShowAlertDialog(
+      disableBackground: false,
+      body: Text("Invalid product for this carton"),
+      okTitle: 'Scan the carton',
+      okFunc: () {
+        Navigator.pop(context);
+        Provider.of<StockVerificationProvider>(context, listen: false)
+            .getCartonInfo(context, cartonId, tag);
+      },
+    ).showAlertDialog(context);
+    hasScanned = false;
   }
 
   void handleInvalidCode(

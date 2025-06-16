@@ -32,7 +32,7 @@ class CartonListScreen extends StatelessWidget {
         ),
       ),
       body: FutureBuilder(
-        future: Provider.of<StockProvider>(context, listen: false)
+        future: Provider.of<StockVerificationProvider>(context, listen: false)
             .fetchCartonList(context, productId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -41,7 +41,7 @@ class CartonListScreen extends StatelessWidget {
 
           return Padding(
             padding: AppConstants.padding,
-            child: Consumer<StockProvider>(builder: (context, value, child) {
+            child: Consumer<StockVerificationProvider>(builder: (context, value, child) {
               if (value.cartonList.isEmpty) {
                 return Column(
                   children: [
