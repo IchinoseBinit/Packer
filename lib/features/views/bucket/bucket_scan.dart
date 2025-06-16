@@ -75,7 +75,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
     if (code.toLowerCase().contains("basket")) {
       try {
         Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(code);
+            .updateBucketData(context,code);
 
         try {
           await Provider.of<OrderProvider>(context, listen: false)

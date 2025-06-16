@@ -20,7 +20,7 @@ class NavigationConstants {
   static const String unsettledOrdersRoute = 'unsettled_orders_screen';
   static const String seeOrderItemsRoute = 'see_order_items';
   // static const String bucketqrScreenRoute = 'bucket_qr_screen';
-  // static const String productqrScreenRoute = 'product_qr_screen';
+  static const String productqrScreenRoute = 'product_qr_screen';
 
   // Weekly Summary
   static const String weeklySummaryRoute = 'weekly_summary';
@@ -38,10 +38,11 @@ class NavigationConstants {
   static const String lowStockDetailRoute = 'low_stock_detail';
   static const String lowStockScannerRoute = 'low_stock_scanner';
 
+  static const String cartonListScreenRoute = 'carton_list_screen';
+
   // stock_verification
   static const String stockVerificationRoute = 'stock_verification_screen';
   static const String storeSelectionRoute = 'store_selection_screen';
-
 
   // basket scan screen
   static const String basketScanScreenRoute = 'basket_scan_screen';
@@ -49,4 +50,13 @@ class NavigationConstants {
   static const String inventoryScanScreenRoute = 'inventory_scan_screen';
   static const String productScanScreenRoute = 'product_scan_screen';
   static const String cartonScanScreenRoute = 'carton_scan_screen';
+
+//carton list screen
+
+
+  // rack update screen
+  static const String rackUpdateScreenRoute = 'rack_update_screen';
+
+  // product list screen
+  static const String productListScreenRoute = 'product_list_screen';
 }

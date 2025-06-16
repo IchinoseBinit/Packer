@@ -35,7 +35,7 @@ class BasketScanScreen extends BaseScanScreen {
         ? "Scan Basket Code"
         : "Scan Basket: $basketCode";
     Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(message);
+        .setMessage(context, message);
   }
 
   @override
@@ -63,7 +63,7 @@ class BasketScanScreen extends BaseScanScreen {
 
       if (forOrder) {
         result = await Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(code);
+            .updateBucketData(context,code);
 
         if (result && context.mounted) {
           Navigator.pop(context, true);

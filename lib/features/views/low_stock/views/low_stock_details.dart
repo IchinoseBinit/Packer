@@ -1,12 +1,12 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 
@@ -106,7 +106,6 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Text(rackName),
                                 RichText(
                                     text: TextSpan(children: [
                                   TextSpan(
@@ -133,7 +132,8 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                             product.productId)) {
                                           return;
                                         }
-                                        showToast("Scan Carton First");
+                                        ErrorHandler.alertDialog(context,
+                                            "Scan Carton First");
                                       },
                                       child: ItemWidget(
                                         model: product,

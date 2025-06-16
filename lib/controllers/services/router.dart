@@ -1,17 +1,16 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:go_router/go_router.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
-import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
+import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
-import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
+import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
+import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
-import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/auth/views/login_screen.dart';
 import 'package:packer/features/views/auth/views/splash_screen.dart';
@@ -28,6 +27,7 @@ import 'package:packer/features/views/order/views/view_image_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
+import 'package:packer/features/views/profile/update_rack_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
@@ -105,27 +105,19 @@ class AppRouter {
               //     );
               //   },
               // ),
-              // GoRoute(
-              //   path: NavigationConstants.productqrScreenRoute,
-              //   builder: (BuildContext context, GoRouterState state) {
-              //     final extra = state.extra as Map<String, dynamic>?;
+              GoRoute(
+                path: NavigationConstants.productqrScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>?;
 
-              //     // final bool cartItem = extra?['cartItem'] as bool;
-              //     final productId =
-              //         extra?['productId']; // Assuming it's int or string
+                  final productId =
+                      extra?['productId']; // Assuming it's int or string
 
-              //     // final index = state.extra as int? ?? 0;
-
-              //     return ProductScannerScreen(
-              //       productId: productId,
-              //       isfromCartItem: true,
-              //       // index: index,
-
-              //       // Ensure it's a list
-              //       // isfromCartItem: cartItem,
-              //     );
-              //   },
-              // ),
+                  return ProductScannerScreen(
+                    productId: productId,
+                  );
+                },
+              ),
               GoRoute(
                 path: NavigationConstants.photoSelectionRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -138,10 +130,34 @@ class AppRouter {
                   return const DrivingLicenseSelection();
                 },
               ),
+
+              // GoRoute(
+              //   path: NavigationConstants.otpScreen,
+              //   builder: (BuildContext context, GoRouterState state) {
+              //     final order = state.extra as OrderDetailModel;
+
+              //     // final map = state.extra as Map<String, dynamic>;
+              //     // final order = map['order'] as OrderDetailModel;
+
+              //     return OtpVerificationScreen(
+              //       order: order,
+              //     );
+              //   },
+              // ),
               GoRoute(
                 path: NavigationConstants.citizenshipCardScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const CitizenshipSelection();
+                },
+              ),
+
+              GoRoute(
+                path: NavigationConstants.cartonListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final productId = state.extra as int;
+                  return CartonListScreen(
+                    productId: productId,
+                  );
                 },
               ),
               GoRoute(
@@ -262,7 +278,8 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.stockVerificationRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return StockVerificationScreen(storeId: state.extra as String);
+                  return StockVerificationScreen(
+                      storeId: state.extra as String);
                 },
               ),
               GoRoute(
@@ -305,7 +322,8 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return ProductScanScreen(
                     productId: args['productId'] ?? 0,
-                    fromStockVerification: args['fromStockVerification'] ?? false,
+                    fromStockVerification:
+                        args['fromStockVerification'] ?? false,
                     fromTransfer: args['forTransfer'] ?? false,
                   );
                 },
@@ -314,6 +332,19 @@ class AppRouter {
                 path: NavigationConstants.cartonScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return CartonScanScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.rackUpdateScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return UpdateRackScreen(productId: args['productId']);
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.productListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ProductListScreen();
                 },
               ),
             ]),

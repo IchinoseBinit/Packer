@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
 class ErrorHandler {
   static const errorMessage =
@@ -21,6 +23,16 @@ class ErrorHandler {
       Navigator.pop(context);
       showToast(ex.toString(), color: AppColors.primaryColor);
     }
+  }
+
+  // alert dialog
+  static void alertDialog(BuildContext context, String message) {
+    if (!context.mounted) return;
+    ShowAlertDialog(
+      disableBackground: true,
+      body: Text(message),
+      okFunc: () {navigatePop(context);}
+    ).showAlertDialog(context);
   }
 
   

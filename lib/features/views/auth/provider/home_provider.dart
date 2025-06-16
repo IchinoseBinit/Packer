@@ -41,6 +41,11 @@ class HomeProvider with ChangeNotifier {
     return user.role == UserRole.manager;
   }
 
+  bool isMainStore() {
+    return packerSummary?.storeType.contains("main") ?? false;
+  }
+  
+
   bool isOnline = false;
   bool _isAvailable = false;
   bool isOrder = true;

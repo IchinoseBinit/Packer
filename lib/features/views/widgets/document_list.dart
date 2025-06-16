@@ -19,9 +19,9 @@ class DocumentList extends StatelessWidget {
   final void Function()? onTap;
 
   DocumentList({
-    Key? key,
+    super.key,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class DocumentList extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10)),
             child: InkWell(
               onTap: () {
-                context.go(routes[index]);
+                context.push(routes[index]);
               },
               child: ListTile(
                 leading: SvgPicture.asset(

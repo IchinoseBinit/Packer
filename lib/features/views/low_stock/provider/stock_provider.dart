@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -7,13 +8,14 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/demo.dart';
+import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -34,6 +36,7 @@ class StockProvider extends ChangeNotifier {
   List<String> scannedList = [];
   List<int> completeProductId = [];
   ProductModel? selectedProduct;
+  List<CartonListModel> cartonList = [];
 
   bool hasScanned = false;
 
@@ -143,7 +146,8 @@ class StockProvider extends ChangeNotifier {
   }
 
   // update rack
-  Future<bool> updateRack(BuildContext context, String code, int productId) async {
+  Future<bool> updateRack(
+      BuildContext context, String code, int productId) async {
     try {
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
@@ -155,15 +159,14 @@ class StockProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200 && context.mounted) {
-        navigateReplacement(context,
-            route: NavigationConstants.dashboardRoute);
+        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
         return true;
       } else {
-        showToast('Failed to update rack');
+        ErrorHandler.alertDialog(context, 'Failed to update rack');
         return false;
       }
     } catch (ex) {
-      showToast(ex.toString());
+      ErrorHandler.alertDialog(context, ex.toString());
       return false;
     }
   }
@@ -196,7 +199,7 @@ class StockProvider extends ChangeNotifier {
         return true;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       return false;
     }
   }
@@ -212,22 +215,28 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              showToast("Already Scanned");
               removeLoading(context);
+              ShowAlertDialog(
+                disableBackground: false,
+                body: Text("Already Scanned"),
+                okFunc: () {
+                  navigatePop(context);
+                },
+              ).showAlertDialog(context);
               return false;
             }
             onProductDetailsTaped(context, matchedModel);
           }
         } else {
-          showToast("No Matching Product found");
+          ErrorHandler.alertDialog(context, "No Matching Product found");
           return false;
         }
       } else {
-        showToast("No Matching Carton found");
+        ErrorHandler.alertDialog(context, "No Matching Carton found");
         return false;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       removeLoading(context);
       return false;
     }
@@ -258,19 +267,41 @@ class StockProvider extends ChangeNotifier {
           );
           if (matchedModel.products.isNotEmpty) {
             log("CartonfffffffffffInfo: $productId");
-
-            // navigate(context,
-            //     route: NavigationConstants.productqrScreenRoute,
-            //     extra: {
-            //       'cartItem': true,
-            //       'productId': productId.toInt(),
-            //     });
           }
         }
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       removeLoading(context);
+    }
+  }
+
+  Future<void> fetchCartonList(BuildContext context, int productId) async {
+    debugger();
+    try {
+      final url = AppUrls.cartonListUrl
+          .replaceFirst('product_id', productId.toString());
+      log("Product ID: $productId");
+      log("Generated URL: $url");
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+
+      log("Response data: ${response.data}");
+
+      if (response.statusCode == 200) {
+        cartonList = (response.data as List)
+            .map((item) => CartonListModel.fromJson(item))
+            .toList();
+        log("Carton List: ${cartonList.length}");
+      } else {
+        return;
+      }
+    } catch (e) {
+      log('Error fetching carton list: $e');
+      rethrow;
     }
   }
 
@@ -320,16 +351,17 @@ class StockProvider extends ChangeNotifier {
   Future<bool> checkItemQr(BuildContext context, String code) async {
     try {
       if (scannedList.contains(code)) {
-        showToast("Tag Already scanned");
+        ErrorHandler.alertDialog(context, "Tag Already scanned");
 
         return false;
       }
       if (selectedProduct?.quantity == scannedList.length) {
-        showToast("Product already scanned");
+        ErrorHandler.alertDialog(context, "Product already scanned");
         return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        showToast("Invalid QR ${detectQrMessage(code)}");
+        ErrorHandler.alertDialog(
+            context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
       scannedList.add(code);
@@ -339,9 +371,9 @@ class StockProvider extends ChangeNotifier {
       // if (selProduct != null && selProduct >= 0) {
       //   selectedModel?.products[selProduct].scannedCount++;
       // }
-        selectedProduct!.scannedCount++;
-        scanMessage =
-            "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
+      selectedProduct!.scannedCount++;
+      scanMessage =
+          "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
 
       if (scannedList.length == selectedProduct?.quantity) {
         final response = await postScannedTags(context);
@@ -357,7 +389,7 @@ class StockProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       return false;
     }
   }
@@ -391,11 +423,11 @@ class StockProvider extends ChangeNotifier {
         showToast("Scanned Successfully");
         return true;
       } else {
-        showToast("Failed to scan basket");
+        ErrorHandler.alertDialog(context, "Failed to scan basket");
         return false;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       scannedList.clear();
       return false;
     } finally {
@@ -423,7 +455,7 @@ class StockProvider extends ChangeNotifier {
       navigatePop(context);
       fetchLowStockProducts();
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
     }
   }
 
@@ -452,11 +484,11 @@ class StockProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         return true;
       } else {
-        showToast("Failed to scan basket");
+        ErrorHandler.alertDialog(context, "Failed to scan basket");
         return false;
       }
     } catch (e) {
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       return false;
     } finally {
       removeLoading(context);
@@ -498,11 +530,11 @@ class StockProvider extends ChangeNotifier {
         // });
         return true;
       } else {
-        showToast("Invalid rack");
+        ErrorHandler.alertDialog(context, "Invalid rack");
         return false;
       }
     } else {
-      showToast("No data found");
+      ErrorHandler.alertDialog(context, "No data found");
       return false;
     }
   }

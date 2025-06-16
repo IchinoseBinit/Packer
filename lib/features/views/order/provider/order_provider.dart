@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -45,6 +46,9 @@ class OrderProvider extends ChangeNotifier {
   set isAvailable(val) {
     _isAvailable = val;
   }
+
+  List<String> rackList = [];
+  Map<String, List<ProductDetails>> rackProductData = {};
 
   String bucketData = ""; // current basket code
   List<String> basketDataList = []; // stores basket codes
@@ -93,6 +97,8 @@ class OrderProvider extends ChangeNotifier {
     basketDataList.clear();
     scannedDataPerBasket.clear();
     scannedDataList.clear();
+    rackProductData.clear();  
+    rackList.clear();
   }
 
   // check by item id in scan list with required quantity
@@ -137,7 +143,7 @@ class OrderProvider extends ChangeNotifier {
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          showToast("QR: $code already scanned");
+          ErrorHandler.alertDialog(context, "QR: $code already scanned");
           return false;
         }
         updateProductList(code);
@@ -149,7 +155,7 @@ class OrderProvider extends ChangeNotifier {
           final scanMessage =
               "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
           Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(scanMessage);
+              .setMessage(context, scanMessage);
           return false;
         }
       }
@@ -221,6 +227,25 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  void mapProductToRack() {
+    rackList.clear();
+    rackProductData.clear();
+    for (var element in _orderDetails?.productDetails ?? []) {
+      if (!rackList.contains(element.rackName)) {
+        rackList.add(element.rackName);
+      }
+      if (rackProductData.containsKey(element.rackName)) {
+        rackProductData[element.rackName]!.add(element);
+      } else {
+        rackProductData[element.rackName] = [element];
+      }
+    }
+
+    // sort
+    rackList.sort((a, b) => a.compareTo(b));
+    notifyListeners();
+  }
+
   Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
     try {
       // debugger();
@@ -231,6 +256,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         _orderDetails = OrderDetailModel.fromJson(response.data);
+        mapProductToRack();
 
         final notifications =
             Provider.of<HomeProvider>(context, listen: false).notifications;
@@ -254,7 +280,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> productPost(int orderId) async {
+  Future<bool> productPost(BuildContext context, int orderId ) async {
     List<Basket> baskets = basketDataList.map((identifier) {
       return Basket(
         identifier: identifier,
@@ -283,14 +309,14 @@ class OrderProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       } else {
-        showToast("Failed to post basket data");
+        ErrorHandler.alertDialog(context, "Failed to post basket data");
         log('Error posting basket data: ${response.statusCode}',
             name: "basket data response");
         return false;
       }
     } catch (e) {
       log('Error posting basket data: $e', name: "basket data response");
-      showToast(e.toString());
+      ErrorHandler.alertDialog(context, e.toString());
       notifyListeners();
       return false;
     }
@@ -300,6 +326,7 @@ class OrderProvider extends ChangeNotifier {
 
   Future fetchUnsettledOrders() async {
     try {
+      debugger();
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.getUnsettledOrdersUrl,
@@ -395,14 +422,14 @@ class OrderProvider extends ChangeNotifier {
   }
 
   // UPDATED and flow fixed
-  Future<bool> updateBucketData(String? data) async {
+  Future<bool> updateBucketData(BuildContext context, String? data) async {
     if (data != null) {
       log("Basket code scanned from order acknowledge $data");
 
       bucketData = data;
 
       if (basketDataList.contains(data)) {
-        showToast("Basket Already Scanned");
+        ErrorHandler.alertDialog(context, "Basket Already Scanned");
         return false;
       }
 

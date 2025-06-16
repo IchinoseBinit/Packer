@@ -45,7 +45,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
     final home =Provider.of<HomeProvider>(context, listen: false);
     if (home.isAuditUser()) {
       widgets[0] = StoreSelectionScreen();
-    } else if (home.packerSummary?.storeType.contains("main") == true) {
+    } else if (home.isMainStore() == true) {
       widgets[0] = HomeWarehouseScreen();
     } 
   }

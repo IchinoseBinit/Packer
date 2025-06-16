@@ -5,9 +5,12 @@ class ScanMessageProvider extends ChangeNotifier {
 
   String message = '';
 
-  setMessage(String message) {
+  setMessage(BuildContext context, String message) {
     this.message = message;
-    notifyListeners();
+    print("Setting message $message");
+    if (context.mounted) {
+      notifyListeners();
+    }
   }
 
   // dispose
