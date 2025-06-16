@@ -42,7 +42,8 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
             padding: EdgeInsets.all(8.0),
             child: Text("Items Ordered:"),
           ),
-          Expanded(child: CartItemsList(cartItems: widget.order.productDetails)),
+          Expanded(
+              child: CartItemsList(cartItems: widget.order.productDetails)),
           SizedBox(
             height: 8.h,
           ),
@@ -59,30 +60,37 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   child: GeneralElevatedButton(
                     onPressed: () async {
                       showLoading(context);
-      
+
                       final parsedOrderId =
                           int.tryParse(widget.order.data.id.toString()) ?? 0;
-      
-                      final success =
-                          await Provider.of<OrderProvider>(context, listen: false)
-                              .productPost(context,
-                        parsedOrderId,
-                      );
-                      if (context.mounted) {
-                        removeLoading(context);
-                      }
-                      if (success && context.mounted) {
+
+                      final success = await Provider.of<OrderProvider>(
+                        context,
+                        listen: false,
+                      ).productPost(context, parsedOrderId);
+
+                      if (!mounted) return;
+
+                      removeLoading(context);
+
+                      if (success) {
                         Provider.of<HomeProvider>(context, listen: false)
                             .fetchLatestOrders();
-                        navigateAndRemoveAll(context,
-                            route: NavigationConstants.dashboardRoute);
+
+                        navigateAndRemoveAll(
+                          context,
+                          route: NavigationConstants.dashboardRoute,
+                        );
                       }
                     },
+
+                    // },
                     title: 'Bill this order',
                   ),
                 )
               : Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   child: GeneralElevatedButton(
                     onPressed: () {},
                     title: 'Scan all items',

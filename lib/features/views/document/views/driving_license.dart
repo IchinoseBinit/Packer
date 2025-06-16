@@ -13,7 +13,7 @@ import 'package:packer/constants/app_constants.dart';
 import 'package:svg_flutter/svg_flutter.dart';
 
 class DrivingLicenseSelection extends StatefulWidget {
-  const DrivingLicenseSelection({Key? key}) : super(key: key);
+  const DrivingLicenseSelection({super.key});
 
   @override
   State<DrivingLicenseSelection> createState() =>
@@ -70,7 +70,7 @@ class _DrivingLicenseSelectionState extends State<DrivingLicenseSelection> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "DRINING LICENSE",
+                      "DRIVING LICENSE",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.grey,
                             fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _DrivingLicenseSelectionState extends State<DrivingLicenseSelection> {
                       height: 5.h,
                     ),
                     if (citizenshipPhotoPaths.isNotEmpty)
-                      Container(
+                      SizedBox(
                         height: 100.h,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,

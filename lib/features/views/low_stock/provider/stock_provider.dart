@@ -2,25 +2,25 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/demo.dart';
+import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
+import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
+import 'package:provider/provider.dart';
 
 class StockProvider extends ChangeNotifier {
   List<LowStockModel> lowStockList = [];
@@ -35,6 +35,7 @@ class StockProvider extends ChangeNotifier {
   List<String> scannedList = [];
   List<int> completeProductId = [];
   ProductModel? selectedProduct;
+  List<CartonListModel> cartonList = [];
 
   bool hasScanned = false;
 
@@ -56,6 +57,8 @@ class StockProvider extends ChangeNotifier {
     });
 
     rackNameList.sort((a, b) => a.compareTo(b));
+    // TODO: Remove
+    rackNameList  = rackNameList.reversed.toList();
   }
 
   // reset
@@ -169,32 +172,50 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  Future onScanCarton(BuildContext context, String code) async {
+  Future onScanCarton(BuildContext context, String code,
+      {int? cartonId}) async {
     try {
       await callCartonInfoApi(context, code);
-
-      if (cartonModel != null && cartonModel!.rackName.isEmpty) {
-        if (context.mounted) {
-          final result = await navigateReplacement(context,
-              route: NavigationConstants.scanRackRoute,
-              extra: {'forCarton': true, 'productId': cartonModel!.productId});
-          if (result ?? false) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              navigateReplacement(context,
-                  route: NavigationConstants.dashboardRoute);
-            });
-          }
-          return true;
-        }
-      } else if (context.mounted) {
-        navigateReplacement(
+      if (cartonId != null && cartonModel != null) {
+        final result = await navigateReplacement(
           context,
-          route: NavigationConstants.scanRackRoute,
+          route: NavigationConstants.productScanScreenRoute,
           extra: {
-            'rack': cartonModel?.rackName,
+            'cartonId': cartonId,
+            'productId': cartonModel!.productId,
           },
         );
+        if (result ?? false) {
+          navigatePop(context);
+        }
         return true;
+      } else {
+        if (cartonModel != null && cartonModel!.rackName.isEmpty) {
+          if (context.mounted) {
+            final result = await navigateReplacement(context,
+                route: NavigationConstants.scanRackRoute,
+                extra: {
+                  'forCarton': true,
+                  'productId': cartonModel!.productId
+                });
+            if (result ?? false) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                navigateReplacement(context,
+                    route: NavigationConstants.dashboardRoute);
+              });
+            }
+            return true;
+          }
+        } else if (context.mounted) {
+          navigateReplacement(
+            context,
+            route: NavigationConstants.scanRackRoute,
+            extra: {
+              'rack': cartonModel?.rackName,
+            },
+          );
+          return true;
+        }
       }
     } catch (e) {
       ErrorHandler.alertDialog(context, e.toString());
@@ -218,7 +239,7 @@ class StockProvider extends ChangeNotifier {
                 disableBackground: false,
                 body: Text("Already Scanned"),
                 okFunc: () {
-                 navigatePop(context);
+                  navigatePop(context);
                 },
               ).showAlertDialog(context);
               return false;
@@ -265,14 +286,35 @@ class StockProvider extends ChangeNotifier {
           );
           if (matchedModel.products.isNotEmpty) {
             log("CartonfffffffffffInfo: $productId");
-
-            
           }
         }
       }
     } catch (e) {
       ErrorHandler.alertDialog(context, e.toString());
       removeLoading(context);
+    }
+  }
+
+  Future<void> fetchCartonList(BuildContext context, int productId) async {
+    try {
+      final url = AppUrls.cartonListUrl
+          .replaceFirst('product_id', productId.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+
+      if (response.statusCode == 200) {
+        cartonList = (response.data as List)
+            .map((item) => CartonListModel.fromJson(item))
+            .toList();
+      } else {
+        return;
+      }
+    } catch (e) {
+      log('Error fetching carton list: $e');
+      rethrow;
     }
   }
 
@@ -331,7 +373,8 @@ class StockProvider extends ChangeNotifier {
         return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        ErrorHandler.alertDialog(context, "Invalid QR ${detectQrMessage(code)}");
+        ErrorHandler.alertDialog(
+            context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
       scannedList.add(code);

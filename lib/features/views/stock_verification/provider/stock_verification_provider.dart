@@ -6,6 +6,8 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/carton/model/carton_list_model.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/model/store_model.dart';
@@ -22,12 +24,17 @@ class StockVerificationProvider extends ChangeNotifier {
 
   List<String> scannedUnits = [];
   Store? selectedStore;
+  CartonListModel? selectedCarton;
 
   List<Store> storeList = [];
 
   void setSelectedStore(Store store) {
     selectedStore = store;
     notifyListeners();
+  }
+
+  void setSelectedCarton(CartonListModel carton) {
+    selectedCarton = carton;
   }
 
   void arrangeStockItems() {
@@ -60,6 +67,10 @@ class StockVerificationProvider extends ChangeNotifier {
       );
       storeList =
           (response.data as List).map((e) => Store.fromJson(e)).toList();
+      if (storeList.isNotEmpty) {
+      } else {
+        selectedStore = null;
+      }
 
       notifyListeners();
     } catch (e) {
@@ -71,9 +82,9 @@ class StockVerificationProvider extends ChangeNotifier {
   // fetch
   Future<void> fetchStockItems(String storeId) async {
     try {
-      isLoading = true;
       rackList.clear();
       rackProductMap.clear();
+      isLoading = true;
       notifyListeners();
       await Future.delayed(const Duration(seconds: 0));
 
@@ -95,6 +106,8 @@ class StockVerificationProvider extends ChangeNotifier {
 
   Future<void> onItemTap(BuildContext context, StockItemModel item) async {
     selectedStockItem = item;
+    selectedCarton = null;
+
     scannedUnits.clear();
     if (selectedStockItem != null) {
       if (selectedStockItem!.rackName.isNotEmpty) {
@@ -105,29 +118,61 @@ class StockVerificationProvider extends ChangeNotifier {
               "productId": selectedStockItem!.productId
             });
 
-        if (result ?? false) {
-          // sacn product
-          final scanResults = await navigate(context,
+        if (context.mounted) {
+          if (selectedStore?.isMainStore ?? false) {
+            final cartonListResults = await navigate(
+              context,
+              route: NavigationConstants.cartonListScreenRoute,
+              extra: selectedStockItem!.productId,
+            );
+            // if (cartonListResults ?? false) {
+            //   final productScanResults = await navigate(context,
+            //       route: NavigationConstants.productScanScreenRoute,
+            //       extra: {
+            //         "productId": selectedStockItem!.productId,
+            //         "productUnits": selectedStockItem!.productUnits,
+            //         "fromStockVerification": true,
+            //       });
+            //   if (productScanResults ?? false) {
+            //     // sacn product
+            //   }
+            // }
+          } else if (result ?? false) {
+            // sacn product
+            final scanResults = await navigate(context,
+                route: NavigationConstants.productScanScreenRoute,
+                extra: {
+                  "productId": selectedStockItem!.productId,
+                  "productUnits": selectedStockItem!.productUnits,
+                  "fromStockVerification": true,
+                });
+            if (scanResults ?? false) {
+              // sacn product
+            }
+          }
+        }
+      } else {
+        // scan product
+        if (selectedStore?.isMainStore ?? false) {
+          final cartonListResults = await navigate(
+            context,
+            route: NavigationConstants.cartonListScreenRoute,
+            extra: selectedStockItem!.productId,
+          );
+        } else {
+          final result = await navigate(context,
               route: NavigationConstants.productScanScreenRoute,
               extra: {
                 "productId": selectedStockItem!.productId,
                 "productUnits": selectedStockItem!.productUnits,
                 "fromStockVerification": true,
               });
-          if (scanResults ?? false) {
+          if (result ?? false) {
+            // navigate(context, route: NavigationConstants.cartonListScreenRoute, extra: {
+            //   'product'
+            // })
             // sacn product
           }
-        }
-      } else {
-        // scan product
-        final result = await navigate(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "productId": selectedStockItem!.productId,
-              "fromStockVerification": true,
-            });
-        if (result ?? false) {
-          // sacn product
         }
       }
     }
@@ -185,16 +230,23 @@ class StockVerificationProvider extends ChangeNotifier {
           "product_units": productUnits,
           "planned_quantity": selectedStockItem!.plannedQuantity,
           "store_id": selectedStore?.id,
+          if (selectedCarton != null) "carton_id": selectedCarton!.id,
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        removeStockItem(selectedStockItem!);
+        if (selectedCarton == null) removeStockItem(selectedStockItem!);
         return true;
       }
       return false;
     } catch (e) {
       return false;
     }
+  }
+
+  completeCarton() {
+    if (selectedCarton != null) removeStockItem(selectedStockItem!);
+    selectedCarton = null;
+    notifyListeners();
   }
 
   void removeStockItem(StockItemModel item) {

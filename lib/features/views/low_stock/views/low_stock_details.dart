@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -110,7 +109,6 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Text(rackName),
                                 RichText(
                                     text: TextSpan(children: [
                                   TextSpan(

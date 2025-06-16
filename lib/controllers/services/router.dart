@@ -1,18 +1,16 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:go_router/go_router.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
-import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
+import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
-import 'package:packer/features/views/order/models/cart_item.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
+import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
-import 'package:packer/features/views/bucket/bucket_scan.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/auth/views/login_screen.dart';
 import 'package:packer/features/views/auth/views/splash_screen.dart';
@@ -132,10 +130,34 @@ class AppRouter {
                   return const DrivingLicenseSelection();
                 },
               ),
+
+              // GoRoute(
+              //   path: NavigationConstants.otpScreen,
+              //   builder: (BuildContext context, GoRouterState state) {
+              //     final order = state.extra as OrderDetailModel;
+
+              //     // final map = state.extra as Map<String, dynamic>;
+              //     // final order = map['order'] as OrderDetailModel;
+
+              //     return OtpVerificationScreen(
+              //       order: order,
+              //     );
+              //   },
+              // ),
               GoRoute(
                 path: NavigationConstants.citizenshipCardScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return const CitizenshipSelection();
+                },
+              ),
+
+              GoRoute(
+                path: NavigationConstants.cartonListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final productId = state.extra as int;
+                  return CartonListScreen(
+                    productId: productId,
+                  );
                 },
               ),
               GoRoute(
@@ -256,7 +278,8 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.stockVerificationRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return StockVerificationScreen(storeId: state.extra as String);
+                  return StockVerificationScreen(
+                      storeId: state.extra as String);
                 },
               ),
               GoRoute(
@@ -299,7 +322,9 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return ProductScanScreen(
                     productId: args['productId'] ?? 0,
-                    fromStockVerification: args['fromStockVerification'] ?? false,
+                    fromStockVerification:
+                        args['fromStockVerification'] ?? false,
+                    cartonId: args['cartonId'],
                     fromTransfer: args['forTransfer'] ?? false,
                   );
                 },
@@ -307,7 +332,9 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.cartonScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return CartonScanScreen();
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+
+                  return CartonScanScreen(cartonId: args['cartonId'] as int);
                 },
               ),
               GoRoute(

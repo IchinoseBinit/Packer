@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -8,6 +10,7 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
+import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -33,8 +36,8 @@ class RackScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(context, rackCode == null ? "Assign a rack" : "Scan Rack $rackCode");
+    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+        context, rackCode == null ? "Assign a rack" : "Scan Rack $rackCode");
   }
 
   @override
@@ -82,25 +85,40 @@ class RackScanScreen extends BaseScanScreen {
           if (context.mounted) await controller.start();
         }
       } else if (context.mounted) {
+        debugger();
         showLoading(context);
+
+        final isMainStore =
+            Provider.of<StockVerificationProvider>(context, listen: false)
+                .storeList
+                .any((store) => store.isMainStore);
 
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
                 .updateRack(context, code, productId);
 
         if (context.mounted) removeLoading(context);
-        if (result && context.mounted) {
-           navigateReplacement(
-          context,
-          route: NavigationConstants.productScanScreenRoute,
-          extra: {
-            "forTransfer": true,
-            "productId": productId,
-          },
-        );
-        } else {
-          if (context.mounted) await controller.start();
+
+        if (isMainStore) {
+          navigateReplacement(
+            context,
+            route: NavigationConstants.cartonListScreenRoute,
+            extra: productId,
+          );
         }
+
+        // if (result && context.mounted) {
+        //   navigateReplacement(
+        //     context,
+        //     route: NavigationConstants.productScanScreenRoute,
+        //     extra: {
+        //       "forTransfer": true,
+        //       "productId": productId,
+        //     },
+        //   );
+        // } else {
+        //   if (context.mounted) await controller.start();
+        // }
       }
     } catch (e) {
       if (context.mounted) {
