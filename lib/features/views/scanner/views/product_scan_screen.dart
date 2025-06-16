@@ -1,11 +1,7 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
@@ -14,24 +10,29 @@ import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
+
 import 'base_scan_screen.dart';
 
 class ProductScanScreen extends BaseScanScreen {
   final int productId;
   bool hasScanned = false;
   bool fromStockVerification = false;
+  int? cartonId;
   bool fromTransfer = false;
 
   ProductScanScreen({
     super.key,
     required this.productId,
     this.fromStockVerification = false,
+    this.cartonId,
     this.fromTransfer = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
           showBackButton: true,
-          floatingActionButtonLocation: fromTransfer ? FloatingActionButtonLocation.endFloat : FloatingActionButtonLocation.centerFloat,
+          floatingActionButtonLocation: fromTransfer
+              ? FloatingActionButtonLocation.endFloat
+              : FloatingActionButtonLocation.centerFloat,
         );
 
   @override
@@ -125,13 +126,21 @@ class ProductScanScreen extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       // split code to get product id
-      final prodId = int.tryParse(code.split('-').first) ?? 0;
+      final list = code.split('-');
+      final prodId = int.tryParse(list.first) ?? 0;
       if (prodId != productId) {
         handleInvalidCode(context, controller, code);
         return;
       }
 
       if (fromStockVerification) {
+        if (cartonId != null) {
+          final splittedCartonId = int.tryParse(list[2]) ?? 0;
+          if (splittedCartonId != cartonId) {
+            handleInvalidCode(context, controller, code);
+            return;
+          }
+        }
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
 

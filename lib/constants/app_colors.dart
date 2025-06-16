@@ -8,8 +8,14 @@ class AppColors {
 
   static const Color splashBackgroundColor = Color(0xff630897);
   static const Color splashNewBackgroundColor = Color(0xffF01045);
+  static const homeScreenTopBgColor = Color(0xffFFD2D1);
 
   // blue500
+  static const orderDetailColor = Color(0xffDDEEFF);
+  static const orderDetailFontColor = Color(0xff2A5D9F);
+  static const progressContainerColor = Color(0xffEEF6FB);
+
+  static const productCardBorderColor = Color(0xffD4D4D4);
 
   static const Color blue500 = Color(0xff3F51B5);
   // blue50

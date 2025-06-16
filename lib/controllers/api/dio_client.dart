@@ -199,6 +199,12 @@ class DioClient {
         return navigateAndRemoveAllWithRouter(AppRouter.router,
             route: NavigationConstants.loginRoute);
       }
+      if (ex.response?.statusCode == 403) {
+        // remove token
+        await AuthController().removeTokens();
+        return navigateAndRemoveAllWithRouter(AppRouter.router,
+            route: NavigationConstants.loginRoute);
+      }
       if (ex.error.runtimeType == SocketException ||
           ex.error.runtimeType == HttpException) {
         throw const SocketException(ErrorHandler.errorMessage);

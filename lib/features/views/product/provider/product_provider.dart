@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_urls.dart';
@@ -20,6 +22,8 @@ class ProductProvider extends ChangeNotifier {
   List<String> scannedUnits = [];
 
   List<String> rackList = [];
+
+  int packedCount = 0;
 
   Map<String, List<ProductAvailability>> rackProductMap = {};
 
@@ -286,5 +290,12 @@ class ProductProvider extends ChangeNotifier {
       ErrorHandler.alertDialog(context, ex.toString());
       return false;
     }
+  }
+
+  void incrementPacked() {
+    debugger();
+    log("ssssssssssss");
+    packedCount++;
+    notifyListeners();
   }
 }

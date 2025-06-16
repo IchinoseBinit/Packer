@@ -36,6 +36,7 @@
 //   }
 // }
 
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/enum/order_status_type.dart';
 
@@ -101,7 +102,7 @@ class ProductDetails {
     id = json['id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
     quantity = json['quantity'].toString().toInt();
-    imageUrl = json['product_image'].toString().toStringConversion();
+    imageUrl = AppUrls.imageUrl + json['product_image'].toString().toStringConversion();
     _size = json['size'].toString().toDouble();
     rackName = json['rack'].toString().toStringConversion();
     productCompartment = json['product_compartment'].toString().toString();

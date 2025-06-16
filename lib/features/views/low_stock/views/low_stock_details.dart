@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -15,6 +16,8 @@ import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
+import 'package:packer/features/views/product/model/common_product_model.dart';
+import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -125,27 +128,37 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                 // 8.h
                                 SizedBox(height: 8.h),
                                 if (state.rackProductMap[rackName] != null)
+                                IntrinsicGridView.vertical(
+                                  columnCount: 2,
+                                  verticalSpace: 12.w,
+                                  horizontalSpace: 12.w,
+                                  children: [
                                   ...state.rackProductMap[rackName]!.map(
-                                    (product) => GestureDetector(
+                                    (product) { 
+                                      final width = (1.sw - 12.w - 32.w) / 2;
+                                      return ProductCard(
+                                      width: width,
                                       onTap: () {
                                         if (state.checkScanCount(
                                             product.productId)) {
                                           return;
                                         }
-                                        ErrorHandler.alertDialog(context,
-                                            "Scan Carton First");
+                                        ErrorHandler.alertDialog(
+                                            context, "Scan Carton First");
                                       },
-                                      child: ItemWidget(
-                                        model: product,
-                                        status: state.checkScanCount(
-                                                product.productId)
-                                            ? ItemStatus.done
-                                            : ItemStatus.remaining,
-                                        quantity: state
-                                            .getScanCount(product.productId),
-                                      ),
-                                    ),
+                                      productModel:
+                                          CommonProductModel.fromProductModel(
+                                              product),
+                                      status: state
+                                              .checkScanCount(product.productId)
+                                          ? ItemStatus.done
+                                          : ItemStatus.remaining,
+                                      quantity:
+                                          state.getScanCount(product.productId),
+                                    );},
                                   ),
+                                  ]),
+
                               ],
                             );
                           },

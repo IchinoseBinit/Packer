@@ -10,7 +10,7 @@ class Store {
     required this.id,
     required this.name,
     required this.type,
-  }) : isMainStore = type.toLowerCase() == 'main';
+  }) : isMainStore = type.toLowerCase() == 'main'; 
 
   factory Store.fromJson(Map<String, dynamic> json) {
     return Store(

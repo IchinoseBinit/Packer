@@ -94,7 +94,6 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
                       } else {
                         return ListView.builder(
                           shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: value.lowStockList.length,
                           itemBuilder: (context, index) {
                             return LowStockCard(

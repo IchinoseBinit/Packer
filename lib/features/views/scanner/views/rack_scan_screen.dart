@@ -88,10 +88,10 @@ class RackScanScreen extends BaseScanScreen {
         debugger();
         showLoading(context);
 
-        final isMainStore =
-            Provider.of<StockVerificationProvider>(context, listen: false)
-                .storeList
-                .any((store) => store.isMainStore);
+        // final isMainStore =
+        //     Provider.of<StockVerificationProvider>(context, listen: false)
+        //         .storeList
+        //         .any((store) => store.isMainStore);
 
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
@@ -99,26 +99,26 @@ class RackScanScreen extends BaseScanScreen {
 
         if (context.mounted) removeLoading(context);
 
-        if (isMainStore) {
-          navigateReplacement(
-            context,
-            route: NavigationConstants.cartonListScreenRoute,
-            extra: productId,
-          );
-        }
-
-        // if (result && context.mounted) {
+        // if (isMainStore) {
         //   navigateReplacement(
         //     context,
-        //     route: NavigationConstants.productScanScreenRoute,
-        //     extra: {
-        //       "forTransfer": true,
-        //       "productId": productId,
-        //     },
+        //     route: NavigationConstants.cartonListScreenRoute,
+        //     extra: productId,
         //   );
-        // } else {
-        //   if (context.mounted) await controller.start();
         // }
+
+        if (result && context.mounted) {
+          navigateReplacement(
+            context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              "forTransfer": true,
+              "productId": productId,
+            },
+          );
+        } else {
+          if (context.mounted) await controller.start();
+        }
       }
     } catch (e) {
       if (context.mounted) {

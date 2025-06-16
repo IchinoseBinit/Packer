@@ -4,6 +4,7 @@ class CartonListModel {
   final int id;
   final String uniqueIdentifier;
   final String status;
+  bool isScanned;
   final DateTime createdAt;
 
   CartonListModel({
@@ -11,6 +12,7 @@ class CartonListModel {
     required this.uniqueIdentifier,
     required this.status,
     required this.createdAt,
+    this.isScanned = false,
   });
 
   factory CartonListModel.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,10 @@ class CartonListModel {
       status: json['status'].toString().toStringConversion(),
       createdAt: DateTime.parse(json['created_at']),
     );
+  }
+
+  setIsScanned(bool isScanned) {
+    this.isScanned = isScanned;
   }
 
   Map<String, dynamic> toJson() {

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_constants.dart';
+import 'package:packer/features/views/order/widgets/cart_items_list.dart';
+import 'package:packer/features/views/product/model/common_product_model.dart';
+import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:provider/provider.dart';
@@ -20,9 +24,10 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<StockVerificationProvider>(context, listen: false)
-        .fetchStockItems(widget.storeId);
-        
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<StockVerificationProvider>();
+      provider.fetchStockItems(widget.storeId);
+    });
   }
 
   @override
@@ -102,28 +107,45 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
                         ])),
                         SizedBox(height: 8.h),
                         if (provider.rackProductMap[rackName] != null)
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: provider.rackProductMap[rackName]!.length,
-                            separatorBuilder: (context, index) {
-                              return SizedBox(height: 8.h);
-                            },
-                            itemBuilder: (context, index) {
-                              final item =
-                                  provider.rackProductMap[rackName]![index];
-                              return InkWell(
-                                onTap: () {
-                                  Provider.of<StockVerificationProvider>(
-                                          context,
-                                          listen: false)
-                                      .onItemTap(context, item);
-                                },
-                                child: StockItemWidget(
-                                  cartItem: item,
-                                ),
-                              );
-                            },
+                          IntrinsicGridView.vertical(
+                            columnCount: 2,
+                            verticalSpace: 6.w,
+                            horizontalSpace: 6.w,
+                            children: List.generate(
+                              provider.rackProductMap[rackName]!.length,
+                              (index) {
+                                final item =
+                                    provider.rackProductMap[rackName]![index];
+                                    final width = (1.sw - 12.w- 32.w) /2;
+                                return ProductCard(
+                                  productModel: CommonProductModel.fromStockItemModel(item),
+                                  status: ItemStatus.remaining,
+                                  width: width,
+                                  onTap: () {
+                                     Provider.of<StockVerificationProvider>(
+                                            context,
+                                            listen: false)
+                                        .onItemTap(context, item);
+                                  },
+                                );
+                              },
+                            ),
+                            // itemBuilder: (context, index) {
+                            //   final item =
+                            //       provider.rackProductMap[rackName]![index];
+                            //   return InkWell(
+                            //     onTap: () {
+                            //       Provider.of<StockVerificationProvider>(
+                            //               context,
+                            //               listen: false)
+                            //           .onItemTap(context, item);
+                            //     },
+                            //     child: ProductCard(
+                            //       productModel: CommonProductModel.fromStockItemModel(item),
+                            //       status: ItemStatus.remaining,
+                            //     ),
+                            //   );
+                            // },
                           ),
 
                         // 8.h
