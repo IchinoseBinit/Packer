@@ -20,8 +20,10 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<StockVerificationProvider>(context, listen: false)
-        .fetchStockItems(widget.storeId);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<StockVerificationProvider>();
+      provider.fetchStockItems(widget.storeId);
+    });
   }
 
   @override
@@ -104,7 +106,8 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
                           ListView.separated(
                             shrinkWrap: true,
                             physics: NeverScrollableScrollPhysics(),
-                            itemCount: provider.rackProductMap[rackName]!.length,
+                            itemCount:
+                                provider.rackProductMap[rackName]!.length,
                             separatorBuilder: (context, index) {
                               return SizedBox(height: 8.h);
                             },

@@ -71,9 +71,9 @@ class StockVerificationProvider extends ChangeNotifier {
   // fetch
   Future<void> fetchStockItems(String storeId) async {
     try {
-      isLoading = true;
       rackList.clear();
       rackProductMap.clear();
+      isLoading = true;
       notifyListeners();
       await Future.delayed(const Duration(seconds: 0));
 
