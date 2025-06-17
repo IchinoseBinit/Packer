@@ -350,6 +350,7 @@ class _ProductCardState extends State<ProductCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
+                          height: 26.h,
                           child: Text(
                             widget.productModel.productName,
                             maxLines: 2,
@@ -409,7 +410,7 @@ class _ProductCardState extends State<ProductCard> {
                         height: 30.h,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4.h),
-                          color: AppColors.cartTextColor,
+                          color: AppColors.primaryColor,
                         ),
                         alignment: Alignment.center,
                         child: Text(

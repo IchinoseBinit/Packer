@@ -119,6 +119,8 @@ class AppUrls {
   // carton_info/<str:carton_identifier>/
   static String cartonInfoUrl = "$_baseUrl/carton_info/:id/";
   static String cartonListUrl = "$_baseUrl/cartons/product_id";
+  // carton-detail/<int:carton_id>/
+  static String cartonDetailUrl = "$_baseUrl/carton-detail/:id/";
 
   static String verifyCartonUrl = "$_baseUrl/packer/verify-carton/";
 
@@ -129,6 +131,8 @@ class AppUrls {
   static String getStoreUrl = "$_baseUrl/stores/";
   static String getStockItemsUrl = "$_baseUrl/stores/products/?store_id=value";
   static String stockVerificationUrl = "$_baseUrl/stores/stock-verifications/";
+  // singleUnitVerificationUrl
+  static String singleUnitVerificationUrl = "$_baseUrl/single-unit-verification/";
 
   // /product-availability-by-unit
   static String productAvailabilityUrl = "$_baseUrl/product-availabilities/";

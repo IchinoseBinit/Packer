@@ -14,6 +14,7 @@ class ShowAlertDialog {
       this.cancelTitle,
       this.isDoublePop = false,
       this.disableBackground = false,
+      this.canDismiss = false,
       this.cancelBtnColor,
       this.okBtnColor});
 
@@ -30,6 +31,7 @@ class ShowAlertDialog {
   bool disableBackground;
   VoidCallback? cancelFunc;
   VoidCallback? okFunc;
+  bool canDismiss;
 
   Future<bool?> showAlertDialog(BuildContext context) async {
     Widget okButton = TextButton(
@@ -98,7 +100,7 @@ class ShowAlertDialog {
       barrierDismissible: !disableBackground,
       builder: (BuildContext context) {
         return PopScope(
-          canPop: true,
+          canPop: canDismiss,
           child: alert,
         );
       },
