@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +17,7 @@ class PackingProgressWidget extends StatefulWidget {
 class _PackingProgressWidgetState extends State<PackingProgressWidget> {
   @override
   Widget build(BuildContext context) {
-    final packedItems = context.watch<ProductProvider>().packedCount;
+    final packedItems = context.watch<OrderProvider>().packedCount;
     final progress =
         widget.totalItems > 0 ? packedItems / widget.totalItems : 0.0;
 

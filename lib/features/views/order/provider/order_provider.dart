@@ -33,6 +33,8 @@ class OrderProvider extends ChangeNotifier {
   CompletedOrderDetails? completedOrderDetails;
   WeeklySummary? weeklySummary;
   bool _isAvailable = false;
+  int packedCount = 0;
+  final Set<int> _alreadyIncremented = {};
 
   DailySummary? dailySummary;
   String? _error;
@@ -97,7 +99,7 @@ class OrderProvider extends ChangeNotifier {
     basketDataList.clear();
     scannedDataPerBasket.clear();
     scannedDataList.clear();
-    rackProductData.clear();  
+    rackProductData.clear();
     rackList.clear();
   }
 
@@ -126,7 +128,6 @@ class OrderProvider extends ChangeNotifier {
     return scannedLength;
   }
 
-
   // UPDATED
   String scanProductMessage(int productId) {
     log("Message Product Id: $productId");
@@ -149,6 +150,10 @@ class OrderProvider extends ChangeNotifier {
         updateProductList(code);
         if (countScannedItem(cartItemId) == element.quantity) {
           showToast("Item scanned successfully");
+
+          //aaaaa
+          incrementPackedOnce(element.id);
+
           notifyListeners();
           return true;
         } else {
@@ -280,7 +285,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> productPost(BuildContext context, int orderId ) async {
+  Future<bool> productPost(BuildContext context, int orderId) async {
     List<Basket> baskets = basketDataList.map((identifier) {
       return Basket(
         identifier: identifier,
@@ -321,8 +326,6 @@ class OrderProvider extends ChangeNotifier {
       return false;
     }
   }
-
- 
 
   Future fetchUnsettledOrders() async {
     try {
@@ -461,5 +464,15 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  
+  void incrementPackedOnce(int productId) {
+    if (_alreadyIncremented.contains(productId)) return;
+
+    _alreadyIncremented.add(productId);
+    packedCount++;
+    notifyListeners();
+  }
+
+  void resetPackedTracking() {
+    _alreadyIncremented.clear();
+  }
 }

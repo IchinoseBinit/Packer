@@ -33,8 +33,7 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProductProvider>(context, listen: false)
-          .resetPackedTracking();
+      Provider.of<OrderProvider>(context, listen: false).resetPackedTracking();
     });
   }
 

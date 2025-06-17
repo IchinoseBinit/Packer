@@ -17,7 +17,8 @@ abstract class BaseScanScreen extends StatefulWidget {
     required this.scanTitle,
     this.showFlash = true,
     this.showBackButton = true,
-    this.floatingActionButtonLocation = FloatingActionButtonLocation.centerFloat,
+    this.floatingActionButtonLocation =
+        FloatingActionButtonLocation.centerFloat,
   });
 
   // also add onscreen created
@@ -30,8 +31,8 @@ abstract class BaseScanScreen extends StatefulWidget {
       BuildContext context, String code, MobileScannerController controller);
   void onDispose(MobileScannerController controller);
 
-  Widget? buildFloatingButton(BuildContext context,
-      MobileScannerController controller);
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller);
 }
 
 class _BaseScanScreenState extends State<BaseScanScreen> {
@@ -51,7 +52,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
   void _onControllerChanged() {
     // if start then has Scanned false
     if (controller!.value.isRunning) {
-        hasScanned = false;
+      hasScanned = false;
     }
   }
 

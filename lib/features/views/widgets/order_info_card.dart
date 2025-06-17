@@ -49,7 +49,7 @@ class _OrderInfoCardState extends State<OrderInfoCard> {
                             padding: EdgeInsets.symmetric(
                                 horizontal: 6.w, vertical: 2.h),
                             decoration: BoxDecoration(
-                              color: AppColors.orderDetailColor,
+                              color: AppColors.green700,
                               borderRadius: BorderRadius.circular(4.h),
                             ),
                             child: Text(
@@ -60,7 +60,7 @@ class _OrderInfoCardState extends State<OrderInfoCard> {
                                   ?.copyWith(
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.w400,
-                                    color: AppColors.orderDetailFontColor,
+                                    color: Colors.black,
                                   ),
                             ),
                           )
