@@ -39,7 +39,8 @@ class CartonListScreen extends StatelessWidget {
 
           return Padding(
             padding: AppConstants.padding,
-            child: Consumer<StockVerificationProvider>(builder: (context, value, child) {
+            child: Consumer<StockVerificationProvider>(
+                builder: (context, value, child) {
               if (value.cartonList.isEmpty) {
                 return Column(
                   children: [
@@ -69,53 +70,73 @@ class CartonListScreen extends StatelessWidget {
                   await Provider.of<StockProvider>(context, listen: false)
                       .fetchCartonList(context, productId);
                 },
-                child: ListView.separated(
-                  separatorBuilder: (context, index) => SizedBox(
-                    height: 8.h,
-                  ),
-                  itemCount: value.cartonList.length,
-                  itemBuilder: (context, index) {
-                    final carton = value.cartonList[index];
-                    return InkWell(
-                      onTap: () {
-                        Provider.of<StockVerificationProvider>(context,
-                                listen: false)
-                            .setSelectedCarton(carton);
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView.separated(
+                        separatorBuilder: (context, index) => SizedBox(
+                          height: 8.h,
+                        ),
+                        itemCount: value.cartonList.length,
+                        itemBuilder: (context, index) {
+                          final carton = value.cartonList[index];
+                          return InkWell(
+                            onTap: () {
+                              Provider.of<StockVerificationProvider>(context,
+                                      listen: false)
+                                  .setSelectedCarton(carton);
 
-                        navigate(context,
-                            route: NavigationConstants.cartonScanScreenRoute,
-                            extra: {
-                              'cartonId': carton.id,
-                              'fromVerification': true,
-                            });
-                      },
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                              color: primaryColor.withOpacity(0.4), width: 1),
-                        ),
-                        child: ListTile(
-                          title: Text(carton.uniqueIdentifier,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                          subtitle: Text('ID: ${carton.id}'),
-                          trailing: Text(
-                            carton.isScanned ? 'Scanned' : 'Not Scanned',
-                            style: TextStyle(
-                              color:
-                                  carton.isScanned ? Colors.green : Colors.red,
+                              navigate(context,
+                                  route:
+                                      NavigationConstants.cartonScanScreenRoute,
+                                  extra: {
+                                    'cartonId': carton.id,
+                                    'fromVerification': true,
+                                    'code': carton.uniqueIdentifier,
+                                  });
+                            },
+                            child: Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                    color: primaryColor.withOpacity(0.4),
+                                    width: 1),
+                              ),
+                              child: ListTile(
+                                title: Text(carton.uniqueIdentifier,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.copyWith(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w600,
+                                        )),
+                                subtitle: Text('ID: ${carton.id}'),
+                                trailing: Text(
+                                  carton.isScanned ? 'Scanned' : 'Not Scanned',
+                                  style: TextStyle(
+                                    color: carton.isScanned
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    GeneralElevatedButton(
+                        title: "Scan Carton",
+                        onPressed: () {
+                          navigate(context,
+                              route: NavigationConstants.cartonScanScreenRoute,
+                              extra: {
+                                'cartonId': 0,
+                                'fromVerification': true,
+                              });
+                        }),
+                  ],
                 ),
               );
             }),

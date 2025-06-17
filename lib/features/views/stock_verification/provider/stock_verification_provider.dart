@@ -40,6 +40,7 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   void setSelectedCarton(CartonListModel carton) {
+    scannedUnits.clear();
     selectedCarton = carton;
   }
 
@@ -276,34 +277,29 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   // onScanCarton
-  bool onScanCarton(BuildContext context, String code, {int? cartonId}) {
-    // scannedUnits.clear();
-    // if (cartonId != null) {
-    //   // Find the carton by ID
-    //   final carton = cartonList.firstWhereOrNull(
-    //     (carton) => carton.id == cartonId,
-    //   );
+  bool onScanCarton(BuildContext context, String code, {String? cartonCode}) {
+    if (cartonCode == null) {
+      // Find the carton by ID
+      final carton = cartonList.firstWhereOrNull(
+        (carton) => carton.uniqueIdentifier == code,
+      );
 
-    //   // Check if the carton exists and the code matches the unique identifier
-    //   if (carton != null &&
-    //       carton.uniqueIdentifier.toLowerCase().contains(code.toLowerCase())) {
-    //     // Proceed with your logic
-    //     selectedCarton = carton;
-    //     navigateReplacement(context,
-    //         route: NavigationConstants.productScanScreenRoute,
-    //         extra: {
-    //           "productId": selectedStockItem!.productId,
-    //           "productUnits": selectedStockItem!.productUnits,
-    //           "fromStockVerification": true,
-    //           'cartonId': selectedCarton!.id,
-    //         });
-    //     return true;
-    //   } else {
-    //     return false;
-    //   }
-    // }
-
-    if (selectedCarton != null) {
+      // Check if the carton exists and the code matches the unique identifier
+      if (carton != null) {
+        setSelectedCarton(carton);
+        navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              "productId": selectedStockItem!.productId,
+              "productUnits": selectedStockItem!.productUnits,
+              "fromStockVerification": true,
+              'cartonId': selectedCarton!.id,
+            });
+        return true;
+      } else {
+        return false;
+      }
+    } else if (selectedCarton != null) {
       if (selectedCarton!.uniqueIdentifier
           .toLowerCase()
           .contains(code.toLowerCase())) {
