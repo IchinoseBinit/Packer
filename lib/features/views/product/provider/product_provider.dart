@@ -24,6 +24,7 @@ class ProductProvider extends ChangeNotifier {
   List<String> rackList = [];
 
   int packedCount = 0;
+  final Set<int> _alreadyIncremented = {};
 
   Map<String, List<ProductAvailability>> rackProductMap = {};
 
@@ -292,10 +293,15 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  void incrementPacked() {
-    debugger();
-    log("ssssssssssss");
+  void incrementPackedOnce(int productId) {
+    if (_alreadyIncremented.contains(productId)) return;
+
+    _alreadyIncremented.add(productId);
     packedCount++;
     notifyListeners();
+  }
+
+  void resetPackedTracking() {
+    _alreadyIncremented.clear();
   }
 }

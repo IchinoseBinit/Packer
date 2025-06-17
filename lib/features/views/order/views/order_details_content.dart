@@ -30,11 +30,18 @@ class OrderDetailsContent extends StatefulWidget {
 
 class _OrderDetailsContentState extends State<OrderDetailsContent> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProductProvider>(context, listen: false)
+          .resetPackedTracking();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
     final status = widget.order.data.status;
-    final packedItems =
-        Provider.of<ProductProvider>(context, listen: true).packedCount;
 
     return Padding(
       padding: AppConstants.padding,
@@ -46,7 +53,6 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
             height: 8.h,
           ),
           PackingProgressWidget(
-            packedItems: packedItems,
             totalItems: widget.order.data.count,
           ),
           Padding(

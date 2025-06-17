@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/product/provider/product_provider.dart';
+import 'package:provider/provider.dart';
 
-class PackingProgressWidget extends StatelessWidget {
-  final int packedItems;
+class PackingProgressWidget extends StatefulWidget {
   final int totalItems;
 
-  const PackingProgressWidget(
-      {super.key, required this.packedItems, required this.totalItems});
+  const PackingProgressWidget({super.key, required this.totalItems});
 
   @override
+  State<PackingProgressWidget> createState() => _PackingProgressWidgetState();
+}
+
+class _PackingProgressWidgetState extends State<PackingProgressWidget> {
+  @override
   Widget build(BuildContext context) {
-    double progress = packedItems / totalItems;
+    final packedItems = context.watch<ProductProvider>().packedCount;
+    final progress =
+        widget.totalItems > 0 ? packedItems / widget.totalItems : 0.0;
 
     return Container(
       padding: EdgeInsets.all(12),
@@ -34,7 +41,7 @@ class PackingProgressWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                "$packedItems of $totalItems",
+                "$packedItems of ${widget.totalItems}",
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14.sp,
@@ -66,6 +73,8 @@ class PackingProgressWidget extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
             ),
           ),
+
+          /// Percentage Text
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(

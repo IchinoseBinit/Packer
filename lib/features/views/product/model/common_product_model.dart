@@ -1,7 +1,4 @@
-import 'dart:developer';
-
 import 'package:packer/features/views/low_stock/model/product_model.dart';
-import 'package:packer/features/views/order/models/cart_item.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/product/model/product_avaliability.dart';
@@ -102,9 +99,5 @@ class CommonProductModel {
     productUnits = stockItemModel.productUnits;
     scannedCount = 0;
     productCompartment = "";
-  }
-
-  bool isPacked(int totalQty, int scannedQty) {
-    return scannedQty >= totalQty;
   }
 }
