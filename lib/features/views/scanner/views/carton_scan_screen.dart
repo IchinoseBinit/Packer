@@ -71,7 +71,7 @@ class CartonScanScreen extends BaseScanScreen {
           code.toLowerCase() == cartonCode!.toLowerCase()) {
         result = await Provider.of<StockVerificationProvider>(context, listen: false)
             .singleVerification(context, cartonId, tag!);
-        back = true;
+
       } else if (!fromVerification && context.mounted) {
         result = await Provider.of<StockProvider>(context, listen: false)
             .onScanCarton(context, code, cartonId: cartonId);
@@ -85,9 +85,9 @@ class CartonScanScreen extends BaseScanScreen {
       } else if (context.mounted) {
         removeLoading(context);
         // Optionally navigate back or show success message
-        if (back) {
-          navigatePop(context, true);
-        }
+        // if (back) {
+        //   navigatePop(context, true);
+        // }
       }
     } catch (e) {
       if (context.mounted) {

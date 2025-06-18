@@ -80,7 +80,7 @@ class ProductScanScreen extends BaseScanScreen {
           final shouldContinue = await ShowAlertDialog(
             body: Text(
               "Are you sure you want to complete verification?\n"
-              "Scanned Units: $scanned\nTotal Units: $total",
+              "Scanned Units: $scanned\nTotal Units: ${provider.selectedCarton?.productQuantity}",
             ),
             needCancel: true,
             disableBackground: true,
@@ -193,11 +193,12 @@ class ProductScanScreen extends BaseScanScreen {
       disableBackground: false,
       body: Text("Invalid product for this carton"),
       okTitle: 'Scan the carton',
-      okFunc: () {
+      okFunc: () async {
         Navigator.pop(context);
-        controller.start();
-        Provider.of<StockVerificationProvider>(context, listen: false)
+        await Provider.of<StockVerificationProvider>(context, listen: false)
             .getCartonInfo(context, cartonId, tag);
+
+       
       },
     ).showAlertDialog(context);
     hasScanned = false;
@@ -210,7 +211,7 @@ class ProductScanScreen extends BaseScanScreen {
       disableBackground: true,
       body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
-        Navigator.pop(context);
+        navigatePop(context);
         controller.start();
       },
     ).showAlertDialog(context);

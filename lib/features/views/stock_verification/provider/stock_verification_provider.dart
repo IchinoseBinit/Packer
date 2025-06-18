@@ -9,6 +9,7 @@ import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -153,7 +154,7 @@ class StockVerificationProvider extends ChangeNotifier {
       );
       if (context.mounted) {
         if (response.statusCode == 200) {
-          await navigate(context,
+          await navigateReplacement(context,
               route: NavigationConstants.cartonScanScreenRoute,
               extra: {
                 'cartonId': id,
@@ -180,6 +181,17 @@ class StockVerificationProvider extends ChangeNotifier {
   Future<bool> singleVerification(
       BuildContext context, int id, String tag) async {
     final url = AppUrls.singleUnitVerificationUrl;
+    if (checkCartonExist(id)) {
+      getMessage(context, selectedStockItem!.productId);
+      await navigateReplacement(context,
+          route: NavigationConstants.productScanScreenRoute,
+          extra: {
+            "productId": selectedStockItem!.productId,
+            "productUnits": selectedStockItem!.productUnits,
+            "fromStockVerification": true,
+          });
+      return true;
+    }
 
     try {
       final response = await DioClient().request(
@@ -192,7 +204,16 @@ class StockVerificationProvider extends ChangeNotifier {
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
+        showToast("Verification successful");
         getMessage(context, selectedStockItem!.productId);
+        await navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              "productId": selectedStockItem!.productId,
+              "productUnits": selectedStockItem!.productUnits,
+              "fromStockVerification": true,
+            });
+
         return true;
       } else {
         return false;
@@ -387,6 +408,10 @@ class StockVerificationProvider extends ChangeNotifier {
     if (selectedCarton != null) removeStockItem(selectedStockItem!);
     selectedCarton = null;
     notifyListeners();
+  }
+
+  bool checkCartonExist(int cartonId) {
+    return cartonList.any((carton) => carton.id == cartonId);
   }
 
   void removeStockItem(StockItemModel item) {

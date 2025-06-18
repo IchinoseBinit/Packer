@@ -6,12 +6,14 @@ class CartonListModel {
   final String status;
   bool isScanned;
   final DateTime createdAt;
+  final int productQuantity;
 
   CartonListModel({
     required this.id,
     required this.uniqueIdentifier,
     required this.status,
     required this.createdAt,
+    required this.productQuantity,
     this.isScanned = false,
   });
 
@@ -22,6 +24,7 @@ class CartonListModel {
           json['unique_identifier'].toString().toStringConversion(),
       status: json['status'].toString().toStringConversion(),
       createdAt: DateTime.parse(json['created_at']),
+      productQuantity: json['product_quantity'].toString().toInt(),
     );
   }
 
@@ -35,6 +38,7 @@ class CartonListModel {
       'unique_identifier': uniqueIdentifier,
       'status': status,
       'created_at': createdAt.toIso8601String(),
+      'product_quantity': productQuantity,
     };
   }
 }
