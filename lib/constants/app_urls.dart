@@ -121,6 +121,7 @@ class AppUrls {
   static String cartonListUrl = "$_baseUrl/cartons/product_id";
   // carton-detail/<int:carton_id>/
   static String cartonDetailUrl = "$_baseUrl/carton-detail/:id/";
+  static String cartonByIdentifierUrl = "$_baseUrl/carton-by-identifier/:identifier/";
 
   static String verifyCartonUrl = "$_baseUrl/packer/verify-carton/";
 

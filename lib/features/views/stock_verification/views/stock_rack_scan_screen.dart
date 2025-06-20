@@ -1,6 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:mobile_scanner/src/mobile_scanner_controller.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -12,17 +13,20 @@ import 'package:provider/provider.dart';
 
 class StockRackScanScreen extends BaseScanScreen {
   final bool changeRack;
-  StockRackScanScreen({super.scanTitle = 'Rack Scanner', this.changeRack = false});
+  StockRackScanScreen(
+      {super.scanTitle = 'Rack Scanner', this.changeRack = false});
 
   bool hasScanned = false;
 
   @override
-  Widget? buildFloatingButton(BuildContext context, MobileScannerController controller) {
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
     return const SizedBox.shrink();
   }
 
   @override
-  Future<void> onCodeDetected(BuildContext context, String code, MobileScannerController controller) async {
+  Future<void> onCodeDetected(BuildContext context, String code,
+      MobileScannerController controller) async {
     if (hasScanned) return;
     hasScanned = true;
 
@@ -35,25 +39,26 @@ class StockRackScanScreen extends BaseScanScreen {
         return;
       }
 
-      if (changeRack){
-        final result = Provider.of<StockVerificationProvider>(context, listen: false).onRackChangeScan(context, code);
+      if (changeRack) {
+        final result =
+            Provider.of<StockVerificationProvider>(context, listen: false)
+                .onRackChangeScan(context, code);
         if (!result && context.mounted) {
           handleInvalidCode(context, controller, code);
         }
-      }else{
-        final result = Provider.of<StockVerificationProvider>(context, listen: false).onRackScan(context, code);
+      } else {
+        final result =
+            Provider.of<StockVerificationProvider>(context, listen: false)
+                .onRackScan(context, code);
         if (!result && context.mounted) {
           handleInvalidCode(context, controller, code);
         }
       }
-
-      
     } catch (e) {
-      
-    }finally {
+      log(e.toString());
+    } finally {
       hasScanned = false;
     }
-    
   }
 
   void handleInvalidCode(
@@ -77,9 +82,7 @@ class StockRackScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
-        context, changeRack ? "Change Rack" : "Scan Rack code");
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, changeRack ? "Change Rack" : "Scan Rack code");
   }
-
-
 }

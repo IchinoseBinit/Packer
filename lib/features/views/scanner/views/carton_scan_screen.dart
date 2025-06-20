@@ -3,26 +3,30 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 import 'base_scan_screen.dart';
 
 class CartonScanScreen extends BaseScanScreen {
-  final int cartonId;
+  final int? cartonId;
   final bool fromVerification;
+  final bool isMainStoreAudit;
   final String? cartonCode;
   final String? tag;
   CartonScanScreen({
     super.key,
-    required this.cartonId,
+    this.cartonId,
     this.fromVerification = false,
+    this.isMainStoreAudit = false,
     this.cartonCode,
     this.tag,
   }) : super(
@@ -42,7 +46,20 @@ class CartonScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    return const SizedBox.shrink();
+    if (isMainStoreAudit) {
+      return GeneralElevatedButton(
+        marginH: 16,
+        title: 'Change Rack',
+        onPressed: () {
+          navigateReplacement(context,
+              route: NavigationConstants.stockRackScanScreenRoute,
+              extra: {
+                'changeRack': false,
+              });
+        },
+      );
+    }
+    return SizedBox.shrink();
   }
 
   @override
@@ -67,17 +84,31 @@ class CartonScanScreen extends BaseScanScreen {
 
       bool result = false;
       bool back = false;
-      if (!fromVerification && cartonCode != null &&
-          code.toLowerCase() == cartonCode!.toLowerCase()) {
-        result = await Provider.of<StockVerificationProvider>(context, listen: false)
-            .singleVerification(context, cartonId, tag!);
 
+      if (isMainStoreAudit) {
+        await Provider.of<StockVerificationProvider>(context, listen: false)
+            .onScanCarton(context, code);
+        removeLoading(context);
+        navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              'fromStockVerification': true,
+            });
+        return;
+      } else if (!fromVerification &&
+          cartonCode != null &&
+          code.toLowerCase() == cartonCode!.toLowerCase()) {
+        result =
+            await Provider.of<StockVerificationProvider>(context, listen: false)
+                .singleVerification(context, cartonId!, tag!);
       } else if (!fromVerification && context.mounted) {
         result = await Provider.of<StockProvider>(context, listen: false)
             .onScanCarton(context, code, cartonId: cartonId);
       } else if (fromVerification && context.mounted) {
-        result = Provider.of<StockVerificationProvider>(context, listen: false)
+        await Provider.of<StockVerificationProvider>(context, listen: false)
             .onScanCarton(context, code, cartonCode: cartonCode);
+        removeLoading(context);
+        return;
       }
 
       if (!result && context.mounted) {
@@ -90,6 +121,7 @@ class CartonScanScreen extends BaseScanScreen {
         // }
       }
     } catch (e) {
+      debugger();
       if (context.mounted) {
         handleInvalidCode(context, controller, code, e.toString());
       }
@@ -99,11 +131,12 @@ class CartonScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code, [String? message]) {
+      BuildContext context, MobileScannerController controller, String code,
+      [String? message]) {
     removeLoading(context);
     ShowAlertDialog(
       disableBackground: true,
-      body: Text(message ??  "Invalid QR ${detectQrMessage(code)}"),
+      body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () async {
         navigatePop(context);
         await controller.start();

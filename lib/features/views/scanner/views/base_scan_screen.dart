@@ -44,9 +44,11 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
-    controller?.start();
-    widget.onScreenCreated(context);
-    controller!.addListener(_onControllerChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller?.start();
+      widget.onScreenCreated(context);
+      controller!.addListener(_onControllerChanged);
+    });
   }
 
   void _onControllerChanged() {

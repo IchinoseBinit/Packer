@@ -339,8 +339,9 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
 
                   return CartonScanScreen(
-                    cartonId: args['cartonId'] as int,
+                    cartonId: args['cartonId'] as int?,
                     fromVerification: args['fromVerification'] ?? false,
+                    isMainStoreAudit: args['isMainStoreAudit'] ?? false,
                     cartonCode: args['code'],
                     tag: args['tag'],
                   );

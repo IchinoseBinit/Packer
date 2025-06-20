@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -42,7 +45,7 @@ class ProductScanScreen extends BaseScanScreen {
   void onScreenCreated(BuildContext context) {
     if (fromStockVerification) {
       Provider.of<StockVerificationProvider>(context, listen: false)
-          .getMessage(context, productId);
+          .getMessage(context);
     } else if (!fromTransfer) {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, "Scan Product Code");
@@ -69,77 +72,71 @@ class ProductScanScreen extends BaseScanScreen {
     }
     final provider = Provider.of<StockVerificationProvider>(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GeneralElevatedButton(
-          marginH: 16,
-          onPressed: () async {
-            controller.stop();
-            final scanned = provider.scannedUnits.length;
+    if (provider.scannedUnits.isEmpty) {
+      return GeneralElevatedButton(
+        marginH: 16,
+        title: 'Change Rack',
+        onPressed: () {
+          navigateReplacement(context,
+              route: NavigationConstants.stockRackScanScreenRoute,
+              extra: {
+                'changeRack': false,
+              });
+        },
+      );
+    } else {
+      return GeneralElevatedButton(
+        marginH: 16,
+        onPressed: () async {
+          controller.stop();
+          final scanned = provider.scannedUnits.length;
 
-            if (scanned == 0) {
-              return;
-            }
+          if (scanned == 0) {
+            return;
+          }
 
-            // Show confirmation dialog
-            final shouldContinue = await ShowAlertDialog(
-              body: Text(
-                "Are you sure you want to complete verification?\n"
-                "Scanned Units: $scanned",
-              ),
-              needCancel: true,
+          // Show confirmation dialog
+          final shouldContinue = await ShowAlertDialog(
+            body: Text(
+              "Are you sure you want to complete verification?\n"
+              "Scanned Units: $scanned",
+            ),
+            needCancel: true,
+            disableBackground: true,
+            okFunc: () => Navigator.pop(context, true),
+            cancelFunc: () {
+              controller.start();
+              Navigator.pop(context, false);
+            },
+          ).showAlertDialog(context);
+
+          if (shouldContinue != true) return;
+          if (!context.mounted) return;
+          showLoading(context);
+          final result = await provider.onVerify();
+          if (!context.mounted) return;
+
+          removeLoading(context);
+
+          if (!context.mounted) return;
+          if (result['success'] == false) {
+            ShowAlertDialog(
               disableBackground: true,
-              okFunc: () => Navigator.pop(context, true),
-              cancelFunc: () {
+              body: Text(result['message']),
+              okFunc: () {
+                Navigator.pop(context);
                 controller.start();
-                Navigator.pop(context, false);
               },
             ).showAlertDialog(context);
-
-            if (shouldContinue != true) return;
-            if (!context.mounted) return;
-            showLoading(context);
-            final result = await provider.onVerify();
-            if (!context.mounted) return;
-
-            removeLoading(context);
-
-            if (!context.mounted) return;
-            if (result['success'] == false) {
-              ShowAlertDialog(
-                disableBackground: true,
-                body: Text(result['message']),
-                okFunc: () {
-                  Navigator.pop(context);
-                  controller.start();
-                },
-              ).showAlertDialog(context);
-            } else {
-              controller.start();
-              Provider.of<ScanMessageProvider>(context, listen: false)
-                  .setMessage(context, "Scan Product Code");
-            }
-          },
-          title: "Complete Verification",
-        ),
-        if (provider.scannedUnits.isEmpty) ...[
-          // 12.h
-          SizedBox(height: 12.h),
-          GeneralElevatedButton(
-            marginH: 16,
-            title: 'Change Rack',
-            onPressed: () {
-              navigateReplacement(context,
-                  route: NavigationConstants.stockRackScanScreenRoute,
-                  extra: {
-                    'changeRack': false,
-                  });
-            },
-          ),
-        ]
-      ],
-    );
+          } else {
+            controller.start();
+            Provider.of<ScanMessageProvider>(context, listen: false)
+                .setMessage(context, "Scan Product Code");
+          }
+        },
+        title: "Complete Verification",
+      );
+    }
   }
 
   @override
@@ -165,16 +162,19 @@ class ProductScanScreen extends BaseScanScreen {
       if (fromStockVerification) {
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
-        if (provider.cartonId != 0 && (provider.selectedStore?.isMainStore ?? false)) {
-          final splittedCartonId = int.tryParse(code.split('-')[2]) ?? 0;
+        if (provider.cartonId != "0" &&
+            (provider.selectedStore?.isMainStore ?? false)) {
+          final splittedCartonId = code.split('-')[2];
           if (splittedCartonId != provider.cartonId) {
-            handleInvalidCarton(context, controller, splittedCartonId, code);
+            handleInvalidCarton(
+                context, controller, splittedCartonId.toInt(), code);
             return;
           }
         }
 
         if (provider.scannedUnits.contains(code)) {
-          handleInvalidCode(context, controller, "Already Scanned Product");
+          handleInvalidCode(
+              context, controller, code, "Already Scanned Product");
           return;
         }
 

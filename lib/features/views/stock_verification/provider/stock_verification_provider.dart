@@ -113,7 +113,7 @@ class StockVerificationProvider extends ChangeNotifier {
     }
   }
 
-  void getMessage(BuildContext context, int productId) {
+  void getMessage(BuildContext context) {
     var message = "Scan Product Code";
     if (scannedUnits.isNotEmpty) {
       message += " Scanned ${scannedUnits.length} units";
@@ -158,11 +158,21 @@ class StockVerificationProvider extends ChangeNotifier {
     try {
       scannedRackCode = code;
       scannedUnits.clear();
-      navigateReplacement(context,
-          route: NavigationConstants.productScanScreenRoute,
-          extra: {
-            'fromStockVerification': true,
-          });
+
+
+      if (selectedStore?.isMainStore ?? false) {
+        navigateReplacement(context,
+            route: NavigationConstants.cartonScanScreenRoute,
+            extra: {
+              'isMainStoreAudit': true,
+            });
+      } else {
+        navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              'fromStockVerification': true,
+            });
+      }
       return true;
     } catch (e) {
       return false;
@@ -220,6 +230,32 @@ class StockVerificationProvider extends ChangeNotifier {
     return "";
   }
 
+  Future<int> getCartonId(BuildContext context, String identifier) async {
+    try {
+      final url = AppUrls.cartonByIdentifierUrl
+          .replaceFirst(':identifier', identifier.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+      if (context.mounted) {
+        if (response.statusCode == 200) {
+          return response.data['id'].toString().toInt();
+        } else {
+          if (context.mounted) {
+            ErrorHandler.alertDialog(context, 'Failed to get carton info');
+          }
+          return 0;
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ErrorHandler.alertDialog(context, e.toString());
+      }
+    }
+    return 0;
+  }
 
   Future<void> getCartonInfo(BuildContext context, int id, String tag) async {
     try {
@@ -259,7 +295,7 @@ class StockVerificationProvider extends ChangeNotifier {
       BuildContext context, int id, String tag) async {
     final url = AppUrls.singleUnitVerificationUrl;
     if (checkCartonExist(id)) {
-      getMessage(context, selectedStockItem!.productId);
+      getMessage(context);
       await navigateReplacement(context,
           route: NavigationConstants.productScanScreenRoute,
           extra: {
@@ -278,16 +314,15 @@ class StockVerificationProvider extends ChangeNotifier {
           "carton_id": id,
           "product_unit": tag,
           "store_id": selectedStore?.id,
+          "rack_id": scannedRackCode,
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         showToast("Verification successful");
-        getMessage(context, selectedStockItem!.productId);
+        getMessage(context);
         await navigateReplacement(context,
             route: NavigationConstants.productScanScreenRoute,
             extra: {
-              "productId": selectedStockItem!.productId,
-              "productUnits": selectedStockItem!.productUnits,
               "fromStockVerification": true,
             });
 
@@ -375,14 +410,13 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   // onScanCarton
-  bool onScanCarton(BuildContext context, String code, {String? cartonCode}) {
-    await getCartonIdentifier(context, cartonId,);
-    navigateReplacement(context,
-        route: NavigationConstants.productScanScreenRoute,
-        extra: {
-          'fromStockVerification': true,
-        });
-    return true;
+  onScanCarton(BuildContext context, String code, {String? cartonCode}) async {
+    cartonId = (await getCartonId(context, code)).toString();
+
+    log("Carton ID Set $cartonId");
+
+
+
     // if (cartonCode == null) {
     //   // Find the carton by ID
     //   final carton = cartonList.firstWhereOrNull(
@@ -426,6 +460,12 @@ class StockVerificationProvider extends ChangeNotifier {
   // onScanProduct
   bool onScanProduct(BuildContext context, int productId, String code,
       {bool fromStockVerification = false}) {
+    if (selectedStore?.isMainStore ?? false) {
+      final productCartonId = code.split("-")[2];
+      if (productCartonId != cartonId) {
+        return false;
+      }
+    }
     if (scannedUnits.isEmpty) {
       scannedUnits.add(code);
     } else if (scannedUnits.contains(code)) {
@@ -482,7 +522,7 @@ class StockVerificationProvider extends ChangeNotifier {
           "store_id": selectedStore?.id,
           "rack_id": scannedRackCode,
           if (selectedStore?.isMainStore ?? false)
-            "carton_id": scannedUnits.first.split('-')[2],
+            "carton_id": cartonId,
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
