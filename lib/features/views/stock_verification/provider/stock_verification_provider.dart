@@ -35,6 +35,9 @@ class StockVerificationProvider extends ChangeNotifier {
   // cartonList
   List<CartonListModel> cartonList = [];
 
+  String scannedRackCode = "";
+  String cartonId = "";
+
   void setSelectedStore(Store store) {
     selectedStore = store;
     notifyListeners();
@@ -120,7 +123,7 @@ class StockVerificationProvider extends ChangeNotifier {
   }
 
   // fetch
-  Future<void> fetchStockItems(String storeId) async {
+  Future<void> fetchStockItems(BuildContext context, String storeId) async {
     try {
       rackList.clear();
       rackProductMap.clear();
@@ -135,14 +138,88 @@ class StockVerificationProvider extends ChangeNotifier {
       stockItems = (response.data as List)
           .map((e) => StockItemModel.fromJson(e))
           .toList();
-      arrangeStockItems();
       isLoading = false;
+      if (context.mounted) {
+        navigate(context,
+            route: NavigationConstants.stockRackScanScreenRoute,
+            extra: {
+              "changeRack": false,
+            });
+      }
     } catch (e) {
       log("Error while getting value $e");
       isLoading = false;
       notifyListeners();
     }
   }
+
+  // onRackScan
+  bool onRackScan(BuildContext context, String code) {
+    try {
+      scannedRackCode = code;
+      scannedUnits.clear();
+      navigateReplacement(context,
+          route: NavigationConstants.productScanScreenRoute,
+          extra: {
+            'fromStockVerification': true,
+          });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // onRackChangeScan
+  bool onRackChangeScan(BuildContext context, String code) {
+    try {
+      scannedRackCode = code;
+      if (selectedStore?.isMainStore ?? false) {
+        navigate(context,
+            route: NavigationConstants.stockRackScanScreenRoute,
+            extra: {
+              "changeRack": true,
+            });
+      } else {
+        navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              'fromStockVerification': true,
+            });
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String> getCartonIdentifier(BuildContext context, int id) async {
+    try {
+      final url = AppUrls.cartonDetailUrl.replaceFirst(':id', id.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+      if (context.mounted) {
+        if (response.statusCode == 200) {
+          return response.data['unique_identifier']
+              .toString()
+              .toStringConversion();
+        } else {
+          if (context.mounted) {
+            ErrorHandler.alertDialog(context, 'Failed to get carton info');
+          }
+          return "";
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ErrorHandler.alertDialog(context, e.toString());
+      }
+    }
+    return "";
+  }
+
 
   Future<void> getCartonInfo(BuildContext context, int id, String tag) async {
     try {
@@ -299,108 +376,134 @@ class StockVerificationProvider extends ChangeNotifier {
 
   // onScanCarton
   bool onScanCarton(BuildContext context, String code, {String? cartonCode}) {
-    if (cartonCode == null) {
-      // Find the carton by ID
-      final carton = cartonList.firstWhereOrNull(
-        (carton) => carton.uniqueIdentifier == code,
-      );
+    await getCartonIdentifier(context, cartonId,);
+    navigateReplacement(context,
+        route: NavigationConstants.productScanScreenRoute,
+        extra: {
+          'fromStockVerification': true,
+        });
+    return true;
+    // if (cartonCode == null) {
+    //   // Find the carton by ID
+    //   final carton = cartonList.firstWhereOrNull(
+    //     (carton) => carton.uniqueIdentifier == code,
+    //   );
 
-      // Check if the carton exists and the code matches the unique identifier
-      if (carton != null) {
-        setSelectedCarton(carton);
-        navigateReplacement(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "productId": selectedStockItem!.productId,
-              "productUnits": selectedStockItem!.productUnits,
-              "fromStockVerification": true,
-              'cartonId': selectedCarton!.id,
-            });
-        return true;
-      } else {
-        return false;
-      }
-    } else if (selectedCarton != null) {
-      if (selectedCarton!.uniqueIdentifier
-          .toLowerCase()
-          .contains(code.toLowerCase())) {
-        navigateReplacement(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "productId": selectedStockItem!.productId,
-              "productUnits": selectedStockItem!.productUnits,
-              "fromStockVerification": true,
-              'cartonId': selectedCarton!.id,
-            });
-        return true;
-      }
-    }
+    //   // Check if the carton exists and the code matches the unique identifier
+    //   if (carton != null) {
+    //     setSelectedCarton(carton);
+    //     navigateReplacement(context,
+    //         route: NavigationConstants.productScanScreenRoute,
+    //         extra: {
+    //           "productId": selectedStockItem!.productId,
+    //           "productUnits": selectedStockItem!.productUnits,
+    //           "fromStockVerification": true,
+    //           'cartonId': selectedCarton!.id,
+    //         });
+    //     return true;
+    //   } else {
+    //     return false;
+    //   }
+    // } else if (selectedCarton != null) {
+    //   if (selectedCarton!.uniqueIdentifier
+    //       .toLowerCase()
+    //       .contains(code.toLowerCase())) {
+    //     navigateReplacement(context,
+    //         route: NavigationConstants.productScanScreenRoute,
+    //         extra: {
+    //           "productId": selectedStockItem!.productId,
+    //           "productUnits": selectedStockItem!.productUnits,
+    //           "fromStockVerification": true,
+    //           'cartonId': selectedCarton!.id,
+    //         });
+    //     return true;
+    //   }
+    // }
 
-    return false;
+    // return false;
   }
 
   // onScanProduct
   bool onScanProduct(BuildContext context, int productId, String code,
       {bool fromStockVerification = false}) {
-    if (selectedStockItem?.productId == productId) {
-      if (scannedUnits.contains(code)) {
+    if (scannedUnits.isEmpty) {
+      scannedUnits.add(code);
+    } else if (scannedUnits.contains(code)) {
+      return false;
+    } else {
+      // check if scanned unit first tag split .first is same as code split .first
+      final scannedUnitFirstTag = scannedUnits.first.split('-').first;
+      final codeFirstTag = code.split('-').first;
+      if (scannedUnitFirstTag != codeFirstTag) {
         return false;
-      } else {
-        scannedUnits.add(code);
       }
 
-      if (fromStockVerification) {
-        final quantity = scannedUnits.length;
-
-        var message = "Scan Product Code";
-        if (quantity > 0) {
-          message += " Scanned $quantity units";
-        }
-        Provider.of<ScanMessageProvider>(context, listen: false)
-            .setMessage(context, message);
-      } else {
-        // check for the remaining or not
-        var scanMessage = "";
-        if (scannedUnits.length >= selectedStockItem!.productUnits.length) {
-          scanMessage = "Scanned ${scannedUnits.length} units";
-        } else {
-          scanMessage =
-              "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
-        }
-        Provider.of<ScanMessageProvider>(context, listen: false)
-            .setMessage(context, scanMessage);
-      }
-
-      notifyListeners();
-
-      return true;
+      scannedUnits.add(code);
     }
-    return false;
+
+    if (fromStockVerification) {
+      final quantity = scannedUnits.length;
+
+      var message = "Scan Product Code";
+      if (quantity > 0) {
+        message += " Scanned $quantity units";
+      }
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, message);
+    } else {
+      // check for the remaining or not
+      var scanMessage = "";
+      if (scannedUnits.length >= selectedStockItem!.productUnits.length) {
+        scanMessage = "Scanned ${scannedUnits.length} units";
+      } else {
+        scanMessage =
+            "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
+      }
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+    }
+
+    notifyListeners();
+
+    return true;
   }
 
   // This should only be called when the button on the ui is clicked.
   // The button would only be visible when the scanned units are equal to the product units.
   // The person can scan other units as well but the button would not be visible.
-  Future<bool> onVerify(int productId, List<String> productUnits) async {
+  Future<Map<String, dynamic>> onVerify() async {
     try {
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.stockVerificationUrl,
         body: {
-          "product": productId,
-          "product_units": productUnits,
-          "planned_quantity": selectedStockItem!.plannedQuantity,
+          "product": scannedUnits.first.split('-').first,
+          "product_units": scannedUnits,
           "store_id": selectedStore?.id,
-          if (selectedCarton != null) "carton_id": selectedCarton!.id,
+          "rack_id": scannedRackCode,
+          if (selectedStore?.isMainStore ?? false)
+            "carton_id": scannedUnits.first.split('-')[2],
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (selectedCarton == null) removeStockItem(selectedStockItem!);
-        return true;
+        scannedUnits.clear();
+        cartonId = "";
+        showToast("Verification successful");
+        notifyListeners();
+        return {
+          'success': true,
+          'message': 'Verification successful',
+        };
       }
-      return false;
+      return {
+        'success': false,
+        'message': 'Verification failed',
+      };
     } catch (e) {
-      return false;
+      return {
+        'success': false,
+        'message': e.toString(),
+      };
     }
   }
 

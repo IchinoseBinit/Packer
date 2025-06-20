@@ -15,7 +15,7 @@ import 'package:uuid/uuid.dart';
 @pragma('vm:entry-point')
 void setupCallKeep() async {
   final config = CallKeepConfig(
-    appName: 'Dropit',
+    appName: 'Fasto Packer',
     acceptText: 'Check',
     callBackText: 'Check',
     android: CallKeepAndroidConfig(
@@ -24,7 +24,7 @@ void setupCallKeep() async {
       showCallBackAction: false,
       ringtoneFileName: 'res_ringtone',
       accentColor: '#E3436F',
-      backgroundUrl: 'assets/images/logo_image.png',
+      backgroundUrl: 'assets/images/app_icon.png',
       incomingCallNotificationChannelName: 'Incoming Calls',
     ),
     ios: CallKeepIosConfig(
@@ -49,7 +49,7 @@ void setupCallKeep() async {
 
 @pragma('vm:entry-point')
 void handleIncomingCall( RemoteMessage message, bool isBackground) async {
-  bool ringtone = true;
+  // bool ringtone = true;
   AwesomeNotifications awesomeNotification =
       await NotificationUtils.changeNotification();
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -61,45 +61,27 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
       int.tryParse(message.data['displayId'] ?? "") ?? Random().nextInt(100000);
   await awesomeNotification.cancel(randomed);
 
-  // bool fullScreen = message.data['title'] == "Order Request";
-  // bool isMissed = message.data['title'] == "Order Missed";
-  // bool isRejected = message.data['title'] == "Order Rejected";
-
-  // bool fullScreenDelivery = message.data['title'] == "Delivery Request";
-  // bool isMissedDelivery = message.data['title'] == "Delivery Missed";
-  // bool isRejectedDelivery = message.data['title'] == "Delivery Rejected";
 
   var fullScreen = true;
-  var isMissed = false;
-  var isRejected = false;
   var fullScreenDelivery = true;
-  var isMissedDelivery = false;
-  var isRejectedDelivery = false;
-
-  if (isRejected || isRejectedDelivery) return;
   if (isBackground) {
     await prefs.setBool("background_handler", true);
   }
-  if (isMissed || isMissedDelivery) {
-    await prefs.setBool("background_handler", false);
-  }
+
 
   NotificationContent content = NotificationContent(
       id: randomed,
-      fullScreenIntent: fullScreen || fullScreenDelivery,
-      channelKey: true
-          ? 'call_channel'
-          : fullScreen || fullScreenDelivery
-              ? (ringtone ? 'activity' : "silent_activity")
-              : (ringtone ? "alerts" : "silent_alerts"),
+      fullScreenIntent: fullScreen,
+      channelKey:'call_channel',
+         
       title: message.notification?.title,
       body: message.notification?.body,
-      autoDismissible: fullScreen || fullScreenDelivery,
-      largeIcon: 'https://dropit.com.np/static/img/logo.jpeg',
+      autoDismissible: fullScreen,
+      largeIcon: 'https://fasto.com.np/static/img/fasto-logo.png',
 
       // 'asset://assets/images/balloons-in-sky.jpg',
       notificationLayout: NotificationLayout.Default,
-      locked: fullScreen || fullScreenDelivery,
+      locked: fullScreen,
       color: AppColors.primaryColor,
       backgroundColor: AppColors.primaryColor,
       category: NotificationCategory.Call,
@@ -117,8 +99,7 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
         'orderId' :  message.data["order_id"] ?? '',
       });
 
-  List<NotificationActionButton>? buttons = fullScreen || fullScreenDelivery
-      ? [
+  List<NotificationActionButton>? buttons = [
           NotificationActionButton(
             key: 'Accept',
             label: 'Accept',
@@ -127,8 +108,7 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
             
           ),
          
-        ]
-      : null;
+        ];
   try {
     
     final notificationStatus = await awesomeNotification.createNotification(
@@ -154,61 +134,8 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
   
 }
 
-// void listenToActionStream(BuildContext context) {
-//   AwesomeNotifications().actionStream.listen((receivedNotification) {
-//     if (receivedNotification.buttonKeyPressed == 'ACCEPT') {
-//       Navigator.of(context).push(
-//         MaterialPageRoute(builder: (context) => BucketScanScreen()),
-//       );
-//     }
-    
-//     // You can also check the payload if needed
-//     if (receivedNotification.payload?['navigation'] == 'true') {
-//       // Additional navigation logic
-//     }
-//   });
-// }
 
 void onCallAccepted(BuildContext context, String callUUID) {
   // Navigate to call screen when answered
   print("Call Accepted: $callUUID");
-} // Future<void> setEventHandler() async {
-//   CallKeep.instance.handler = CallEventHandler(
-//     onCallIncoming: (event) {
-//       print('call incoming: ${event.toMap()}');
-//       if (!CallKeep.instance.isIncomingCallDisplayed) {
-//         showAdaptiveDialog(
-//             context: AppRouter.context,
-//             builder: (context) {
-//               return AlertDialog(
-//                 title: Text("Incoming Call"),
-//                 content: Text("Incoming call from ${event.callerName}"),
-//                 actions: [
-//                   TextButton(
-//                     onPressed: () {
-//                       Navigator.pop(context);
-//                       // getCallbackFunction()
-//                     },
-//                     child: Text("Accept"),
-//                   ),
-//                 ],
-//               );
-//             });
-//       }
-//     },
-//     onCallStarted: (event) {
-//       print('call started: ${event.toMap()}');
-//     },
-//     onCallEnded: (event) {
-//       print('call ended: ${event.toMap()}');
-//     },
-//     onCallAccepted: (event) {
-//       print('call answered: ${event.toMap()}');
-//       // NavigationService.instance
-//       //     .pushNamedIfNotCurrent(AppRoute.callingPage, args: event.toMap());
-//     },
-//     onCallDeclined: (event) async {
-//       print('call declined: ${event.toMap()}');
-//     },
-//   );
-// }
+}

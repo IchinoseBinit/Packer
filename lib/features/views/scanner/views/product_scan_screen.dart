@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -68,55 +69,76 @@ class ProductScanScreen extends BaseScanScreen {
     }
     final provider = Provider.of<StockVerificationProvider>(context);
 
-    return GeneralElevatedButton(
-      marginH: 16,
-      onPressed: () async {
-        controller.stop();
-        final total = provider.selectedStockItem?.productUnits.length ?? 0;
-        final scanned = provider.scannedUnits.length;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GeneralElevatedButton(
+          marginH: 16,
+          onPressed: () async {
+            controller.stop();
+            final scanned = provider.scannedUnits.length;
 
-        if (scanned < total) {
-          // Show confirmation dialog
-          final shouldContinue = await ShowAlertDialog(
-            body: Text(
-              "Are you sure you want to complete verification?\n"
-              "Scanned Units: $scanned\nTotal Units: ${provider.selectedCarton?.productQuantity}",
-            ),
-            needCancel: true,
-            disableBackground: true,
-            okFunc: () => Navigator.pop(context, true),
-            cancelFunc: () {
+            if (scanned == 0) {
+              return;
+            }
+
+            // Show confirmation dialog
+            final shouldContinue = await ShowAlertDialog(
+              body: Text(
+                "Are you sure you want to complete verification?\n"
+                "Scanned Units: $scanned",
+              ),
+              needCancel: true,
+              disableBackground: true,
+              okFunc: () => Navigator.pop(context, true),
+              cancelFunc: () {
+                controller.start();
+                Navigator.pop(context, false);
+              },
+            ).showAlertDialog(context);
+
+            if (shouldContinue != true) return;
+            if (!context.mounted) return;
+            showLoading(context);
+            final result = await provider.onVerify();
+            if (!context.mounted) return;
+
+            removeLoading(context);
+
+            if (!context.mounted) return;
+            if (result['success'] == false) {
+              ShowAlertDialog(
+                disableBackground: true,
+                body: Text(result['message']),
+                okFunc: () {
+                  Navigator.pop(context);
+                  controller.start();
+                },
+              ).showAlertDialog(context);
+            } else {
               controller.start();
-              Navigator.pop(context, false);
+              Provider.of<ScanMessageProvider>(context, listen: false)
+                  .setMessage(context, "Scan Product Code");
+            }
+          },
+          title: "Complete Verification",
+        ),
+        if (provider.scannedUnits.isEmpty) ...[
+          // 12.h
+          SizedBox(height: 12.h),
+          GeneralElevatedButton(
+            marginH: 16,
+            title: 'Change Rack',
+            onPressed: () {
+              navigateReplacement(context,
+                  route: NavigationConstants.stockRackScanScreenRoute,
+                  extra: {
+                    'changeRack': false,
+                  });
             },
-          ).showAlertDialog(context);
-
-          if (shouldContinue != true) return;
-        }
-        if (!context.mounted) return;
-        showLoading(context);
-        final success =
-            await provider.onVerify(productId, provider.scannedUnits.toList());
-        if (!context.mounted) return;
-
-        removeLoading(context);
-
-        if (!context.mounted) return;
-        if (success) {
-          controller.dispose();
-          Navigator.pop(context, true);
-        } else {
-          ShowAlertDialog(
-            disableBackground: true,
-            body: const Text("Verification failed. Try again."),
-            okFunc: () {
-              Navigator.pop(context);
-              controller.start();
-            },
-          ).showAlertDialog(context);
-        }
-      },
-      title: "Complete Verification",
+          ),
+        ]
+      ],
     );
   }
 
@@ -131,26 +153,27 @@ class ProductScanScreen extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       // split code to get product id
-      final list = code.split('-');
-      final prodId = int.tryParse(list.first) ?? 0;
-      if (prodId != productId) {
-        handleInvalidCode(context, controller, code);
-        return;
+      if (productId > 0) {
+        final list = code.split('-');
+        final prodId = int.tryParse(list.first) ?? 0;
+        if (prodId != productId) {
+          handleInvalidCode(context, controller, code);
+          return;
+        }
       }
 
       if (fromStockVerification) {
-        if (cartonId != null) {
-          final splittedCartonId = int.tryParse(list[2]) ?? 0;
-          if (splittedCartonId != cartonId) {
+        final provider =
+            Provider.of<StockVerificationProvider>(context, listen: false);
+        if (provider.cartonId != 0 && (provider.selectedStore?.isMainStore ?? false)) {
+          final splittedCartonId = int.tryParse(code.split('-')[2]) ?? 0;
+          if (splittedCartonId != provider.cartonId) {
             handleInvalidCarton(context, controller, splittedCartonId, code);
             return;
           }
         }
-        final provider =
-            Provider.of<StockVerificationProvider>(context, listen: false);
 
-        final prodId = int.tryParse(code.split('-').first) ?? 0;
-        if (prodId != productId || provider.scannedUnits.contains(code)) {
+        if (provider.scannedUnits.contains(code)) {
           handleInvalidCode(context, controller, "Already Scanned Product");
           return;
         }
@@ -197,8 +220,6 @@ class ProductScanScreen extends BaseScanScreen {
         Navigator.pop(context);
         await Provider.of<StockVerificationProvider>(context, listen: false)
             .getCartonInfo(context, cartonId, tag);
-
-       
       },
     ).showAlertDialog(context);
     hasScanned = false;

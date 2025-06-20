@@ -38,16 +38,19 @@ class StoreSelectionScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final store = storeList[index];
                   return StoreCard(
-                  storeName: store.name,
-                  onPressed: () {
-                    Provider.of<StockVerificationProvider>(context, listen: false).setSelectedStore(store);
-                    navigate(
-                      context,
-                      route: NavigationConstants.stockVerificationRoute,
-                      extra: store.id.toString(),
-                    );
-                  },
-                );
+                    storeName: store.name,
+                    onPressed: () {
+                      final provider = Provider.of<StockVerificationProvider>(
+                          context,
+                          listen: false);
+                      provider.setSelectedStore(store);
+                      navigate(context,
+                          route: NavigationConstants.stockRackScanScreenRoute,
+                          extra: {
+                            "changeRack": false,
+                          });
+                    },
+                  );
                 },
               ),
             );
@@ -55,7 +58,6 @@ class StoreSelectionScreen extends StatelessWidget {
     );
   }
 }
-
 
 class StoreCard extends StatelessWidget {
   final String storeName;
@@ -99,13 +101,15 @@ class StoreCard extends StatelessWidget {
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
-                padding:
-                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text("View", style: TextStyle(color: Colors.white),),
+              child: const Text(
+                "Start Audit",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -113,4 +117,3 @@ class StoreCard extends StatelessWidget {
     );
   }
 }
-

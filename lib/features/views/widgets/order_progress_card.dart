@@ -22,7 +22,7 @@ class _PackingProgressWidgetState extends State<PackingProgressWidget> {
         widget.totalItems > 0 ? packedItems / widget.totalItems : 0.0;
 
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(12.sp),
       decoration: BoxDecoration(
         color: AppColors.progressContainerColor,
         borderRadius: BorderRadius.circular(8),
@@ -66,7 +66,7 @@ class _PackingProgressWidgetState extends State<PackingProgressWidget> {
 
           /// Progress Bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(10.r),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 15,
@@ -79,7 +79,7 @@ class _PackingProgressWidgetState extends State<PackingProgressWidget> {
           Align(
             alignment: Alignment.bottomRight,
             child: Padding(
-              padding: EdgeInsets.only(right: 8, top: 4, bottom: 4),
+              padding: EdgeInsets.only(right: 8.w, top: 4.h, bottom: 4.h),
               child: Text(
                 "${(progress * 100).toStringAsFixed(0)}%",
                 style: TextStyle(

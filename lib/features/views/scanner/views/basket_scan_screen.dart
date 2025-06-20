@@ -16,11 +16,15 @@ import 'base_scan_screen.dart';
 class BasketScanScreen extends BaseScanScreen {
   final String? basketCode;
   final bool forOrder;
+  final bool fromCall;
+  final int orderId;
 
   BasketScanScreen({
     super.key,
     this.basketCode,
     this.forOrder = false,
+    this.fromCall = false,
+    this.orderId = 0,
   }) : super(
           scanTitle: "Basket Scanner",
           showFlash: true,
@@ -63,8 +67,12 @@ class BasketScanScreen extends BaseScanScreen {
 
       if (forOrder) {
         result = await Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(context,code);
-
+            .updateBucketData(context, code);
+        if (fromCall && context.mounted && result) {
+          navigate(context,
+              route: NavigationConstants.orderDetailsRoute, extra: orderId);
+          Provider.of<OrderProvider>(context, listen: false).initState();
+        } else
         if (result && context.mounted) {
           Navigator.pop(context, true);
           return;

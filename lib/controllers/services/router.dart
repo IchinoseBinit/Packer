@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
@@ -35,6 +36,7 @@ import 'package:packer/features/views/scanner/views/carton_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
+import 'package:packer/features/views/stock_verification/views/stock_rack_scan_screen.dart';
 import 'package:packer/features/views/stock_verification/views/stock_verification_screen.dart';
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
@@ -164,7 +166,7 @@ class AppRouter {
                 path: NavigationConstants.orderDetailsRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   // var orderId = '3485';
-                  final orderId = state.extra as String;
+                  final orderId = state.extra.toString();
 
                   log(orderId, name: "order id:");
 
@@ -295,6 +297,8 @@ class AppRouter {
                   return BasketScanScreen(
                     basketCode: args['basketCode'],
                     forOrder: args['forOrder'] ?? false,
+                    fromCall: args['fromCall'] ?? false,
+                    orderId: args['orderId'].toString().toInt(),
                   );
                 },
               ),
@@ -355,6 +359,16 @@ class AppRouter {
                   return ProductListScreen();
                 },
               ),
+              GoRoute(
+                path: NavigationConstants.stockRackScanScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return StockRackScanScreen(
+                    changeRack: args['changeRack'] ?? false,
+                  );
+                },
+              ),
+
             ]),
       ],
     );

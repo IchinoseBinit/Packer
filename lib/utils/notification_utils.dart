@@ -1,13 +1,10 @@
-import 'dart:developer';
-
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
-import 'package:provider/provider.dart';
 
 class NotificationUtils {
   static AwesomeNotifications awesomeNotification = AwesomeNotifications();
@@ -36,75 +33,24 @@ class NotificationUtils {
     // debugger();
     debugPrint("ACCEPTED");
     if (receivedAction.buttonKeyPressed == 'Accept') {
-      final orderId = receivedAction.payload?['orderId'];
-
-      // final prefs = await SharedPreferences.getInstance();
-      // await prefs.setString('navigate_to', 'bucketqrscan');
-      // await prefs.setString(
-      //     'order_id', orderId ?? '');
+      final orderId = receivedAction.payload?['orderId'].toString().toInt();
 
       // Navigate using GoRouter
       if (AppRouter.router.canPop()) {
         AppRouter.router.pop();
       }
 
-      final result = await navigateWithRouter(
+      navigateWithRouter(
         AppRouter.router,
         route: NavigationConstants.basketScanScreenRoute,
         extra: {
           'forOrder': true,
+          'fromCall': true,
+          'orderId': orderId,
         },
       );
-      if (result ?? false) {
-        log("result from basket scan screen $result", name: "Accept Order");
-
-        navigateWithRouter(AppRouter.router,
-            route: NavigationConstants.orderDetailsRoute, extra: orderId);
-      }
     }
   }
-
-  // CallKeepUtils.callKeep.startCall(
-  //     receivedAction.payload!["call_id"],
-  //     receivedAction.payload!["caller_name"],
-  //     receivedAction.payload!["caller_number"],
-  //     receivedAction.payload!["caller_image"]);
-
-  // if (receivedAction.buttonKeyPressed == "Reject") {
-  //   if (receivedAction.payload!["order"] != null) {
-  //     SharedPreferences prefs = await SharedPreferences.getInstance();
-  //     await prefs.setBool("background_handler", false);
-  //     if (receivedAction.payload?["delivery"] == "true") {
-  //       await http.put(
-  //           Uri.parse(
-  //               "${ApiService.baseUrl}staff/delivery/reject/${receivedAction.payload!["order"]}"),
-  //           headers: {
-  //             "content-type": "application/json",
-  //             "x-access-token": prefs.getString("token") ?? ""
-  //           });
-  //     } else {
-  //       await http.put(
-  //           Uri.parse("${ApiService.baseUrl}staff/feedback/reject"),
-  //           body: jsonEncode({"order_id": receivedAction.payload!["order"]}),
-  //           headers: {
-  //             "content-type": "application/json",
-  //             "x-access-token": prefs.getString("token") ?? ""
-  //           });
-  //     }
-  //     return;
-  //   }
-  // // }
-  // if (receivedAction.payload!['title'] == "You have been rated.") {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   await prefs.setBool("rateIntent", true);
-  //   if (MyApp.navigatorKey.currentContext != null) {
-  //     while (Navigator.canPop(MyApp.navigatorKey.currentContext!)) {
-  //       Navigator.pop(MyApp.navigatorKey.currentContext!);
-  //     }
-  //   }
-  //   MyApp.navigatorKey.currentState
-  //       ?.push(MaterialPageRoute(builder: (_) => ShopRatingDetails()));
-  // }
 
   static List<NotificationChannel> getNonSilentChannels() {
     final channel_3 = NotificationChannel(

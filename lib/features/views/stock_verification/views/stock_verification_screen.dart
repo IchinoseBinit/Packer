@@ -7,6 +7,7 @@ import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
 import '/constants/app_colors.dart';
@@ -25,8 +26,8 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<StockVerificationProvider>();
-      provider.fetchStockItems(widget.storeId);
+      // final provider = context.read<StockVerificationProvider>();
+      // provider.fetchStockItems(widget.storeId);
     });
   }
 
@@ -37,13 +38,13 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
       appBar: AppBar(
         title: const Text('Stock Verification'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              Provider.of<StockVerificationProvider>(context, listen: false)
-                  .fetchStockItems(widget.storeId);
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.refresh),
+          //   onPressed: () {
+          //     Provider.of<StockVerificationProvider>(context, listen: false)
+          //         .fetchStockItems(widget.storeId);
+          //   },
+          // ),
         ],
       ),
       body: Consumer<StockVerificationProvider>(
@@ -56,113 +57,114 @@ class _StockVerificationScreenState extends State<StockVerificationScreen> {
         return Padding(
           padding: AppConstants.padding,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundColor,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 2,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Products Remaining: ${provider.stockItems.length}',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Expanded(
-                child: ListView.separated(
-                  separatorBuilder: (context, index) {
-                    return SizedBox(height: 8.h);
-                  },
-                  itemCount: provider.rackList.length,
-                  itemBuilder: (context, index) {
-                    final rackName = provider.rackList[index];
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                            text: TextSpan(children: [
-                          TextSpan(
-                              text: "Rack Name: ",
-                              style: Theme.of(context).textTheme.labelLarge),
-                          TextSpan(
-                              text: rackName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                    fontSize: 16.sp,
-                                  )),
-                        ])),
-                        SizedBox(height: 8.h),
-                        if (provider.rackProductMap[rackName] != null)
-                          IntrinsicGridView.vertical(
-                            columnCount: 2,
-                            verticalSpace: 6.w,
-                            horizontalSpace: 6.w,
-                            children: List.generate(
-                              provider.rackProductMap[rackName]!.length,
-                              (index) {
-                                final item =
-                                    provider.rackProductMap[rackName]![index];
-                                    final width = (1.sw - 12.w- 32.w) /2;
-                                return ProductCard(
-                                  productModel: CommonProductModel.fromStockItemModel(item),
-                                  status: ItemStatus.remaining,
-                                  width: width,
-                                  onTap: () {
-                                     Provider.of<StockVerificationProvider>(
-                                            context,
-                                            listen: false)
-                                        .onItemTap(context, item);
-                                  },
-                                );
-                              },
-                            ),
-                            // itemBuilder: (context, index) {
-                            //   final item =
-                            //       provider.rackProductMap[rackName]![index];
-                            //   return InkWell(
-                            //     onTap: () {
-                            //       Provider.of<StockVerificationProvider>(
-                            //               context,
-                            //               listen: false)
-                            //           .onItemTap(context, item);
-                            //     },
-                            //     child: ProductCard(
-                            //       productModel: CommonProductModel.fromStockItemModel(item),
-                            //       status: ItemStatus.remaining,
-                            //     ),
-                            //   );
-                            // },
-                          ),
+              // Container(
+              //   width: double.infinity,
+              //   padding: const EdgeInsets.all(12),
+              //   decoration: BoxDecoration(
+              //     color: AppColors.backgroundColor,
+              //     borderRadius: BorderRadius.circular(8),
+              //     boxShadow: [
+              //       BoxShadow(
+              //         color: Colors.black.withOpacity(0.05),
+              //         blurRadius: 2,
+              //         offset: const Offset(0, 2),
+              //       ),
+              //     ],
+              //   ),
+              //   child: Text(
+              //     'Products Remaining: ${provider.stockItems.length}',
+              //     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              //           fontWeight: FontWeight.w600,
+              //         ),
+              //   ),
+              // ),
+              // SizedBox(height: 16.h),
+              // Expanded(
+              //   child: ListView.separated(
+              //     separatorBuilder: (context, index) {
+              //       return SizedBox(height: 8.h);
+              //     },
+              //     itemCount: provider.rackList.length,
+              //     itemBuilder: (context, index) {
+              //       final rackName = provider.rackList[index];
+              //       return Column(
+              //         mainAxisSize: MainAxisSize.min,
+              //         crossAxisAlignment: CrossAxisAlignment.start,
+              //         children: [
+              //           RichText(
+              //               text: TextSpan(children: [
+              //             TextSpan(
+              //                 text: "Rack Name: ",
+              //                 style: Theme.of(context).textTheme.labelLarge),
+              //             TextSpan(
+              //                 text: rackName,
+              //                 style: Theme.of(context)
+              //                     .textTheme
+              //                     .headlineSmall
+              //                     ?.copyWith(
+              //                       fontSize: 16.sp,
+              //                     )),
+              //           ])),
+              //           SizedBox(height: 8.h),
+              //           if (provider.rackProductMap[rackName] != null)
+              //             IntrinsicGridView.vertical(
+              //               columnCount: 2,
+              //               verticalSpace: 6.w,
+              //               horizontalSpace: 6.w,
+              //               children: List.generate(
+              //                 provider.rackProductMap[rackName]!.length,
+              //                 (index) {
+              //                   final item =
+              //                       provider.rackProductMap[rackName]![index];
+              //                       final width = (1.sw - 12.w- 32.w) /2;
+              //                   return ProductCard(
+              //                     productModel: CommonProductModel.fromStockItemModel(item),
+              //                     status: ItemStatus.remaining,
+              //                     width: width,
+              //                     onTap: () {
+              //                        Provider.of<StockVerificationProvider>(
+              //                               context,
+              //                               listen: false)
+              //                           .onItemTap(context, item);
+              //                     },
+              //                   );
+              //                 },
+              //               ),
+              //               // itemBuilder: (context, index) {
+              //               //   final item =
+              //               //       provider.rackProductMap[rackName]![index];
+              //               //   return InkWell(
+              //               //     onTap: () {
+              //               //       Provider.of<StockVerificationProvider>(
+              //               //               context,
+              //               //               listen: false)
+              //               //           .onItemTap(context, item);
+              //               //     },
+              //               //     child: ProductCard(
+              //               //       productModel: CommonProductModel.fromStockItemModel(item),
+              //               //       status: ItemStatus.remaining,
+              //               //     ),
+              //               //   );
+              //               // },
+              //             ),
 
-                        // 8.h
-                        SizedBox(height: 8.h),
-                      ],
-                    );
-                  },
-                ),
-              ),
+              //           // 8.h
+              //           SizedBox(height: 8.h),
+              //         ],
+              //       );
+              //     },
+              //   ),
+              // ),
 
               // 16.h
               // const SizedBox(height: 16),
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: 16),
-              //   child:
-              //       GeneralElevatedButton(onPressed: () {}, title: 'Verify',),
-              // )
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child:
+                    GeneralElevatedButton(onPressed: () {}, title: 'Scan Rack',),
+              )
             ],
           ),
         );
