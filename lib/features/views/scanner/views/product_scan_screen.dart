@@ -114,12 +114,15 @@ class ProductScanScreen extends BaseScanScreen {
           if (!context.mounted) return;
           showLoading(context);
           final result = await provider.onVerify();
-          if (!context.mounted) return;
-
-          removeLoading(context);
 
           if (!context.mounted) return;
           if (result['success'] == false) {
+            if (!context.mounted) return;
+
+            Provider.of<ScanMessageProvider>(context, listen: false)
+                .setMessage(context, "Scan Product Code");
+
+            removeLoading(context);
             ShowAlertDialog(
               disableBackground: true,
               body: Text(result['message']),
@@ -129,9 +132,14 @@ class ProductScanScreen extends BaseScanScreen {
               },
             ).showAlertDialog(context);
           } else {
-            controller.start();
-            Provider.of<ScanMessageProvider>(context, listen: false)
-                .setMessage(context, "Scan Product Code");
+            Future.delayed(Duration(seconds: 1), () {
+              if (!context.mounted) return;
+
+              removeLoading(context);
+              controller.start();
+              Provider.of<ScanMessageProvider>(context, listen: false)
+                  .setMessage(context, "Scan Product Code");
+            });
           }
         },
         title: "Complete Verification",
@@ -148,6 +156,14 @@ class ProductScanScreen extends BaseScanScreen {
 
       controller.stop();
       HapticFeedback.heavyImpact();
+
+      if (code.contains("carton") ||
+          code.contains("rack") ||
+          code.contains("basket")) {
+        handleInvalidCode(
+            context, controller, code, "Please scan a product code");
+        return;
+      }
 
       // split code to get product id
       if (productId > 0) {
@@ -187,8 +203,11 @@ class ProductScanScreen extends BaseScanScreen {
         if (!success && context.mounted) {
           handleInvalidCode(context, controller, code);
         } else {
-          controller.start();
-          hasScanned = false;
+          Future.delayed(Duration(seconds: 1), () {
+            if (!context.mounted) return;
+            controller.start();
+            hasScanned = false;
+          });
         }
       } else if (fromTransfer) {
         showLoading(context);

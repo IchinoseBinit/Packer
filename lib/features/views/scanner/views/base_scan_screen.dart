@@ -44,10 +44,13 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
   void initState() {
     super.initState();
     controller = MobileScannerController();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller?.start();
+
       widget.onScreenCreated(context);
-      controller!.addListener(_onControllerChanged);
+
+      controller?.addListener(_onControllerChanged);
     });
   }
 
@@ -84,6 +87,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
     );
 
     return Scaffold(
+      backgroundColor: Colors.black,
       floatingActionButton: widget.buildFloatingButton(context, controller!),
       floatingActionButtonLocation: widget.floatingActionButtonLocation,
       body: Stack(

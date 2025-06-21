@@ -159,7 +159,6 @@ class StockVerificationProvider extends ChangeNotifier {
       scannedRackCode = code;
       scannedUnits.clear();
 
-
       if (selectedStore?.isMainStore ?? false) {
         navigateReplacement(context,
             route: NavigationConstants.cartonScanScreenRoute,
@@ -415,8 +414,6 @@ class StockVerificationProvider extends ChangeNotifier {
 
     log("Carton ID Set $cartonId");
 
-
-
     // if (cartonCode == null) {
     //   // Find the carton by ID
     //   final carton = cartonList.firstWhereOrNull(
@@ -521,8 +518,7 @@ class StockVerificationProvider extends ChangeNotifier {
           "product_units": scannedUnits,
           "store_id": selectedStore?.id,
           "rack_id": scannedRackCode,
-          if (selectedStore?.isMainStore ?? false)
-            "carton_id": cartonId,
+          if (selectedStore?.isMainStore ?? false) "carton_id": cartonId,
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -540,6 +536,8 @@ class StockVerificationProvider extends ChangeNotifier {
         'message': 'Verification failed',
       };
     } catch (e) {
+      scannedUnits.clear();
+      cartonId = "";
       return {
         'success': false,
         'message': e.toString(),
