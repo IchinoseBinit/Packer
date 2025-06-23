@@ -37,10 +37,38 @@ class StockVerificationProvider extends ChangeNotifier {
 
   String scannedRackCode = "";
   String cartonId = "";
+  int auditId = 0;
 
-  void setSelectedStore(Store store) {
+  void setSelectedStore(BuildContext context, Store store) async {
     selectedStore = store;
-    notifyListeners();
+    auditId = 0;
+    try {
+      showLoading(context);
+      final apiResponse = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.getAuditViewUrl,
+        body: {
+          "store_id": store.id,
+        },
+      );
+      if (context.mounted) {
+        removeLoading(context);
+        if (apiResponse.statusCode == 200) {
+          auditId = apiResponse.data['audit_id'].toString().toInt();
+          navigate(context,
+              route: NavigationConstants.stockRackScanScreenRoute,
+              extra: {
+                "changeRack": false,
+              });
+        }else {
+          ErrorHandler.alertDialog(context, 'Failed to get audit view');
+        }
+      }
+    } catch (e) {
+      removeLoading(context);
+      log("Error while getting audit view $e");
+      ErrorHandler.alertDialog(context, e.toString());
+    }
   }
 
   void setSelectedCarton(CartonListModel carton) {
@@ -101,10 +129,10 @@ class StockVerificationProvider extends ChangeNotifier {
       );
       storeList =
           (response.data as List).map((e) => Store.fromJson(e)).toList();
-      if (storeList.isNotEmpty) {
-      } else {
-        selectedStore = null;
-      }
+      // if (storeList.isNotEmpty) {
+      // } else {
+      //   selectedStore = null;
+      // }
 
       notifyListeners();
     } catch (e) {
@@ -312,7 +340,7 @@ class StockVerificationProvider extends ChangeNotifier {
         body: {
           "carton_id": id,
           "product_unit": tag,
-          "store_id": selectedStore?.id,
+          "audit_id": auditId,
           "rack_id": scannedRackCode,
         },
       );
@@ -516,7 +544,7 @@ class StockVerificationProvider extends ChangeNotifier {
         body: {
           "product": scannedUnits.first.split('-').first,
           "product_units": scannedUnits,
-          "store_id": selectedStore?.id,
+          "audit_id": auditId,
           "rack_id": scannedRackCode,
           if (selectedStore?.isMainStore ?? false) "carton_id": cartonId,
         },
@@ -524,6 +552,7 @@ class StockVerificationProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         scannedUnits.clear();
         cartonId = "";
+        auditId = 0;
         showToast("Verification successful");
         notifyListeners();
         return {
@@ -537,7 +566,6 @@ class StockVerificationProvider extends ChangeNotifier {
       };
     } catch (e) {
       scannedUnits.clear();
-      cartonId = "";
       return {
         'success': false,
         'message': e.toString(),

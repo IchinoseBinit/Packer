@@ -43,12 +43,7 @@ class StoreSelectionScreen extends StatelessWidget {
                       final provider = Provider.of<StockVerificationProvider>(
                           context,
                           listen: false);
-                      provider.setSelectedStore(store);
-                      navigate(context,
-                          route: NavigationConstants.stockRackScanScreenRoute,
-                          extra: {
-                            "changeRack": false,
-                          });
+                      provider.setSelectedStore(context, store);
                     },
                   );
                 },

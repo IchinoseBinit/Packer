@@ -136,9 +136,17 @@ class ProductScanScreen extends BaseScanScreen {
               if (!context.mounted) return;
 
               removeLoading(context);
-              controller.start();
-              Provider.of<ScanMessageProvider>(context, listen: false)
-                  .setMessage(context, "Scan Product Code");
+              if (provider.selectedStore?.isMainStore ?? false) {
+                navigateReplacement(context,
+                    route: NavigationConstants.cartonScanScreenRoute,
+                    extra: {
+                      'isMainStoreAudit': true,
+                    });
+              } else {
+                controller.start();
+                Provider.of<ScanMessageProvider>(context, listen: false)
+                    .setMessage(context, "Scan Product Code");
+              }
             });
           }
         },
