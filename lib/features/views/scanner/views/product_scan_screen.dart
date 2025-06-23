@@ -73,6 +73,9 @@ class ProductScanScreen extends BaseScanScreen {
     final provider = Provider.of<StockVerificationProvider>(context);
 
     if (provider.scannedUnits.isEmpty) {
+      if (provider.selectedStore?.isMainStore ?? false) {
+        return SizedBox.shrink();
+      }
       return GeneralElevatedButton(
         marginH: 16,
         title: 'Change Rack',
@@ -136,7 +139,10 @@ class ProductScanScreen extends BaseScanScreen {
               if (!context.mounted) return;
 
               removeLoading(context);
-              if (provider.selectedStore?.isMainStore ?? false) {
+              if (Provider.of<StockVerificationProvider>(context)
+                      .selectedStore
+                      ?.isMainStore ??
+                  false) {
                 navigateReplacement(context,
                     route: NavigationConstants.cartonScanScreenRoute,
                     extra: {
@@ -186,15 +192,16 @@ class ProductScanScreen extends BaseScanScreen {
       if (fromStockVerification) {
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
-        if (provider.cartonId != "0" &&
-            (provider.selectedStore?.isMainStore ?? false)) {
-          final splittedCartonId = code.split('-')[2];
-          if (splittedCartonId != provider.cartonId) {
-            handleInvalidCarton(
-                context, controller, splittedCartonId.toInt(), code);
-            return;
-          }
-        }
+        // If other cartoon check is needed
+        // if (provider.cartonId != "0" &&
+        //     (provider.selectedStore?.isMainStore ?? false)) {
+        //   final splittedCartonId = code.split('-')[2];
+        //   if (splittedCartonId != provider.cartonId) {
+        //     handleInvalidCarton(
+        //         context, controller, splittedCartonId.toInt(), code);
+        //     return;
+        //   }
+        // }
 
         if (provider.scannedUnits.contains(code)) {
           handleInvalidCode(

@@ -485,12 +485,13 @@ class StockVerificationProvider extends ChangeNotifier {
   // onScanProduct
   bool onScanProduct(BuildContext context, int productId, String code,
       {bool fromStockVerification = false}) {
-    if (selectedStore?.isMainStore ?? false) {
-      final productCartonId = code.split("-")[2];
-      if (productCartonId != cartonId) {
-        return false;
-      }
-    }
+    // If carton scan is needed
+    // if (selectedStore?.isMainStore ?? false) {
+    //   final productCartonId = code.split("-")[2];
+    //   if (productCartonId != cartonId) {
+    //     return false;
+    //   }
+    // }
     if (scannedUnits.isEmpty) {
       scannedUnits.add(code);
     } else if (scannedUnits.contains(code)) {
