@@ -6,74 +6,35 @@ import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
-import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/product/model/product_avaliability.dart';
+import 'package:packer/features/views/product/model/unit_verify_model.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:provider/provider.dart';
 
 class ProductProvider extends ChangeNotifier {
-  bool isLoading = false;
-  List<ProductAvailability> productAvailabilityList = [];
-
   List<String> scannedUnits = [];
+  UnitVerifyModel? unitVerifyModel;
 
-  List<String> rackList = [];
-
-  Map<String, List<ProductAvailability>> rackProductMap = {};
-
-  void initRackProductMap() {
-    rackList.clear();
-    rackProductMap.clear();
-    notifyListeners();
-    for (var element in productAvailabilityList) {
-      if (!rackList.contains(element.rackName)) {
-        rackList.add(element.rackName);
-      }
-
-      rackProductMap.putIfAbsent(element.rackName, () => []);
-      rackProductMap[element.rackName]!.add(element);
-    }
-
-    rackList.sort((a, b) => a.compareTo(b));
-    notifyListeners();
-  }
-
-  // get count of product scan tags from scannedUnits list
-  int getScanCount(int productId) {
-    return scannedUnits
-        .where((element) => element.split("-").first == productId.toString())
-        .length;
+  // init State
+  void initState() {
+    unitVerifyModel = UnitVerifyModel(previousRackName: "");
+    scannedUnits = [];
   }
 
   // check if product is scanned
-  bool checkScanCount(int productId) {
-    final prod = productAvailabilityList
-        .firstWhere((element) => element.productId == productId);
-    return getScanCount(productId) == prod.productUnits.length;
+  bool checkScanCount() {
+    // just check len of scannedUnits and unitVerifyModel.productUnitTags
+    return scannedUnits.length == unitVerifyModel?.productUnitTags?.length;
   }
 
-  // get message
-  String getMessage(int productId) {
-    final prod = productAvailabilityList
-        .firstWhere((element) => element.productId == productId);
-    return "Scan ${prod.productUnits.length - getScanCount(productId)} ${prod.productName}";
-  }
-
-  void showProductTags(BuildContext context, int productId) {
+  void showProductTags(BuildContext context) {
     // get item
-    final item = productAvailabilityList.firstWhereOrNull(
-      (element) => element.productId == productId,
-    );
-    if (item == null) {
-      ErrorHandler.alertDialog(context, "Item not found");
-      return;
-    }
-    final remainingTags = getTagsList(productId, true);
-    final completedTags = getTagsList(productId, false);
+
+    final remainingTags = getTagsList(true);
+    final completedTags = getTagsList(false);
     // show modal bottom sheet
     showModalBottomSheet(
       context: context,
@@ -156,103 +117,58 @@ class ProductProvider extends ChangeNotifier {
   }
 
   // get tags list of product condition remaining true or false
-  List<String> getTagsList(int productId, bool remaining) {
-    final prod = productAvailabilityList
-        .firstWhere((element) => element.productId == productId);
+  List<String> getTagsList(bool remaining) {
+    final tags = unitVerifyModel?.productUnitTags ?? [];
+
     if (remaining) {
-      // Return tags that have NOT been scanned
-      return prod.productUnits
+      // Tags NOT scanned
+      return tags
           .where((tag) => !scannedUnits.contains(tag))
+          .cast<String>()
           .toList();
     } else {
-      // Return tags that HAVE been scanned
-      return prod.productUnits
+      // Tags scanned
+      return tags
           .where((tag) => scannedUnits.contains(tag))
+          .cast<String>()
           .toList();
     }
   }
 
-  // fetch product availability
-  Future<void> fetchProductAvailability(BuildContext context) async {
-    try {
-      isLoading = true;
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.productAvailabilityUrl,
+  // onRackScan
+  void onRackScan(BuildContext context, String code) {
+    debugger();
+    if (unitVerifyModel == null) {
+      log("unitVerifyModel was null, initializing...");
+      unitVerifyModel = UnitVerifyModel(
+        previousRackName: code,
+        productUnitTags: [],
       );
-      if (response.statusCode == 200) {
-        productAvailabilityList = (response.data as List)
-            .map((e) => ProductAvailability.fromJson(e))
-            .toList();
-        initRackProductMap();
-      } else {
-        ErrorHandler.alertDialog(context, "No data found");
-      }
-    } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
-    } finally {
-      isLoading = false;
+    } else if (unitVerifyModel?.previousRackName.isEmpty ?? true) {
+      unitVerifyModel = unitVerifyModel!.copyWith(previousRackName: code);
+    } else {
+      log("Till now unitVerifyModel: ${unitVerifyModel?.toJson()}");
+      unitVerifyModel = unitVerifyModel!.copyWith(newRackName: code);
     }
-  }
 
-  onItemTap(BuildContext context, int productId) async {
-    // get product
-    final prod = productAvailabilityList
-        .firstWhereOrNull((element) => element.productId == productId);
-    if (prod == null) {
-      ErrorHandler.alertDialog(context, "Product not found");
-      return;
-    }
-    bool rackScanned = true;
-    if (prod.rackName.isNotEmpty) {
-      rackScanned = await navigate(context,
-              route: NavigationConstants.scanRackRoute,
-              extra: {'rack': prod.rackName}) ??
-          false;
-    }
-    if (rackScanned && context.mounted) {
-      navigate(context,
-          route: NavigationConstants.productqrScreenRoute,
-          extra: {'productId': productId});
-    }
+    navigate(
+      context,
+      route: NavigationConstants.unitVerifyScannerRoute,
+      extra: {
+        'productScan': true,
+        if (unitVerifyModel?.newRackName != null) 'showInfo': true,
+      },
+    );
+    notifyListeners();
   }
 
   // scanProduct
-  Future<bool> scanProduct(
-      BuildContext context, int productId, String code) async {
+  Future<bool> scanProduct(BuildContext context, String code) async {
     try {
-      final prod = productAvailabilityList
-          .firstWhere((element) => element.productId == productId);
-      if (scannedUnits.contains(code)) {
-        ErrorHandler.alertDialog(context, "Product tag already scanned");
-        return false;
+      if (unitVerifyModel?.newRackName?.isNotEmpty ?? false) {
+        return secondaryTagsScan(context, code);
       }
-
-      // if code is not in productUnits
-      if (!prod.productUnits.contains(code)) {
-        ErrorHandler.alertDialog(context, "Product tag not found");
-        return false;
-      }
-      scannedUnits.add(code);
-      // check if all tags are scanned of product
-      if (checkScanCount(productId)) {
-        final success = await postScannedTags(context, productId);
-        if (success) {
-          return true;
-        } else {
-          // remove tags of product from scannedUnits
-          scannedUnits.removeWhere(
-              (element) => element.split("-").first == productId.toString());
-
-          return true;
-        }
-      } else {
-        final scanMessage =
-            "Scan ${prod.productUnits.length - getScanCount(productId)} more ${prod.productName}";
-        Provider.of<ScanMessageProvider>(context, listen: false)
-            .setMessage(context, scanMessage);
-        return false;
-      }
+      return initialTagsScan(context, code);
     } catch (ex) {
       ErrorHandler.alertDialog(context, ex.toString());
       return false;
@@ -261,17 +177,81 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
+  // two types of scan first add tags to scannedUnits and when user press complete then transfer to unitVerifyModel.productUnitTags
+  bool initialTagsScan(BuildContext context, String code) {
+    if (scannedUnits.isEmpty) {
+      // add code to scannedUnits
+      scannedUnits.add(code);
+      // also split id from code
+      final id = code.split("-").first;
+      unitVerifyModel = unitVerifyModel?.copyWith(product: int.parse(id));
+    } else {
+      // check if code is already in scannedUnits
+      if (scannedUnits.contains(code)) {
+        ErrorHandler.alertDialog(context, "Product tag already scanned");
+        return false;
+      } else if (scannedUnits.first.split("-").first != code.split("-").first) {
+        ErrorHandler.alertDialog(
+            context, "Product tag not belongs to same product");
+        return false;
+      }
+      scannedUnits.add(code);
+    }
+    final scanMessage = "Scanned ${scannedUnits.length} tags";
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, scanMessage);
+    notifyListeners();
+    return false;
+  }
+
+  // complete tags scan
+  void completeTagsScan(BuildContext context) {
+    unitVerifyModel = unitVerifyModel?.copyWith(productUnitTags: scannedUnits);
+    log("on complete tags scan: ${unitVerifyModel?.toJson()}");
+    scannedUnits.clear();
+    // notifyListeners();
+  }
+
+  // secondary scan
+  Future<bool> secondaryTagsScan(BuildContext context, String code) async {
+    // now we only have to check for unitVerifyModel.productUnitTags if contain then add to scannedUnits
+    // also check if code is not in scannedUnits
+    // also check if code is not in unitVerifyModel.productUnitTags
+    // check with unitVerifyModel.product
+    if (unitVerifyModel?.product != int.tryParse(code.split("-").first)) {
+      ErrorHandler.alertDialog(
+          context, "Product tag not belongs to same product");
+      return false;
+    }
+    if (scannedUnits.contains(code)) {
+      ErrorHandler.alertDialog(context, "Product tag already scanned");
+      return false;
+    }
+    if (unitVerifyModel?.productUnitTags?.contains(code) ?? false) {
+      scannedUnits.add(code);
+
+      // check if all tags are scanned of product
+      if (checkScanCount()) {
+        await postScannedTags(context);
+        unitVerifyModel = null;
+        return true;
+      }
+      final scanMessage = "Scanned ${scannedUnits.length} tags";
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+      notifyListeners();
+    }
+    return false;
+  }
+
   // post scanned tags
-  Future<bool> postScannedTags(BuildContext context, int productId) async {
+  Future<bool> postScannedTags(BuildContext context) async {
     try {
       showLoading(context);
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.productUnitVerificationUrl,
-        body: {
-          "product": productId,
-          "product_units": getTagsList(productId, false),
-        },
+        body: unitVerifyModel?.toJson(),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         showToast('Tags posted successfully');

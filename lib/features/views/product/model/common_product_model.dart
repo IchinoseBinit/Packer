@@ -28,7 +28,7 @@ class CommonProductModel {
     image = productAvailability.image;
     productUnits = productAvailability.productUnits;
     id = productAvailability.productId;
-    quantity = 0;
+    quantity = productAvailability.productUnits.length;
     size = "";
     measurement = "";
     scannedCount = 0;

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
+import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -55,11 +56,15 @@ class ProfileScreen extends StatelessWidget {
     // productListScreenRoute
     if (!value.isAuditUser() &&
         !otherInfoData.any(
-            (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
+            (e) => e['screen'] == NavigationConstants.unitVerifyScannerRoute)) {
       otherInfoData.add({
         'icon': Icons.list,
-        'title': 'Product List',
-        'screen': NavigationConstants.productListScreenRoute,
+        'title': 'Product Verification',
+        'screen': NavigationConstants.unitVerifyScannerRoute,
+        'onTap': () {
+          Provider.of<ProductProvider>(context, listen: false)
+              .initState();
+        },
       });
     }
   }
@@ -117,6 +122,9 @@ class ProfileScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     return ListTile(
                       onTap: () {
+                        if (otherInfoData[index]['onTap'] != null) {
+                          otherInfoData[index]['onTap']();
+                        }
                         navigate(context,
                             route: otherInfoData[index]['screen']);
                       },
