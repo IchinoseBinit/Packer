@@ -139,7 +139,7 @@ class ProductScanScreen extends BaseScanScreen {
               if (!context.mounted) return;
 
               removeLoading(context);
-              if (Provider.of<StockVerificationProvider>(context)
+              if (Provider.of<StockVerificationProvider>(context, listen: false)
                       .selectedStore
                       ?.isMainStore ??
                   false) {
