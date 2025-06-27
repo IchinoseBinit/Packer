@@ -63,4 +63,6 @@ class NavigationConstants {
   static const String productListScreenRoute = 'product_list_screen';
   // unitVerifyScannerRoute
   static const String unitVerifyScannerRoute = 'unit_verify_scanner';
+  // unit_product_scanner
+  static const String unitProductScannerRoute = 'unit_product_scanner';
 }

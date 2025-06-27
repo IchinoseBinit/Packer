@@ -56,15 +56,11 @@ class ProfileScreen extends StatelessWidget {
     // productListScreenRoute
     if (!value.isAuditUser() &&
         !otherInfoData.any(
-            (e) => e['screen'] == NavigationConstants.unitVerifyScannerRoute)) {
+            (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
       otherInfoData.add({
         'icon': Icons.list,
         'title': 'Product Verification',
-        'screen': NavigationConstants.unitVerifyScannerRoute,
-        'onTap': () {
-          Provider.of<ProductProvider>(context, listen: false)
-              .initState();
-        },
+        'screen': NavigationConstants.productListScreenRoute,
       });
     }
   }

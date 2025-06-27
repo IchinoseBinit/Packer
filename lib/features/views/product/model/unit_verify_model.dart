@@ -6,17 +6,21 @@
 // Binit
 // product_id = request.data.get('product') yo panichha
 
+import 'package:packer/features/views/product/model/product_avaliability.dart';
+
 class UnitVerifyModel {
   List<String>? productUnitTags;
   String previousRackName;
   String? newRackName;
   int? product;
+  ProductAvailability? productAvailability;
 
   UnitVerifyModel({
     this.productUnitTags,
     required this.previousRackName,
     this.newRackName,
     this.product,
+    this.productAvailability,
   });
 
   // copyWith
@@ -25,12 +29,14 @@ class UnitVerifyModel {
     String? previousRackName,
     String? newRackName,
     int? product,
+    ProductAvailability? productAvailability,
   }) {
     return UnitVerifyModel(
       productUnitTags: productUnitTags ?? this.productUnitTags,
       previousRackName: previousRackName ?? this.previousRackName,
       newRackName: newRackName ?? this.newRackName,
       product: product ?? this.product,
+      productAvailability: productAvailability ?? this.productAvailability,
     );
   }
 

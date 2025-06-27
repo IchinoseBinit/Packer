@@ -355,12 +355,12 @@ class AppRouter {
                   return UpdateRackScreen(productId: args['productId']);
                 },
               ),
-              // GoRoute(
-              //   path: NavigationConstants.productListScreenRoute,
-              //   builder: (BuildContext context, GoRouterState state) {
-              //     return ProductListScreen();
-              //   },
-              // ),
+              GoRoute(
+                path: NavigationConstants.productListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ProductListScreen();
+                },
+              ),
               GoRoute(
                 path: NavigationConstants.stockRackScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -375,7 +375,15 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return UnitVerifyScanner(
-                    productScan: args['productScan'] ?? false,
+                    reScan: args['reScan'] ?? false,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.unitProductScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return UnitProductScannerScreen(
                     showInfo: args['showInfo'] ?? false,
                   );
                 },

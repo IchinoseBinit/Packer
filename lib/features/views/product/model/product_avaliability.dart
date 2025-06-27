@@ -7,6 +7,7 @@ class ProductAvailability {
   late int productId;
   late String productName;
   late String rackName;
+  late String newRackName;
   late String image;
   late List<String> productUnits;
 
@@ -14,6 +15,7 @@ class ProductAvailability {
     required this.productId,
     required this.productName,
     required this.rackName,
+    required this.newRackName,
     required this.image,
     required this.productUnits,
   });
@@ -22,6 +24,7 @@ class ProductAvailability {
     productId = json['product_id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
     rackName = json['rack_name'].toString().toStringConversion();
+    newRackName = json['new_rack_name'].toString().toStringConversion();
     image = AppUrls.imageUrl + json['image'].toString().toStringConversion();
     productUnits = [];
     for (var element in json['product_units']) {

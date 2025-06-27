@@ -16,31 +16,24 @@ import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
 class UnitVerifyScanner extends BaseScanScreen {
-  final bool productScan;
-  final bool showInfo;
+  final bool reScan;
 
   bool hasScanned = false;
   UnitVerifyScanner({
-    this.productScan = false,
-    this.showInfo = false,
+    this.reScan = false,
     super.key,
   }) : super(
-          scanTitle: productScan ? "Product Scanner" : "Rack Scanner",
-          floatingActionButtonLocation: showInfo
-              ? FloatingActionButtonLocation.endFloat
-              : FloatingActionButtonLocation.centerFloat,
+          scanTitle: "Rack Scanner",
           showFlash: true,
           showBackButton: true,
         );
 
   @override
   void onScreenCreated(BuildContext context) {
-    if (productScan) {
+    if (!reScan) {
+      final message = Provider.of<ProductProvider>(context, listen: false).unitVerifyModel?.productAvailability?.rackName;
       Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, "Scan Product Code");
-    } else {
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, "Scan Rack Code");
+          .setMessage(context, 'Scan rack code${message?.isNotEmpty ?? false ? ' :: $message' : ''}');
     }
   }
 
@@ -56,30 +49,33 @@ class UnitVerifyScanner extends BaseScanScreen {
 
       log("code for unit verify: $code");
 
-      if (!productScan) {
-        if (!code.contains('rack')) {
-          handleInvalidCode(context, controller, code);
-          return;
-        }
-        navigatePop(context);
-        Future.delayed(
-          Durations.medium1,
-          () {
-            if (!context.mounted) return;
-            Provider.of<ProductProvider>(context, listen: false)
-                .onRackScan(context, code);
-          },
-        );
-      } else {
-        final success =
-            await Provider.of<ProductProvider>(context, listen: false)
-                .scanProduct(context, code);
-        if (success && context.mounted) {
-          Navigator.pop(context);
-        } else {
-          controller.start();
-        }
+      // if (!productScan) {
+      if (!code.contains('rack')) {
+        handleInvalidCode(context, controller, code);
+        return;
       }
+      // navigatePop(context);
+      Future.delayed(
+        Durations.medium1,
+        () {
+          if (!context.mounted) return;
+          final success = Provider.of<ProductProvider>(context, listen: false)
+              .onRackScan(context, code, reScan);
+          if (!success && context.mounted) {
+            controller.start();
+          }
+        },
+      );
+      // } else {
+      //   final success =
+      //       await Provider.of<ProductProvider>(context, listen: false)
+      //           .scanProduct(context, code);
+      //   if (success && context.mounted) {
+      //     Navigator.pop(context);
+      //   } else {
+      //     controller.start();
+      //   }
+      // }
     } catch (e) {
       handleInvalidCode(context, controller, code);
     } finally {
@@ -109,60 +105,6 @@ class UnitVerifyScanner extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    if (showInfo) {
-      return FloatingActionButton(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: () async {
-          Provider.of<ProductProvider>(context, listen: false)
-              .showProductTags(context);
-        },
-        child: const Icon(Icons.info, color: Colors.white),
-      );
-    }
-    final provider = Provider.of<ProductProvider>(context, listen: false);
-
-    return GeneralElevatedButton(
-      marginH: 16,
-      onPressed: () async {
-        controller.stop();
-        final scanned = provider.scannedUnits.length;
-
-        if (scanned == 0) {
-          return;
-        }
-
-        // Show confirmation dialog
-        final shouldContinue = await ShowAlertDialog(
-          body: Text(
-            "Are you sure you want to scan new rack for this product?\n"
-            "Scanned Units: $scanned",
-          ),
-          needCancel: true,
-          disableBackground: true,
-          okFunc: () => Navigator.pop(context, true),
-          cancelFunc: () {
-            controller.start();
-            Navigator.pop(context, false);
-          },
-        ).showAlertDialog(context);
-
-        if (shouldContinue != true) return;
-        if (!context.mounted) return;
-        // showLoading(context);
-        provider.completeTagsScan(context);
-        navigatePop(context);
-
-        Future.delayed(Durations.medium1, () {
-          if (!context.mounted) return;
-
-          // removeLoading(context);
-          navigate(
-            context,
-            route: NavigationConstants.unitVerifyScannerRoute,
-          );
-        });
-      },
-      title: "Scan New Rack",
-    );
+    return const SizedBox.shrink();
   }
 }
