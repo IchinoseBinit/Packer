@@ -111,7 +111,7 @@ class _ProductCardState extends State<ProductCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          height: 26.h,
+                          height: 30.h,
                           child: Text(
                             widget.productModel.productName,
                             maxLines: 2,

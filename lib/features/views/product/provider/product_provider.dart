@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 class ProductProvider extends ChangeNotifier {
   List<String> scannedUnits = [];
   List<String> secondaryScannedUnits = [];
+  List<UnitVerifyModel> unitVerifyModels = [];
   UnitVerifyModel? unitVerifyModel;
   List<ProductAvailability> productAvailabilityList = [];
   List<String> rackList = [];
@@ -29,11 +30,14 @@ class ProductProvider extends ChangeNotifier {
   void initState() {
     unitVerifyModel = UnitVerifyModel(previousRackName: "");
     scannedUnits = [];
+    unitVerifyModels = [];
     secondaryScannedUnits = [];
   }
 
   getMessage() {
-    if (unitVerifyModel?.productAvailability == null) return "Scan Product code";
+    if (unitVerifyModel?.productAvailability == null) {
+      return "Scan Product code";
+    }
     return "Scan ${unitVerifyModel?.productAvailability?.productName}";
   }
 
@@ -214,13 +218,11 @@ class ProductProvider extends ChangeNotifier {
 
   bool checkRackName(String code, {bool first = false}) {
     if (first) {
-      return unitVerifyModel?.productAvailability?.rackName
-              .contains(unitVerifyModel?.previousRackName ?? '') ??
-          false;
+      return code
+          .contains(unitVerifyModel?.productAvailability?.rackName ?? '');
     } else {
-      return unitVerifyModel?.productAvailability?.rackName
-              .contains(unitVerifyModel?.newRackName ?? '') ??
-          false;
+      return code
+          .contains(unitVerifyModel?.productAvailability?.newRackName ?? '');
     }
   }
 
@@ -229,10 +231,9 @@ class ProductProvider extends ChangeNotifier {
     // debugger();
     bool canNavigate = false;
 
-    if (unitVerifyModel?.productAvailability == null){
+    if (unitVerifyModel?.productAvailability == null) {
       canNavigate = true;
-    }else
-    if (!reScan) {
+    } else if (!reScan) {
       // check with unitVerifyModel
       if (checkRackName(code)) {
         canNavigate = true;
@@ -277,6 +278,19 @@ class ProductProvider extends ChangeNotifier {
     return true;
   }
 
+  // change another product 
+  void changeProduct(BuildContext context) {
+    if (unitVerifyModels.length >=3){
+      ErrorHandler.alertDialog(context, "You can only scan 3 products of same rack");
+      return;
+    }
+    unitVerifyModels.add(unitVerifyModel!.copyWith(productUnitTags: scannedUnits));
+    unitVerifyModel = UnitVerifyModel(previousRackName: unitVerifyModel?.previousRackName ?? '');
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, "Scan product code");
+    // notifyListeners();
+  }
+
   // scanProduct
   Future<bool> scanProduct(BuildContext context, String code) async {
     try {
@@ -292,20 +306,42 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
+  // check fron code product is in list and matches with unitVerifyModel.previousRackName
+  bool checkProductInList(String code) {
+    final id = code.split("-").first;
+    final item = productAvailabilityList
+        .firstWhereOrNull((element) => element.productId == int.parse(id));
+    if (item == null) {
+      return false;
+    }
+    if (unitVerifyModel?.previousRackName.contains(item.rackName) ?? false) {
+      return true;
+    }
+    return false;
+  }
+
   // two types of scan first add tags to scannedUnits and when user press complete then transfer to unitVerifyModel.productUnitTags
   bool initialTagsScan(BuildContext context, String code) {
     // debugger();
-    if (scannedUnits.isEmpty && unitVerifyModel?.product == null) {
+    if (unitVerifyModel?.product == null) {
       // add code to scannedUnits
       // also split id from code
       final id = code.split("-").first;
-      final item = productAvailabilityList.firstWhereOrNull((element) => element.productId == int.parse(id));
+      final item = productAvailabilityList
+          .firstWhereOrNull((element) => element.productId == int.parse(id));
       if (item == null) {
         ErrorHandler.alertDialog(context, "Product not found");
         return false;
       }
+      if (!(unitVerifyModel?.previousRackName.contains(item.rackName) ??
+          false)) {
+        ErrorHandler.alertDialog(
+            context, "Product tag not belongs to scanned rack");
+        return false;
+      }
       scannedUnits.add(code);
-      unitVerifyModel = unitVerifyModel?.copyWith(product: int.parse(id), productAvailability: item);
+      unitVerifyModel = unitVerifyModel?.copyWith(
+          product: int.parse(id), productAvailability: item);
     } else {
       // check if code is already in scannedUnits
       if (scannedUnits.contains(code)) {
@@ -313,12 +349,15 @@ class ProductProvider extends ChangeNotifier {
         return false;
       } else if (unitVerifyModel?.product.toString() != code.split("-").first) {
         ErrorHandler.alertDialog(
-            context, "Product tag not belongs to same product");
+            context, "Product tag not belongs to this product");
+        return false;
+      }else if ((unitVerifyModel?.productAvailability?.productUnits.length ?? 0) < scannedUnits.length){
+        ErrorHandler.alertDialog(context, "Required number of tags scanned for this product");
         return false;
       }
       scannedUnits.add(code);
     }
-    final scanMessage = "Scanned ${scannedUnits.length} tags";
+    final scanMessage = "Scanned ${scannedUnits.map((e) => e.split('-').first == unitVerifyModel?.product.toString()).length} tags";
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, scanMessage);
     notifyListeners();
@@ -327,26 +366,24 @@ class ProductProvider extends ChangeNotifier {
 
   // complete tags scan
   void completeTagsScan(BuildContext context) {
-    unitVerifyModel = unitVerifyModel?.copyWith(productUnitTags: scannedUnits);
-    log("on complete tags scan: ${unitVerifyModel?.toJson()}");
-      navigateReplacement(
-        context,
-        route: NavigationConstants.unitVerifyScannerRoute,
-        extra: {
-          'reScan': true,
-        },
-      );
-    // if (unitVerifyModel?.productAvailability?.newRackName.isNotEmpty ?? false) {
-    //   final scanMessage = "Scan rack code ${unitVerifyModel?.newRackName ?? ''}";
-    // } else {
-    //   final scanMessage = "Assign rack code";
-    //   Provider.of<ScanMessageProvider>(context, listen: false)
-    //       .setMessage(context, scanMessage);
-    // }
-    final item = productAvailabilityList.firstWhereOrNull((element) => element.productId == unitVerifyModel?.product);
-    final scanMessage = (item?.newRackName.isNotEmpty ?? false) ? "Scan rack code ${item?.newRackName}" : "Assign rack code";
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, scanMessage);
+    for (var element in unitVerifyModels) {
+      log("on complete tags scan: ${element.toJson()}");
+    }
+    navigateReplacement(
+      context,
+      route: NavigationConstants.unitVerifyScannerRoute,
+      extra: {
+        'reScan': true,
+      },
+    );
+    final item = productAvailabilityList.firstWhereOrNull(
+        (element) => element.productId == unitVerifyModels.first.product);
+    unitVerifyModel = unitVerifyModels.first;
+    final scanMessage = (item?.newRackName.isNotEmpty ?? false)
+        ? "Scan rack code ${item?.newRackName}"
+        : "Assign rack code";
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, scanMessage);
     // scannedUnits.clear();
     // notifyListeners();
   }
@@ -357,9 +394,8 @@ class ProductProvider extends ChangeNotifier {
     // also check if code is not in scannedUnits
     // also check if code is not in unitVerifyModel.productUnitTags
     // check with unitVerifyModel.product
-    if (unitVerifyModel?.product != int.tryParse(code.split("-").first)) {
-      ErrorHandler.alertDialog(
-          context, "Product tag not belongs to same product");
+    if (unitVerifyModels.first.product.toString() != code.split("-").first) {
+      ErrorHandler.alertDialog(context, "Product tag not belongs to this product");
       return false;
     }
     if (secondaryScannedUnits.contains(code)) {
@@ -371,19 +407,37 @@ class ProductProvider extends ChangeNotifier {
       return false;
     }
     secondaryScannedUnits.add(code);
-    
 
     // check if all tags are scanned of product
     if (checkScanCount()) {
-      unitVerifyModel =
-          unitVerifyModel?.copyWith(productUnitTags: secondaryScannedUnits);
-     return await postScannedTags(context);
-      
+      // spilt.first all tags and get unique list with product id and count
+      final productIds =
+          secondaryScannedUnits.map((e) => e.split("-").first).toSet();
+      final productCount = productIds.length;
+      for (int i = 0; i < productCount; i++) {
+        final productId = productIds.elementAt(i);
+        final product = productAvailabilityList.firstWhereOrNull(
+            (element) => element.productId == int.parse(productId));
+        if (product == null) {
+          continue;
+        } else {
+          unitVerifyModel = unitVerifyModel?.copyWith(
+              product: int.parse(productId),
+              productAvailability: product,
+              productUnitTags: secondaryScannedUnits
+                  .map((e) => e.split("-").first == productId ? e : null)
+                  .whereType<String>()
+                  .toList());
+          await postScannedTags(context);
+        }
+      }
+      unitVerifyModel = null;
+      return true;
     }
     final scanMessage = "Scanned ${secondaryScannedUnits.length} tags";
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, scanMessage);
-    
+
     notifyListeners();
 
     return false;
@@ -403,7 +457,7 @@ class ProductProvider extends ChangeNotifier {
           (element) => element.productId == unitVerifyModel?.product,
         );
         arrangeProductAvailabilityList();
-        unitVerifyModel = null;
+
         showToast('Tags posted successfully');
         notifyListeners();
         removeLoading(context);

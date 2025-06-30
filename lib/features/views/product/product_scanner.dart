@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -48,54 +49,111 @@ class UnitProductScannerScreen extends BaseScanScreen {
     }
     final provider = Provider.of<ProductProvider>(context, listen: false);
 
-    return GeneralElevatedButton(
-      marginH: 16,
-      onPressed: () async {
-        controller.stop();
-        final scanned = provider.scannedUnits.length;
-
-        if (scanned == 0) {
-          ErrorHandler.alertDialog(context, "No tags scanned");
-          controller.start();
-          return;
-        }
-
-        // Show confirmation dialog
-        final shouldContinue = await ShowAlertDialog(
-          body: Text(
-            "Are you sure you want to scan new rack for this product?\n"
-            "Scanned Units: $scanned\n"
-            "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
-          ),
-          needCancel: true,
-          disableBackground: true,
-          okFunc: () => Navigator.pop(context, true),
-          cancelFunc: () {
+    return Column(
+      spacing: 12.h,
+      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GeneralElevatedButton(
+          marginH: 16,
+          onPressed: () async {
+            controller.stop();
+            final scanned = provider.unitVerifyModels.length;
+        
+            if (scanned >= 3) {
+              ErrorHandler.alertDialog(context, "You can only scan 3 products");
+              controller.start();
+              return;
+            }
+        
+            // Show confirmation dialog
+            final shouldContinue = await ShowAlertDialog(
+              body: Text(
+                "Are you sure you want to scan new product?\n"
+                // "Scanned Units: $scanned\n"
+                // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
+              ),
+              needCancel: true,
+              disableBackground: true,
+              okFunc: () => Navigator.pop(context, true),
+              cancelFunc: () {
+                controller.start();
+                Navigator.pop(context, false);
+              },
+            ).showAlertDialog(context);
+        
+            if (shouldContinue != true) return;
+            if (!context.mounted) return;
+            // showLoading(context);
             controller.start();
-            Navigator.pop(context, false);
+            provider.changeProduct(context);
+            // navigatePop(context);
+        
+            // Future.delayed(Durations.medium1, () {
+            //   if (!context.mounted) return;
+        
+            //   // removeLoading(context);
+            //   // navigateReplacement(
+            //   //   context,
+            //   //   route: NavigationConstants.unitVerifyScannerRoute,
+            //   //   extra: {
+            //   //     'reScan': true,
+            //   //   },
+            //   // );
+            // });
           },
-        ).showAlertDialog(context);
-
-        if (shouldContinue != true) return;
-        if (!context.mounted) return;
-        // showLoading(context);
-        provider.completeTagsScan(context);
-        // navigatePop(context);
-
-        // Future.delayed(Durations.medium1, () {
-        //   if (!context.mounted) return;
-
-        //   // removeLoading(context);
-        //   // navigateReplacement(
-        //   //   context,
-        //   //   route: NavigationConstants.unitVerifyScannerRoute,
-        //   //   extra: {
-        //   //     'reScan': true,
-        //   //   },
-        //   // );
-        // });
-      },
-      title: "Scan New Rack",
+          title: "Scan New Product",
+        ),
+        GeneralElevatedButton(
+          marginH: 16,
+          onPressed: () async {
+            controller.stop();
+            final scanned = provider.scannedUnits.length;
+        
+            if (scanned == 0) {
+              ErrorHandler.alertDialog(context, "No tags scanned");
+              controller.start();
+              return;
+            }
+        
+            // Show confirmation dialog
+            final shouldContinue = await ShowAlertDialog(
+              body: Text(
+                "Are you sure you want to scan new rack?\n"
+                // "Scanned Units: $scanned\n"
+                // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
+              ),
+              needCancel: true,
+              disableBackground: true,
+              okFunc: () => Navigator.pop(context, true),
+              cancelFunc: () {
+                controller.start();
+                Navigator.pop(context, false);
+              },
+            ).showAlertDialog(context);
+        
+            if (shouldContinue != true) return;
+            if (!context.mounted) return;
+            // showLoading(context);
+            provider.completeTagsScan(context);
+            // navigatePop(context);
+        
+            // Future.delayed(Durations.medium1, () {
+            //   if (!context.mounted) return;
+        
+            //   // removeLoading(context);
+            //   // navigateReplacement(
+            //   //   context,
+            //   //   route: NavigationConstants.unitVerifyScannerRoute,
+            //   //   extra: {
+            //   //     'reScan': true,
+            //   //   },
+            //   // );
+            // });
+          },
+          title: "Scan New Rack",
+        ),
+      ],
     );
   
   }

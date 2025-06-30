@@ -35,9 +35,11 @@ void main() async {
 
   NotificationUtils.initializeLocalNotifications();
 
-
   // Request permission for notifications
-  await FirebaseAPI().requestPermission();
+  try {
+    await FirebaseAPI().requestPermission();
+  } catch (_) {
+  }
 
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -45,7 +47,6 @@ void main() async {
     android: initializationSettingsAndroid,
   );
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     handleIncomingCall(message, false);
@@ -58,8 +59,6 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const MyApp());
-
-  
 }
 
 @pragma('vm:entry-point')
@@ -79,8 +78,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
-  
   }
 
   @override
