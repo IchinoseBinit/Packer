@@ -54,14 +54,15 @@ class UnitProductScannerScreen extends BaseScanScreen {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (provider.unitVerifyModels.length < provider.maxProductCount -1)
         GeneralElevatedButton(
           marginH: 16,
           onPressed: () async {
             controller.stop();
             final scanned = provider.unitVerifyModels.length;
         
-            if (scanned >= 3) {
-              ErrorHandler.alertDialog(context, "You can only scan 3 products");
+            if (scanned >= provider.maxProductCount - 1) {
+              ErrorHandler.alertDialog(context, "You can only scan ${provider.maxProductCount} products");
               controller.start();
               return;
             }

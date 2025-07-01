@@ -27,6 +27,8 @@ class ProductProvider extends ChangeNotifier {
   bool isLoading = false;
   int index = 0;
 
+  int maxProductCount = 1;
+
   // init State
   void initState() {
     unitVerifyModel = UnitVerifyModel(previousRackName: "");
@@ -203,14 +205,18 @@ class ProductProvider extends ChangeNotifier {
       // Tags NOT scanned
       final productId = unitVerifyModel?.product;
       return scannedUnits
-          .where((tag) => tag.split("-").first == productId.toString() && !secondaryScannedUnits.contains(tag))
+          .where((tag) =>
+              tag.split("-").first == productId.toString() &&
+              !secondaryScannedUnits.contains(tag))
           .cast<String>()
           .toList();
     } else {
       // Tags scanned
       final productId = unitVerifyModel?.product;
       return scannedUnits
-          .where((tag) => tag.split("-").first == productId.toString() && secondaryScannedUnits.contains(tag))
+          .where((tag) =>
+              tag.split("-").first == productId.toString() &&
+              secondaryScannedUnits.contains(tag))
           .cast<String>()
           .toList();
     }
@@ -284,9 +290,9 @@ class ProductProvider extends ChangeNotifier {
 
   // change another product
   void changeProduct(BuildContext context) {
-    if (unitVerifyModels.length >= 3) {
+    if (unitVerifyModels.length >= maxProductCount) {
       ErrorHandler.alertDialog(
-          context, "You can only scan 3 products of same rack");
+          context, "You can only scan $maxProductCount products of same rack");
       return;
     }
     unitVerifyModels.add(unitVerifyModel!.copyWith(
@@ -347,14 +353,34 @@ class ProductProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(
             context, "Product tag not belongs to this product");
         return false;
-      } else if ((unitVerifyModel?.productAvailability?.productUnits.length ??
-              0) <=
-          scannedUnits.where((element) => element.split("-").first == unitVerifyModel?.product.toString()).length) {
-        ErrorHandler.alertDialog(
-            context, "Required number of tags scanned for this product");
-        return false;
       }
+
+      // else if ((unitVerifyModel?.productAvailability?.productUnits.length ??
+      //         0) <=
+      //     scannedUnits.where((element) => element.split("-").first == unitVerifyModel?.product.toString()).length) {
+      //   ErrorHandler.alertDialog(
+      //       context, "You have scanned tags for this product. Scan another product", () {
+      //         navigatePop(context);
+      //         changeProduct(context);
+      //       });
+      //   return false;
+      // }
       scannedUnits.add(code);
+      /// [Quantity check]
+      // final initialCount = scannedUnits
+      //     .where((element) =>
+      //         element.split("-").first == unitVerifyModel?.product.toString())
+      //     .length;
+      // final requiredCount =
+      //     unitVerifyModel?.productAvailability?.productUnits.length ?? 0;
+      // if (initialCount >= requiredCount) {
+      //   ErrorHandler.alertDialog(context,
+      //       "You have scanned tags for this product. Scan another product", () {
+      //     navigatePop(context);
+      //     changeProduct(context);
+      //   });
+      //   return false;
+      // }
     }
     final scanMessage =
         "Scanned ${scannedUnits.where((e) => e.split('-').first == unitVerifyModel?.product.toString()).length} ${unitVerifyModel?.productAvailability?.productName}";
@@ -366,12 +392,21 @@ class ProductProvider extends ChangeNotifier {
 
   // complete tags scan
   void completeTagsScan(BuildContext context, {bool repeat = false}) {
-    unitVerifyModels.add(unitVerifyModel!.copyWith(
-      productUnitTags: scannedUnits.where((element) => element.split("-").first == unitVerifyModel?.product.toString()).toList(),
-    ));
+    if (unitVerifyModel?.product != null) {
+      unitVerifyModels.add(unitVerifyModel!.copyWith(
+        productUnitTags: scannedUnits
+            .where((element) =>
+                element.split("-").first == unitVerifyModel?.product.toString())
+            .toList(),
+      ));
+    }
     for (var element in unitVerifyModels) {
       log("on complete tags scan: ${element.toJson()}");
     }
+    // sort unitVerifyModels by productAvailability.newRackName
+    unitVerifyModels.sort((a, b) => (a.productAvailability?.newRackName ?? '')
+        .compareTo(b.productAvailability?.newRackName ?? ''));
+
     navigateReplacement(
       context,
       route: NavigationConstants.unitVerifyScannerRoute,
@@ -402,7 +437,8 @@ class ProductProvider extends ChangeNotifier {
     // also check if code is not in unitVerifyModel.productUnitTags
     // check with unitVerifyModel.product
     if (unitVerifyModel?.product.toString() != code.split("-").first) {
-      ErrorHandler.alertDialog(context, "Product tag not belongs to this product");
+      ErrorHandler.alertDialog(
+          context, "Product tag not belongs to this product");
       return false;
     }
     if (secondaryScannedUnits.contains(code)) {
@@ -435,15 +471,23 @@ class ProductProvider extends ChangeNotifier {
       unitVerifyModel = null;
       return true;
     }
-    final scannedCount = secondaryScannedUnits.where((element) => element.split("-").first == unitVerifyModel?.product.toString()).length;
-    final initialCount = scannedUnits.where((element) => element.split("-").first == unitVerifyModel?.product.toString()).length;
-    
-    final scanMessage = "Scanned $scannedCount ${unitVerifyModel?.productAvailability?.productName}";
+    final scannedCount = secondaryScannedUnits
+        .where((element) =>
+            element.split("-").first == unitVerifyModel?.product.toString())
+        .length;
+    final initialCount = scannedUnits
+        .where((element) =>
+            element.split("-").first == unitVerifyModel?.product.toString())
+        .length;
+
+    final scanMessage =
+        "Scanned $scannedCount ${unitVerifyModel?.productAvailability?.productName}";
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, scanMessage);
 
-    if (scannedCount == initialCount){
-      ErrorHandler.alertDialog(context, "You have scanned tags for this product. Scan another product", () {
+    if (scannedCount == initialCount) {
+      ErrorHandler.alertDialog(context,
+          "You have scanned tags for this product. Scan another product", () {
         navigatePop(context);
         completeTagsScan(context, repeat: true);
       });
