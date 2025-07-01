@@ -3,14 +3,10 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:packer/constants/app_colors.dart';
-import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
-import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
@@ -60,7 +56,7 @@ class UnitVerifyScanner extends BaseScanScreen {
         () {
           if (!context.mounted) return;
           final success = Provider.of<ProductProvider>(context, listen: false)
-              .onRackScan(context, code, reScan);
+              .handleRackScan(context, code, reScan);
           if (!success && context.mounted) {
             controller.start();
           }

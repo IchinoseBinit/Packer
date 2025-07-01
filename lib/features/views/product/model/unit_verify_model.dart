@@ -44,7 +44,7 @@ class UnitVerifyModel {
   Map<String, dynamic> toJson() {
     return {
       'product_unit_tags': productUnitTags,
-      'previous_rack': previousRackName,
+      // 'previous_rack': previousRackName,
       'new_rack': newRackName,
       'product': product,
     };

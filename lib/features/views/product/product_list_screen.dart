@@ -43,7 +43,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             title: "Scan Product",
             onPressed: () {
               Provider.of<ProductProvider>(context, listen: false)
-                  .onItemTap(context, null);
+                  .navigateToProductScanner(context, null);
 
             },
           ),
@@ -101,7 +101,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           return ProductCard(
                             width: width,
                             onTap: () {
-                              provider.onItemTap(context, product.productId);
+                              provider.navigateToProductScanner(context, product.productId);
                             },
                             productModel:
                                 CommonProductModel.fromProductAvailability(

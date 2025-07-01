@@ -42,7 +42,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
         backgroundColor: AppColors.primaryColor,
         onPressed: () async {
           Provider.of<ProductProvider>(context, listen: false)
-              .showProductTags(context);
+              .showProductTagsDialog(context);
         },
         child: const Icon(Icons.info, color: Colors.white),
       );
@@ -54,18 +54,18 @@ class UnitProductScannerScreen extends BaseScanScreen {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (provider.unitVerifyModels.length < provider.maxProductCount -1)
+        // if (provider.unitVerifyModels.length < ProductProvider.maxProductCount -1)
         GeneralElevatedButton(
           marginH: 16,
           onPressed: () async {
             controller.stop();
-            final scanned = provider.unitVerifyModels.length;
+            // final scanned = provider.unitVerifyModels.length;
         
-            if (scanned >= provider.maxProductCount - 1) {
-              ErrorHandler.alertDialog(context, "You can only scan ${provider.maxProductCount} products");
-              controller.start();
-              return;
-            }
+            // if (scanned >= ProductProvider.maxProductCount - 1) {
+            //   ErrorHandler.alertDialog(context, "You can only scan ${ProductProvider.maxProductCount} products");
+            //   controller.start();
+            //   return;
+            // }
         
             // Show confirmation dialog
             final shouldContinue = await ShowAlertDialog(
@@ -87,7 +87,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
             if (!context.mounted) return;
             // showLoading(context);
             controller.start();
-            provider.changeProduct(context);
+            provider.switchToNextProduct(context);
             // navigatePop(context);
         
             // Future.delayed(Durations.medium1, () {
@@ -136,7 +136,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
             if (shouldContinue != true) return;
             if (!context.mounted) return;
             // showLoading(context);
-            provider.completeTagsScan(context);
+            provider.completeScanningSession(context);
             // navigatePop(context);
         
             // Future.delayed(Durations.medium1, () {
@@ -180,7 +180,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
       }
 
       final success = await Provider.of<ProductProvider>(context, listen: false)
-          .scanProduct(context, code);
+          .handleProductScan(context, code);
       if (success && context.mounted) {
         Navigator.pop(context);
       } else {
@@ -215,7 +215,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
   @override
   void onScreenCreated(BuildContext context) {
     final message = Provider.of<ProductProvider>(context, listen: false)
-        .getMessage();
+        .getScanMessage();
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, message);
   }
