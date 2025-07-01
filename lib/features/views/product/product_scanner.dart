@@ -170,6 +170,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
       final success = await Provider.of<ProductProvider>(context, listen: false)
           .handleProductScan(context, code);
       if (success && context.mounted) {
+        controller.start();
         Navigator.pop(context);
       } else {
         controller.start();
