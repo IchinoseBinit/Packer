@@ -44,15 +44,15 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.storeSelectionRoute,
       });
     }
-    if (value.isStoreManager() &&
-        !otherInfoData.any(
-            (e) => e['screen'] == NavigationConstants.rackUpdateScreenRoute)) {
-      otherInfoData.add({
-        'icon': Icons.folder,
-        'title': 'Rack Update',
-        'screen': NavigationConstants.rackUpdateScreenRoute,
-      });
-    }
+    // if (value.isStoreManager() &&
+    //     !otherInfoData.any(
+    //         (e) => e['screen'] == NavigationConstants.rackUpdateScreenRoute)) {
+    //   otherInfoData.add({
+    //     'icon': Icons.folder,
+    //     'title': 'Rack Update',
+    //     'screen': NavigationConstants.rackUpdateScreenRoute,
+    //   });
+    // }
     // productListScreenRoute
     if (!value.isAuditUser() &&
         !otherInfoData.any(

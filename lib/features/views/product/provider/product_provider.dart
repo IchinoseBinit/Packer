@@ -348,9 +348,20 @@ class ProductProvider extends ChangeNotifier {
         .setMessage(context, message);
   }
 
+  void _updateScanMessage2(BuildContext context, [String? customMessage]) {
+    final message = customMessage ?? _generateScanMessage2();
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, message);
+  }
+
   String _generateScanMessage() {
     final scannedCount = _getCurrentProductTags().length;
     return "Scanned $scannedCount ${unitVerifyModel?.productAvailability?.productName}";
+  }
+  String _generateScanMessage2() {
+    final scannedCount = _getCurrentProductTags().length;
+    final remainingCount = scannedCount - secondaryScannedUnits.where((e) => e.split("-").first == unitVerifyModel?.product.toString()).length;
+    return "Scan $remainingCount ${unitVerifyModel?.productAvailability?.productName} more";
   }
 
   void completeScanningSession(BuildContext context, {bool repeat = false}) {
@@ -447,7 +458,7 @@ class ProductProvider extends ChangeNotifier {
   }
 
   Future<bool> _handlePartialScanCompletion(BuildContext context) async {
-    _updateScanMessage(context);
+    _updateScanMessage2(context);
 
     final scannedCount = _getCurrentProductTags().length;
     final initialCount = secondaryScannedUnits
