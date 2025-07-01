@@ -377,10 +377,10 @@ class ProductProvider extends ChangeNotifier {
     
     secondaryScannedUnits.add(code);
     
-    if (hasCompletedScanning()) {
-      await _processCompletedScan(context);
-      return true;
-    }
+    // if (hasCompletedScanning()) {
+    //   await _processCompletedScan(context);
+    //   return true;
+    // }
     
     return await _handlePartialScanCompletion(context);
   }
@@ -407,7 +407,8 @@ class ProductProvider extends ChangeNotifier {
   Future<void> _processCompletedScan(BuildContext context) async {
     for (final model in unitVerifyModels) {
       unitVerifyModel = model;
-      await postScannedTags(context);
+      final result = await postScannedTags(context);
+      if (result) navigatePop(context);
     }
     
     unitVerifyModel = null;
@@ -423,6 +424,7 @@ class ProductProvider extends ChangeNotifier {
     
     if (scannedCount == initialCount) {
       await postScannedTags(context);
+      await Future.delayed(const Duration(seconds: 1));
       final shouldPickUp = await showPickUpRerackDialog(context);
       await _handleScanCompletionDecision(context, shouldPickUp);
     }
@@ -449,6 +451,7 @@ class ProductProvider extends ChangeNotifier {
     
     if (shouldPickUp) {
       await Future.delayed(const Duration(seconds: 1));
+      unitVerifyModel = UnitVerifyModel(previousRackName: '');
       // resetState();
       _updateScanMessage(context, "Scan product code");
       navigateReplacement(context, route: NavigationConstants.unitProductScannerRoute);
@@ -470,7 +473,7 @@ class ProductProvider extends ChangeNotifier {
       );
       
       if (response.statusCode == 200 || response.statusCode == 201) {
-        _removeProcessedProduct();
+        _removeProcessedProduct(context);
         showToast('Tags posted successfully');
         return true;
       } else {
@@ -485,12 +488,15 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  void _removeProcessedProduct() {
+  void _removeProcessedProduct(BuildContext context) {
     productAvailabilityList.removeWhere(
       (e) => e.productId == unitVerifyModel?.product,
     );
     unitVerifyModels.removeAt(currentIndex);
     currentIndex--;
+    if (unitVerifyModels.isEmpty) {
+      navigatePop(context);
+    }
     organizeProductsByRack();
     notifyListeners();
   }
