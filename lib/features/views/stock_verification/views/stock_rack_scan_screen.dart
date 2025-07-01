@@ -81,6 +81,11 @@ class StockRackScanScreen extends BaseScanScreen {
   }
 
   @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) {
+    
+  }
+
+  @override
   void onScreenCreated(BuildContext context) {
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, changeRack ? "Change Rack" : "Scan Rack code");

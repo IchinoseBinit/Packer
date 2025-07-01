@@ -119,4 +119,9 @@ class BasketScanScreen extends BaseScanScreen {
   void onDispose(MobileScannerController controller) {
     // Clean up if needed
   }
+
+  @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) {
+    
+  }
 }

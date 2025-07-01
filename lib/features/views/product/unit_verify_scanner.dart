@@ -19,6 +19,7 @@ class UnitVerifyScanner extends BaseScanScreen {
     this.reScan = false,
     super.key,
   }) : super(
+    canPop: false,
           scanTitle: "Rack Scanner",
           showFlash: true,
           showBackButton: true,
@@ -97,6 +98,25 @@ class UnitVerifyScanner extends BaseScanScreen {
   @override
   void onDispose(MobileScannerController controller) {
     // TODO: implement onDispose
+  }
+
+  Future<bool?> closeVerification(BuildContext context) {
+    return ShowAlertDialog(
+      title: "Alert",
+      body: Text("Are you sure you want to cancel re-rack"),
+      okTitle: 'yes',
+      cancelTitle: 'no',
+      okFunc: () => Navigator.pop(context, true),
+      cancelFunc: () => Navigator.pop(context, false),
+    ).showAlertDialog(context);
+  }
+
+  @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) async {
+    final willContinue = await closeVerification(context);
+      if (willContinue != true) return;
+      Provider.of<ProductProvider>(context, listen: false).resetState();
+      navigatePop(context);
   }
 
   @override

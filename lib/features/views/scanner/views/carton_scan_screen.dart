@@ -148,4 +148,9 @@ class CartonScanScreen extends BaseScanScreen {
   void onDispose(MobileScannerController controller) {
     // Cleanup if needed
   }
+
+  @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) {
+    
+  }
 }

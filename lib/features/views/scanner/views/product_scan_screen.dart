@@ -277,4 +277,9 @@ class ProductScanScreen extends BaseScanScreen {
   void onDispose(MobileScannerController controller) {
     // Any cleanup specific to cart item scanning
   }
+
+  @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) {
+    
+  }
 }

@@ -146,4 +146,9 @@ class RackScanScreen extends BaseScanScreen {
   void onDispose(MobileScannerController controller) {
     // Optional cleanup
   }
+
+  @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) {
+    
+  }
 }

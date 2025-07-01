@@ -24,6 +24,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
     required this.showInfo,
     // required this.index,
   }) : super(
+    canPop: false,
           scanTitle: "Product Scanner",
           floatingActionButtonLocation: showInfo
               ? FloatingActionButtonLocation.endFloat
@@ -33,6 +34,32 @@ class UnitProductScannerScreen extends BaseScanScreen {
   bool hasScanned = false;
 
   final bool showInfo;
+
+  @override
+  void onPopInvokedWithResult(
+      BuildContext context, MobileScannerController controller) async {
+    // TODO: implement onDispose
+    if (showInfo) {
+      final willContinue = await closeVerification(context);
+      if (willContinue != true) return;
+      Provider.of<ProductProvider>(context, listen: false).resetState();
+      navigatePop(context);
+    }else {
+      navigatePop(context);
+    }
+  }
+
+  // ask for close dialog
+  Future<bool?> closeVerification(BuildContext context) {
+    return ShowAlertDialog(
+      title: "Alert",
+      body: Text("Are you sure you want to cancel re-rack"),
+      okTitle: 'yes',
+      cancelTitle: 'no',
+      okFunc: () => Navigator.pop(context, true),
+      cancelFunc: () => Navigator.pop(context, false),
+    ).showAlertDialog(context);
+  }
 
   @override
   Widget? buildFloatingButton(
@@ -48,105 +75,107 @@ class UnitProductScannerScreen extends BaseScanScreen {
       );
     }
     final provider = Provider.of<ProductProvider>(context, listen: false);
-    if (provider.scannedUnits.isEmpty){
-      return const SizedBox.shrink();
-    }
-    return Column(
-      spacing: 12.h,
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // if (provider.unitVerifyModels.length < ProductProvider.maxProductCount -1)
-        Consumer<ProductProvider>(builder: (context, value, _) {
-          if (value.canScanNewProduct()) {
-            return GeneralElevatedButton(
-              marginH: 16,
-              onPressed: () async {
-                controller.stop();
-                // final scanned = provider.unitVerifyModels.length;
+    Consumer<ProductProvider>(builder: (context, value, _) {
+      if (value.scannedUnits.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Column(
+        spacing: 12.h,
+        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // if (provider.unitVerifyModels.length < ProductProvider.maxProductCount -1)
+          Consumer<ProductProvider>(builder: (context, value, _) {
+            if (value.canScanNewProduct()) {
+              return GeneralElevatedButton(
+                marginH: 16,
+                onPressed: () async {
+                  controller.stop();
+                  // final scanned = provider.unitVerifyModels.length;
 
-                // if (scanned >= ProductProvider.maxProductCount - 1) {
-                //   ErrorHandler.alertDialog(context, "You can only scan ${ProductProvider.maxProductCount} products");
-                //   controller.start();
-                //   return;
-                // }
+                  // if (scanned >= ProductProvider.maxProductCount - 1) {
+                  //   ErrorHandler.alertDialog(context, "You can only scan ${ProductProvider.maxProductCount} products");
+                  //   controller.start();
+                  //   return;
+                  // }
 
-                // Show confirmation dialog
-                final shouldContinue = await ShowAlertDialog(
-                  body: Text("Are you sure you want to scan new product?\n"
-                      // "Scanned Units: $scanned\n"
-                      // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
-                      ),
-                  needCancel: true,
-                  disableBackground: true,
-                  okFunc: () => Navigator.pop(context, true),
-                  cancelFunc: () {
-                    controller.start();
-                    Navigator.pop(context, false);
-                  },
-                ).showAlertDialog(context);
+                  // Show confirmation dialog
+                  final shouldContinue = await ShowAlertDialog(
+                    body: Text("Are you sure you want to scan new product?\n"
+                        // "Scanned Units: $scanned\n"
+                        // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
+                        ),
+                    needCancel: true,
+                    disableBackground: true,
+                    okFunc: () => Navigator.pop(context, true),
+                    cancelFunc: () {
+                      controller.start();
+                      Navigator.pop(context, false);
+                    },
+                  ).showAlertDialog(context);
 
-                if (shouldContinue != true) return;
-                if (!context.mounted) return;
-                // showLoading(context);
-                controller.start();
-                provider.switchToNextProduct(context);
-                // navigatePop(context);
+                  if (shouldContinue != true) return;
+                  if (!context.mounted) return;
+                  // showLoading(context);
+                  controller.start();
+                  provider.switchToNextProduct(context);
+                  // navigatePop(context);
 
-                // Future.delayed(Durations.medium1, () {
-                //   if (!context.mounted) return;
+                  // Future.delayed(Durations.medium1, () {
+                  //   if (!context.mounted) return;
 
-                //   // removeLoading(context);
-                //   // navigateReplacement(
-                //   //   context,
-                //   //   route: NavigationConstants.unitVerifyScannerRoute,
-                //   //   extra: {
-                //   //     'reScan': true,
-                //   //   },
-                //   // );
-                // });
-              },
-              title: "Scan New Product",
-            );
-          }
-          return SizedBox.shrink();
-        }),
-        GeneralElevatedButton(
-          marginH: 16,
-          onPressed: () async {
-            controller.stop();
-            final scanned = provider.scannedUnits.length;
-
-            if (scanned == 0) {
-              ErrorHandler.alertDialog(context, "No tags scanned");
-              controller.start();
-              return;
+                  //   // removeLoading(context);
+                  //   // navigateReplacement(
+                  //   //   context,
+                  //   //   route: NavigationConstants.unitVerifyScannerRoute,
+                  //   //   extra: {
+                  //   //     'reScan': true,
+                  //   //   },
+                  //   // );
+                  // });
+                },
+                title: "Scan New Product",
+              );
             }
+            return SizedBox.shrink();
+          }),
+          GeneralElevatedButton(
+            marginH: 16,
+            onPressed: () async {
+              controller.stop();
+              final scanned = provider.scannedUnits.length;
 
-            // Show confirmation dialog
-            final shouldContinue = await ShowAlertDialog(
-              body: Text("Are you sure you want to scan new rack?\n"
-                  // "Scanned Units: $scanned\n"
-                  // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
-                  ),
-              needCancel: true,
-              disableBackground: true,
-              okFunc: () => Navigator.pop(context, true),
-              cancelFunc: () {
+              if (scanned == 0) {
+                ErrorHandler.alertDialog(context, "No tags scanned");
                 controller.start();
-                Navigator.pop(context, false);
-              },
-            ).showAlertDialog(context);
+                return;
+              }
 
-            if (shouldContinue != true) return;
-            if (!context.mounted) return;
-            // showLoading(context);
-            provider.completeScanningSession(context);
-          },
-          title: "Re-Rack",
-        ),
-      ],
-    );
+              // Show confirmation dialog
+              final shouldContinue = await ShowAlertDialog(
+                body: Text("Are you sure you want to scan new rack?\n"
+                    // "Scanned Units: $scanned\n"
+                    // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
+                    ),
+                needCancel: true,
+                disableBackground: true,
+                okFunc: () => Navigator.pop(context, true),
+                cancelFunc: () {
+                  controller.start();
+                  Navigator.pop(context, false);
+                },
+              ).showAlertDialog(context);
+
+              if (shouldContinue != true) return;
+              if (!context.mounted) return;
+              // showLoading(context);
+              provider.completeScanningSession(context);
+            },
+            title: "Re-Rack",
+          ),
+        ],
+      );
+    });
   }
 
   @override
@@ -199,9 +228,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // TODO: implement onDispose
-  }
+  void onDispose(MobileScannerController controller) {}
 
   @override
   void onScreenCreated(BuildContext context) {

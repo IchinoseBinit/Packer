@@ -10,6 +10,7 @@ abstract class BaseScanScreen extends StatefulWidget {
   final String scanTitle;
   final bool showFlash;
   final bool showBackButton;
+  final bool canPop;
   final FloatingActionButtonLocation floatingActionButtonLocation;
 
   const BaseScanScreen({
@@ -17,6 +18,7 @@ abstract class BaseScanScreen extends StatefulWidget {
     required this.scanTitle,
     this.showFlash = true,
     this.showBackButton = true,
+    this.canPop = true,
     this.floatingActionButtonLocation =
         FloatingActionButtonLocation.centerFloat,
   });
@@ -33,6 +35,8 @@ abstract class BaseScanScreen extends StatefulWidget {
 
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller);
+
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller);
 }
 
 class _BaseScanScreenState extends State<BaseScanScreen> {
@@ -86,79 +90,86 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
       height: 200,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      floatingActionButton: widget.buildFloatingButton(context, controller!),
-      floatingActionButtonLocation: widget.floatingActionButtonLocation,
-      body: Stack(
-        children: [
-          MobileScanner(
-            fit: BoxFit.cover,
-            scanWindow: scanWindow,
-            controller: controller,
-            errorBuilder: (context, error, child) =>
-                ScannerErrorWidget(error: error),
-            onDetect: (barcodes) async {
-              final code = barcodes.barcodes.first.rawValue ?? '';
-              if (hasScanned) return;
-              hasScanned = true;
-              await widget.onCodeDetected(context, code, controller!);
-            },
-          ),
-          _buildScanWindow(scanWindow),
-          if (widget.showFlash)
-            Positioned(
-              top: 8.h * 6,
-              right: 4.w * 3,
-              child: _buildFlashButton(),
+    return PopScope(
+      canPop: widget.canPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        widget.onPopInvokedWithResult(context, controller!);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        floatingActionButton: widget.buildFloatingButton(context, controller!),
+        floatingActionButtonLocation: widget.floatingActionButtonLocation,
+        body: Stack(
+          children: [
+            MobileScanner(
+              fit: BoxFit.cover,
+              scanWindow: scanWindow,
+              controller: controller,
+              errorBuilder: (context, error, child) =>
+                  ScannerErrorWidget(error: error),
+              onDetect: (barcodes) async {
+                final code = barcodes.barcodes.first.rawValue ?? '';
+                if (hasScanned) return;
+                hasScanned = true;
+                await widget.onCodeDetected(context, code, controller!);
+              },
             ),
-          Positioned(
-            top: 8.h * 8,
-            right: 40.w * 3,
-            child: Text(
-              widget.scanTitle,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.backgroundColor),
-            ),
-          ),
-          if (widget.showBackButton)
+            _buildScanWindow(scanWindow),
+            if (widget.showFlash)
+              Positioned(
+                top: 8.h * 6,
+                right: 4.w * 3,
+                child: _buildFlashButton(),
+              ),
             Positioned(
-              top: 8.h * 6,
-              left: 4.w * 3,
-              child: IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                ),
+              top: 8.h * 8,
+              right: 40.w * 3,
+              child: Text(
+                widget.scanTitle,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.backgroundColor),
               ),
             ),
-          Consumer<ScanMessageProvider>(
-            builder: (_, provider, __) {
-              if (provider.message.isEmpty) return const SizedBox();
-              return Positioned(
-                top: 8.h * 20,
-                left: 16,
-                right: 16,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    provider.message,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+            if (widget.showBackButton)
+              Positioned(
+                top: 8.h * 6,
+                left: 4.w * 3,
+                child: IconButton(
+                  onPressed: () => widget.canPop ? Navigator.pop(context) : widget.onPopInvokedWithResult(context, controller!),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
                   ),
                 ),
-              );
-            },
-          )
-        ],
+              ),
+            Consumer<ScanMessageProvider>(
+              builder: (_, provider, __) {
+                if (provider.message.isEmpty) return const SizedBox();
+                return Positioned(
+                  top: 8.h * 20,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.message,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
   }

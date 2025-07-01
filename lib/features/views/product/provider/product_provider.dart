@@ -78,8 +78,10 @@ class ProductProvider extends ChangeNotifier {
   // Fetch product availability data
   Future<void> fetchProductAvailability(BuildContext context) async {
     try {
+      if (productAvailabilityList.isNotEmpty) return;
       isLoading = true;
       notifyListeners();
+      await Future.delayed(const Duration(seconds: 1));
 
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
@@ -105,7 +107,7 @@ class ProductProvider extends ChangeNotifier {
   }
 
   void navigateToProductScanner(BuildContext context, int? productId) {
-    resetState();
+    // resetState();
 
     if (productId == null) {
       navigate(context, route: NavigationConstants.unitProductScannerRoute);

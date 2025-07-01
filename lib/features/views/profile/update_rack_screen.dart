@@ -94,4 +94,9 @@ class UpdateRackScreen extends BaseScanScreen {
           .setMessage(context, "Scan Product Code");
     }
   }
+
+  @override
+  void onPopInvokedWithResult(BuildContext context, MobileScannerController controller) {
+    
+  }
 }
