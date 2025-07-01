@@ -26,12 +26,12 @@ class ErrorHandler {
   }
 
   // alert dialog
-  static void alertDialog(BuildContext context, String message) {
+  static void alertDialog(BuildContext context, String message,[Function()? okFunc]) {
     if (!context.mounted) return;
     ShowAlertDialog(
       disableBackground: true,
       body: Text(message),
-      okFunc: () {navigatePop(context);}
+      okFunc: okFunc ?? () {navigatePop(context);}
     ).showAlertDialog(context);
   }
 

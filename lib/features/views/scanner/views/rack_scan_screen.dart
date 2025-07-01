@@ -133,6 +133,7 @@ class RackScanScreen extends BaseScanScreen {
       BuildContext context, MobileScannerController controller, String code) {
     ShowAlertDialog(
       disableBackground: true,
+      canDismiss: true,
       body: Text("Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);

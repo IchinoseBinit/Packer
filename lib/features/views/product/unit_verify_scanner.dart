@@ -88,6 +88,7 @@ class UnitVerifyScanner extends BaseScanScreen {
       [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
+      // canDismiss: true,
       body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         navigatePop(context);
