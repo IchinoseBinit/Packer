@@ -23,6 +23,8 @@ class UnitVerifyModel {
     this.productAvailability,
   });
 
+  int get productCount => productUnitTags?.length ?? 0;
+
   // copyWith
   UnitVerifyModel copyWith({
     List<String>? productUnitTags,

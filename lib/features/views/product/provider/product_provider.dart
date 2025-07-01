@@ -42,6 +42,17 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool canScanNewProduct() {
+    return (unitVerifyModel?.productCount ?? 0) == getScannedUnitsForProduct().length;
+  }
+
+  List<String> getScannedUnitsForProduct() {
+    return scannedUnits.where((tag) {
+      final isSameProduct = tag.split("-").first == unitVerifyModel?.product?.toString();
+      return isSameProduct;
+    }).toList();
+  }
+
   String getScanMessage() {
     return unitVerifyModel?.productAvailability == null
         ? "Scan Product code"
@@ -299,6 +310,7 @@ class ProductProvider extends ChangeNotifier {
     unitVerifyModel = unitVerifyModel?.copyWith(
       product: int.parse(id),
       productAvailability: product,
+      productUnitTags: product.productUnits
     );
 
     _updateScanMessage(context);
@@ -453,7 +465,7 @@ class ProductProvider extends ChangeNotifier {
   Future<bool?> showPickUpRerackDialog(BuildContext context) {
     return ShowAlertDialog(
       body: const Text("You have scanned tags for this product."),
-      needCancel: true,
+      needCancel: scannedUnits.isNotEmpty,
       disableBackground: true,
       canDismiss: true,
       okTitle: "Pick Up",
@@ -513,6 +525,8 @@ class ProductProvider extends ChangeNotifier {
     );
     unitVerifyModels.removeAt(currentIndex);
     currentIndex--;
+    unitVerifyModel = null;
+
 
     organizeProductsByRack();
     notifyListeners();

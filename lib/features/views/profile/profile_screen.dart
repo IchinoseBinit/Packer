@@ -59,7 +59,7 @@ class ProfileScreen extends StatelessWidget {
             (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
       otherInfoData.add({
         'icon': Icons.list,
-        'title': 'Product Verification',
+        'title': 'Re-Rack',
         'screen': NavigationConstants.productListScreenRoute,
       });
     }
