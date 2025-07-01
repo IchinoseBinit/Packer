@@ -48,7 +48,9 @@ class UnitProductScannerScreen extends BaseScanScreen {
       );
     }
     final provider = Provider.of<ProductProvider>(context, listen: false);
-
+    if (provider.scannedUnits.isEmpty){
+      return const SizedBox.shrink();
+    }
     return Column(
       spacing: 12.h,
       mainAxisAlignment: MainAxisAlignment.end,
