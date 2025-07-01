@@ -449,7 +449,7 @@ class ProductProvider extends ChangeNotifier {
     
     if (shouldPickUp) {
       await Future.delayed(const Duration(seconds: 1));
-      resetState();
+      // resetState();
       _updateScanMessage(context, "Scan product code");
       navigateReplacement(context, route: NavigationConstants.unitProductScannerRoute);
     } else {
