@@ -22,8 +22,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<ProductProvider>(context, listen: false)
-        .fetchProductAvailability(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ProductProvider>(context, listen: false)
+          .fetchProductAvailability(context);
+    });
   }
 
   @override
@@ -44,7 +46,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
             onPressed: () {
               Provider.of<ProductProvider>(context, listen: false)
                   .navigateToProductScanner(context, null);
-
             },
           ),
         ),
@@ -101,7 +102,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           return ProductCard(
                             width: width,
                             onTap: () {
-                              provider.navigateToProductScanner(context, product.productId);
+                              provider.navigateToProductScanner(
+                                  context, product.productId);
                             },
                             productModel:
                                 CommonProductModel.fromProductAvailability(

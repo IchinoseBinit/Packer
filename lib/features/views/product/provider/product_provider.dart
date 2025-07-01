@@ -34,26 +34,31 @@ class ProductProvider extends ChangeNotifier {
 
   // Initialize state
   void resetState() {
-    unitVerifyModel = UnitVerifyModel(previousRackName: "");
-    scannedUnits.clear();
-    unitVerifyModels.clear();
-    secondaryScannedUnits.clear();
-    currentIndex = 0;
+    unitVerifyModel ??= UnitVerifyModel(previousRackName: "");
+    // scannedUnits.clear();
+    // unitVerifyModels.clear();
+    // secondaryScannedUnits.clear();
+    // currentIndex = 0;
     notifyListeners();
   }
 
   bool canScanNewProduct() {
-    return (unitVerifyModel?.productCount ?? 0) == getScannedUnitsForProduct().length;
+    return (unitVerifyModel?.productCount ?? 0) ==
+        getScannedUnitsForProduct().length;
   }
 
   List<String> getScannedUnitsForProduct() {
     return scannedUnits.where((tag) {
-      final isSameProduct = tag.split("-").first == unitVerifyModel?.product?.toString();
+      final isSameProduct =
+          tag.split("-").first == unitVerifyModel?.product?.toString();
       return isSameProduct;
     }).toList();
   }
 
   String getScanMessage() {
+    if (canScanNewProduct()) {
+      return "Scan new product";
+    }
     return unitVerifyModel?.productAvailability == null
         ? "Scan Product code"
         : "Scan ${unitVerifyModel?.productAvailability?.productName}";
@@ -78,6 +83,9 @@ class ProductProvider extends ChangeNotifier {
   // Fetch product availability data
   Future<void> fetchProductAvailability(BuildContext context) async {
     try {
+      if (productAvailabilityList.isNotEmpty) {
+        return;
+      }
       isLoading = true;
       notifyListeners();
 
@@ -308,10 +316,9 @@ class ProductProvider extends ChangeNotifier {
 
     scannedUnits.add(code);
     unitVerifyModel = unitVerifyModel?.copyWith(
-      product: int.parse(id),
-      productAvailability: product,
-      productUnitTags: product.productUnits
-    );
+        product: int.parse(id),
+        productAvailability: product,
+        productUnitTags: product.productUnits);
 
     _updateScanMessage(context);
     return false;
@@ -330,7 +337,8 @@ class ProductProvider extends ChangeNotifier {
     }
 
     scannedUnits.add(code);
-    _updateScanMessage(context);
+    _updateScanMessage(
+        context, canScanNewProduct() ? "Scan new product" : null);
     return false;
   }
 
@@ -526,7 +534,6 @@ class ProductProvider extends ChangeNotifier {
     unitVerifyModels.removeAt(currentIndex);
     currentIndex--;
     unitVerifyModel = null;
-
 
     organizeProductsByRack();
     notifyListeners();

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 abstract class BaseScanScreen extends StatefulWidget {
@@ -86,79 +88,115 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
       height: 200,
     );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      floatingActionButton: widget.buildFloatingButton(context, controller!),
-      floatingActionButtonLocation: widget.floatingActionButtonLocation,
-      body: Stack(
-        children: [
-          MobileScanner(
-            fit: BoxFit.cover,
-            scanWindow: scanWindow,
-            controller: controller,
-            errorBuilder: (context, error, child) =>
-                ScannerErrorWidget(error: error),
-            onDetect: (barcodes) async {
-              final code = barcodes.barcodes.first.rawValue ?? '';
-              if (hasScanned) return;
-              hasScanned = true;
-              await widget.onCodeDetected(context, code, controller!);
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          controller?.stop();
+        } else {
+          controller?.stop();
+          ShowAlertDialog(
+            body: Text("Are you sure you want to exit?"),
+            needCancel: true,
+            okFunc: () {
+              navigatePop(context);
+              navigatePop(context);
             },
-          ),
-          _buildScanWindow(scanWindow),
-          if (widget.showFlash)
-            Positioned(
-              top: 8.h * 6,
-              right: 4.w * 3,
-              child: _buildFlashButton(),
+            cancelFunc: () {
+              controller?.start();
+              navigatePop(context);
+            },
+          ).showAlertDialog(context);
+        }
+      },
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        floatingActionButton: widget.buildFloatingButton(context, controller!),
+        floatingActionButtonLocation: widget.floatingActionButtonLocation,
+        body: Stack(
+          children: [
+            MobileScanner(
+              fit: BoxFit.cover,
+              scanWindow: scanWindow,
+              controller: controller,
+              errorBuilder: (context, error, child) =>
+                  ScannerErrorWidget(error: error),
+              onDetect: (barcodes) async {
+                final code = barcodes.barcodes.first.rawValue ?? '';
+                if (hasScanned) return;
+                hasScanned = true;
+                await widget.onCodeDetected(context, code, controller!);
+              },
             ),
-          Positioned(
-            top: 8.h * 8,
-            right: 40.w * 3,
-            child: Text(
-              widget.scanTitle,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.backgroundColor),
-            ),
-          ),
-          if (widget.showBackButton)
+            _buildScanWindow(scanWindow),
+            if (widget.showFlash)
+              Positioned(
+                top: 8.h * 6,
+                right: 4.w * 3,
+                child: _buildFlashButton(),
+              ),
             Positioned(
-              top: 8.h * 6,
-              left: 4.w * 3,
-              child: IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                ),
+              top: 8.h * 8,
+              right: 40.w * 3,
+              child: Text(
+                widget.scanTitle,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.backgroundColor),
               ),
             ),
-          Consumer<ScanMessageProvider>(
-            builder: (_, provider, __) {
-              if (provider.message.isEmpty) return const SizedBox();
-              return Positioned(
-                top: 8.h * 20,
-                left: 16,
-                right: 16,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    provider.message,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+            if (widget.showBackButton)
+              Positioned(
+                top: 8.h * 6,
+                left: 4.w * 3,
+                child: IconButton(
+                  onPressed: () {
+                    controller?.stop();
+                    ShowAlertDialog(
+                    body: Text("Are you sure you want to exit?"),
+                    needCancel: true,
+                    okFunc: () {
+                      navigatePop(context);
+                      navigatePop(context);
+                    },
+                    cancelFunc: () {
+                      controller?.start();
+                      navigatePop(context);
+                    },
+                  ).showAlertDialog(context);
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
                   ),
                 ),
-              );
-            },
-          )
-        ],
+              ),
+            Consumer<ScanMessageProvider>(
+              builder: (_, provider, __) {
+                if (provider.message.isEmpty) return const SizedBox();
+                return Positioned(
+                  top: 8.h * 20,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      provider.message,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
   }
