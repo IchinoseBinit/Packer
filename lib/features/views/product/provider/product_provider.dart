@@ -14,6 +14,7 @@ import 'package:packer/features/views/product/model/product_avaliability.dart';
 import 'package:packer/features/views/product/model/unit_verify_model.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 class ProductProvider extends ChangeNotifier {
@@ -27,7 +28,7 @@ class ProductProvider extends ChangeNotifier {
   bool isLoading = false;
   int index = 0;
 
-  int maxProductCount = 1;
+  int maxProductCount = 2;
 
   // init State
   void initState() {
@@ -96,18 +97,19 @@ class ProductProvider extends ChangeNotifier {
   void onItemTap(BuildContext context, int? id) {
     initState();
     if (id == null) {
-      navigate(context, route: NavigationConstants.unitVerifyScannerRoute);
+      navigate(context, route: NavigationConstants.unitProductScannerRoute);
       return;
     }
     unitVerifyModel = unitVerifyModel?.copyWith(
         product: id,
         productAvailability: productAvailabilityList
             .firstWhere((element) => element.productId == id));
-    if (unitVerifyModel?.productAvailability?.rackName.isNotEmpty ?? false) {
-      navigate(context, route: NavigationConstants.unitVerifyScannerRoute);
-    } else {
-      navigate(context, route: NavigationConstants.unitProductScannerRoute);
-    }
+    navigate(context, route: NavigationConstants.unitProductScannerRoute);
+    // if (unitVerifyModel?.productAvailability?.rackName.isNotEmpty ?? false) {
+    //   navigate(context, route: NavigationConstants.unitVerifyScannerRoute);
+    // } else {
+    //   navigate(context, route: NavigationConstants.unitProductScannerRoute);
+    // }
   }
 
   void showProductTags(BuildContext context) {
@@ -335,12 +337,12 @@ class ProductProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, "Product not found");
         return false;
       }
-      if (!(unitVerifyModel?.previousRackName.contains(item.rackName) ??
-          false)) {
-        ErrorHandler.alertDialog(
-            context, "Product tag not belongs to scanned rack");
-        return false;
-      }
+      // if (!(unitVerifyModel?.previousRackName.contains(item.rackName) ??
+      //     false)) {
+      //   ErrorHandler.alertDialog(
+      //       context, "Product tag not belongs to scanned rack");
+      //   return false;
+      // }
       scannedUnits.add(code);
       unitVerifyModel = unitVerifyModel?.copyWith(
           product: int.parse(id), productAvailability: item);
@@ -366,6 +368,7 @@ class ProductProvider extends ChangeNotifier {
       //   return false;
       // }
       scannedUnits.add(code);
+
       /// [Quantity check]
       // final initialCount = scannedUnits
       //     .where((element) =>
@@ -403,9 +406,6 @@ class ProductProvider extends ChangeNotifier {
     for (var element in unitVerifyModels) {
       log("on complete tags scan: ${element.toJson()}");
     }
-    // sort unitVerifyModels by productAvailability.newRackName
-    unitVerifyModels.sort((a, b) => (a.productAvailability?.newRackName ?? '')
-        .compareTo(b.productAvailability?.newRackName ?? ''));
 
     navigateReplacement(
       context,
@@ -418,6 +418,9 @@ class ProductProvider extends ChangeNotifier {
       index++;
     } else {
       index = 0;
+      // sort unitVerifyModels by productAvailability.newRackName
+      unitVerifyModels.sort((a, b) => (a.productAvailability?.newRackName ?? '')
+          .compareTo(b.productAvailability?.newRackName ?? ''));
     }
     unitVerifyModel = unitVerifyModels[index];
     final item = unitVerifyModel?.productAvailability;
@@ -486,11 +489,19 @@ class ProductProvider extends ChangeNotifier {
         .setMessage(context, scanMessage);
 
     if (scannedCount == initialCount) {
-      ErrorHandler.alertDialog(context,
-          "You have scanned tags for this product. Scan another product", () {
-        navigatePop(context);
+      // ErrorHandler.alertDialog(context,
+      //     "You have scanned tags for this product. Scan another product", () {
+      //   navigatePop(context);
+      //   completeTagsScan(context, repeat: true);
+      // });
+      final value = await optionPanePickUpRerack(context);
+      if (value != null && value) {
+        unitVerifyModel = null;
+        navigateReplacement(context,
+            route: NavigationConstants.unitProductScannerRoute);
+      } else {
         completeTagsScan(context, repeat: true);
-      });
+      }
       await Future.delayed(const Duration(seconds: 1));
       return false;
     }
@@ -498,6 +509,21 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
 
     return false;
+  }
+
+  // Option Pane PickUp Rerack
+  Future<bool?> optionPanePickUpRerack(BuildContext context) async {
+    // show alert dialog for pick up and rerack
+    return ShowAlertDialog(
+      body: Text("You have scanned tags for this product."),
+      needCancel: true,
+      disableBackground: true,
+      canDismiss: true,
+      okTitle: "Pick Up",
+      cancelTitle: "Re-rack",
+      okFunc: () => Navigator.pop(context, true),
+      cancelFunc: () => Navigator.pop(context, false),
+    ).showAlertDialog(context);
   }
 
   // post scanned tags

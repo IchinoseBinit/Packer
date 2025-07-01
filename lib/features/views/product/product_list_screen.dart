@@ -40,7 +40,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
           child: GeneralElevatedButton(
             marginH: 12.w,
-            title: "Scan Rack",
+            title: "Scan Product",
             onPressed: () {
               Provider.of<ProductProvider>(context, listen: false)
                   .onItemTap(context, null);
