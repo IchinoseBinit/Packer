@@ -59,6 +59,11 @@ class ProductProvider extends ChangeNotifier {
     if (!isVerificationScan && canScanNewProduct()) {
       return "Scan new product";
     }
+    if (isVerificationScan) {
+      return unitVerifyModel?.productAvailability == null
+          ? "Scan Product code"
+          : "Scan ${unitVerifyModel?.productCount} ${unitVerifyModel?.productAvailability?.productName} \n Rack Name: ${unitVerifyModel?.newRackName}";
+    }
     return unitVerifyModel?.productAvailability == null
         ? "Scan Product code"
         : "Scan ${unitVerifyModel?.productAvailability?.productName}";
@@ -272,7 +277,7 @@ class ProductProvider extends ChangeNotifier {
       previousRackName: unitVerifyModel?.previousRackName ?? '',
     );
 
-    _updateScanMessage(context, "Scan product code");
+    _updateScanMessage(context, "Scan new product");
   }
 
   List<String> _getCurrentProductTags() {
@@ -304,10 +309,28 @@ class ProductProvider extends ChangeNotifier {
   }
 
   bool _processNewProductScan(BuildContext context, String code) {
+
+    // check if product is already scanned
+    if (scannedUnits.contains(code)) {
+      ErrorHandler.alertDialog(context, "Product tag already scanned");
+      return false;
+    }
+
+    
     final id = code.split("-").first;
     final product = productAvailabilityList.firstWhereOrNull(
       (e) => e.productId == int.tryParse(id),
     );
+
+    // also check does this product is in unitVerifyModels
+    if (unitVerifyModels.any((e) => e.product == int.parse(id))) {
+      final product = productAvailabilityList.firstWhereOrNull(
+        (e) => e.productId == int.tryParse(id),
+      );
+      final scanCount = scannedUnits.where((e) => e.split("-").first == id).length;
+      ErrorHandler.alertDialog(context, "Product ${product?.productName} scanned : $scanCount");
+      return false;
+    }
 
     if (product == null) {
       ErrorHandler.alertDialog(context, "Product not found");
@@ -320,7 +343,11 @@ class ProductProvider extends ChangeNotifier {
         productAvailability: product,
         productUnitTags: product.productUnits);
 
-    _updateScanMessage(context);
+    _updateScanMessage(
+        context, canScanNewProduct() ? "Scan new product" : null);
+    if (canScanNewProduct()) {
+      switchToNextProduct(context);
+    }
     return false;
   }
 
@@ -339,6 +366,9 @@ class ProductProvider extends ChangeNotifier {
     scannedUnits.add(code);
     _updateScanMessage(
         context, canScanNewProduct() ? "Scan new product" : null);
+    if (canScanNewProduct()) {
+      switchToNextProduct(context);
+    }
     return false;
   }
 
@@ -358,10 +388,15 @@ class ProductProvider extends ChangeNotifier {
     final scannedCount = _getCurrentProductTags().length;
     return "Scanned $scannedCount ${unitVerifyModel?.productAvailability?.productName}";
   }
+
   String _generateScanMessage2() {
     final scannedCount = _getCurrentProductTags().length;
-    final remainingCount = scannedCount - secondaryScannedUnits.where((e) => e.split("-").first == unitVerifyModel?.product.toString()).length;
-    return "Scan $remainingCount ${unitVerifyModel?.productAvailability?.productName} more";
+    final remainingCount = scannedCount -
+        secondaryScannedUnits
+            .where((e) =>
+                e.split("-").first == unitVerifyModel?.product.toString())
+            .length;
+    return "Scan $remainingCount ${unitVerifyModel?.productAvailability?.productName} more \n Rack Name: ${unitVerifyModel?.newRackName}";
   }
 
   void completeScanningSession(BuildContext context, {bool repeat = false}) {
@@ -537,6 +572,10 @@ class ProductProvider extends ChangeNotifier {
     productAvailabilityList.removeWhere(
       (e) => e.productId == unitVerifyModel?.product,
     );
+    scannedUnits.removeWhere(
+        (e) => e.split("-").first == unitVerifyModel?.product.toString());
+    secondaryScannedUnits.removeWhere(
+        (e) => e.split("-").first == unitVerifyModel?.product.toString());
     unitVerifyModels.removeAt(currentIndex);
     currentIndex--;
     unitVerifyModel = null;
