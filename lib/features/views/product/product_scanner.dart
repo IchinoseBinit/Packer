@@ -211,7 +211,7 @@ class UnitProductScannerScreen extends BaseScanScreen {
   @override
   void onScreenCreated(BuildContext context) {
     final message =
-        Provider.of<ProductProvider>(context, listen: false).getScanMessage();
+        Provider.of<ProductProvider>(context, listen: false).getScanMessage(isVerificationScan: showInfo);
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, message);
   }

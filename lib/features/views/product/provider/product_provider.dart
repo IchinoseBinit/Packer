@@ -55,8 +55,8 @@ class ProductProvider extends ChangeNotifier {
     }).toList();
   }
 
-  String getScanMessage() {
-    if (canScanNewProduct()) {
+  String getScanMessage({bool isVerificationScan = false}) {
+    if (!isVerificationScan && canScanNewProduct()) {
       return "Scan new product";
     }
     return unitVerifyModel?.productAvailability == null
@@ -466,12 +466,7 @@ class ProductProvider extends ChangeNotifier {
         .length;
 
     if (scannedCount == initialCount) {
-      final result = await postScannedTags(context);
-      if (result && unitVerifyModels.isEmpty) {
-        navigateReplacement(context,
-            route: NavigationConstants.productListScreenRoute);
-        return false;
-      }
+      await postScannedTags(context);
       await Future.delayed(const Duration(seconds: 1));
       final shouldPickUp = await showPickUpRerackDialog(context);
       await _handleScanCompletionDecision(context, shouldPickUp);
