@@ -406,6 +406,14 @@ class ProductProvider extends ChangeNotifier {
       ));
     }
 
+    // trim unitVerifyModels
+    unitVerifyModels.removeWhere((e) => e.product == null);
+
+    // if (unitVerifyModels.isEmpty) {
+    //   navigatePop(context);
+    //   return;
+    // }
+
     _logScanningSession();
 
     navigateReplacement(
