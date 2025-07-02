@@ -132,7 +132,7 @@ class _ProductCardState extends State<ProductCard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Qty: ${widget.productModel.quantity}",
+                              "Qty: ${widget.productModel.productUnits.length}",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium

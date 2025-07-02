@@ -54,15 +54,14 @@ class UnitProductScannerScreen extends BaseScanScreen {
         if (value.scannedUnits.isEmpty) {
           return SizedBox.shrink();
         }
-        return Column(
-          spacing: 12.h,
-          mainAxisAlignment: MainAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // if (provider.unitVerifyModels.length < ProductProvider.maxProductCount -1)
-            Consumer<ProductProvider>(builder: (context, value, _) {
-              if (value.canScanNewProduct()) {
-                return GeneralElevatedButton(
+        return Consumer<ProductProvider>(builder: (context, value, _) {
+          if (value.canScanNewProduct()) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              spacing: 12.h,
+              children: [
+                GeneralElevatedButton(
                   marginH: 16,
                   onPressed: () async {
                     controller.stop();
@@ -110,46 +109,46 @@ class UnitProductScannerScreen extends BaseScanScreen {
                     // });
                   },
                   title: "Scan New Product",
-                );
-              }
-              return SizedBox.shrink();
-            }),
-            GeneralElevatedButton(
-              marginH: 16,
-              onPressed: () async {
-                controller.stop();
-                final scanned = provider.scannedUnits.length;
+                ),
+                GeneralElevatedButton(
+                  marginH: 16,
+                  onPressed: () async {
+                    controller.stop();
+                    final scanned = provider.scannedUnits.length;
 
-                if (scanned == 0) {
-                  ErrorHandler.alertDialog(context, "No tags scanned");
-                  controller.start();
-                  return;
-                }
+                    if (scanned == 0) {
+                      ErrorHandler.alertDialog(context, "No tags scanned");
+                      controller.start();
+                      return;
+                    }
 
-                // Show confirmation dialog
-                final shouldContinue = await ShowAlertDialog(
-                  body: Text("Are you sure you want to scan new rack?\n"
-                      // "Scanned Units: $scanned\n"
-                      // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
-                      ),
-                  needCancel: true,
-                  disableBackground: true,
-                  okFunc: () => Navigator.pop(context, true),
-                  cancelFunc: () {
-                    controller.start();
-                    Navigator.pop(context, false);
+                    // Show confirmation dialog
+                    final shouldContinue = await ShowAlertDialog(
+                      body: Text("Are you sure you want to scan new rack?\n"
+                          // "Scanned Units: $scanned\n"
+                          // "Total Tags: ${provider.unitVerifyModel?.productAvailability?.productUnits.length}\n"
+                          ),
+                      needCancel: true,
+                      disableBackground: true,
+                      okFunc: () => Navigator.pop(context, true),
+                      cancelFunc: () {
+                        controller.start();
+                        Navigator.pop(context, false);
+                      },
+                    ).showAlertDialog(context);
+
+                    if (shouldContinue != true) return;
+                    if (!context.mounted) return;
+                    // showLoading(context);
+                    provider.completeScanningSession(context);
                   },
-                ).showAlertDialog(context);
-
-                if (shouldContinue != true) return;
-                if (!context.mounted) return;
-                // showLoading(context);
-                provider.completeScanningSession(context);
-              },
-              title: "Re-Rack",
-            ),
-          ],
-        );
+                  title: "Re-Rack",
+                ),
+              ],
+            );
+          }
+          return SizedBox.shrink();
+        });
       },
     );
   }
@@ -210,8 +209,8 @@ class UnitProductScannerScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    final message =
-        Provider.of<ProductProvider>(context, listen: false).getScanMessage(isVerificationScan: showInfo);
+    final message = Provider.of<ProductProvider>(context, listen: false)
+        .getScanMessage(isVerificationScan: showInfo);
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, message);
   }
