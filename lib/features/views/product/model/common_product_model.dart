@@ -10,7 +10,7 @@ class CommonProductModel {
   late String productName;
   late String rackName;
   late String image;
-  late List<String> productUnits;
+  late List<String> productUnits = [];
   late int quantity;
   late String size;
   late String measurement;

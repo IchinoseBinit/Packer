@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -61,6 +62,14 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.list,
         'title': 'Re-Rack',
         'screen': NavigationConstants.productListScreenRoute,
+      });
+    }
+
+    if (!value.isAuditUser() &&
+        !otherInfoData.any((e) => e['title'] == 'Report Damage')) {
+      otherInfoData.add({
+        'icon': Icons.report,
+        'title': 'Report Damage',
       });
     }
   }
@@ -121,8 +130,54 @@ class ProfileScreen extends StatelessWidget {
                         if (otherInfoData[index]['onTap'] != null) {
                           otherInfoData[index]['onTap']();
                         }
-                        navigate(context,
-                            route: otherInfoData[index]['screen']);
+                        if (otherInfoData[index]['title'] == "Report Damage") {
+                          showModalBottomSheet(
+                              context: context,
+                              builder: (context) => Container(
+                                    height: 100.h,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w, vertical: 8.h),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 16.h,
+                                            ),
+                                            child: GeneralElevatedButton(
+                                              marginH: 6.w,
+                                              title: "With QR",
+                                              onPressed: () {
+                                                navigate(context,
+                                                    route: NavigationConstants
+                                                        .damageScanScreenRoute);
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: 16.h,
+                                            ),
+                                            child: GeneralElevatedButton(
+                                              marginH: 6.w,
+                                              title: "Without QR",
+                                              onPressed: () {
+                                                navigate(context,
+                                                    route: NavigationConstants
+                                                        .damageScanScreenRoute);
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ));
+                        } else {
+                          navigate(context,
+                              route: otherInfoData[index]['screen']);
+                        }
                       },
                       titleTextStyle: TextStyle(
                         color: Colors.black,

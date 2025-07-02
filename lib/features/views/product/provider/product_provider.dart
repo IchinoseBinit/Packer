@@ -309,14 +309,12 @@ class ProductProvider extends ChangeNotifier {
   }
 
   bool _processNewProductScan(BuildContext context, String code) {
-
     // check if product is already scanned
     if (scannedUnits.contains(code)) {
       ErrorHandler.alertDialog(context, "Product tag already scanned");
       return false;
     }
 
-    
     final id = code.split("-").first;
     final product = productAvailabilityList.firstWhereOrNull(
       (e) => e.productId == int.tryParse(id),
@@ -327,8 +325,10 @@ class ProductProvider extends ChangeNotifier {
       final product = productAvailabilityList.firstWhereOrNull(
         (e) => e.productId == int.tryParse(id),
       );
-      final scanCount = scannedUnits.where((e) => e.split("-").first == id).length;
-      ErrorHandler.alertDialog(context, "Product ${product?.productName} scanned : $scanCount");
+      final scanCount =
+          scannedUnits.where((e) => e.split("-").first == id).length;
+      ErrorHandler.alertDialog(
+          context, "Product ${product?.productName} scanned : $scanCount");
       return false;
     }
 

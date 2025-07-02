@@ -7,8 +7,6 @@ import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
-import 'package:packer/features/views/order/models/see_order_details_packer.dart';
-import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
@@ -34,6 +32,7 @@ import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/carton_scan_screen.dart';
+import 'package:packer/features/views/scanner/views/damaged_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
@@ -127,6 +126,7 @@ class AppRouter {
                   return const PhotoSelection();
                 },
               ),
+
               GoRoute(
                 path: NavigationConstants.drivingLicenseScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -370,6 +370,7 @@ class AppRouter {
                   );
                 },
               ),
+
               GoRoute(
                 path: NavigationConstants.unitVerifyScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -388,7 +389,15 @@ class AppRouter {
                   );
                 },
               ),
-
+              GoRoute(
+                path: NavigationConstants.damageScanScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return DamagedScanScreen(
+                    showInfo: args['showInfo'] ?? false,
+                  );
+                },
+              ),
             ]),
       ],
     );
