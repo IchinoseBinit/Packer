@@ -1,4 +1,3 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -8,7 +7,7 @@ import 'package:packer/controllers/services/show_toast_message.dart';
 class DamageProductController extends ChangeNotifier {
   bool isLoading = false;
   List<String> tagList = [];
-
+  List<String> difference = [];
   List<String> productUnits = [];
   Future<void> postProductTag(String code) async {
     try {
@@ -58,13 +57,32 @@ class DamageProductController extends ChangeNotifier {
     }
   }
 
+  Future<void> requestQrDamaged(List<String> code) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.qrDamageUrl,
+        body: {"tags": code},
+      );
+
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      showToast("...Failed...");
+    }
+  }
+
   void scannedTags(String code) {
     tagList.add(code);
   }
 
   List<String> getUnscannedTags() {
-    final difference =
-        productUnits.where((tag) => !tagList.contains(tag)).toList();
+    difference = productUnits.where((tag) => !tagList.contains(tag)).toList();
     notifyListeners();
     return difference;
   }

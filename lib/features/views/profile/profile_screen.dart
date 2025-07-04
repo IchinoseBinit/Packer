@@ -72,6 +72,13 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Report Damage',
       });
     }
+    if (!value.isAuditUser() &&
+        !otherInfoData.any((e) => e['title'] == 'Request QR')) {
+      otherInfoData.add({
+        'icon': Icons.qr_code,
+        'title': 'Request QR',
+      });
+    }
   }
 
   @override
@@ -129,6 +136,11 @@ class ProfileScreen extends StatelessWidget {
                       onTap: () {
                         if (otherInfoData[index]['onTap'] != null) {
                           otherInfoData[index]['onTap']();
+                        }
+                        if (otherInfoData[index]['screen'] == "") {
+                          navigate(context,
+                              route: NavigationConstants.damageScanScreenRoute,
+                              extra: {'qr': false, 'requestQr': true});
                         }
                         if (otherInfoData[index]['title'] == "Report Damage") {
                           showModalBottomSheet(

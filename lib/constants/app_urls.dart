@@ -149,4 +149,5 @@ class AppUrls {
   //damage product url
   static String damageProductUnitUrl = "$_baseUrl/product_units/";
   static String markDamageUrl = "$_baseUrl/mark-damaged/";
+  static String qrDamageUrl = "$_baseUrl/qr-damaged/";
 }

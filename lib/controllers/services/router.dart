@@ -396,6 +396,7 @@ class AppRouter {
                   return DamagedScanScreen(
                     showInfo: args['showInfo'] ?? false,
                     qr: args['qr'],
+                    requestQr: args['requestQr'],
                   );
                 },
               ),

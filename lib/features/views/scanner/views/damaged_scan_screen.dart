@@ -18,7 +18,8 @@ import 'package:provider/provider.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
 class DamagedScanScreen extends BaseScanScreen {
-  DamagedScanScreen({super.key, required this.showInfo, required this.qr
+  DamagedScanScreen(
+      {super.key, required this.showInfo, required this.qr, this.requestQr
       // required this.index,
       })
       : super(
@@ -30,6 +31,7 @@ class DamagedScanScreen extends BaseScanScreen {
 
   bool hasScanned = false;
   bool qr = false;
+  bool? requestQr = false;
 
   final bool showInfo;
 
@@ -134,7 +136,12 @@ class DamagedScanScreen extends BaseScanScreen {
               final remainingItem = provider.getUnscannedTags();
 
               removeLoading(context);
-              provider.markDamaged(remainingItem);
+              if (requestQr!) {
+                provider.requestQrDamaged(remainingItem);
+              } else {
+                provider.markDamaged(remainingItem);
+              }
+
               navigatePop(context);
             } else {
               navigatePop(context);
