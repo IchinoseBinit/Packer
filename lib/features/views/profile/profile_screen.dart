@@ -150,7 +150,8 @@ class ProfileScreen extends StatelessWidget {
                                               onPressed: () {
                                                 navigate(context,
                                                     route: NavigationConstants
-                                                        .damageScanScreenRoute);
+                                                        .damageScanScreenRoute,
+                                                    extra: {'qr': true});
                                               },
                                             ),
                                           ),
@@ -166,7 +167,8 @@ class ProfileScreen extends StatelessWidget {
                                               onPressed: () {
                                                 navigate(context,
                                                     route: NavigationConstants
-                                                        .damageScanScreenRoute);
+                                                        .damageScanScreenRoute,
+                                                    extra: {'qr': false});
                                               },
                                             ),
                                           ),

@@ -395,6 +395,7 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return DamagedScanScreen(
                     showInfo: args['showInfo'] ?? false,
+                    qr: args['qr'],
                   );
                 },
               ),

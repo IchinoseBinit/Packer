@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -49,6 +50,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller?.start();
+      Provider.of<DamageProductController>(context, listen: false).reset();
 
       widget.onScreenCreated(context);
 
@@ -154,17 +156,17 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
                   onPressed: () {
                     controller?.stop();
                     ShowAlertDialog(
-                    body: Text("Are you sure you want to exit?"),
-                    needCancel: true,
-                    okFunc: () {
-                      navigatePop(context);
-                      navigatePop(context);
-                    },
-                    cancelFunc: () {
-                      controller?.start();
-                      navigatePop(context);
-                    },
-                  ).showAlertDialog(context);
+                      body: Text("Are you sure you want to exit?"),
+                      needCancel: true,
+                      okFunc: () {
+                        navigatePop(context);
+                        navigatePop(context);
+                      },
+                      cancelFunc: () {
+                        controller?.start();
+                        navigatePop(context);
+                      },
+                    ).showAlertDialog(context);
                   },
                   icon: const Icon(
                     Icons.arrow_back,

@@ -3,12 +3,14 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
@@ -16,82 +18,73 @@ import 'package:provider/provider.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
 class DamagedScanScreen extends BaseScanScreen {
-  DamagedScanScreen({
-    super.key,
-    required this.showInfo,
-    // required this.index,
-  }) : super(
-          scanTitle: "Damaged Product Scanner",
+  DamagedScanScreen({super.key, required this.showInfo, required this.qr
+      // required this.index,
+      })
+      : super(
+          scanTitle: "Scan the Product",
           floatingActionButtonLocation: showInfo
               ? FloatingActionButtonLocation.endFloat
               : FloatingActionButtonLocation.centerFloat,
         );
 
   bool hasScanned = false;
+  bool qr = false;
 
   final bool showInfo;
 
   @override
   Widget? buildFloatingButton(
-      BuildContext context, MobileScannerController controller) {
+    BuildContext context,
+    MobileScannerController controller,
+  ) {
     if (showInfo) {
       return FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
-        onPressed: () async {
+        onPressed: () {
           Provider.of<ProductProvider>(context, listen: false)
               .showProductTagsDialog(context);
         },
         child: const Icon(Icons.info, color: Colors.white),
       );
     }
-    return null;
-    // final provider = Provider.of<ProductProvider>(context, listen: false);
 
-    // return Consumer<ProductProvider>(
-    //   builder: (context, value, _) {
-    //     if (value.scannedUnits.isEmpty) {
-    //       return SizedBox.shrink();
-    //     }
-    //     return Consumer<ProductProvider>(builder: (context, value, _) {
-    //       if (value.canScanNewProduct()) {
-    //         return Column(
-    //           mainAxisAlignment: MainAxisAlignment.end,
-    //           mainAxisSize: MainAxisSize.min,
-    //           spacing: 12.h,
-    //           children: [
-    //             GeneralElevatedButton(
-    //               marginH: 16,
-    //               onPressed: () async {
-    //                 controller.stop();
+    return Consumer<DamageProductController>(
+      builder: (context, provider, _) {
+        return GeneralElevatedButton(
+          title: qr ? "Confirm Verification" : "Check Unscanned Tags",
+          onPressed: () {
+            if (qr) {
+              ShowAlertDialog(
+                title: "Confirm",
+                body: Text("Scan all products.${provider.tagList.join('\n')}"),
+                okFunc: () {
+                  provider.markDamaged(provider.tagList);
+                  navigatePop(context);
+                },
+                cancelFunc: () {
+                  navigatePop(context);
+                },
+              ).showAlertDialog(context);
+            } else {
+              final unscanned = provider.getUnscannedTags();
 
-    //                 // Show confirmation dialog
-    //                 final shouldContinue = await ShowAlertDialog(
-    //                   body:
-    //                       Text("Are you sure you want to scan new product?\n"),
-    //                   needCancel: true,
-    //                   disableBackground: true,
-    //                   okFunc: () => Navigator.pop(context, true),
-    //                   cancelFunc: () {
-    //                     controller.start();
-    //                     Navigator.pop(context, false);
-    //                   },
-    //                 ).showAlertDialog(context);
-
-    //                 if (shouldContinue != true) return;
-    //                 if (!context.mounted) return;
-    //                 // showLoading(context);
-    //                 controller.start();
-    //                 provider.switchToNextProduct(context);
-    //               },
-    //               title: "Scan New Product",
-    //             ),
-    //           ],
-    //         );
-    //       }
-    //       return SizedBox.shrink();
-    //     });
-    //   },
-    // );
+              ShowAlertDialog(
+                title: "Unscanned Tags",
+                body: Text(
+                  unscanned.isEmpty
+                      ? "All tags scanned!"
+                      : "Missing tags:\n\n${unscanned.join('\n')}",
+                ),
+                okFunc: () {
+                  navigatePop(context);
+                },
+              ).showAlertDialog(context);
+            }
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -104,10 +97,16 @@ class DamagedScanScreen extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       log("code: $code");
+      if (qr) {
+        Provider.of<DamageProductController>(context, listen: false)
+            .scannedTags(code);
+      } else {
+        await Provider.of<DamageProductController>(context, listen: false)
+            .postProductTag(code);
+      }
 
       // check by spliting code
       final id = code.split("-").first;
-      // try parsing id
       final parsedId = int.tryParse(id);
       if (parsedId == null) {
         handleInvalidCode(context, controller, code);
@@ -115,8 +114,33 @@ class DamagedScanScreen extends BaseScanScreen {
       }
 
       if (context.mounted) {
+        final provider =
+            Provider.of<DamageProductController>(context, listen: false);
+        if (!qr) provider.scannedTags(code);
+
         controller.start();
-        Navigator.pop(context);
+        ShowAlertDialog(
+          title: "Do you want to scan other item",
+          body: Text("ssssss"),
+          okFunc: () {
+            navigatePop(context);
+          },
+          needCancel: true,
+          cancelFunc: () async {
+            navigatePop(context);
+
+            showLoading(context);
+            if (!qr) {
+              final remainingItem = provider.getUnscannedTags();
+
+              removeLoading(context);
+              provider.markDamaged(remainingItem);
+              navigatePop(context);
+            } else {
+              navigatePop(context);
+            }
+          },
+        ).showAlertDialog(context);
       } else {
         controller.start();
       }

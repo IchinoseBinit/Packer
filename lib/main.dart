@@ -12,6 +12,7 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -38,8 +39,7 @@ void main() async {
   // Request permission for notifications
   try {
     await FirebaseAPI().requestPermission();
-  } catch (_) {
-  }
+  } catch (_) {}
 
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -140,6 +140,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => StockVerificationProvider()),
         ChangeNotifierProvider(create: (_) => RackUpdateProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => DamageProductController()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
