@@ -71,7 +71,6 @@ class _LowStockScannerState extends State<LowStockScanner> {
           code,
         );
         if (value && mounted) {
-          // Navigator.pop(context);
           hasScanned = false;
         } else if (mounted) {
           controller?.start();

@@ -329,7 +329,6 @@ class OrderProvider extends ChangeNotifier {
 
   Future fetchUnsettledOrders() async {
     try {
-      debugger();
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.getUnsettledOrdersUrl,

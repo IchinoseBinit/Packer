@@ -19,7 +19,6 @@ import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
-
 @Deprecated("Use other screens")
 class ScanScreen extends StatefulWidget {
   const ScanScreen({
@@ -71,13 +70,13 @@ class _ScanScreenState extends State<ScanScreen> {
         //     .initScanMessage(widget.productId ?? 0);
       }
     });
-    Provider.of<PackerTransferProvider>(context, listen: false).resetHasScanned();
+    Provider.of<PackerTransferProvider>(context, listen: false)
+        .resetHasScanned();
   }
 
   var _flash = false;
 
   checkQr(String code) async {
-
     if (hasScanned) return;
     hasScanned = true;
     controller?.stop();
@@ -122,12 +121,14 @@ class _ScanScreenState extends State<ScanScreen> {
       }
       hasScanned = false;
 
-      // navigatePop(context, code);
+      navigatePop(context, code);
 
       return;
     }
 
     showLoading(context);
+
+    //waitlist
 
     if (code.contains('topicName')) {
       final data = jsonDecode(code);
@@ -292,10 +293,10 @@ class _ScanScreenState extends State<ScanScreen> {
               //   return;
               // }
               // if (widget.checkIdentifier) {
-                // Provider.of<PackerTransferProvider>(context, listen: false)
-                //     .checkIdentifier(context, controller,
-                //         barcodes.barcodes.first.rawValue.toString());
-                // return;
+              // Provider.of<PackerTransferProvider>(context, listen: false)
+              //     .checkIdentifier(context, controller,
+              //         barcodes.barcodes.first.rawValue.toString());
+              // return;
               // }
               // if (widget.forBasket) {
               //   Provider.of<PackerTransferProvider>(context, listen: false)
@@ -355,7 +356,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
                 )),
           ),
-          
+
           Visibility(
             visible: widget.checkIdentifier,
             child: Positioned(

@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
@@ -128,37 +127,38 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                 // 8.h
                                 SizedBox(height: 8.h),
                                 if (state.rackProductMap[rackName] != null)
-                                IntrinsicGridView.vertical(
-                                  columnCount: 2,
-                                  verticalSpace: 12.w,
-                                  horizontalSpace: 12.w,
-                                  children: [
-                                  ...state.rackProductMap[rackName]!.map(
-                                    (product) { 
-                                      final width = (1.sw - 12.w - 32.w) / 2;
-                                      return ProductCard(
-                                      width: width,
-                                      onTap: () {
-                                        if (state.checkScanCount(
-                                            product.productId)) {
-                                          return;
-                                        }
-                                        ErrorHandler.alertDialog(
-                                            context, "Scan Carton First");
-                                      },
-                                      productModel:
-                                          CommonProductModel.fromProductModel(
-                                              product),
-                                      status: state
-                                              .checkScanCount(product.productId)
-                                          ? ItemStatus.done
-                                          : ItemStatus.remaining,
-                                      quantity:
-                                          state.getScanCount(product.productId),
-                                    );},
-                                  ),
-                                  ]),
-
+                                  IntrinsicGridView.vertical(
+                                      columnCount: 2,
+                                      verticalSpace: 12.w,
+                                      horizontalSpace: 12.w,
+                                      children: [
+                                        ...state.rackProductMap[rackName]!.map(
+                                          (product) {
+                                            final width =
+                                                (1.sw - 12.w - 32.w) / 2;
+                                            return ProductCard(
+                                              width: width,
+                                              onTap: () {
+                                                if (state.checkScanCount(
+                                                    product.productId)) {
+                                                  return;
+                                                }
+                                                ErrorHandler.alertDialog(
+                                                    context,
+                                                    "Scan Carton First");
+                                              },
+                                              productModel: CommonProductModel
+                                                  .fromProductModel(product),
+                                              status: state.checkScanCount(
+                                                      product.productId)
+                                                  ? ItemStatus.done
+                                                  : ItemStatus.remaining,
+                                              quantity: state.getScanCount(
+                                                  product.productId),
+                                            );
+                                          },
+                                        ),
+                                      ]),
                               ],
                             );
                           },

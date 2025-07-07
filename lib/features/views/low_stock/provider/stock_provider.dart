@@ -58,7 +58,7 @@ class StockProvider extends ChangeNotifier {
 
     rackNameList.sort((a, b) => a.compareTo(b));
     // TODO: Remove
-    rackNameList  = rackNameList.reversed.toList();
+    rackNameList = rackNameList.reversed.toList();
   }
 
   // reset
@@ -124,7 +124,6 @@ class StockProvider extends ChangeNotifier {
 
   Future callCartonInfoApi(BuildContext context, String code) async {
     try {
-      // debugger();
       showLoading(context);
       if (!code.contains("carton")) {
         throw "Invalid Carton QR";
@@ -234,8 +233,7 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              removeLoading(context);
-              ShowAlertDialog(
+              await ShowAlertDialog(
                 disableBackground: false,
                 body: Text("Already Scanned"),
                 okFunc: () {
@@ -363,27 +361,23 @@ class StockProvider extends ChangeNotifier {
 
   Future<bool> checkItemQr(BuildContext context, String code) async {
     try {
+      debugger();
       if (scannedList.contains(code)) {
-        ErrorHandler.alertDialog(context, "Tag Already scanned");
-
+        await ErrorHandler.alertDialog(context, "Tag Already scanned");
         return false;
       }
       if (selectedProduct?.quantity == scannedList.length) {
-        ErrorHandler.alertDialog(context, "Product already scanned");
+        await ErrorHandler.alertDialog(context, "Product already scanned");
         return false;
       }
       if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        ErrorHandler.alertDialog(
+        await ErrorHandler.alertDialog(
             context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
+
       scannedList.add(code);
 
-      // final selProduct = selectedModel?.products.indexWhere(
-      //     (element) => element.productId == selectedProduct?.productId);
-      // if (selProduct != null && selProduct >= 0) {
-      //   selectedModel?.products[selProduct].scannedCount++;
-      // }
       selectedProduct!.scannedCount++;
       scanMessage =
           "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
@@ -402,7 +396,7 @@ class StockProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
+      await ErrorHandler.alertDialog(context, e.toString());
       return false;
     }
   }
@@ -434,18 +428,18 @@ class StockProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         completeProductId.add(selectedProduct?.productId ?? 0);
         showToast("Scanned Successfully");
+        removeLoading(context);
         return true;
       } else {
         ErrorHandler.alertDialog(context, "Failed to scan basket");
         return false;
       }
     } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
       scannedList.clear();
-      return false;
-    } finally {
+
       removeLoading(context);
-      navigatePop(context);
+      rethrow;
+    } finally {
       scannedList = [];
     }
   }

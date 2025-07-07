@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -72,8 +74,7 @@ class BasketScanScreen extends BaseScanScreen {
           navigate(context,
               route: NavigationConstants.orderDetailsRoute, extra: orderId);
           Provider.of<OrderProvider>(context, listen: false).initState();
-        } else
-        if (result && context.mounted) {
+        } else if (result && context.mounted) {
           Navigator.pop(context, true);
           return;
         }
@@ -105,6 +106,7 @@ class BasketScanScreen extends BaseScanScreen {
 
   void handleInvalidCode(
       BuildContext context, MobileScannerController controller, String code) {
+    debugger();
     ShowAlertDialog(
       disableBackground: true,
       body: Text("Invalid QR ${detectQrMessage(code)}"),

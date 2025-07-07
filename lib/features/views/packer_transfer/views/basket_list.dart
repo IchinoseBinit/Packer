@@ -73,13 +73,16 @@ class BasketList extends StatelessWidget {
             );
           },
         ),
-        bottomNavigationBar: GeneralElevatedButton(
-            marginH: 16.w,
-            title: "Scan Basket",
-            onPressed: () {
-              Provider.of<PackerTransferProvider>(context, listen: false)
-                  .onBasketScanTapped(context, null);
-            }),
+        bottomNavigationBar: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+          child: GeneralElevatedButton(
+              marginH: 16.w,
+              title: "Scan Basket",
+              onPressed: () {
+                Provider.of<PackerTransferProvider>(context, listen: false)
+                    .onBasketScanTapped(context, null);
+              }),
+        ),
       ),
     );
   }
