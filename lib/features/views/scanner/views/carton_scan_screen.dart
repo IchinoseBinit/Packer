@@ -121,7 +121,6 @@ class CartonScanScreen extends BaseScanScreen {
         // }
       }
     } catch (e) {
-      debugger();
       if (context.mounted) {
         handleInvalidCode(context, controller, code, e.toString());
       }

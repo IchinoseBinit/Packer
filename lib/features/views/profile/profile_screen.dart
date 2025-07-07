@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
-import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
@@ -137,7 +136,7 @@ class ProfileScreen extends StatelessWidget {
                         if (otherInfoData[index]['onTap'] != null) {
                           otherInfoData[index]['onTap']();
                         }
-                        if (otherInfoData[index]['screen'] == "") {
+                        if (otherInfoData[index]['title'] == "Request QR") {
                           navigate(context,
                               route: NavigationConstants.damageScanScreenRoute,
                               extra: {'qr': false, 'requestQr': true});

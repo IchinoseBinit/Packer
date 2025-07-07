@@ -85,7 +85,6 @@ class RackScanScreen extends BaseScanScreen {
           if (context.mounted) await controller.start();
         }
       } else if (context.mounted) {
-        debugger();
         showLoading(context);
 
         // final isMainStore =

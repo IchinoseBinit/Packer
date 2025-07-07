@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -53,37 +54,49 @@ class DamagedScanScreen extends BaseScanScreen {
 
     return Consumer<DamageProductController>(
       builder: (context, provider, _) {
-        return GeneralElevatedButton(
-          title: qr ? "Confirm Verification" : "Check Unscanned Tags",
-          onPressed: () {
-            if (qr) {
-              ShowAlertDialog(
-                title: "Confirm",
-                body: Text("Scan all products.${provider.tagList.join('\n')}"),
-                okFunc: () {
-                  provider.markDamaged(provider.tagList);
-                  navigatePop(context);
-                },
-                cancelFunc: () {
-                  navigatePop(context);
-                },
-              ).showAlertDialog(context);
-            } else {
-              final unscanned = provider.getUnscannedTags();
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 12.h),
+          child: GeneralElevatedButton(
+            title: requestQr! ? "Request QR" : "Confirm Verification",
+            onPressed: () {
+              requestQr!
+                  ? ShowAlertDialog(
+                      title: "Confirm",
+                      body: Text(
+                          "Do you want to request QR for products ${provider.tagList.join('\n')}"),
+                      okFunc: () {
+                        provider.requestQrDamaged(provider.tagList);
 
-              ShowAlertDialog(
-                title: "Unscanned Tags",
-                body: Text(
-                  unscanned.isEmpty
-                      ? "All tags scanned!"
-                      : "Missing tags:\n\n${unscanned.join('\n')}",
-                ),
-                okFunc: () {
-                  navigatePop(context);
-                },
-              ).showAlertDialog(context);
-            }
-          },
+                        navigatePop(context);
+                      },
+                      cancelFunc: () {
+                        navigatePop(context);
+                      },
+                    ).showAlertDialog(context)
+                  : ShowAlertDialog(
+                      title: "Confirm",
+                      body: Text(
+                          "Product Scanned \n${provider.tagList.join('\n')}"),
+                      okFunc: () {
+                        debugger();
+
+                        final remainingItem = provider.getUnscannedTags();
+
+                        if (qr) {
+                          provider.markDamaged(provider.tagList);
+                        } else {
+                          provider.markDamaged(remainingItem);
+                        }
+                        navigatePop(context);
+                        navigatePop(context);
+                      },
+                      needCancel: true,
+                      cancelFunc: () {
+                        navigatePop(context);
+                      },
+                    ).showAlertDialog(context);
+            },
+          ),
         );
       },
     );
@@ -94,17 +107,19 @@ class DamagedScanScreen extends BaseScanScreen {
       MobileScannerController controller) async {
     if (hasScanned) return;
     hasScanned = true;
+    bool isFirstTime = false;
+    final provider =
+        Provider.of<DamageProductController>(context, listen: false);
     try {
       controller.stop();
       HapticFeedback.heavyImpact();
 
       log("code: $code");
       if (qr) {
-        Provider.of<DamageProductController>(context, listen: false)
-            .scannedTags(code);
+        provider.scannedTags(code);
       } else {
-        await Provider.of<DamageProductController>(context, listen: false)
-            .postProductTag(code);
+        await provider.postProductTag(code);
+        provider.scannedTags(code);
       }
 
       // check by spliting code
@@ -116,38 +131,33 @@ class DamagedScanScreen extends BaseScanScreen {
       }
 
       if (context.mounted) {
-        final provider =
-            Provider.of<DamageProductController>(context, listen: false);
-        if (!qr) provider.scannedTags(code);
+        // ShowAlertDialog(
+        //   title: "Do you want to scan other item",
+        //   body: Text("ssssss"),
+        //   okFunc: () {
+        //     navigatePop(context);
+        //   },
+        //   needCancel: true,
+        //   cancelFunc: () async {
+        //     navigatePop(context);
 
-        controller.start();
-        ShowAlertDialog(
-          title: "Do you want to scan other item",
-          body: Text("ssssss"),
-          okFunc: () {
-            navigatePop(context);
-          },
-          needCancel: true,
-          cancelFunc: () async {
-            navigatePop(context);
+        //     showLoading(context);
+        //     if (!qr) {
+        //       final remainingItem = provider.getUnscannedTags();
 
-            showLoading(context);
-            if (!qr) {
-              final remainingItem = provider.getUnscannedTags();
+        //       removeLoading(context);
+        //       if (requestQr!) {
+        //         provider.requestQrDamaged(remainingItem);
+        //       } else {
+        //         provider.markDamaged(remainingItem);
+        //       }
 
-              removeLoading(context);
-              if (requestQr!) {
-                provider.requestQrDamaged(remainingItem);
-              } else {
-                provider.markDamaged(remainingItem);
-              }
-
-              navigatePop(context);
-            } else {
-              navigatePop(context);
-            }
-          },
-        ).showAlertDialog(context);
+        //       navigatePop(context);
+        //     } else {
+        //       navigatePop(context);
+        //     }
+        //   },
+        // ).showAlertDialog(context);
       } else {
         controller.start();
       }
@@ -155,6 +165,7 @@ class DamagedScanScreen extends BaseScanScreen {
       handleInvalidCode(context, controller, code);
     } finally {
       hasScanned = false;
+      controller.start();
     }
   }
 
