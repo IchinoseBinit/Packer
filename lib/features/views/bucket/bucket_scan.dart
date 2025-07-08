@@ -17,7 +17,6 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-
 @Deprecated("Use BasketScanScreen instead")
 class BucketScanScreen extends StatefulWidget {
   const BucketScanScreen({
@@ -75,7 +74,7 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
     if (code.toLowerCase().contains("basket")) {
       try {
         Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(context,code);
+            .updateBucketData(context, code);
 
         try {
           await Provider.of<OrderProvider>(context, listen: false)
@@ -237,7 +236,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
           ),
           _buildBarcodeOverlay(),
           _buildScanWindow(scanWindow),
-
           Positioned(
             child: buildFlash(),
             top: 8.h * 6,
@@ -265,7 +263,6 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
               ),
             ),
           ),
-          
         ],
       ),
     );

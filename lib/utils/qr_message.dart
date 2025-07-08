@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 String detectQrMessage(String input) {
   final lower = input.toLowerCase();
   final types = {

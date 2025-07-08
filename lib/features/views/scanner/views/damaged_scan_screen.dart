@@ -78,8 +78,6 @@ class DamagedScanScreen extends BaseScanScreen {
                       body: Text(
                           "Product Scanned \n${provider.tagList.join('\n')}"),
                       okFunc: () {
-                        debugger();
-
                         final remainingItem = provider.getUnscannedTags();
 
                         if (qr) {

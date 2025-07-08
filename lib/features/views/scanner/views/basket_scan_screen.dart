@@ -106,12 +106,12 @@ class BasketScanScreen extends BaseScanScreen {
 
   void handleInvalidCode(
       BuildContext context, MobileScannerController controller, String code) {
-    debugger();
     ShowAlertDialog(
       disableBackground: true,
       body: Text("Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context); // dismiss dialog
+        removeLoading(context);
         controller.start();
       },
     ).showAlertDialog(context);
