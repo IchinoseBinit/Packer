@@ -36,6 +36,7 @@ class ErrorHandler {
             okFunc: okFunc ??
                 () {
                   navigatePop(context);
+                  
                 })
         .showAlertDialog(context);
   }

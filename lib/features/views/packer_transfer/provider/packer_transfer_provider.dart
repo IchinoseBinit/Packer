@@ -145,7 +145,8 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   // get tags completed or not (bool remaining)
-  List<String> getTagsRemaining(BuildContext context, int productId, bool remaining) {
+  List<String> getTagsRemaining(
+      BuildContext context, int productId, bool remaining) {
     final item = selectedTransferModel?.items?.firstWhere(
       (element) => element.product == productId,
       orElse: () => TransferItemModel(),
@@ -261,6 +262,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<bool> scanProduct(
       BuildContext context, int productId, String code) async {
     if (scanTagsList.contains(code)) {
+      removeLoading(context);
       ErrorHandler.alertDialog(context, "Tag already scanned");
 
       return false;
@@ -279,7 +281,9 @@ class PackerTransferProvider extends ChangeNotifier {
         Provider.of<ScanMessageProvider>(context, listen: false)
             .setMessage(context, scanMessage);
       } else {
-        ErrorHandler.alertDialog(context, "Invalid QR ${detectQrMessage(code)}");
+        removeLoading(context);
+        await ErrorHandler.alertDialog(
+            context, "Invalid QR ${detectQrMessage(code)}");
         return false;
       }
     } else {
@@ -303,6 +307,7 @@ class PackerTransferProvider extends ChangeNotifier {
         return false;
       }
     }
+    removeLoading(context);
     return false;
   }
 
@@ -510,7 +515,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<void> completeTransfer(BuildContext context) async {
     try {
       showLoading(context);
-      final id = selectedTransferModel?.id;
+      final id = selectedTransferModel?.id; 
       if (id == null) {
         ErrorHandler.alertDialog(context, 'Transfer ID is null');
         return;
@@ -530,14 +535,12 @@ class PackerTransferProvider extends ChangeNotifier {
         selectedTransferModel?.baskets?.removeWhere(
           (element) => element.identifier == selectedBasketModel?.identifier,
         );
-        Navigator.pop(context);
+        removeLoading(context);
       } else {
         ErrorHandler.alertDialog(context, 'Failed to complete transfer');
       }
     } catch (ex) {
       ErrorHandler.alertDialog(context, ex.toString());
-    } finally {
-      removeLoading(context);
     }
   }
 

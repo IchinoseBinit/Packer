@@ -361,7 +361,6 @@ class StockProvider extends ChangeNotifier {
 
   Future<bool> checkItemQr(BuildContext context, String code) async {
     try {
-      debugger();
       if (scannedList.contains(code)) {
         await ErrorHandler.alertDialog(context, "Tag Already scanned");
         return false;

@@ -1,3 +1,4 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -231,7 +232,6 @@ class ProductScanScreen extends BaseScanScreen {
           removeLoading(context);
           Navigator.pop(context, true);
         } else if (context.mounted) {
-          removeLoading(context);
           controller.start();
           hasScanned = false;
         }
