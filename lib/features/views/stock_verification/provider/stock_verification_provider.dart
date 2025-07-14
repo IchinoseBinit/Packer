@@ -553,7 +553,6 @@ class StockVerificationProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         scannedUnits.clear();
         cartonId = "";
-        auditId = 0;
         showToast("Verification successful");
         notifyListeners();
         return {
