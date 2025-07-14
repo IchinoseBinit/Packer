@@ -255,6 +255,7 @@ class HomeProvider with ChangeNotifier {
       FirebaseAPI().requestPermission();
       if (!isFromWarehouse) {
         fetchLatestOrders();
+        updateAvailability(topicName: "packer");
       }
       notifyListeners();
     } else {

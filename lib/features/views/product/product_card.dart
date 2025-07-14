@@ -11,7 +11,6 @@ class ProductCard extends StatefulWidget {
   final Function()? onTap;
   final ItemStatus status;
   final int? quantity;
-  
 
   const ProductCard({
     super.key,
@@ -132,7 +131,7 @@ class _ProductCardState extends State<ProductCard> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Qty: ${widget.productModel.productUnits.length}",
+                              "Qty: ${widget.productModel.quantity != 0 ? widget.productModel.quantity : widget.productModel.productUnits.length}",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium

@@ -40,6 +40,12 @@ class NotificationUtils {
         AppRouter.router.pop();
       }
 
+      // first navigate to home
+      navigateWithRouter(
+        AppRouter.router,
+        route: NavigationConstants.dashboardRoute,
+      );
+
       navigateWithRouter(
         AppRouter.router,
         route: NavigationConstants.basketScanScreenRoute,

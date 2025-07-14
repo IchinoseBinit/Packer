@@ -225,15 +225,15 @@ class ProductScanScreen extends BaseScanScreen {
           });
         }
       } else if (fromTransfer) {
-        showLoading(context);
+        // showLoading(context);
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
                 .scanProduct(context, productId, code);
-        if ((result) && context.mounted) {
-          removeLoading(context);
+        if (result && context.mounted) {
+          // removeLoading(context);
           Navigator.pop(context, true);
         } else if (context.mounted) {
-          removeLoading(context);
+          // removeLoading(context);
           controller.start();
           hasScanned = false;
         }
