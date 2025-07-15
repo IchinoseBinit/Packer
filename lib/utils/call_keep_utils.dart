@@ -22,7 +22,7 @@ void setupCallKeep() async {
       logo: "launcher_icon",
       showMissedCallNotification: false,
       showCallBackAction: false,
-      ringtoneFileName: 'res_ringtone',
+      ringtoneFileName: 'assets/sounds/ringtone.mp3',
       accentColor: '#E3436F',
       backgroundUrl: 'assets/images/app_icon.png',
       incomingCallNotificationChannelName: 'Incoming Calls',

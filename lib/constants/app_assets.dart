@@ -35,5 +35,5 @@ class AppAssets {
 
   static const phoneRingIcon = "$_iconPath/phone_ring.svg";
 
-  static const notificationSound = "$_soundPath/notification.mp3";
+  static const notificationSound = "$_soundPath/ringtone.mp3";
 }
