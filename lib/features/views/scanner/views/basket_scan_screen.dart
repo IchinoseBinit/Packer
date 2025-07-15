@@ -29,6 +29,7 @@ class BasketScanScreen extends BaseScanScreen {
           scanTitle: "Basket Scanner",
           showFlash: true,
           showBackButton: true,
+          fromCall: fromCall,
         );
 
   bool _processing = false;
@@ -71,6 +72,7 @@ class BasketScanScreen extends BaseScanScreen {
             .updateBucketData(context, code);
         if (fromCall && context.mounted && result) {
           removeLoading(context);
+          navigate(context, route: NavigationConstants.dashboardRoute);
           navigate(context,
               route: NavigationConstants.orderDetailsRoute, extra: orderId);
           Provider.of<OrderProvider>(context, listen: false).initState();
