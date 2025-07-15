@@ -103,10 +103,10 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
             okFunc: () {
               navigatePop(context);
               if (widget.fromCall) {
-                navigateReplacement(context, route: NavigationConstants.dashboardRoute);
-              } else{
+                navigateReplacement(context,
+                    route: NavigationConstants.dashboardRoute);
+              } else {
                 navigatePop(context);
-
               }
             },
             cancelFunc: () {
@@ -162,17 +162,22 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
                   onPressed: () {
                     controller?.stop();
                     ShowAlertDialog(
-                    body: Text("Are you sure you want to exit?"),
-                    needCancel: true,
-                    okFunc: () {
-                      navigatePop(context);
-                      navigatePop(context);
-                    },
-                    cancelFunc: () {
-                      controller?.start();
-                      navigatePop(context);
-                    },
-                  ).showAlertDialog(context);
+                      body: Text("Are you sure you want to exit?"),
+                      needCancel: true,
+                      okFunc: () {
+                        navigatePop(context);
+                        if (widget.fromCall) {
+                          navigateReplacement(context,
+                              route: NavigationConstants.dashboardRoute);
+                        } else {
+                          navigatePop(context);
+                        }
+                      },
+                      cancelFunc: () {
+                        controller?.start();
+                        navigatePop(context);
+                      },
+                    ).showAlertDialog(context);
                   },
                   icon: const Icon(
                     Icons.arrow_back,

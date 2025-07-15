@@ -88,12 +88,15 @@ class StockProvider extends ChangeNotifier {
     return 0;
   }
 
-  Future<void> fetchLowStockProducts() async {
+  Future<void> fetchLowStockProducts(BuildContext context) async {
     try {
       isLoading = true;
       isError = false;
       errorMessage = "";
       FirebaseAPI().cancelScheduledNotification();
+      if (context.mounted) {
+        notifyListeners();
+      }
       // for demo
       // await Future.delayed(const Duration(seconds: 2));
       // for (var item in demoData) {
@@ -466,7 +469,7 @@ class StockProvider extends ChangeNotifier {
       lowStockList.remove(selectedModel);
       notifyListeners();
       navigatePop(context);
-      fetchLowStockProducts();
+      fetchLowStockProducts(context);
     } catch (e) {
       ErrorHandler.alertDialog(context, e.toString());
     }

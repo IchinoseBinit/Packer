@@ -22,18 +22,20 @@ class HomeWarehouseScreen extends StatefulWidget {
   State<HomeWarehouseScreen> createState() => _HomeWarehouseScreenState();
 }
 
-class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
+class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
+    with WidgetsBindingObserver {
   Timer? timer;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   void startTimer() {
     timer = Timer.periodic(Duration(minutes: 5), (timer) {
       if (mounted) {
         Provider.of<StockProvider>(context, listen: false)
-            .fetchLowStockProducts();
+            .fetchLowStockProducts(context);
       }
     });
   }
@@ -44,10 +46,25 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
     }
   }
 
+  bool refetch = false;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (refetch && state == AppLifecycleState.resumed) {
+      Provider.of<StockProvider>(context, listen: false)
+          .fetchLowStockProducts(context);
+      refetch = false;
+    } else if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused) {
+      refetch = true;
+    }
+  }
+
   @override
   void dispose() {
     stopTimer();
     FirebaseAPI().cancelScheduledNotification();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -58,7 +75,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
     return Consumer<HomeProvider>(builder: (context, homeProvider, child) {
       if (homeProvider.isOnline) {
         Provider.of<StockProvider>(context, listen: false)
-            .fetchLowStockProducts();
+            .fetchLowStockProducts(context);
         startTimer();
       } else {
         stopTimer();
@@ -73,56 +90,63 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen> {
           }),
           trailingSvgAsset: AppAssets.bell_icon,
         ),
-        body: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Consumer<StockProvider>(
-                    builder: (context, value, child) {
-                      if (value.isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (value.isError) {
-                        return Center(
-                          child: Text(
-                            value.errorMessage,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        );
-                      } else {
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: value.lowStockList.length,
-                          itemBuilder: (context, index) {
-                            return LowStockCard(
-                                model: value.lowStockList[index],
-                                primaryColor: Theme.of(context).primaryColor,
-                                callback: () {
-                                  Provider.of<StockProvider>(context,
-                                          listen: false)
-                                      .onDetailsTaped(
-                                          context, value.lowStockList[index]);
-                                });
-                          },
-                        );
-                      }
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await Provider.of<StockProvider>(context, listen: false)
+                .fetchLowStockProducts(context);
+          },
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Consumer<StockProvider>(
+                      builder: (context, value, child) {
+                        if (value.isLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (value.isError) {
+                          return Center(
+                            child: Text(
+                              value.errorMessage,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          );
+                        } else {
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: value.lowStockList.length,
+                            itemBuilder: (context, index) {
+                              return LowStockCard(
+                                  model: value.lowStockList[index],
+                                  primaryColor: Theme.of(context).primaryColor,
+                                  callback: () {
+                                    Provider.of<StockProvider>(context,
+                                            listen: false)
+                                        .onDetailsTaped(
+                                            context, value.lowStockList[index]);
+                                  });
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  GeneralElevatedButton(
+                    title: 'Scan Carton',
+                    onPressed: () {
+                      navigate(
+                        context,
+                        route: NavigationConstants.cartonScanScreenRoute,
+                      );
                     },
                   ),
-                ),
-                SizedBox(height: 20.h),
-                GeneralElevatedButton(
-                  title: 'Scan Carton',
-                  onPressed: () {
-                    navigate(
-                      context,
-                      route: NavigationConstants.cartonScanScreenRoute,
-                    );
-                  },
-                ),
-                SizedBox(height: 20.h),
-              ],
+                  SizedBox(height: 20.h),
+                ],
+              ),
             ),
           ),
         ),

@@ -100,7 +100,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                         onRefresh: () {
                           return Provider.of<StockProvider>(context,
                                   listen: false)
-                              .fetchLowStockProducts();
+                              .fetchLowStockProducts(context);
                         },
                         child: ListView.builder(
                           itemCount: state.rackNameList.length,
