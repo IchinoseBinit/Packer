@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:hive/hive.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -12,9 +11,6 @@ import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
-import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
-import 'package:packer/controllers/services/hive_db/product_dao.dart';
-import 'package:packer/controllers/services/hive_db/trolley_item.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/carton/model/carton_list_model.dart';
@@ -23,7 +19,6 @@ import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
-import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -51,9 +46,6 @@ class StockProvider extends ChangeNotifier {
   Map<String, List<ProductModel>> rackProductMap = {};
 
   List<String> scannedCartonProductTagsList = [];
-
-  late Box<TrolleyItem> box;
-  List<TrolleyItem> trolleyItems = [];
 
   void initRackProductMap() {
     rackNameList.clear();
@@ -532,6 +524,7 @@ class StockProvider extends ChangeNotifier {
       rethrow;
     }
   }
+  
 
   void onDetailsTaped(
     BuildContext context,
@@ -540,15 +533,11 @@ class StockProvider extends ChangeNotifier {
     selectedModel = lowStockModel;
     initRackProductMap();
     basketId = "";
-    box = await HiveDBService.openProductBox('store_${lowStockModel.storeId}');
-
-
-    if (context.mounted) {
-      navigateReplacement(context,
-          route: NavigationConstants.lowStockDetailRoute);
-      trolleyItems = box.values.toList();
-      notifyListeners();
-    }
+    navigate(
+      context,
+      route: NavigationConstants.lowStockScannerRoute,
+      extra: {"forProduct": false},
+    );
   }
 
   void onProductDetailsTaped(BuildContext context, ProductModel model) {
@@ -608,6 +597,7 @@ class StockProvider extends ChangeNotifier {
           "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
 
       if (scannedList.length == selectedProduct?.quantity) {
+       
         final response = await postScannedTags(context);
         if (response) {
           return true;
