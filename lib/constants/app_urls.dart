@@ -145,4 +145,6 @@ class AppUrls {
 
   //getAuditViewUrl
   static String getAuditViewUrl = "$_baseUrl/audit-view/";
+
+  static String postCartonProductTagsUrl = "$_baseUrl/scanned_carton/";
 }

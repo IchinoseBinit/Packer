@@ -29,7 +29,7 @@ class RackUpdateProvider extends ChangeNotifier {
       log("Carton Info: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        cartonModel = CartonModel.fromJson(response.data);
+        cartonModel = CartonModel.fromJson(response.data, code);
       }
       if (context.mounted) {
         Provider.of<ScanMessageProvider>(context, listen: false)

@@ -331,6 +331,7 @@ class AppRouter {
                         args['fromStockVerification'] ?? false,
                     cartonId: args['cartonId'],
                     fromTransfer: args['forTransfer'] ?? false,
+                    forCarton: args['forCarton'] ?? false,
                   );
                 },
               ),

@@ -19,7 +19,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     provider.initialize(isFirstTime: true);
     provider.fetchpackerSummary();
     getToken();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   // For test purposes. Must remove this after!!!
@@ -38,6 +39,28 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       print('No token found');
     }
+  }
+
+  bool refetch = false;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (refetch && state == AppLifecycleState.resumed) {
+      final provider = Provider.of<HomeProvider>(context, listen: false);
+
+      provider.initialize(isFirstTime: true);
+      provider.fetchpackerSummary();
+      refetch = false;
+    } else if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused) {
+      refetch = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override

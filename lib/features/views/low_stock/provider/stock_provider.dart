@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive/hive.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -10,12 +12,17 @@ import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
+import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
+import 'package:packer/controllers/services/hive_db/product_dao.dart';
+import 'package:packer/controllers/services/hive_db/trolley_item.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
+import 'package:packer/features/views/scanner/model/scan_result.dart';
+import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -43,6 +50,11 @@ class StockProvider extends ChangeNotifier {
   List<String> rackNameList = [];
   Map<String, List<ProductModel>> rackProductMap = {};
 
+  List<String> scannedCartonProductTagsList = [];
+
+  late Box<TrolleyItem> box;
+  List<TrolleyItem> trolleyItems = [];
+
   void initRackProductMap() {
     rackNameList.clear();
     rackProductMap.clear();
@@ -58,7 +70,7 @@ class StockProvider extends ChangeNotifier {
 
     rackNameList.sort((a, b) => a.compareTo(b));
     // TODO: Remove
-    rackNameList  = rackNameList.reversed.toList();
+    rackNameList = rackNameList.reversed.toList();
   }
 
   // reset
@@ -125,9 +137,9 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
+  /// Get carton info
   Future callCartonInfoApi(BuildContext context, String code) async {
     try {
-      // debugger();
       showLoading(context);
       if (!code.contains("carton")) {
         throw "Invalid Carton QR";
@@ -142,17 +154,198 @@ class StockProvider extends ChangeNotifier {
         removeLoading(context);
       }
       if (response.statusCode == 200) {
-        cartonModel = CartonModel.fromJson(response.data);
+        cartonModel = CartonModel.fromJson(response.data, code);
       }
     } catch (e) {
       rethrow;
     }
   }
 
-  // update rack
-  Future<bool> updateRack(
-      BuildContext context, String code, int productId) async {
+  /// FOR SCAN CARTON BUTTON
+  ///
+  /// EX Message: Scan 10 Cadburys
+  void getMessageForCartonProduct(BuildContext context) {
+    scannedCartonProductTagsList.clear();
+    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context,
+        "Scan ${cartonModel?.productUnits.length} ${cartonModel?.productName}");
+  }
+
+  /// Return TAGS scanned or remaining
+  List<String> getTagsRemaining(bool remaining) {
+    if (remaining) {
+      // Return tags that have NOT been scanned
+      return cartonModel?.productUnits
+              .where((tag) => !scannedCartonProductTagsList.contains(tag))
+              .toList() ??
+          [];
+    } else {
+      // Return tags that HAVE been scanned
+      return cartonModel?.productUnits
+              .where((tag) => scannedCartonProductTagsList.contains(tag))
+              .toList() ??
+          [];
+    }
+  }
+
+  /// Display TAGS scanned or remaining
+  void showCartonProductTags(BuildContext context) {
+    final remainingTags = getTagsRemaining(true);
+    final completedTags = getTagsRemaining(false);
+    // show modal bottom sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: .8.sh,
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text("Product Tags"),
+              ),
+              // 12.h
+              SizedBox(height: 12.h),
+              if (remainingTags.isNotEmpty) ...[
+                Text("Remaining Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                Expanded(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: remainingTags.length,
+                    itemBuilder: (context, index) {
+                      return Text(remainingTags[index],
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontSize: 13.sp,
+                              ));
+                    },
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 12.h);
+                    },
+                  ),
+                ),
+              ],
+              // 12.h
+              SizedBox(height: 12.h),
+              if (completedTags.isNotEmpty) ...[
+                Text("Completed Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                Expanded(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 12.h);
+                    },
+                    itemCount: completedTags.length,
+                    itemBuilder: (context, index) {
+                      return Row(
+                        children: [
+                          Expanded(
+                              child: Text(completedTags[index],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Colors.green,
+                                        fontSize: 13.sp,
+                                      ))),
+                          const Icon(Icons.check_circle, color: Colors.green),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Logic for scanning carton products
+  ///
+  /// [TODO]:
+  // onScanCartonProduct(BuildContext context, String code)
+  Future<ScanResult> onScanCartonProduct(
+      BuildContext context, String code) async {
     try {
+      // check if code is already scanned
+      if (scannedCartonProductTagsList.contains(code)) {
+        return ScanResult(success: false, message: 'Tag already scanned');
+      }
+      // check if code is from carton product units
+      if (!cartonModel!.productUnits.contains(code)) {
+        return ScanResult(success: false, message: 'Invalid tag');
+      }
+      scannedCartonProductTagsList.add(code);
+      // check if required tags are scanned
+      if (scannedCartonProductTagsList.length ==
+          cartonModel!.productUnits.length) {
+        // call api to post
+        final result = await postCartonProductTags(context);
+        if (result) {
+          return ScanResult(success: true, message: 'Tag scanned successfully');
+        } else {
+          getMessageForCartonProduct(context);
+          return ScanResult(success: false, message: 'Failed to scan tag');
+        }
+      }
+      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+          context,
+          "Scan ${cartonModel!.productUnits.length - scannedCartonProductTagsList.length} ${cartonModel!.productName} more");
+      return ScanResult(success: false);
+    } catch (e) {
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  /// Post carton product tags
+  Future<bool> postCartonProductTags(BuildContext context) async {
+    try {
+      final url = AppUrls.postCartonProductTagsUrl;
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+        body: {
+          "carton_id": cartonModel!.cartonCode,
+          "unit_tags": scannedCartonProductTagsList,
+        },
+      );
+      if (response.statusCode == 200 && context.mounted) {
+        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (ex) {
+      return false;
+    }
+  }
+
+  /// Updates the rack for a product of catron
+  Future<bool> updateRack(
+      BuildContext context, String code, int productId, bool isCarton) async {
+    try {
+      showLoading(context);
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
@@ -160,8 +353,11 @@ class StockProvider extends ChangeNotifier {
         body: {
           "rack_identifier": code,
           "product_id": productId,
+          if (isCarton && cartonModel != null)
+            "carton_identifier": cartonModel!.cartonCode,
         },
       );
+      removeLoading(context);
       if (response.statusCode == 200 && context.mounted) {
         navigateReplacement(context, route: NavigationConstants.dashboardRoute);
         return true;
@@ -170,6 +366,7 @@ class StockProvider extends ChangeNotifier {
         return false;
       }
     } catch (ex) {
+      removeLoading(context);
       ErrorHandler.alertDialog(context, ex.toString());
       return false;
     }
@@ -193,7 +390,22 @@ class StockProvider extends ChangeNotifier {
         }
         return true;
       } else {
-        if (cartonModel != null && cartonModel!.rackName.isEmpty) {
+        if (cartonModel != null && cartonModel!.productUnits.isNotEmpty) {
+          if (context.mounted) {
+            final result = await navigateReplacement(
+              context,
+              route: NavigationConstants.productScanScreenRoute,
+              extra: {
+                'productId': cartonModel!.productId,
+                'forCarton': true,
+              },
+            );
+            if (result ?? false) {
+              navigatePop(context);
+            }
+            return true;
+          }
+        } else if (cartonModel != null && cartonModel!.rackName.isEmpty) {
           if (context.mounted) {
             final result = await navigateReplacement(context,
                 route: NavigationConstants.scanRackRoute,
@@ -324,15 +536,19 @@ class StockProvider extends ChangeNotifier {
   void onDetailsTaped(
     BuildContext context,
     LowStockModel lowStockModel,
-  ) {
+  ) async {
     selectedModel = lowStockModel;
     initRackProductMap();
     basketId = "";
-    navigate(
-      context,
-      route: NavigationConstants.lowStockScannerRoute,
-      extra: {"forProduct": false},
-    );
+    box = await HiveDBService.openProductBox('store_${lowStockModel.storeId}');
+
+
+    if (context.mounted) {
+      navigateReplacement(context,
+          route: NavigationConstants.lowStockDetailRoute);
+      trolleyItems = box.values.toList();
+      notifyListeners();
+    }
   }
 
   void onProductDetailsTaped(BuildContext context, ProductModel model) {
@@ -528,31 +744,6 @@ class StockProvider extends ChangeNotifier {
         );
       },
     );
-  }
-
-  Future<bool> scanRack(BuildContext context, String code) async {
-    if (cartonModel != null) {
-      if (cartonModel!.rackName.isEmpty) {
-        final result = await updateRack(context, code, cartonModel!.productId);
-        return result;
-      } else if (code
-          .toLowerCase()
-          .contains(cartonModel!.rackName.toLowerCase())) {
-        showToast("Rack scanned successfully");
-
-        // WidgetsBinding.instance.addPostFrameCallback((_) {
-        //   navigateReplacement(context,
-        //       route: NavigationConstants.dashboardRoute);
-        // });
-        return true;
-      } else {
-        ErrorHandler.alertDialog(context, "Invalid rack");
-        return false;
-      }
-    } else {
-      ErrorHandler.alertDialog(context, "No data found");
-      return false;
-    }
   }
 
   // Future<bool> updateRack(
