@@ -41,10 +41,7 @@ void main() async {
     await FirebaseAPI().requestPermission();
   } catch (_) {
   }
-  try {
-    await HiveDBService.initHive();
-  } catch (_) {
-  }
+  
 
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
