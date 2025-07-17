@@ -160,12 +160,15 @@ class LowStockCard extends StatelessWidget {
   final Color primaryColor;
   final VoidCallback? callback;
   final String basketId;
+  final int? count;
+
 
   const LowStockCard({
     super.key,
     required this.model,
     required this.primaryColor,
     this.callback,
+    this.count,
     this.basketId = "",
   });
 
@@ -202,7 +205,7 @@ class LowStockCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Text(
-                        'Product Count: ${model.products.length}',
+                        'Product Count: ${count ?? model.products.length}',
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium

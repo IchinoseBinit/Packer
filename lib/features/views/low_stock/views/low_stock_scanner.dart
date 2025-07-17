@@ -23,9 +23,11 @@ class LowStockScanner extends StatefulWidget {
   const LowStockScanner({
     super.key,
     this.forProduct = false,
+    this.changeBasket = false,
   });
 
   final bool forProduct;
+  final bool changeBasket;
 
   @override
   State<LowStockScanner> createState() => _LowStockScannerState();
@@ -71,7 +73,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
           code,
         );
         if (value && mounted) {
-          // Navigator.pop(context);
+          Navigator.pop(context);
           hasScanned = false;
         } else if (mounted) {
           controller?.start();
@@ -80,12 +82,22 @@ class _LowStockScannerState extends State<LowStockScanner> {
       } else {
         final value = await Provider.of<StockProvider>(context, listen: false)
             .checkBasketQr(context, code);
-        if (value && mounted) {
+        if (value.success && mounted) {
           hasScanned = false;
-          navigateReplacement(context,
-              route: NavigationConstants.lowStockDetailRoute);
+
+          if (!widget.changeBasket) {
+            navigateReplacement(context,
+                route: NavigationConstants.trolleyItemScreenRoute);
+          } else {
+            navigatePop(context);
+          }
         } else if (mounted) {
-          handleInvalidQr(code);
+          if (value.message != null) {
+            handleInvalidQr(code, message: value.message);
+          } else {
+            hasScanned = false;
+            controller?.start();
+          }
         }
       }
     } catch (e) {
@@ -93,10 +105,10 @@ class _LowStockScannerState extends State<LowStockScanner> {
     }
   }
 
-  void handleInvalidQr(String code) {
+  void handleInvalidQr(String code, {String? message}) {
     // removeLoading(context);
     ShowAlertDialog(
-      body: Text("Invalid QR ${detectQrMessage(code)}"),
+      body: Text("Invalid QR ${message ?? detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);
         controller?.start();

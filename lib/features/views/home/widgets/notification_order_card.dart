@@ -89,11 +89,11 @@ class NotificationOrderCard extends StatelessWidget {
                   log("result from basket scan screen $result",
                       name: "Order Detials");
                   if ((result ?? false) && context.mounted) {
+                    Provider.of<OrderProvider>(context, listen: false)
+                        .initState();
                     navigate(context,
                         route: NavigationConstants.orderDetailsRoute,
                         extra: orderItem.orderId);
-                    Provider.of<OrderProvider>(context, listen: false)
-                        .initState();
                   }
                 },
                 child: Container(

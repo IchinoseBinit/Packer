@@ -7,6 +7,8 @@ import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
+import 'package:packer/features/views/low_stock/views/trolley_item_screen.dart';
+import 'package:packer/features/views/low_stock/views/trolley_scan_screen.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
@@ -213,12 +215,22 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.trolleyItemScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return TrolleyScanScreen(
+                    productId: state.extra.toString().toInt(),
+                  );
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.lowStockScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   final forProduct = args['forProduct'] ?? false;
+                  final changeBasket = args['changeBasket'] ?? false;
                   return LowStockScanner(
                     forProduct: forProduct,
+                    changeBasket: changeBasket,
                   );
                 },
               ),
@@ -283,6 +295,12 @@ class AppRouter {
                 builder: (BuildContext context, GoRouterState state) {
                   return StockVerificationScreen(
                       storeId: state.extra as String);
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.trolleyItemScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return TrolleyItemScreen();
                 },
               ),
               GoRoute(

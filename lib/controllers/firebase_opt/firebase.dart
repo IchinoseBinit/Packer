@@ -73,6 +73,10 @@ class FirebaseAPI {
     await AwesomeNotifications().cancel(1010);
   }
 
+  void cancelCallNotification(int id) async {
+    await AwesomeNotifications().cancel(id);
+  }
+
   // Display notification using flutter_local_notifications
   Future<void> displayNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =

@@ -10,6 +10,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -21,6 +22,7 @@ import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
+import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
@@ -53,7 +55,12 @@ class StockProvider extends ChangeNotifier {
   List<String> scannedCartonProductTagsList = [];
 
   late Box<TrolleyItem> box;
+  late ProductDao dao;
   List<TrolleyItem> trolleyItems = [];
+  LowStockModel? trolleyLowStockModel;
+
+
+
 
   void initRackProductMap() {
     rackNameList.clear();
@@ -449,7 +456,6 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              removeLoading(context);
               ShowAlertDialog(
                 disableBackground: false,
                 body: Text("Already Scanned"),
@@ -471,7 +477,6 @@ class StockProvider extends ChangeNotifier {
       }
     } catch (e) {
       ErrorHandler.alertDialog(context, e.toString());
-      removeLoading(context);
       return false;
     }
   }
@@ -533,6 +538,18 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
+  // update [LowStockModel] with trolley items if found the status change to ItemStatus.done
+  void updateLowStockModel() {
+    for (var element in selectedModel?.products ?? []) {
+      for (var item in trolleyItems) {
+        if (element.productId == item.productId) {
+          element.scannedCount = item.quantity;
+        }
+      }
+    }
+    notifyListeners();
+  }
+
   void onDetailsTaped(
     BuildContext context,
     LowStockModel lowStockModel,
@@ -540,13 +557,14 @@ class StockProvider extends ChangeNotifier {
     selectedModel = lowStockModel;
     initRackProductMap();
     basketId = "";
+  
     box = await HiveDBService.openProductBox('store_${lowStockModel.storeId}');
-
+    dao = ProductDao(box);
 
     if (context.mounted) {
-      navigateReplacement(context,
-          route: NavigationConstants.lowStockDetailRoute);
-      trolleyItems = box.values.toList();
+      trolleyItems = dao.getAll();
+      updateLowStockModel();
+      navigate(context, route: NavigationConstants.lowStockDetailRoute);
       notifyListeners();
     }
   }
@@ -562,7 +580,7 @@ class StockProvider extends ChangeNotifier {
     );
   }
 
-  Future<bool> checkBasketQr(BuildContext context, String code) async {
+  Future<ScanResult> checkBasketQr(BuildContext context, String code) async {
     scanMessage = "";
     notifyListeners();
     HapticFeedback.heavyImpact();
@@ -571,12 +589,12 @@ class StockProvider extends ChangeNotifier {
       final value = await postBasketCode(context, code);
       if (value) {
         basketId = code;
-        return true;
+        return ScanResult(success: true);
       } else {
-        return false;
+        return ScanResult(success: false);
       }
     } catch (e) {
-      return false;
+      return ScanResult(success: false, message: e.toString());
     }
   }
 
@@ -608,15 +626,19 @@ class StockProvider extends ChangeNotifier {
           "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
 
       if (scannedList.length == selectedProduct?.quantity) {
-        final response = await postScannedTags(context);
-        if (response) {
-          return true;
-        } else {
-          if (selectedProduct != null) {
-            selectedProduct!.scannedCount = 0;
-          }
-          return false;
-        }
+        await dao.addOrUpdateProduct(TrolleyItem(
+          productId: selectedProduct!.productId,
+          productName: selectedProduct!.productName,
+          image: selectedProduct!.imageUrl,
+          tags: scannedList,
+          quantity: scannedList.length,
+        ));
+
+        trolleyItems = dao.getAll();
+        scannedList = [];
+        notifyListeners();
+        return true;
+        
       }
       notifyListeners();
       return false;
@@ -630,44 +652,17 @@ class StockProvider extends ChangeNotifier {
     if (selectedModel?.products == null) {
       return false;
     }
-    for (ProductModel element in selectedModel?.products ?? []) {
-      if (element.scannedCount != element.quantity) {
+    // check with all trolley items.id with selected model products.id
+    for (var element in trolleyItems) {
+      if (!selectedModel!.products
+          .any((product) => product.productId == element.productId)) {
         return false;
       }
     }
     return true;
   }
 
-  Future<bool> postScannedTags(BuildContext context) async {
-    try {
-      showLoading(context);
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: AppUrls.addProductsUrl,
-        body: {
-          "store_id": selectedModel?.storeId,
-          "product_units": scannedList,
-          "basket_identifier": basketId,
-        },
-      );
-      if (response.statusCode == 200) {
-        completeProductId.add(selectedProduct?.productId ?? 0);
-        showToast("Scanned Successfully");
-        return true;
-      } else {
-        ErrorHandler.alertDialog(context, "Failed to scan basket");
-        return false;
-      }
-    } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
-      scannedList.clear();
-      return false;
-    } finally {
-      removeLoading(context);
-      navigatePop(context);
-      scannedList = [];
-    }
-  }
+  
 
   void transferBasket(BuildContext context) async {
     try {
@@ -704,6 +699,7 @@ class StockProvider extends ChangeNotifier {
   }
 
   Future<bool> postBasketCode(BuildContext context, String code) async {
+    scannedList = [];
     try {
       showLoading(context);
       final response = await DioClient().request(
@@ -713,18 +709,24 @@ class StockProvider extends ChangeNotifier {
           "basket_identifier": code,
         },
       );
+      print("Basket Code: ${response.data}");
+      removeLoading(context);
       if (response.statusCode == 200) {
+        int storeId = response.data['store_id'].toString().toInt();
+        trolleyLowStockModel = lowStockList.firstWhere((element) => element.storeId == storeId);
+        box = await HiveDBService.openProductBox('store_$storeId');
+        dao = ProductDao(box);
+        trolleyItems = dao.getAll();
         return true;
       } else {
         ErrorHandler.alertDialog(context, "Failed to scan basket");
         return false;
       }
     } catch (e) {
+      removeLoading(context);
       ErrorHandler.alertDialog(context, e.toString());
       return false;
-    } finally {
-      removeLoading(context);
-    }
+    } 
   }
 
   Future<bool?> showYesNo(BuildContext context) {
@@ -741,6 +743,191 @@ class StockProvider extends ChangeNotifier {
               child: const Text("Ok"),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  /// FOR TROLLEY Items
+  /// 
+  /// on scan trolley items
+  Future<ScanResult> onScanTrolleyItems(BuildContext context, int productId, String code) async {
+    try {
+      // check if scannedList contains code
+      // split code and check first part is productId
+      if (code.split("-").first != productId.toString()) {
+        return ScanResult(success: false, message: "Invalid QR - Product ID does not match");
+      }
+      if (scannedList.contains(code)) {
+        return ScanResult(success: false, message: "Tag Already scanned");
+      }
+      final item = trolleyItems.firstWhereOrNull((element) => element.productId == productId);
+      if (item == null) {
+        return ScanResult(success: false, message: "Product not found");
+      }
+      if (!item.tags.contains(code)) {
+        return ScanResult(success: false, message: "Tag not found");
+      }
+      scannedList.add(code);
+      if (scannedList.length == item.quantity) {
+        final result = await postTrolleyScannedTags(context, productId);
+        scannedList = [];
+        if (result) {
+          trolleyItems = dao.getAll();
+          notifyListeners();
+          return ScanResult(success: true, message: "Scanned Successfully");
+        }else {
+          return ScanResult(success: false, message: "Failed to post scanned tags");
+        }
+      }
+      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context, "Scan ${item.quantity - scannedList.length} ${item.productName}");
+      notifyListeners();
+      return ScanResult(success: false);
+    } catch (e) {
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  /// getMessageForTrolleyItem
+  /// 
+  /// example message: Scan 10 Cadburys
+  Future<void> getMessageForTrolleyItem(BuildContext context, int productId) async {
+    scannedList.clear();
+    final product = trolleyItems.firstWhere((element) => element.productId == productId);
+    var message = "Scan ${product.quantity} ${product.productName}";
+    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context, message);
+  }
+
+  /// get tags of product in trolley whether scanned or not
+  /// 
+  /// return list of tags
+  List<String> getTagsOfProductInTrolley(int productId, bool remaining) {
+    final product = trolleyItems.firstWhere((element) => element.productId == productId);
+    if (remaining) {
+      return product.tags.where((element) => !scannedList.contains(element)).toList();
+    } else {
+      return product.tags.where((element) => scannedList.contains(element)).toList();
+    }
+  }
+
+  // trolley item tag post
+  Future<bool> postTrolleyScannedTags(BuildContext context, int productId) async {
+    try {
+      showLoading(context);
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.addProductsUrl,
+        body: {
+          "store_id": trolleyLowStockModel?.storeId,
+          "product_units": scannedList,
+          "basket_identifier": basketId,
+        },
+      );
+      removeLoading(context);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        dao.deleteProduct(productId.toString());
+        selectedModel?.products.removeWhere((element) => element.productId == productId);
+        initRackProductMap();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      removeLoading(context);
+      scannedList.clear();
+      return false;
+    } 
+  }
+
+  /// Display TAGS scanned or remaining
+  void showTrolleyProductTags(BuildContext context, int productId) {
+    final remainingTags = getTagsOfProductInTrolley(productId, true);
+    final completedTags = getTagsOfProductInTrolley(productId, false);
+    // show modal bottom sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxHeight: .8.sh,
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text("Product Tags"),
+              ),
+              // 12.h
+              SizedBox(height: 12.h),
+              if (remainingTags.isNotEmpty) ...[
+                Text("Remaining Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                Expanded(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: remainingTags.length,
+                    itemBuilder: (context, index) {
+                      return Text(remainingTags[index],
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontSize: 13.sp,
+                              ));
+                    },
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 12.h);
+                    },
+                  ),
+                ),
+              ],
+              // 12.h
+              SizedBox(height: 12.h),
+              if (completedTags.isNotEmpty) ...[
+                Text("Completed Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                Expanded(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 12.h);
+                    },
+                    itemCount: completedTags.length,
+                    itemBuilder: (context, index) {
+                      return Row(
+                        children: [
+                          Expanded(
+                              child: Text(completedTags[index],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Colors.green,
+                                        fontSize: 13.sp,
+                                      ))),
+                          const Icon(Icons.check_circle, color: Colors.green),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
         );
       },
     );

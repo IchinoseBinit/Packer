@@ -44,7 +44,6 @@ class HomeProvider with ChangeNotifier {
   bool isMainStore() {
     return packerSummary?.storeType.contains("main") ?? false;
   }
-  
 
   bool isOnline = false;
   bool _isAvailable = false;
@@ -91,8 +90,8 @@ class HomeProvider with ChangeNotifier {
       FirebaseAPI().requestPermission();
       if (isAvailable) {
         fetchCreatedOrders();
-        FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
       }
+      FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
       fetchLatestOrders(isFirstTime: isFirstTime);
     }
   }

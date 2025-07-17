@@ -12,24 +12,24 @@ VoidCallback getCallbackFunction(BuildContext context,
   switch (orderItem.status) {
     case OrderStatusType.packerAssigned:
       return () {
+        Provider.of<OrderProvider>(context, listen: false).initState();
         navigate(context,
             route: NavigationConstants.orderDetailsRoute,
             extra: orderItem.orderId);
-        Provider.of<OrderProvider>(context, listen: false).initState();
       };
     case OrderStatusType.completed:
       return () {
+        Provider.of<OrderProvider>(context, listen: false).initState();
         navigate(context,
             route: NavigationConstants.orderDetailsRoute,
             extra: orderItem.orderId);
-        Provider.of<OrderProvider>(context, listen: false).initState();
       };
     case OrderStatusType.cancelled:
       return () {
+        Provider.of<OrderProvider>(context, listen: false).initState();
         navigate(context,
             route: NavigationConstants.orderDetailsRoute,
             extra: orderItem.orderId);
-        Provider.of<OrderProvider>(context, listen: false).initState();
       };
 
     default:
