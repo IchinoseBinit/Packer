@@ -76,7 +76,7 @@ class AppUrls {
   static String packerAvailability = "$_baseUrl/staff/packer/availability/";
 
   static String getOrdersByStatusUrl = "$orderUrl/get-order?status=";
-  static String getLatestOrdersUrl = "$orderUrl/get-order";
+  static String getLatestOrdersUrl = "$orderUrl/get-order"; 
   static String getUnsettledOrdersUrl = "$_packerUrl/unsettled-orders";
   static String createSettlementRequestUrl =
       "$_packerUrl/create-settlement-request";

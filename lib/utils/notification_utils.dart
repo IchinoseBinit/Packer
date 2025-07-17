@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -30,7 +32,6 @@ class NotificationUtils {
   @pragma("vm:entry-point")
   static Future<void> onActionReceivedMethod(
       ReceivedAction receivedAction) async {
-    // debugger();
     debugPrint("ACCEPTED");
     if (receivedAction.buttonKeyPressed == 'Accept') {
       final orderId = receivedAction.payload?['orderId'].toString().toInt();

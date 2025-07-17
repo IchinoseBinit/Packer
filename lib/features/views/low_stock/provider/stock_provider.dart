@@ -283,7 +283,7 @@ class StockProvider extends ChangeNotifier {
             ),
           );
           if (matchedModel.products.isNotEmpty) {
-            log("CartonfffffffffffInfo: $productId");
+            log("CartonInfo: $productId");
           }
         }
       }
@@ -384,6 +384,9 @@ class StockProvider extends ChangeNotifier {
       if (scannedList.length == selectedProduct?.quantity) {
         final response = await postScannedTags(context);
         if (response) {
+          navigateReplacement(context,
+              route: NavigationConstants.lowStockDetailRoute);
+          showToast("Scanned Successfully");
           return true;
         } else {
           if (selectedProduct != null) {
@@ -393,10 +396,12 @@ class StockProvider extends ChangeNotifier {
         }
       }
       notifyListeners();
+
       return false;
     } catch (e) {
-      await ErrorHandler.alertDialog(context, e.toString());
-      return false;
+      // await ErrorHandler.alertDialog(context, e.toString());
+      // return false;
+      rethrow;
     }
   }
 

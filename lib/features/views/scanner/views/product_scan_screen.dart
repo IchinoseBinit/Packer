@@ -230,7 +230,7 @@ class ProductScanScreen extends BaseScanScreen {
                 .scanProduct(context, productId, code);
         if ((result) && context.mounted) {
           removeLoading(context);
-          Navigator.pop(context, true);
+          Navigator.pop(context);
         } else if (context.mounted) {
           controller.start();
           hasScanned = false;
