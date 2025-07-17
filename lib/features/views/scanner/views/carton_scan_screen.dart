@@ -111,6 +111,7 @@ class CartonScanScreen extends BaseScanScreen {
       }
 
       if (!result && context.mounted) {
+        removeLoading(context);
         handleInvalidCode(context, controller, code);
       } else if (context.mounted) {
         removeLoading(context);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -13,6 +14,7 @@ abstract class BaseScanScreen extends StatefulWidget {
   final String scanTitle;
   final bool showFlash;
   final bool showBackButton;
+  final bool fromCall;
   final FloatingActionButtonLocation floatingActionButtonLocation;
 
   const BaseScanScreen({
@@ -20,6 +22,7 @@ abstract class BaseScanScreen extends StatefulWidget {
     required this.scanTitle,
     this.showFlash = true,
     this.showBackButton = true,
+    this.fromCall = false,
     this.floatingActionButtonLocation =
         FloatingActionButtonLocation.centerFloat,
   });
@@ -101,7 +104,12 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
             needCancel: true,
             okFunc: () {
               navigatePop(context);
-              navigatePop(context);
+              if (widget.fromCall) {
+                navigateReplacement(context,
+                    route: NavigationConstants.dashboardRoute);
+              } else {
+                navigatePop(context);
+              }
             },
             cancelFunc: () {
               controller?.start();
@@ -160,7 +168,12 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
                       needCancel: true,
                       okFunc: () {
                         navigatePop(context);
-                        navigatePop(context);
+                        if (widget.fromCall) {
+                          navigateReplacement(context,
+                              route: NavigationConstants.dashboardRoute);
+                        } else {
+                          navigatePop(context);
+                        }
                       },
                       cancelFunc: () {
                         controller?.start();

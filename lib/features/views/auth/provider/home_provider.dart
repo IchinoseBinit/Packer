@@ -91,6 +91,7 @@ class HomeProvider with ChangeNotifier {
       FirebaseAPI().requestPermission();
       if (isAvailable) {
         fetchCreatedOrders();
+        FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
       }
       fetchLatestOrders(isFirstTime: isFirstTime);
     }
@@ -255,6 +256,7 @@ class HomeProvider with ChangeNotifier {
       FirebaseAPI().requestPermission();
       if (!isFromWarehouse) {
         fetchLatestOrders();
+        FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
       }
       notifyListeners();
     } else {

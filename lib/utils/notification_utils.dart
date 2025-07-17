@@ -19,7 +19,7 @@ class NotificationUtils {
     awesomeNotification = AwesomeNotifications();
     // await awesomeNotification.initialize(null, [...getNonSilentChannels(), ...getSilentChannels()]);
     await awesomeNotification.initialize(
-        'resource://drawable/logo', [...getNonSilentChannels()],
+        'resource://drawable/launcher_icon', [...getNonSilentChannels()],
         debug: true);
 
     awesomeNotification.setListeners(

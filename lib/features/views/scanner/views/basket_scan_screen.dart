@@ -18,6 +18,7 @@ import 'base_scan_screen.dart';
 class BasketScanScreen extends BaseScanScreen {
   final String? basketCode;
   final bool forOrder;
+  @override
   final bool fromCall;
   final int orderId;
 
@@ -31,6 +32,7 @@ class BasketScanScreen extends BaseScanScreen {
           scanTitle: "Basket Scanner",
           showFlash: true,
           showBackButton: true,
+          fromCall: fromCall,
         );
 
   bool _processing = false;
@@ -68,14 +70,19 @@ class BasketScanScreen extends BaseScanScreen {
       bool result = false;
 
       if (forOrder) {
+        showLoading(context);
         result = await Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(context, code);
         if (fromCall && context.mounted && result) {
+          removeLoading(context);
+          navigate(context, route: NavigationConstants.dashboardRoute);
           navigate(context,
               route: NavigationConstants.orderDetailsRoute, extra: orderId);
           Provider.of<OrderProvider>(context, listen: false).initState();
         } else if (result && context.mounted) {
+          removeLoading(context);
           Navigator.pop(context, true);
+
           return;
         }
       } else {
@@ -111,6 +118,7 @@ class BasketScanScreen extends BaseScanScreen {
       body: Text("Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context); // dismiss dialog
+        removeLoading(context);
         removeLoading(context);
         controller.start();
       },

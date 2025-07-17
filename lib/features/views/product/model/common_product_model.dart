@@ -61,6 +61,7 @@ class CommonProductModel {
     scannedCount = productDetails.itemScanCount;
     productCompartment = productDetails.productCompartment;
     plannedQuantity = 0;
+    productUnits = [];
   }
 
   // TransferItemModel transferItemModel;

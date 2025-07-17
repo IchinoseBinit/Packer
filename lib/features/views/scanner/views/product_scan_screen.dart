@@ -6,6 +6,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
@@ -24,6 +26,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool fromStockVerification = false;
   int? cartonId;
   bool fromTransfer = false;
+  bool forCarton = false;
 
   ProductScanScreen({
     super.key,
@@ -31,18 +34,22 @@ class ProductScanScreen extends BaseScanScreen {
     this.fromStockVerification = false,
     this.cartonId,
     this.fromTransfer = false,
+    this.forCarton = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
           showBackButton: true,
-          floatingActionButtonLocation: fromTransfer
+          floatingActionButtonLocation: fromTransfer || forCarton
               ? FloatingActionButtonLocation.endFloat
               : FloatingActionButtonLocation.centerFloat,
         );
 
   @override
   void onScreenCreated(BuildContext context) {
-    if (fromStockVerification) {
+    if (forCarton) {
+      Provider.of<StockProvider>(context, listen: false)
+          .getMessageForCartonProduct(context);
+    } else if (fromStockVerification) {
       Provider.of<StockVerificationProvider>(context, listen: false)
           .getMessage(context);
     } else if (!fromTransfer) {
@@ -59,6 +66,16 @@ class ProductScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
+    if (forCarton) {
+      return FloatingActionButton(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: () async {
+          Provider.of<StockProvider>(context, listen: false)
+              .showCartonProductTags(context);
+        },
+        child: const Icon(Icons.info, color: Colors.white),
+      );
+    }
     if (fromTransfer) {
       return FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
@@ -187,8 +204,33 @@ class ProductScanScreen extends BaseScanScreen {
           return;
         }
       }
+      if (forCarton) {
+        final result = await Provider.of<StockProvider>(context, listen: false)
+            .onScanCartonProduct(context, code);
+        if (!context.mounted) return;
+        if (result.success == false) {
+          Future.delayed(Duration(seconds: 1), () {
+            if (!context.mounted) return;
+            if (result.message != null) {
+              handleInvalidCode(context, controller, code, result.message);
+            } else {
+              hasScanned = false;
+              controller.start();
+            }
+          });
+        } else {
+          if (result.message != null) {
+            showToast(result.message ?? '');
+          }
+          Future.delayed(Duration(seconds: 1), () {
+            if (!context.mounted) return;
+            navigatePop(context);
 
-      if (fromStockVerification) {
+            controller.start();
+            hasScanned = false;
+          });
+        }
+      } else if (fromStockVerification) {
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
         // If other cartoon check is needed
@@ -224,14 +266,15 @@ class ProductScanScreen extends BaseScanScreen {
           });
         }
       } else if (fromTransfer) {
-        showLoading(context);
+        // showLoading(context);
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
                 .scanProduct(context, productId, code);
-        if ((result) && context.mounted) {
-          removeLoading(context);
-          Navigator.pop(context);
+        if (result && context.mounted) {
+          // removeLoading(context);
+          Navigator.pop(context, true);
         } else if (context.mounted) {
+          // removeLoading(context);
           controller.start();
           hasScanned = false;
         }

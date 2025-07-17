@@ -146,6 +146,8 @@ class AppUrls {
   //getAuditViewUrl
   static String getAuditViewUrl = "$_baseUrl/audit-view/";
 
+  static String postCartonProductTagsUrl = "$_baseUrl/scanned_carton/";
+
   //damage product url
   static String damageProductUnitUrl = "$_baseUrl/product_units/";
   static String markDamageUrl = "$_baseUrl/mark-damaged/";

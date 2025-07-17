@@ -72,16 +72,15 @@ class RackScanScreen extends BaseScanScreen {
           if (context.mounted) handleInvalidCode(context, controller, code);
         }
       } else if (forCarton) {
-        if (context.mounted) showLoading(context);
 
         final result = await Provider.of<StockProvider>(context, listen: false)
-            .updateRack(context, code, productId);
+            .updateRack(context, code, productId, true);
 
-        if (context.mounted) removeLoading(context);
         if (result && context.mounted) {
           navigatePop(context, true);
           showToast("Rack Assigned successfully");
         } else {
+
           if (context.mounted) await controller.start();
         }
       } else if (context.mounted) {

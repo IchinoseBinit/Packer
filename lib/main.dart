@@ -40,6 +40,8 @@ void main() async {
   try {
     await FirebaseAPI().requestPermission();
   } catch (_) {}
+  
+  
 
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');

@@ -43,8 +43,8 @@ class ProductProvider extends ChangeNotifier {
   }
 
   bool canScanNewProduct() {
-    return (unitVerifyModel?.productCount ?? 0) ==
-        getScannedUnitsForProduct().length;
+    return getScannedUnitsForProduct().length >=
+        (unitVerifyModel?.productCount ?? 0);
   }
 
   List<String> getScannedUnitsForProduct() {
@@ -405,6 +405,14 @@ class ProductProvider extends ChangeNotifier {
         productUnitTags: _getCurrentProductTags(),
       ));
     }
+
+    // trim unitVerifyModels
+    unitVerifyModels.removeWhere((e) => e.product == null);
+
+    // if (unitVerifyModels.isEmpty) {
+    //   navigatePop(context);
+    //   return;
+    // }
 
     _logScanningSession();
 
