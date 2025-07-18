@@ -17,7 +17,7 @@ class AuthController {
         'password': password,
       };
       final response = await DioClient().request(
-        requestType: RequestType.post,
+        requestType: RequestType.postWithToken,
         url: AppUrls.loginUrl,
         body: body,
       );
@@ -34,15 +34,13 @@ class AuthController {
     }
   }
 
-
-
   Future logout() async {
     final body = {
       "refresh": DioClient.refreshToken,
     };
     try {
       final otpResponse = await DioClient().request(
-        requestType: RequestType.post,
+        requestType: RequestType.postWithToken,
         url: AppUrls.logoutUrl,
         body: body,
       );
@@ -72,7 +70,6 @@ class AuthController {
     DioClient.refreshToken = token.refreshToken;
   }
 
-
   removeTokens() async {
     await SecureStorageHelper()
         .remove(key: SecureStorageConstants.accessTokenKey);
@@ -82,12 +79,11 @@ class AuthController {
     DioClient.refreshToken = "";
   }
 
-
   Future refreshToken() async {
     final body = {"refresh": DioClient.refreshToken};
     try {
       final otpResponse = await DioClient().request(
-        requestType: RequestType.post,
+        requestType: RequestType.postWithToken,
         url: AppUrls.refreshTokenUrl,
         body: body,
       );
