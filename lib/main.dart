@@ -9,7 +9,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
-import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -39,9 +38,7 @@ void main() async {
   // Request permission for notifications
   try {
     await FirebaseAPI().requestPermission();
-  } catch (_) {
-  }
-  
+  } catch (_) {}
 
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');

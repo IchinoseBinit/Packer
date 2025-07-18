@@ -115,22 +115,31 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                             ),
                           );
                         } else {
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: value.lowStockList.length,
-                            itemBuilder: (context, index) {
-                              return LowStockCard(
-                                  model: value.lowStockList[index],
-                                  primaryColor: Theme.of(context).primaryColor,
-                                  callback: () {
-                                    Provider.of<StockProvider>(context,
-                                            listen: false)
-                                        .onDetailsTaped(
-                                            context, value.lowStockList[index]);
-                                  });
-                            },
-                          );
+                          if (homeProvider.isOnline) {
+                            return ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: value.lowStockList.length,
+                              itemBuilder: (context, index) {
+                                return LowStockCard(
+                                    model: value.lowStockList[index],
+                                    primaryColor:
+                                        Theme.of(context).primaryColor,
+                                    callback: () {
+                                      Provider.of<StockProvider>(context,
+                                              listen: false)
+                                          .onDetailsTaped(context,
+                                              value.lowStockList[index]);
+                                    });
+                              },
+                            );
+                          }
                         }
+                        return Center(
+                          child: Text(
+                            'You are currently offline.',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        );
                       },
                     ),
                   ),
