@@ -29,6 +29,7 @@ class AppAssets {
   static const camera = "$_iconPath/camera.svg";
   static const homeIcon = "$_iconPath/homeIcon.svg";
   static const box = "$_iconPath/Box.svg";
+  static const trolleyIcon = "$_iconPath/trolley_icon.svg";
 
   static const acknowledgedOrderImage = "$_imagePath/order_ready.png";
   static const splashScreenLogo = "$_imagePath/logo.png";

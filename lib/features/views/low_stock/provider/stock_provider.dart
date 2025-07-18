@@ -932,6 +932,22 @@ class StockProvider extends ChangeNotifier {
     );
   }
 
+  /// Open box for low stock list if there is product of store
+  Future<List<LowStockModel>> openBoxForLowStockList(BuildContext context) async {
+    List<LowStockModel> list = [];
+    for (var element in lowStockList) {
+      final box = await HiveDBService.openProductBox('store_${element.storeId}');
+      final dao = ProductDao(box);
+      final trolleyItems = dao.getAll();
+      if (trolleyItems.isNotEmpty) {
+        list.add(element.copyWith(qty: trolleyItems.length));
+      }
+    }
+    return list;
+  }
+
+ 
+
   // Future<bool> updateRack(
   //     BuildContext context, String code, int productId) async {
   //   try {

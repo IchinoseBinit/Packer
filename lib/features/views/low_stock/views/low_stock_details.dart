@@ -178,16 +178,6 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     // 20.h
                     GeneralElevatedButton(
                       onPressed: () {
-                        ShowAlertDialog(
-                          canDismiss: true,
-                          needCancel: true,
-                          title: 'Scan',
-                          body: const Text('What do you want to scan?'),
-                          okTitle: 'Carton',
-                          cancelTitle: 'Basket',
-                          okFunc: () {
-                            // pop
-                            navigatePop(context);
                             navigate(
                               context,
                               route: NavigationConstants.qrScanScreenRoute,
@@ -196,16 +186,34 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                 'isLowStockCarton': true,
                               },
                             );
-                          },
-                          cancelFunc: () {
-                            navigatePop(context);
-                            navigate(
-                              context,
-                              route: NavigationConstants.lowStockScannerRoute,
-                              extra: {"forProduct": false},
-                            );
-                          },
-                        ).showAlertDialog(context);
+                        // ShowAlertDialog(
+                        //   canDismiss: true,
+                        //   needCancel: true,
+                        //   title: 'Scan',
+                        //   body: const Text('What do you want to scan?'),
+                        //   okTitle: 'Carton',
+                        //   cancelTitle: 'View Products',
+                        //   okFunc: () {
+                        //     // pop
+                        //     navigatePop(context);
+                        //     navigate(
+                        //       context,
+                        //       route: NavigationConstants.qrScanScreenRoute,
+                        //       extra: {
+                        //         'scanCarton': true,
+                        //         'isLowStockCarton': true,
+                        //       },
+                        //     );
+                        //   },
+                        //   cancelFunc: () {
+                        //     navigatePop(context);
+                        //     navigate(
+                        //       context,
+                        //       route: NavigationConstants.collectedProductViewRoute,
+                        //     );
+                            
+                        //   },
+                        // ).showAlertDialog(context);
                       },
                       title: "Scan",
                     ),

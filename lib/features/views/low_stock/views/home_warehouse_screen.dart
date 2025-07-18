@@ -31,6 +31,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
   }
 
   void startTimer() {
+    timer?.cancel();
     timer = Timer.periodic(Duration(minutes: 5), (timer) {
       if (mounted) {
         Provider.of<StockProvider>(context, listen: false)
@@ -87,7 +88,11 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
             middleWidget: Consumer<HomeProvider>(builder: (_, value, __) {
               return const CustomSwitch(fromWareHouse: true);
             }),
-            trailingSvgAsset: AppAssets.bell_icon,
+            trailingSvgAsset: AppAssets.trolleyIcon,
+            trailingOnPressed: () {
+              navigate(context,
+                  route: NavigationConstants.collectedProductViewRoute);
+            },
           ),
           body: homeProvider.isOnline
               ? RefreshIndicator(
