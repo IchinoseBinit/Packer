@@ -60,7 +60,8 @@ class OrderItems {
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();
     imageUrl = json['image_url'].toString().toStringConversion();
-    unitTags = json['unit_tags'].cast<String>();
+    unitTags =
+        (json['unit_tags'] as List?)?.map((e) => e.toString()).toList() ?? [];
   }
 
   Map<String, dynamic> toJson() {
