@@ -71,20 +71,9 @@ class OrderNotificationList extends StatelessWidget {
                 FirebaseAPI()
                     .cancelCallNotification(notification.orderId.toInt());
                 homeProvider.initialize(isFirstTime: true);
-                Provider.of<OrderProvider>(context, listen: false).initState();
-                final result = await navigate(context,
-                    route: NavigationConstants.basketScanScreenRoute,
-                    extra: {
-                      'forOrder': true,
-                    });
-                print(
-                  "result from basket scan screen $result",
-                );
-                if (result ?? false) {
-                  navigateWithRouter(AppRouter.router,
-                      route: NavigationConstants.orderDetailsRoute,
-                      extra: notification.orderId);
-                }
+                Provider.of<OrderProvider>(context, listen: false)
+                    .onOrderAcceptOrGetDetail(notification.orderId.toInt(),
+                        fromCall: false, context: context);
               }),
         ],
       ),

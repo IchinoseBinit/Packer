@@ -17,7 +17,7 @@ class AuthController {
         'password': password,
       };
       final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
+        requestType: RequestType.post,
         url: AppUrls.loginUrl,
         body: body,
       );

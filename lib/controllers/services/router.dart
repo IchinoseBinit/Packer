@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
@@ -52,6 +53,7 @@ class AppRouter {
   GoRouter getRoutes(BuildContext context) {
     router = GoRouter(
       initialLocation: NavigationConstants.initialRoute,
+      navigatorKey: AppConstants.navigatorKey,
       routes: <RouteBase>[
         GoRoute(
             path: NavigationConstants.initialRoute,

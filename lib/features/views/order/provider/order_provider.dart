@@ -3,13 +3,18 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
+import 'package:packer/controllers/services/hive_db/basket_dao.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/router.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
@@ -52,20 +57,50 @@ class OrderProvider extends ChangeNotifier {
   List<String> rackList = [];
   Map<String, List<ProductDetails>> rackProductData = {};
 
-  String bucketData = ""; // current basket code
-  List<String> basketDataList = []; // stores basket codes
-  Map<String, List<String>> scannedDataPerBasket =
-      {}; // map product tag with basket code
+  late Box<Basket> basketBox;
+  late BasketDao basketDao;
+
+  List<Basket> baskets = [];
+  // String bucketData = ""; // current basket code
+  // List<String> basketDataList = []; // stores basket codes
+  // Map<String, List<String>> scannedDataPerBasket =
+  //     {}; // map product tag with basket code
   List<String> scannedDataList =
       []; // stores all scanned product tags for all baskets
 
   get isAvailable => _isAvailable;
 
-  void addProductTagToBasket(String basketId, String productTag) {
-    if (!scannedDataPerBasket.containsKey(basketId)) {
-      scannedDataPerBasket[basketId] = [];
+  List<String> get basketDataList => baskets.map((e) => e.identifier).toList();
+
+  // current basket code
+  String bucketData = "";
+
+  set bucket(String value) {
+    final basket = basketDao.getBasket(value);
+    if (basket != null) {
+      bucketData = value;
+    } else {
+      basketDao
+          .addOrUpdateBasket(Basket(identifier: value, productIdentifiers: []));
+      baskets = basketDao.getAll();
+      bucketData = value;
     }
-    scannedDataPerBasket[basketId]!.add(productTag);
+    notifyListeners();
+  }
+
+  void addProductTagToBasket(String basketId, String productTag) {
+    // if (!scannedDataPerBasket.containsKey(basketId)) {
+    //   scannedDataPerBasket[basketId] = [];
+    // }
+    // scannedDataPerBasket[basketId]!.add(productTag);
+    final basket = basketDao.getBasket(basketId);
+    if (basket != null) {
+      basket.productIdentifiers.add(productTag);
+      basketDao.addOrUpdateBasket(basket);
+    } else {
+      basketDao.addOrUpdateBasket(
+          Basket(identifier: basketId, productIdentifiers: [productTag]));
+    }
   }
 
   bool allCartItemScanned() {
@@ -91,13 +126,15 @@ class OrderProvider extends ChangeNotifier {
 
   void initState() {
     scannedDataList.clear();
+    scannedDataList =
+        baskets.map((e) => e.productIdentifiers).expand((x) => x).toList();
     // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
   }
 
   // UPDATED
   void resetState() {
     basketDataList.clear();
-    scannedDataPerBasket.clear();
+    baskets.clear();
     scannedDataList.clear();
     rackProductData.clear();
     rackList.clear();
@@ -118,6 +155,46 @@ class OrderProvider extends ChangeNotifier {
       }
     }
     return false;
+  }
+
+  // UPDATED // accept or detail of order
+  void onOrderAcceptOrGetDetail(int orderId,
+      {bool fromCall = false, BuildContext? context}) async {
+    // open box
+    basketBox = await Hive.openBox('order_#$orderId');
+    basketDao = BasketDao(basketBox);
+    baskets = basketDao.getAll();
+    if (baskets.isNotEmpty) {
+      navigate(context!,
+          route: NavigationConstants.orderDetailsRoute, extra: orderId);
+      initState();
+    } else {
+      if (fromCall) {
+        navigateWithRouter(
+          AppRouter.router,
+          route: NavigationConstants.basketScanScreenRoute,
+          extra: {
+            'forOrder': true,
+            'fromCall': fromCall,
+            'orderId': orderId,
+          },
+        );
+      } else {
+        final result = await navigate(context!,
+            route: NavigationConstants.basketScanScreenRoute,
+            extra: {
+              'forOrder': true,
+            });
+        log("result from basket scan screen $result", name: "Order Detials");
+        if (result ?? false) {
+          initState();
+          navigate(context,
+              route: NavigationConstants.orderDetailsRoute, extra: orderId);
+        }
+      }
+    }
+    // scan basket
+    notifyListeners();
   }
 
   // UPDATED
@@ -286,13 +363,13 @@ class OrderProvider extends ChangeNotifier {
   }
 
   Future<bool> productPost(BuildContext context, int orderId) async {
-    List<Basket> baskets = basketDataList.map((identifier) {
-      return Basket(
-        identifier: identifier,
-        productIdentifiers:
-            List<String>.from(scannedDataPerBasket[identifier] ?? []),
-      );
-    }).toList();
+    // List<Basket> baskets = basketDataList.map((identifier) {
+    //   return Basket(
+    //     identifier: identifier,
+    //     productIdentifiers:
+    //         List<String>.from(scannedDataPerBasket[identifier] ?? []),
+    //   );
+    // }).toList();
 
     PostBasketRequest postBasketRequest = PostBasketRequest(
       orderId: orderId,
@@ -311,6 +388,8 @@ class OrderProvider extends ChangeNotifier {
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
         resetState();
+        // remove box
+        basketDao.clearAll();
         notifyListeners();
         return true;
       } else {
@@ -429,17 +508,8 @@ class OrderProvider extends ChangeNotifier {
     if (data != null) {
       log("Basket code scanned from order acknowledge $data");
 
-      bucketData = data;
-
-      if (basketDataList.contains(data)) {
-        ErrorHandler.alertDialog(context, "Basket Already Scanned");
-        return false;
-      }
-
-      // not mandatory just to clear previous basket data
+      bucket = data;
       await clearBasket();
-
-      basketDataList.add(data);
       log("basket code list $basketDataList");
       notifyListeners();
       return true;
