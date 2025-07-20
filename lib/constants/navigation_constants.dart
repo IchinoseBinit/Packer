@@ -70,4 +70,7 @@ class NavigationConstants {
   static const String unitVerifyScannerRoute = 'unit_verify_scanner';
   // unit_product_scanner
   static const String unitProductScannerRoute = 'unit_product_scanner';
+  static const String orderReturnDetailsRoute = 'order_return_details';
+  // orderReturnScannerRoute
+  static const String orderReturnScannerRoute = 'order_return_scanner';
 }

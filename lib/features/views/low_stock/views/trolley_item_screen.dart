@@ -41,7 +41,7 @@ class TrolleyItemScreen extends StatelessWidget {
                   }).showAlertDialog(context);
             },
             icon: Icon(
-              Icons.shopping_cart,
+              Icons.shopping_bag,
               color: AppColors.splashNewBackgroundColor,
             ),
           ),
@@ -103,7 +103,9 @@ class TrolleyItemWidget extends StatelessWidget {
   final String image;
   final int qty;
   final double width;
+  final String? measurement;
   final VoidCallback? onTap;
+  final bool isCompleted;
 
   const TrolleyItemWidget({
     super.key,
@@ -112,8 +114,11 @@ class TrolleyItemWidget extends StatelessWidget {
     required this.image,
     required this.qty,
     this.width = 140,
+    this.measurement,
     this.onTap,
+    this.isCompleted = false,
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -198,22 +203,39 @@ class TrolleyItemWidget extends StatelessWidget {
                   SizedBox(height: 6.h),
 
                   /// Quantity
-                  Text(
-                    'Qty: $qty',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 12.sp,
-                          color: AppColors.homeScreenDimTextColor,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Qty: $qty',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.homeScreenDimTextColor,
+                              ),
                         ),
+                      ),
+
+                      Expanded(
+                        child: Text(
+                          measurement ?? '',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.homeScreenDimTextColor,
+                              ),
+                              textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
                   ),
                   Container(
                     height: 30.h,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4.h),
-                      color: AppColors.primaryColor,
+                      color: isCompleted ? AppColors.green700 : AppColors.primaryColor,
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      "Remaining: $qty",
+                      isCompleted ? "Completed" : "Remaining: $qty",
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.white,

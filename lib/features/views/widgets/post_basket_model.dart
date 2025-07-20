@@ -13,6 +13,14 @@ class Basket {
     };
   }
 
+  // toPost
+  Map<String, dynamic> toPostBasketRequest() {
+    return {
+      'basket_id': identifier,
+      'scanned_tags': productIdentifiers,
+    };
+  }
+
   // from json
   factory Basket.fromJson(Map<String, dynamic> json) {
     return Basket(

@@ -19,6 +19,7 @@ class OrderReturnModel {
     orderId = json['order'].toString().toInt();
     basket = json['basket'].toString().toStringConversion();
     createdAt = json['created_at'];
+    // orderItems = [];
     if (json['order_items'] != null) {
       orderItems = <OrderItems>[];
       json['order_items'].forEach((v) {
@@ -45,6 +46,7 @@ class OrderItems {
   late final String measurement;
   late final String imageUrl;
   late final List<String> unitTags;
+  late final String rackName;
 
   OrderItems(
       {required this.productId,
@@ -52,7 +54,8 @@ class OrderItems {
       required this.size,
       required this.measurement,
       required this.imageUrl,
-      required this.unitTags});
+      required this.unitTags,
+      required this.rackName});
 
   OrderItems.fromJson(Map<String, dynamic> json) {
     productId = json['product_id'].toString().toInt();
@@ -61,6 +64,7 @@ class OrderItems {
     measurement = json['measurement'].toString().toStringConversion();
     imageUrl = json['image_url'].toString().toStringConversion();
     unitTags = json['unit_tags'].cast<String>();
+    rackName = json['rack_name'].toString().toStringConversion();
   }
 
   Map<String, dynamic> toJson() {
@@ -71,6 +75,7 @@ class OrderItems {
     data['measurement'] = measurement.toString().toStringConversion();
     data['image_url'] = imageUrl.toString().toStringConversion();
     data['unit_tags'] = unitTags;
+    data['rack_name'] = rackName.toString().toStringConversion();
     return data;
   }
 }

@@ -12,6 +12,9 @@ import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart
 import 'package:packer/features/views/low_stock/views/trolley_item_screen.dart';
 import 'package:packer/features/views/low_stock/views/trolley_scan_screen.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
+import 'package:packer/features/views/order/views/order_return_detail.dart';
+import 'package:packer/features/views/order/views/order_return_list.dart';
+import 'package:packer/features/views/order/views/order_return_scanner.dart';
 import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
@@ -32,7 +35,6 @@ import 'package:packer/features/views/order/views/view_image_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/product/unit_verify_scanner.dart';
-import 'package:packer/features/views/order/order_return_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/profile/update_rack_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
@@ -226,11 +228,28 @@ class AppRouter {
                   );
                 },
               ),
+              GoRoute(
+                path: NavigationConstants.orderReturnScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>? ?? {};
+                  return OrderReturnScanner(
+                    productId: extra['productId'].toString().toInt(),
+                    product: extra['product'].toString().toBool(false),
+                    rack: extra['rack'].toString().toBool(false),
+                  );
+                },
+              ),
               // collectedProductViewRoute
               GoRoute(
                 path: NavigationConstants.collectedProductViewRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return CollectedProductView();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.orderReturnDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return OrderReturnDetail();
                 },
               ),
               GoRoute(
@@ -355,7 +374,7 @@ class AppRouter {
                 path: NavigationConstants.orderReturnScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
-                  return OrderReturnScreen();
+                  return OrderReturnList();
                 },
               ),
               GoRoute(
