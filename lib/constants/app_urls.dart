@@ -107,6 +107,8 @@ class AppUrls {
 
   static String basketClearUrl = "$orderUrl/clear-basket/";
 
+  static String orderReturnUrl = "$baseUrl/staff/order-cancel-request-list/";
+
   // staff/scan-basket
   static String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
 

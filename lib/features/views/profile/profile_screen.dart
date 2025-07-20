@@ -63,6 +63,15 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.productListScreenRoute,
       });
     }
+
+    if (!value.isAuditUser() &&
+        !otherInfoData.any((e) => e['title'] == 'Order return')) {
+      otherInfoData.add({
+        'icon': Icons.repeat_rounded,
+        'title': 'Order return',
+        'screen': NavigationConstants.orderReturnScreenRoute,
+      });
+    }
   }
 
   @override

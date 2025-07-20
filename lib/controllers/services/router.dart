@@ -30,6 +30,7 @@ import 'package:packer/features/views/order/views/view_image_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/product/unit_verify_scanner.dart';
+import 'package:packer/features/views/order/order_return_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/profile/update_rack_screen.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
@@ -339,6 +340,14 @@ class AppRouter {
                   );
                 },
               ),
+
+              GoRoute(
+                path: NavigationConstants.orderReturnScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return OrderReturnScreen();
+                },
+              ),
               GoRoute(
                 path: NavigationConstants.productScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -407,7 +416,6 @@ class AppRouter {
                   );
                 },
               ),
-
             ]),
       ],
     );

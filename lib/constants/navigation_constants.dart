@@ -58,7 +58,7 @@ class NavigationConstants {
 
 //carton list screen
 
-
+  static const String orderReturnScreenRoute = 'order_return_screen';
   // rack update screen
   static const String rackUpdateScreenRoute = 'rack_update_screen';
 
