@@ -25,7 +25,6 @@ import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
-import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -932,6 +931,22 @@ class StockProvider extends ChangeNotifier {
       },
     );
   }
+
+  /// Open box for low stock list if there is product of store
+  Future<List<LowStockModel>> openBoxForLowStockList(BuildContext context) async {
+    List<LowStockModel> list = [];
+    for (var element in lowStockList) {
+      final box = await HiveDBService.openProductBox('store_${element.storeId}');
+      final dao = ProductDao(box);
+      final trolleyItems = dao.getAll();
+      if (trolleyItems.isNotEmpty) {
+        list.add(element.copyWith(qty: trolleyItems.length));
+      }
+    }
+    return list;
+  }
+
+ 
 
   // Future<bool> updateRack(
   //     BuildContext context, String code, int productId) async {

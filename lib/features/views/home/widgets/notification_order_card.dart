@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
@@ -81,20 +82,9 @@ class NotificationOrderCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: GestureDetector(
                 onTap: () async {
-                  final result = await navigate(context,
-                      route: NavigationConstants.basketScanScreenRoute,
-                      extra: {
-                        'forOrder': true,
-                      });
-                  log("result from basket scan screen $result",
-                      name: "Order Detials");
-                  if ((result ?? false) && context.mounted) {
-                    Provider.of<OrderProvider>(context, listen: false)
-                        .initState();
-                    navigate(context,
-                        route: NavigationConstants.orderDetailsRoute,
-                        extra: orderItem.orderId);
-                  }
+                  Provider.of<OrderProvider>(context, listen: false)
+                      .onOrderAcceptOrGetDetail(orderItem.orderId.toInt(),
+                          fromCall: false,context: context);
                 },
                 child: Container(
                   decoration: BoxDecoration(

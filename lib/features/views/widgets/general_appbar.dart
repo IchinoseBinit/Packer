@@ -55,6 +55,7 @@ class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
                 trailingSvgAsset!,
                 height: 24.0,
                 width: 24.0,
+                color: Colors.black,
               ),
               onPressed: trailingOnPressed,
             ),

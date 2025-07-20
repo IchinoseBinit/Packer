@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,6 +31,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
   }
 
   void startTimer() {
+    timer?.cancel();
     timer = Timer.periodic(Duration(minutes: 5), (timer) {
       if (mounted) {
         Provider.of<StockProvider>(context, listen: false)
@@ -83,74 +83,91 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
         Provider.of<StockProvider>(context, listen: false).reset();
       }
       return Scaffold(
-        appBar: GeneralAppBar(
-          needLeading: false,
-          middleWidget: Consumer<HomeProvider>(builder: (_, value, __) {
-            return const CustomSwitch(fromWareHouse: true);
-          }),
-          trailingSvgAsset: AppAssets.bell_icon,
-        ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            await Provider.of<StockProvider>(context, listen: false)
-                .fetchLowStockProducts(context);
-          },
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Consumer<StockProvider>(
-                      builder: (context, value, child) {
-                        if (value.isLoading) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        } else if (value.isError) {
-                          return Center(
-                            child: Text(
-                              value.errorMessage,
-                              style: Theme.of(context).textTheme.bodyLarge,
+          appBar: GeneralAppBar(
+            needLeading: false,
+            middleWidget: Consumer<HomeProvider>(builder: (_, value, __) {
+              return const CustomSwitch(fromWareHouse: true);
+            }),
+            trailingSvgAsset: AppAssets.trolleyIcon,
+            trailingOnPressed: () {
+              navigate(context,
+                  route: NavigationConstants.collectedProductViewRoute);
+            },
+          ),
+          body: homeProvider.isOnline
+              ? RefreshIndicator(
+                  onRefresh: () async {
+                    await Provider.of<StockProvider>(context, listen: false)
+                        .fetchLowStockProducts(context);
+                  },
+                  child: SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 16.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Consumer<StockProvider>(
+                              builder: (context, value, child) {
+                                if (value.isLoading) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                } else if (value.isError) {
+                                  return Center(
+                                    child: Text(
+                                      value.errorMessage,
+                                      style:
+                                          Theme.of(context).textTheme.bodyLarge,
+                                    ),
+                                  );
+                                } else {
+                                  return ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: value.lowStockList.length,
+                                    itemBuilder: (context, index) {
+                                      return LowStockCard(
+                                          model: value.lowStockList[index],
+                                          primaryColor:
+                                              Theme.of(context).primaryColor,
+                                          callback: () {
+                                            Provider.of<StockProvider>(context,
+                                                    listen: false)
+                                                .onDetailsTaped(context,
+                                                    value.lowStockList[index]);
+                                          });
+                                    },
+                                  );
+                                }
+                              },
                             ),
-                          );
-                        } else {
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: value.lowStockList.length,
-                            itemBuilder: (context, index) {
-                              return LowStockCard(
-                                  model: value.lowStockList[index],
-                                  primaryColor: Theme.of(context).primaryColor,
-                                  callback: () {
-                                    Provider.of<StockProvider>(context,
-                                            listen: false)
-                                        .onDetailsTaped(
-                                            context, value.lowStockList[index]);
-                                  });
+                          ),
+                          SizedBox(height: 20.h),
+                          GeneralElevatedButton(
+                            title: 'Scan Carton',
+                            onPressed: () {
+                              navigate(
+                                context,
+                                route:
+                                    NavigationConstants.cartonScanScreenRoute,
+                              );
                             },
-                          );
-                        }
-                      },
+                          ),
+                          SizedBox(height: 20.h),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(height: 20.h),
-                  GeneralElevatedButton(
-                    title: 'Scan Carton',
-                    onPressed: () {
-                      navigate(
-                        context,
-                        route: NavigationConstants.cartonScanScreenRoute,
-                      );
-                    },
+                )
+              : Center(
+                  child: Text(
+                    'You are currently offline.',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
-                  SizedBox(height: 20.h),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+                ));
     });
   }
 }
