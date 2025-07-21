@@ -165,7 +165,7 @@ class OrderProvider extends ChangeNotifier {
     basketBox = await Hive.openBox('order_#$orderId');
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
-    if (baskets.isNotEmpty) {
+    if (baskets.isNotEmpty && !fromCall) {
       navigate(context!,
           route: NavigationConstants.orderDetailsRoute, extra: orderId);
       initState();

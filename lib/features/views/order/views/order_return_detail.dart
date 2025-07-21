@@ -22,8 +22,8 @@ class OrderReturnDetail extends StatefulWidget {
 class _OrderReturnDetailState extends State<OrderReturnDetail> {
   @override
   Widget build(BuildContext context) {
-  OrderReturnProvider orderReturnProvider =
-      Provider.of<OrderReturnProvider>(context, listen: false);
+    OrderReturnProvider orderReturnProvider =
+        Provider.of<OrderReturnProvider>(context, listen: false);
     return Scaffold(
       appBar: const GeneralAppBar(
         middleWidget: Text("Order Return"),
@@ -50,66 +50,100 @@ class _OrderReturnDetailState extends State<OrderReturnDetail> {
             SizedBox(height: 12.h),
 
             Expanded(
-              child: IntrinsicGridView.vertical(
-                  columnCount: 2,
-                  verticalSpace: 12.w,
-                  horizontalSpace: 12.w,
-                  children: List.generate(
-                    Provider.of<OrderReturnProvider>(context)
-                            .selectedOrder
-                            ?.orderItems
-                            .length ??
-                        0,
-                    (index) {
-                      final orderItem =
-                          Provider.of<OrderReturnProvider>(context)
-                              .selectedOrder
-                              ?.orderItems[index];
-                      return TrolleyItemWidget(
-                        id: orderItem?.productId ?? 0,
-                        name: orderItem?.productName ?? "",
-                        image: orderItem?.imageUrl ?? "",
-                        qty: orderItem?.unitTags.length ?? 0,
-                        measurement: "${orderItem?.size} ${orderItem?.measurement}",
-                        isCompleted: orderReturnProvider.isItemCompleted(orderItem?.productId ?? 0),
+              child: ListView.builder(
+                  itemCount: orderReturnProvider.rackNames.length,
+                  itemBuilder: (context, index) {
+                    final rackName = orderReturnProvider.rackNames[index];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                            text: TextSpan(children: [
+                          TextSpan(
+                              text: "Rack Name: ",
+                              style: Theme.of(context).textTheme.labelLarge),
+                          TextSpan(
+                              text: rackName,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontSize: 16.sp,
+                                  )),
+                        ])),
+                        // 8.h
+                        SizedBox(height: 8.h),
+                        if (orderReturnProvider.rackToOrderItems[rackName] !=
+                            null)
+                          IntrinsicGridView.vertical(
+                              columnCount: 2,
+                              verticalSpace: 12.w,
+                              horizontalSpace: 12.w,
+                              children: List.generate(
+                                orderReturnProvider
+                                    .rackToOrderItems[rackName]!.length,
+                                (index) {
+                                  final orderItem = orderReturnProvider
+                                      .rackToOrderItems[rackName]![index];
 
-                        onTap: () {
-                          if (orderReturnProvider.isItemCompleted(orderItem?.productId ?? 0)) {
-                            return;
-                          }
-                          Provider.of<OrderReturnProvider>(context, listen: false).initScannedTagsList();
-                          navigate(context,
-                              route: NavigationConstants.orderReturnScannerRoute,
-                              extra: {"productId": orderItem?.productId, "rack": true});
-                        },
-                      );
-                    },
-                  )
-                  // [
-                  //   TrolleyItemWidget(
-                  //     id: orderItem?.productId ?? 0,
-                  //     name: orderItem?.productName ?? "",
-                  //     image: orderItem?.imageUrl ?? "",
-                  //     qty: orderItem?.unitTags.length ?? 0,
-                  //   ),
-                  // ],
+                                  return TrolleyItemWidget(
+                                    id: orderItem.productId,
+                                    name: orderItem.productName,
+                                    image: orderItem.imageUrl,
+                                    qty: orderItem.unitTags.length,
+                                    measurement:
+                                        "${orderItem.size} ${orderItem.measurement}",
+                                    isCompleted: orderReturnProvider
+                                        .isItemCompleted(orderItem.productId),
+                                    onTap: () {
+                                      if (orderReturnProvider.isItemCompleted(
+                                          orderItem.productId)) {
+                                        return;
+                                      }
+                                      Provider.of<OrderReturnProvider>(context,
+                                              listen: false)
+                                          .initScannedTagsList();
+                                      navigate(context,
+                                          route: NavigationConstants
+                                              .orderReturnScannerRoute,
+                                          extra: {
+                                            "productId": orderItem.productId,
+                                            "rack": true
+                                          });
+                                    },
+                                  );
+                                },
+                              )
+                              // [
+                              //   TrolleyItemWidget(
+                              //     id: orderItem?.productId ?? 0,
+                              //     name: orderItem?.productName ?? "",
+                              //     image: orderItem?.imageUrl ?? "",
+                              //     qty: orderItem?.unitTags.length ?? 0,
+                              //   ),
+                              // ],
 
-                  ),
-            ), 
+                              ),
+                      ],
+                    );
+                  }),
+            ),
 
             // 12.h
             SizedBox(height: 12.h),
             orderReturnProvider.isCompleted
                 ? GeneralElevatedButton(
                     onPressed: () async {
-                      final result = await orderReturnProvider.postOrderReturn(context);
+                      final result =
+                          await orderReturnProvider.postOrderReturn(context);
                       if (result.success) {
                         showToast("Order returned successfully");
-                        navigateAndRemoveAll(context, route: NavigationConstants.dashboardRoute);
-
-                      }else{
+                        navigateAndRemoveAll(context,
+                            route: NavigationConstants.dashboardRoute);
+                      } else {
                         if (result.message != null) {
-                          ErrorHandler.alertDialog(context, result.message ?? '');
+                          ErrorHandler.alertDialog(
+                              context, result.message ?? '');
                         }
                       }
                     },
@@ -119,7 +153,6 @@ class _OrderReturnDetailState extends State<OrderReturnDetail> {
                     onPressed: () {},
                     title: 'Scan all items',
                   ),
-
           ],
         ),
       ),
@@ -188,7 +221,27 @@ class OrderReturnInfoCard extends StatelessWidget {
                     ],
                   ),
 
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Text(
+                        'Product Count: ',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      Text(
+                        "${orderProvider.selectedOrder?.orderItems.length}",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w400,
+                            ),
+                      )
+                    ],
+                  ),
                   /// Basket Line (if available)
+
                   SizedBox(height: 4.h),
                   Row(
                     children: [

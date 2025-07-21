@@ -1,3 +1,4 @@
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
 class OrderReturnModel {
@@ -62,7 +63,7 @@ class OrderItems {
     productName = json['product_name'].toString().toStringConversion();
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();
-    imageUrl = json['image_url'].toString().toStringConversion();
+    imageUrl = AppUrls.imageUrl + json['image_url'].toString().toStringConversion();
     unitTags = json['unit_tags'].cast<String>();
     rackName = json['rack_name'].toString().toStringConversion();
   }

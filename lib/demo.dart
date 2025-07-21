@@ -10,6 +10,31 @@ const List<Map<String, dynamic>> demoData = [
                 "product_id": 1912,
                 "product_name": "Pahadi Original Himalayan Blend Green Tea 37.5g MRP 170",
                 "size": "37.50",
+                "rack_name": "MAR-0-A-4",
+                "measurement": "g",
+                "image_url": "",
+                "unit_tags": [
+                    "1912-1-56-20-1",
+                    "1912-1-56-20-2"
+                ]
+            },
+            {
+                "product_id": 1915,
+                "product_name": "Pahadi Original Himalayan Blend Green Tea 37.5g MRP 170",
+                "size": "37.50",
+                "rack_name": "MAR-0-A-3",
+                "measurement": "g",
+                "image_url": "",
+                "unit_tags": [
+                    "1912-1-56-20-1",
+                    "1912-1-56-20-2"
+                ]
+            },
+            {
+                "product_id": 1918,
+                "product_name": "Pahadi Original Himalayan Blend Green Tea 37.5g MRP 170",
+                "size": "37.50",
+                "rack_name": "MAR-0-A-3",
                 "measurement": "g",
                 "image_url": "",
                 "unit_tags": [

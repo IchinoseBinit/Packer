@@ -24,6 +24,9 @@ class OrderReturnProvider extends ChangeNotifier {
   late BasketDao basketDao;
   List<Basket> baskets = [];
 
+  List<String> rackNames = [];
+  Map<String, List<OrderItems>> rackToOrderItems = {};
+
   List<String> scannedTagsList = [];
 
   Future<List<OrderReturnModel>> fetchOrderReturns() async {
@@ -40,14 +43,35 @@ class OrderReturnProvider extends ChangeNotifier {
       throw Exception('Failed to load order returns');
     }
 
+
     // returnOrder = demoData.map((order) => OrderReturnModel.fromJson(order)).toList();
 
-    notifyListeners();
+    // notifyListeners();
     return returnOrder;
   }
 
+  // assign selected model product according to rack
+  void assignProductsToRack() {
+    rackToOrderItems = {};
+    rackNames.clear();
+    for (final items in selectedOrder?.orderItems ?? <OrderItems>[]) {
+      if (rackNames.contains(items.rackName)) {
+        rackToOrderItems[items.rackName]!.add(items);
+      }else {
+        rackNames.add(items.rackName);
+        rackToOrderItems[items.rackName] = [items];
+      }
+    }
+    
+    // sort rack names
+    rackNames.sort();
+    notifyListeners();
+  }
+
+
   void onScanBasketTaped(BuildContext context, OrderReturnModel order) async {
     selectedOrder = order;
+    assignProductsToRack();
     basketBox = await Hive.openBox('order_return_#${order.orderId}');
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
