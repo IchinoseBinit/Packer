@@ -74,6 +74,9 @@ class _OrderReturnDetailState extends State<OrderReturnDetail> {
                         isCompleted: orderReturnProvider.isItemCompleted(orderItem?.productId ?? 0),
 
                         onTap: () {
+                          if (orderReturnProvider.isItemCompleted(orderItem?.productId ?? 0)) {
+                            return;
+                          }
                           Provider.of<OrderReturnProvider>(context, listen: false).initScannedTagsList();
                           navigate(context,
                               route: NavigationConstants.orderReturnScannerRoute,
