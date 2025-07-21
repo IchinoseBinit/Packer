@@ -23,6 +23,7 @@ import 'package:packer/features/views/order/models/order_completed_details.dart'
 import 'package:packer/features/views/order/models/order_picked_details.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/models/unsettled_orders.dart';
+import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
@@ -504,33 +505,36 @@ class OrderProvider extends ChangeNotifier {
   }
 
   // UPDATED and flow fixed
-  Future<bool> updateBucketData(BuildContext context, String? data) async {
+  Future<ScanResult> updateBucketData(BuildContext context, String? data) async {
     if (data != null) {
       log("Basket code scanned from order acknowledge $data");
 
+      final result = await clearBasket( data);
+      if (!result.success) {
+        return result;
+      }
       bucket = data;
-      await clearBasket();
       log("basket code list $basketDataList");
       notifyListeners();
-      return true;
+      return ScanResult(success: true);
     }
-    return false;
+    return ScanResult(success: false, message: "Failed to update bucket data");
   }
 
   // UPDATED and flow fixed
-  Future<bool> clearBasket() async {
+  Future<ScanResult> clearBasket(String code) async {
     try {
       var url = AppUrls.basketClearUrl;
       final response = await DioClient()
           .request(requestType: RequestType.postWithToken, url: url, body: {
-        "basket_id": bucketData,
+        "basket_id": code,
       });
-      if (response.statusCode == 200) {
-        return true;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return ScanResult(success: true);
       }
-      return false;
+      return ScanResult(success: false, message: "Failed to clear basket");
     } catch (e) {
-      return false;
+      return ScanResult(success: false, message: e.toString());
     }
   }
 
