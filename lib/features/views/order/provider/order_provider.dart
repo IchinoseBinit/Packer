@@ -185,13 +185,15 @@ class OrderProvider extends ChangeNotifier {
             route: NavigationConstants.basketScanScreenRoute,
             extra: {
               'forOrder': true,
+              'fromCall': fromCall,
+              'orderId': orderId,
             });
-        log("result from basket scan screen $result", name: "Order Detials");
-        if (result ?? false) {
-          initState();
-          navigate(context,
-              route: NavigationConstants.orderDetailsRoute, extra: orderId);
-        }
+        // log("result from basket scan screen $result", name: "Order Detials");
+        // if (result ?? false) {
+        //   initState();
+        //   navigate(context,
+        //       route: NavigationConstants.orderDetailsRoute, extra: orderId);
+        // } 
       }
     }
     // scan basket
