@@ -24,27 +24,34 @@ class TrolleyItemScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              ShowAlertDialog(
-                  title: "Do you want to scan a new Basket?",
-                  okFunc: () {
-                    navigatePop(context);
-                    navigate(context,
-                        route: NavigationConstants.lowStockScannerRoute,
-                        extra: {"changeBasket": true});
-                  },
-                  needCancel: true,
-                  cancelTitle: "Cancel",
-                  cancelFunc: () {
-                    navigatePop(context);
-                  }).showAlertDialog(context);
+          Consumer<StockProvider>(
+            builder: (context, state, child) {
+              if (state.trolleyItems.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                onPressed: () {
+                  ShowAlertDialog(
+                      title: "Do you want to scan a new Basket?",
+                      okFunc: () {
+                        navigatePop(context);
+                        navigate(context,
+                            route: NavigationConstants.lowStockScannerRoute,
+                            extra: {"changeBasket": true});
+                      },
+                      needCancel: true,
+                      cancelTitle: "Cancel",
+                      cancelFunc: () {
+                        navigatePop(context);
+                      }).showAlertDialog(context);
+                },
+                icon: Icon(
+                  Icons.shopping_bag,
+                  color: AppColors.splashNewBackgroundColor,
+                ),
+              );
             },
-            icon: Icon(
-              Icons.shopping_bag,
-              color: AppColors.splashNewBackgroundColor,
-            ),
-          ),
+          )
         ],
       ),
       body: Consumer<StockProvider>(
@@ -61,32 +68,35 @@ class TrolleyItemScreen extends StatelessWidget {
                 ),
                 // 12.h
                 SizedBox(height: 12.h),
+
                 Expanded(
-                  child: IntrinsicGridView.vertical(
-                      columnCount: 2,
-                      verticalSpace: 12.w,
-                      horizontalSpace: 12.w,
-                      children: [
-                        ...state.trolleyItems.map((product) {
-                          final width = (1.sw - 12.w - 32.w) / 2;
-                          return TrolleyItemWidget(
-                            id: product.productId,
-                            name: product.productName,
-                            image: product.image,
-                            width: width,
-                            qty: product.quantity,
-                            onTap: () {
-                              print('Trolley item tapped');
-                              // trolleyItemScannerRoute
-                                  
-                              navigate(context,
-                                  route: NavigationConstants
-                                      .trolleyItemScannerRoute,
-                                  extra: product.productId);
-                            },
-                          );
-                        })
-                      ]),
+                  child: state.trolleyItems.isEmpty
+                      ? const Center(child: Text("No items in trolley"))
+                      : IntrinsicGridView.vertical(
+                          columnCount: 2,
+                          verticalSpace: 12.w,
+                          horizontalSpace: 12.w,
+                          children: [
+                              ...state.trolleyItems.map((product) {
+                                final width = (1.sw - 12.w - 32.w) / 2;
+                                return TrolleyItemWidget(
+                                  id: product.productId,
+                                  name: product.productName,
+                                  image: product.image,
+                                  width: width,
+                                  qty: product.quantity,
+                                  onTap: () {
+                                    print('Trolley item tapped');
+                                    // trolleyItemScannerRoute
+
+                                    navigate(context,
+                                        route: NavigationConstants
+                                            .trolleyItemScannerRoute,
+                                        extra: product.productId);
+                                  },
+                                );
+                              })
+                            ]),
                 ),
               ],
             ),
@@ -118,7 +128,6 @@ class TrolleyItemWidget extends StatelessWidget {
     this.onTap,
     this.isCompleted = false,
   });
-
 
   @override
   Widget build(BuildContext context) {
@@ -208,21 +217,22 @@ class TrolleyItemWidget extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Qty: $qty',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.homeScreenDimTextColor,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 12.sp,
+                                    color: AppColors.homeScreenDimTextColor,
+                                  ),
                         ),
                       ),
-
                       Expanded(
                         child: Text(
                           measurement ?? '',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontSize: 12.sp,
-                                color: AppColors.homeScreenDimTextColor,
-                              ),
-                              textAlign: TextAlign.right,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontSize: 12.sp,
+                                    color: AppColors.homeScreenDimTextColor,
+                                  ),
+                          textAlign: TextAlign.right,
                         ),
                       ),
                     ],
@@ -231,7 +241,9 @@ class TrolleyItemWidget extends StatelessWidget {
                     height: 30.h,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4.h),
-                      color: isCompleted ? AppColors.green700 : AppColors.primaryColor,
+                      color: isCompleted
+                          ? AppColors.green700
+                          : AppColors.primaryColor,
                     ),
                     alignment: Alignment.center,
                     child: Text(
