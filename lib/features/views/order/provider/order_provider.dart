@@ -126,6 +126,8 @@ class OrderProvider extends ChangeNotifier {
   }
 
   void initState() {
+    resetPackedTracking();
+    packedCount = 0;
     scannedDataList.clear();
     scannedDataList =
         baskets.map((e) => e.productIdentifiers).expand((x) => x).toList();
@@ -166,9 +168,9 @@ class OrderProvider extends ChangeNotifier {
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
     if (baskets.isNotEmpty && !fromCall) {
+      initState();
       navigate(context!,
           route: NavigationConstants.orderDetailsRoute, extra: orderId);
-      initState();
     } else {
       if (fromCall) {
         navigateWithRouter(
@@ -176,16 +178,16 @@ class OrderProvider extends ChangeNotifier {
           route: NavigationConstants.basketScanScreenRoute,
           extra: {
             'forOrder': true,
-            'fromCall': fromCall,
+            'fromCall': true,
             'orderId': orderId,
           },
         );
       } else {
-        final result = await navigate(context!,
+       await navigate(context!,
             route: NavigationConstants.basketScanScreenRoute,
             extra: {
               'forOrder': true,
-              'fromCall': fromCall,
+              'fromCall': true,
               'orderId': orderId,
             });
         // log("result from basket scan screen $result", name: "Order Detials");
@@ -393,6 +395,7 @@ class OrderProvider extends ChangeNotifier {
         resetState();
         // remove box
         basketDao.clearAll();
+        scannedDataList.clear();
         notifyListeners();
         return true;
       } else {

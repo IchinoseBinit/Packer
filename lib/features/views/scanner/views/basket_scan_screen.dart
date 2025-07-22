@@ -72,10 +72,10 @@ class BasketScanScreen extends BaseScanScreen {
       
         if (fromCall && context.mounted && bucketResult.success) {
           removeLoading(context);
+          Provider.of<OrderProvider>(context, listen: false).initState();
           navigate(context, route: NavigationConstants.dashboardRoute);
           navigate(context,
               route: NavigationConstants.orderDetailsRoute, extra: orderId);
-          Provider.of<OrderProvider>(context, listen: false).initState();
         } else if (bucketResult.success && context.mounted) {
           removeLoading(context);
           Navigator.pop(context, true);
