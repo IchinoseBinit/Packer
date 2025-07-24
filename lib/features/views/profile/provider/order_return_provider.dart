@@ -231,6 +231,8 @@ class OrderReturnProvider extends ChangeNotifier {
           body: baskets.first.toPostBasketRequest());
       removeLoading(context);
       if (response.statusCode == 200) {
+        basketDao.deleteBasket(baskets.first.identifier);
+        baskets = basketDao.getAll();
         return ScanResult(success: true);
       } else {
         return ScanResult(
