@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
+import 'package:packer/features/views/home/driver_home_screen.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
@@ -206,6 +207,12 @@ class AppRouter {
                     // cartonProduct: data['cartonProduct'] ?? false,
                     // message: data['message'] ?? '',
                   );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.driverHomeRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return DriverHomeScreen();
                 },
               ),
               GoRoute(

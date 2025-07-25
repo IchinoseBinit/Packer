@@ -73,4 +73,8 @@ class NavigationConstants {
   static const String orderReturnDetailsRoute = 'order_return_details';
   // orderReturnScannerRoute
   static const String orderReturnScannerRoute = 'order_return_scanner';
+
+
+  // ------------------ for driver -------
+  static const String driverHomeRoute = 'driver_home';
 }

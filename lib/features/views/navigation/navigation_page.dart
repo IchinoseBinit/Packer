@@ -6,9 +6,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/home/driver_home_screen.dart';
 import 'package:packer/features/views/home/home_screen.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/order/views/order_screen.dart';
+import 'package:packer/features/views/profile/driver_profile_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/stock_verification/views/stock_verification_screen.dart';
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
@@ -47,7 +49,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
       widgets[0] = StoreSelectionScreen();
     } else if (home.isMainStore() == true) {
       widgets[0] = HomeWarehouseScreen();
-    } 
+    } else if (home.isDriver()) {
+      widgets[0] = DriverHomeScreen();
+      widgets[1] = DriverProfileScreen();
+    }
   }
 
   @override

@@ -1,6 +1,6 @@
 echo "Building your app"
 
-flutter build appbundle --release --dart-define=APIType=production
+flutter build appbundle --obfuscate --split-debug-info=./ --release --dart-define=APIType=production
 
 mkdir -p ./gen/
 

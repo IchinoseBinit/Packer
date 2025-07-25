@@ -1,7 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/router.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -41,20 +44,22 @@ class _LoginScreenState extends State<LoginScreen> {
       authProvider
           .validateLogin(context, username, password)
           .then((value) async {
+        usernameController.clear();
+        passwordController.clear();
         if (value is bool) {
           Provider.of<HomeProvider>(context, listen: false)
               .fetchpackerSummary()
               .then((v) {
             removeLoading(context);
-            // final homeProvider =
-            //     Provider.of<HomeProvider>(context, listen: false);
-            // if (homeProvider.packerSummary?.storeType.contains("main") ==
-            //     true) {
-            //   navigateReplacement(context,
-            //       route: NavigationConstants.lowStockRoute);
-            //     return;
+            // final home = Provider.of<HomeProvider>(context, listen: false);
+            // log(home.user.toString());
+            // if (home.isDriver()) {
+            //   navigateAndRemoveAllWithRouter(AppRouter.router,
+            //       route: NavigationConstants.driverHomeRoute);
+            //   return;
             // }
-            context.go(NavigationConstants.dashboardRoute.addSlashInRoute());
+
+            navigate(context, route: NavigationConstants.dashboardRoute);
           });
         } else {
           removeLoading(context);
