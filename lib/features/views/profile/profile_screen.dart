@@ -64,7 +64,7 @@ class ProfileScreen extends StatelessWidget {
       });
     }
 
-    if (!value.isAuditUser() &&
+    if (!value.isAuditUser() && !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Order return')) {
       otherInfoData.add({
         'icon': Icons.repeat_rounded,

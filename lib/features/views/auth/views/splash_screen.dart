@@ -1,4 +1,6 @@
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:geolocator/geolocator.dart';
@@ -50,6 +52,13 @@ class _SplashScreenState extends State<SplashScreen> {
             //   navigateReplacement(context,
             //       route: NavigationConstants.lowStockRoute);
             //     return;
+            // }
+            // final home = Provider.of<HomeProvider>(context, listen: false);
+            // log(home.user.toString());
+            // if (home.isDriver()) {
+            //   navigateReplacement(context,
+            //       route: NavigationConstants.driverHomeRoute);
+            //   return;
             // }
             navigateReplacement(context,
                 route: NavigationConstants.dashboardRoute);

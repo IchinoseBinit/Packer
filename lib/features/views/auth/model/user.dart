@@ -13,12 +13,19 @@ class User {
     username = obj['username'];
     phoneNumber = obj['phone_number'];
     role = UserRole.fromString(obj['role'].toString().toStringConversion());
+    // role = UserRole.fromString("driver");
+  }
+
+  // toString
+  @override
+  String toString() {
+    return 'User(id: $id, name: $name, username: $username, phoneNumber: $phoneNumber, role: $role)';
   }
 
 }
 
 enum UserRole {
-  packer, rider, manager, audit;
+  packer, rider, manager, audit, driver;
 
   // from string
   static UserRole fromString(String role) {
@@ -31,6 +38,8 @@ enum UserRole {
         return UserRole.manager;
       case 'audit':
         return UserRole.audit;
+      case 'driver':
+        return UserRole.driver;
       default:
         throw Exception('Invalid user role');
     }

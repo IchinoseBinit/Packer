@@ -54,6 +54,7 @@ class _CollectedProductViewState extends State<CollectedProductView> {
                 itemCount: lowStockList.length,
                 itemBuilder: (context, index) {
                   final lowStock = lowStockList[index];
+                  if (lowStock.qty == 0) return const SizedBox.shrink();
                   return LowStockCard(
                     model: lowStock,
                     count: lowStock.qty,

@@ -82,6 +82,7 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
       // 'asset://assets/images/balloons-in-sky.jpg',
       notificationLayout: NotificationLayout.Default,
       locked: fullScreen,
+      
       color: AppColors.primaryColor,
       backgroundColor: AppColors.primaryColor,
       category: NotificationCategory.Call,

@@ -57,33 +57,35 @@ class TransferItemsList extends StatelessWidget {
                 color: Color(0xffEAEAEA),
               ),
               SizedBox(height: 8.h),
-              IntrinsicGridView.vertical(
-                columnCount: 2,
-                verticalSpace: 12.w,
-                horizontalSpace: 12.w,
-                children: List.generate(
-                  provider.selectedTransferModel!.items?.length ?? 0,
-                  (index) {
-                    final product =
-                        provider.selectedTransferModel!.items?[index];
-                    ItemStatus status =
-                        (product?.itemScanCount == product?.quantity)
-                            ? ItemStatus.done
-                            : ItemStatus.remaining;
-                    final width = (1.sw - 12.w - 32.w) / 2;
-
-                    return ProductCard(
-                      width: width,
-                      onTap: () {
-                        log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product?.id}");
-                        if (status == ItemStatus.done) return;
-                        provider.itemTaped(context, product);
-                      },
-                      productModel:
-                          CommonProductModel.fromTransferItemModel(product!),
-                      status: status,
-                    );
-                  },
+              Expanded(
+                child: IntrinsicGridView.vertical(
+                  columnCount: 2,
+                  verticalSpace: 12.w,
+                  horizontalSpace: 12.w,
+                  children: List.generate(
+                    provider.selectedTransferModel!.items?.length ?? 0,
+                    (index) {
+                      final product =
+                          provider.selectedTransferModel!.items?[index];
+                      ItemStatus status =
+                          (product?.itemScanCount == product?.quantity)
+                              ? ItemStatus.done
+                              : ItemStatus.remaining;
+                      final width = (1.sw - 12.w - 32.w) / 2;
+                
+                      return ProductCard(
+                        width: width,
+                        onTap: () {
+                          log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product?.id}");
+                          if (status == ItemStatus.done) return;
+                          provider.itemTaped(context, product);
+                        },
+                        productModel:
+                            CommonProductModel.fromTransferItemModel(product!),
+                        status: status,
+                      );
+                    },
+                  ),
                 ),
               )
 

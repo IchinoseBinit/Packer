@@ -41,6 +41,10 @@ class HomeProvider with ChangeNotifier {
     return user.role == UserRole.manager;
   }
 
+  bool isDriver() {
+    return user.role == UserRole.driver;
+  }
+
   bool isMainStore() {
     return packerSummary?.storeType.contains("main") ?? false;
   }

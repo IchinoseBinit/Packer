@@ -106,13 +106,13 @@ class StockProvider extends ChangeNotifier {
     return 0;
   }
 
-  Future<void> fetchLowStockProducts(BuildContext context) async {
+  Future<void> fetchLowStockProducts(BuildContext context, {bool isFromBuild = false}) async {
     try {
       isLoading = true;
       isError = false;
       errorMessage = "";
       FirebaseAPI().cancelScheduledNotification();
-      if (context.mounted) {
+      if (context.mounted && !isFromBuild) {
         notifyListeners();
       }
       // for demo
