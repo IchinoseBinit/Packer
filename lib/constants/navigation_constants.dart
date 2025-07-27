@@ -37,6 +37,11 @@ class NavigationConstants {
   static const String lowStockRoute = 'low_stock';
   static const String lowStockDetailRoute = 'low_stock_detail';
   static const String lowStockScannerRoute = 'low_stock_scanner';
+  // trolley_item_screen
+  // CollectedProductView
+  static const String collectedProductViewRoute = 'collected_product_view';
+  static const String trolleyItemScreenRoute = 'trolley_item_screen';
+  static const String trolleyItemScannerRoute = 'trolley_item_scanner';
 
   static const String cartonListScreenRoute = 'carton_list_screen';
 
@@ -55,7 +60,7 @@ class NavigationConstants {
   static const String damageScanScreenRoute = 'damage_scan_screen';
 
 //carton list screen
-
+  static const String orderReturnScreenRoute = 'order_return_screen';
   // rack update screen
   static const String rackUpdateScreenRoute = 'rack_update_screen';
 
@@ -66,4 +71,11 @@ class NavigationConstants {
   static const String unitVerifyScannerRoute = 'unit_verify_scanner';
   // unit_product_scanner
   static const String unitProductScannerRoute = 'unit_product_scanner';
+  static const String orderReturnDetailsRoute = 'order_return_details';
+  // orderReturnScannerRoute
+  static const String orderReturnScannerRoute = 'order_return_scanner';
+
+
+  // ------------------ for driver -------
+  static const String driverHomeRoute = 'driver_home';
 }

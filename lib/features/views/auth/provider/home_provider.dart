@@ -41,10 +41,13 @@ class HomeProvider with ChangeNotifier {
     return user.role == UserRole.manager;
   }
 
+  bool isDriver() {
+    return user.role == UserRole.driver;
+  }
+
   bool isMainStore() {
     return packerSummary?.storeType.contains("main") ?? false;
   }
-  
 
   bool isOnline = false;
   bool _isAvailable = false;
@@ -91,8 +94,8 @@ class HomeProvider with ChangeNotifier {
       FirebaseAPI().requestPermission();
       if (isAvailable) {
         fetchCreatedOrders();
-        FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
       }
+      FirebaseAPI().listenTopackerStatusNotifications(_showNotificationPopup);
       fetchLatestOrders(isFirstTime: isFirstTime);
     }
   }

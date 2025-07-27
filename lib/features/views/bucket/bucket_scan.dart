@@ -10,6 +10,7 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
+import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -73,24 +74,26 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
 
     if (code.toLowerCase().contains("basket")) {
       try {
-        Provider.of<OrderProvider>(context, listen: false)
+        final result = await Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(context, code);
+        if (!result.success) {
+          if (result.message != null) {
+            handleInvalidQr(context, code, result.message!);
+          } else {
+            removeLoading(context);
+            controller?.start();
+            hasScanned = false;
+          }
+        } else {
+          removeLoading(context);
+          Navigator.pop(context);
+          showToast("basket available");
+          navigate(context,
+              route: NavigationConstants.orderDetailsRoute, extra: orderId);
+          Provider.of<OrderProvider>(context, listen: false).initState();
 
-        try {
-          await Provider.of<OrderProvider>(context, listen: false)
-              .clearBasket();
-        } catch (ex) {
-          debugPrint(ex.toString());
+          hasScanned = false;
         }
-
-        removeLoading(context);
-        Navigator.pop(context);
-        showToast("basket available");
-        navigate(context,
-            route: NavigationConstants.orderDetailsRoute, extra: orderId);
-        Provider.of<OrderProvider>(context, listen: false).initState();
-
-        hasScanned = false;
       } catch (ex) {
         removeLoading(context);
         showToast(ex.toString());
@@ -109,6 +112,19 @@ class _BucketScanScreenState extends State<BucketScanScreen> {
       controller?.start();
       hasScanned = false;
     }
+  }
+
+  // handle invalid qr code
+  handleInvalidQr(BuildContext context, String code, [String? message]) {
+    removeLoading(context);
+    ShowAlertDialog(
+      body: Text("Invalid QR ${message ?? detectQrMessage(code)}"),
+      okFunc: () {
+        Navigator.pop(context);
+        controller?.start();
+      },
+    ).showAlertDialog(context);
+    hasScanned = false;
   }
 
   @override

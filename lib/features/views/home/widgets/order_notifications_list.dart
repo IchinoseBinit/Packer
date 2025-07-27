@@ -2,7 +2,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -65,20 +68,12 @@ class OrderNotificationList extends StatelessWidget {
           GeneralElevatedButton(
               title: "Accept",
               onPressed: () async {
-                final result = await navigate(context,
-                    route: NavigationConstants.basketScanScreenRoute,
-                    extra: {
-                      'forOrder': true,
-                    });
-                log("result from basket scan screen $result",
-                    name: "Accept Order");
-                if ((result ?? false) && context.mounted) {
-                  navigate(context,
-                      route: NavigationConstants.orderDetailsRoute,
-                      extra: notification.orderId);
-                  Provider.of<OrderProvider>(context, listen: false)
-                      .initState();
-                }
+                FirebaseAPI()
+                    .cancelCallNotification(notification.orderId.toInt());
+                homeProvider.initialize(isFirstTime: true);
+                Provider.of<OrderProvider>(context, listen: false)
+                    .onOrderAcceptOrGetDetail(notification.orderId.toInt(),
+                        fromCall: false, context: context);
               }),
         ],
       ),

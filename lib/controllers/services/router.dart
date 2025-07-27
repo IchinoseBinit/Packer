@@ -2,11 +2,20 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
+import 'package:packer/features/views/home/driver_home_screen.dart';
+import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
+import 'package:packer/features/views/low_stock/views/trolley_item_screen.dart';
+import 'package:packer/features/views/low_stock/views/trolley_scan_screen.dart';
+import 'package:packer/features/views/order/models/see_order_details_packer.dart';
+import 'package:packer/features/views/order/views/order_return_detail.dart';
+import 'package:packer/features/views/order/views/order_return_list.dart';
+import 'package:packer/features/views/order/views/order_return_scanner.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
@@ -48,6 +57,7 @@ class AppRouter {
   GoRouter getRoutes(BuildContext context) {
     router = GoRouter(
       initialLocation: NavigationConstants.initialRoute,
+      navigatorKey: AppConstants.navigatorKey,
       routes: <RouteBase>[
         GoRoute(
             path: NavigationConstants.initialRoute,
@@ -201,6 +211,12 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.driverHomeRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return DriverHomeScreen();
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.lowStockRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return HomeWarehouseScreen();
@@ -213,12 +229,46 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.trolleyItemScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return TrolleyScanScreen(
+                    productId: state.extra.toString().toInt(),
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.orderReturnScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>? ?? {};
+                  return OrderReturnScanner(
+                    productId: extra['productId'].toString().toInt(),
+                    product: extra['product'].toString().toBool(false),
+                    rack: extra['rack'].toString().toBool(false),
+                  );
+                },
+              ),
+              // collectedProductViewRoute
+              GoRoute(
+                path: NavigationConstants.collectedProductViewRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return CollectedProductView();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.orderReturnDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return OrderReturnDetail();
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.lowStockScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   final forProduct = args['forProduct'] ?? false;
+                  final changeBasket = args['changeBasket'] ?? false;
                   return LowStockScanner(
                     forProduct: forProduct,
+                    changeBasket: changeBasket,
                   );
                 },
               ),
@@ -286,6 +336,12 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.trolleyItemScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return TrolleyItemScreen();
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.storeSelectionRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return StoreSelectionScreen();
@@ -319,6 +375,14 @@ class AppRouter {
                   return IdentifierScanScreen(
                     identifier: args['identifier'] ?? '',
                   );
+                },
+              ),
+
+              GoRoute(
+                path: NavigationConstants.orderReturnScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return OrderReturnList();
                 },
               ),
               GoRoute(

@@ -12,6 +12,8 @@ class ProductCard extends StatefulWidget {
   final ItemStatus status;
   final int? quantity;
 
+  final String? statusToShow;
+
   const ProductCard({
     super.key,
     required this.productModel,
@@ -19,6 +21,7 @@ class ProductCard extends StatefulWidget {
     this.onTap,
     required this.status,
     this.quantity,
+    this.statusToShow,
   });
 
   @override
@@ -205,7 +208,7 @@ class _ProductCardState extends State<ProductCard> {
                                   color: Colors.white, size: 16.sp),
                               SizedBox(width: 4.w),
                               Text(
-                                "Packed",
+                               widget.statusToShow ?? "Packed",
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall

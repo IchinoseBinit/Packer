@@ -67,26 +67,35 @@ class BasketScanScreen extends BaseScanScreen {
         return;
       }
 
-      bool result = false;
 
       if (forOrder) {
         showLoading(context);
-        result = await Provider.of<OrderProvider>(context, listen: false)
+        var bucketResult = await Provider.of<OrderProvider>(context, listen: false)
             .updateBucketData(context, code);
-        if (fromCall && context.mounted && result) {
+      
+        if (fromCall && context.mounted && bucketResult.success) {
           removeLoading(context);
+          Provider.of<OrderProvider>(context, listen: false).initState();
           navigate(context, route: NavigationConstants.dashboardRoute);
           navigate(context,
               route: NavigationConstants.orderDetailsRoute, extra: orderId);
-          Provider.of<OrderProvider>(context, listen: false).initState();
-        } else if (result && context.mounted) {
+        } else if (bucketResult.success && context.mounted) {
           removeLoading(context);
           Navigator.pop(context, true);
 
           return;
+        } else {
+          if (bucketResult.message == null) {
+            removeLoading(context);
+          controller.start();
+          _processing = false;
+          }else {
+            removeLoading(context);
+            handleInvalidCode(context, controller, code, bucketResult.message);
+          }
         }
       } else {
-        result = Provider.of<PackerTransferProvider>(context, listen: false)
+        var result = Provider.of<PackerTransferProvider>(context, listen: false)
             .scanBasketCode(context, code);
 
         if (result && context.mounted) {
@@ -95,13 +104,12 @@ class BasketScanScreen extends BaseScanScreen {
             route: NavigationConstants.transferDetailsRoute,
           );
           return;
+        } else {
+          handleInvalidCode(context, controller, code);
         }
       }
 
-      if (context.mounted && !result) {
-        handleInvalidCode(context, controller, code);
-        return;
-      }
+      
     } catch (_) {
       if (context.mounted) {
         handleInvalidCode(context, controller, code);
@@ -112,10 +120,10 @@ class BasketScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code) {
+      BuildContext context, MobileScannerController controller, String code, [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
-      body: Text("Invalid QR ${detectQrMessage(code)}"),
+      body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context); // dismiss dialog
         removeLoading(context);

@@ -26,5 +26,19 @@ class ProductModel {
     scannedCount = 0;
   }
 
+  // tojson
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'product_id': productId,
+      'product_name': productName,
+      'product_image': imageUrl,
+      'quantity': quantity,
+      'size': size,
+      'measurement': measurement,
+      'rack_name': rackName,
+    };
+  }
+
   
 }

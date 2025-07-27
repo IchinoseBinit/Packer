@@ -3,10 +3,14 @@ import 'dart:developer';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:provider/provider.dart';
 
 class NotificationUtils {
   static AwesomeNotifications awesomeNotification = AwesomeNotifications();
@@ -41,15 +45,22 @@ class NotificationUtils {
         AppRouter.router.pop();
       }
 
-      navigateWithRouter(
-        AppRouter.router,
-        route: NavigationConstants.basketScanScreenRoute,
-        extra: {
-          'forOrder': true,
-          'fromCall': true,
-          'orderId': orderId,
-        },
-      );
+      try {
+        // navigateWithRouter(
+        //   AppRouter.router,
+        //   route: NavigationConstants.basketScanScreenRoute,
+        //   extra: {
+        //     'forOrder': true,
+        //     'fromCall': true,
+        //     'orderId': orderId,
+        //   },
+        // );
+        final context = AppConstants.navigatorKey.currentContext!;
+        Provider.of<OrderProvider>(context, listen: false)
+            .onOrderAcceptOrGetDetail(orderId.toString().toInt(), fromCall: true);
+      } catch (e) {
+        showToast("Failed to navigate to basket scan screen");
+      }
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 
@@ -56,27 +57,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
               navigatePop(context);
             },
           ),
-          actions: [
-            IconButton(
-              onPressed: () {
-                ShowAlertDialog(
-                    title: "Do you want to scan a new Basket?",
-                    okFunc: () {
-                      navigate(context,
-                          route: NavigationConstants.lowStockScannerRoute);
-                    },
-                    needCancel: true,
-                    cancelTitle: "Cancel",
-                    cancelFunc: () {
-                      navigatePop(context);
-                    }).showAlertDialog(context);
-              },
-              icon: Icon(
-                Icons.shopping_cart,
-                color: AppColors.splashNewBackgroundColor,
-              ),
-            ),
-          ],
+          
         ),
         body: Consumer<StockProvider>(
           builder: (context, state, child) {
@@ -89,7 +70,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                   children: [
                     LowStockCard(
                       model: model,
-                      basketId: state.basketId,
+                      // basketId: state.basketId,
                       primaryColor: Theme.of(context).primaryColor,
                     ),
                     // 20.h
@@ -137,25 +118,31 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                             final width =
                                                 (1.sw - 12.w - 32.w) / 2;
                                             return ProductCard(
-                                              width: width,
-                                              onTap: () {
-                                                if (state.checkScanCount(
-                                                    product.productId)) {
-                                                  return;
-                                                }
-                                                ErrorHandler.alertDialog(
-                                                    context,
-                                                    "Scan Carton First");
-                                              },
-                                              productModel: CommonProductModel
-                                                  .fromProductModel(product),
-                                              status: state.checkScanCount(
-                                                      product.productId)
-                                                  ? ItemStatus.done
-                                                  : ItemStatus.remaining,
-                                              quantity: state.getScanCount(
-                                                  product.productId),
-                                            );
+                                                width: width,
+                                                onTap: () {
+                                                  if (state.checkScanCount(
+                                                      product.productId)) {
+                                                    return;
+                                                  }
+                                                  ErrorHandler.alertDialog(
+                                                      context,
+                                                      "Scan Carton First");
+                                                },
+                                                productModel: CommonProductModel
+                                                    .fromProductModel(product),
+                                                status: state.checkScanCount(
+                                                        product.productId)
+                                                    ? ItemStatus.done
+                                                    : ItemStatus.remaining,
+                                                quantity: state.getScanCount(
+                                                    product.productId),
+                                                statusToShow: state.trolleyItems
+                                                    .firstWhereOrNull(
+                                                        (element) =>
+                                                            element.productId ==
+                                                            product.productId)
+                                                    ?.status
+                                                    .name);
                                           },
                                         ),
                                       ]),
@@ -167,28 +154,69 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     ),
                     // 20.h
                     SizedBox(height: 20.h),
-                    state.showCompleteButton()
-                        ? GeneralElevatedButton(
-                            onPressed: () {
-                              // debugger();
+                    // state.showCompleteButton()
+                    //     ? GeneralElevatedButton(
+                    //         onPressed: () {
+                    //           // debugger();
 
-                              state.transferBasket(context);
-                            },
-                            title: "Complete",
-                          )
-                        : GeneralElevatedButton(
-                            title: "Scan Carton",
-                            onPressed: () {
-                              navigate(
-                                context,
-                                route: NavigationConstants.qrScanScreenRoute,
-                                extra: {
-                                  'scanCarton': true,
-                                  'isLowStockCarton': true,
-                                },
-                              );
-                            }),
+                    //           state.transferBasket(context);
+                    //         },
+                    //         title: "Scan Basket",
+                    //       )
+                    //     : GeneralElevatedButton(
+                    //         title: "Scan Carton",
+                    //         onPressed: () {
+                    //           navigate(
+                    //             context,
+                    //             route: NavigationConstants.qrScanScreenRoute,
+                    //             extra: {
+                    //               'scanCarton': true,
+                    //               'isLowStockCarton': true,
+                    //             },
+                    //           );
+                    //         }),
                     // 20.h
+                    GeneralElevatedButton(
+                      onPressed: () {
+                            navigate(
+                              context,
+                              route: NavigationConstants.qrScanScreenRoute,
+                              extra: {
+                                'scanCarton': true,
+                                'isLowStockCarton': true,
+                              },
+                            );
+                        // ShowAlertDialog(
+                        //   canDismiss: true,
+                        //   needCancel: true,
+                        //   title: 'Scan',
+                        //   body: const Text('What do you want to scan?'),
+                        //   okTitle: 'Carton',
+                        //   cancelTitle: 'View Products',
+                        //   okFunc: () {
+                        //     // pop
+                        //     navigatePop(context);
+                        //     navigate(
+                        //       context,
+                        //       route: NavigationConstants.qrScanScreenRoute,
+                        //       extra: {
+                        //         'scanCarton': true,
+                        //         'isLowStockCarton': true,
+                        //       },
+                        //     );
+                        //   },
+                        //   cancelFunc: () {
+                        //     navigatePop(context);
+                        //     navigate(
+                        //       context,
+                        //       route: NavigationConstants.collectedProductViewRoute,
+                        //     );
+                            
+                        //   },
+                        // ).showAlertDialog(context);
+                      },
+                      title: "Scan",
+                    ),
                     SizedBox(height: 8.h),
                   ],
                 ),

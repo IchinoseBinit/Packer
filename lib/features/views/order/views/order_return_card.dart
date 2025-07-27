@@ -1,25 +1,23 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
-import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/enum/order_status_type.dart';
-import 'package:packer/features/views/auth/model/order_notification.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:packer/controllers/services/date_formatter.dart';
 
-class NotificationOrderCard extends StatelessWidget {
-  final OrderNotification orderItem;
+class ReturnOrderCard extends StatelessWidget {
+  final String orderId;
+  final int productCount;
+  final String time;
+  final String basketId;
   final Color primaryColor;
-  final VoidCallback callback;
+  final VoidCallback onTap;
 
-  const NotificationOrderCard({
+  const ReturnOrderCard({
     super.key,
-    required this.orderItem,
+    required this.orderId,
+    required this.productCount,
+    required this.time,
+    required this.basketId,
     required this.primaryColor,
-    required this.callback,
+    required this.onTap,
   });
 
   @override
@@ -43,32 +41,34 @@ class NotificationOrderCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   backgroundColor: primaryColor,
-                  child: const Icon(Icons.shopping_cart, color: Colors.white),
+                  child: const Icon(Icons.local_shipping, color: Colors.white),
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text.rich(
-                        TextSpan(
-                          text: orderItem.customerName,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          children: [
-                            TextSpan(
-                              text:
-                                  " (${orderItem.status.toStringConversion()})",
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            )
-                          ],
-                        ),
+                      Text(
+                        'Order ID: $orderId',
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Text(
-                        'Order ID: ${orderItem.orderId}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.grey[700]),
+                        'Products: $productCount',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[700],
+                            ),
+                      ),
+                      // Text(
+                      //   'Time: ${ DateFormatter().formatTimestamp(time)}',
+                      //   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      //         color: Colors.grey[700],
+                      //       ),
+                      // ),
+                      Text(
+                        'Basket ID: $basketId',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[700],
+                            ),
                       ),
                     ],
                   ),
@@ -81,11 +81,7 @@ class NotificationOrderCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: GestureDetector(
-                onTap: () async {
-                  Provider.of<OrderProvider>(context, listen: false)
-                      .onOrderAcceptOrGetDetail(orderItem.orderId.toInt(),
-                          fromCall: false,context: context);
-                },
+                onTap: onTap,
                 child: Container(
                   decoration: BoxDecoration(
                     color: primaryColor,
@@ -94,7 +90,7 @@ class NotificationOrderCard extends StatelessWidget {
                   padding:
                       EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   child: Text(
-                    'Details',
+                    'Scan Basket',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                         ),

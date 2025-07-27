@@ -58,7 +58,7 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
       .readKey(key: SecureStorageConstants.accessTokenKey);
   if (tokenKey == null) return;
   int randomed =
-      int.tryParse(message.data['displayId'] ?? "") ?? Random().nextInt(100000);
+      int.tryParse(message.data['order_id'] ?? "") ?? Random().nextInt(100000);
   await awesomeNotification.cancel(randomed);
 
 
@@ -83,6 +83,7 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
       // 'asset://assets/images/balloons-in-sky.jpg',
       notificationLayout: NotificationLayout.Default,
       locked: fullScreen,
+      
       color: AppColors.primaryColor,
       backgroundColor: AppColors.primaryColor,
       category: NotificationCategory.Call,

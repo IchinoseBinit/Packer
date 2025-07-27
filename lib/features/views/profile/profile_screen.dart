@@ -78,6 +78,15 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Request QR',
       });
     }
+
+    if (!value.isAuditUser() && !value.isMainStore() &&
+        !otherInfoData.any((e) => e['title'] == 'Order return')) {
+      otherInfoData.add({
+        'icon': Icons.repeat_rounded,
+        'title': 'Order return',
+        'screen': NavigationConstants.orderReturnScreenRoute,
+      });
+    }
   }
 
   @override
