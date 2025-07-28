@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -67,6 +69,8 @@ class DamageProductController extends ChangeNotifier {
         url: AppUrls.qrDamageUrl,
         body: {"tags": code},
       );
+
+      showToast("QR Requested Successfully");
 
       isLoading = false;
       notifyListeners();

@@ -11,7 +11,6 @@ import 'package:packer/features/views/damage_products/controller/damage_product_
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
@@ -59,13 +58,14 @@ class DamagedScanScreen extends BaseScanScreen {
           child: GeneralElevatedButton(
             title: requestQr! ? "Request QR" : "Confirm Verification",
             onPressed: () {
+              final remainingItem = provider.getUnscannedTags();
               requestQr!
                   ? ShowAlertDialog(
                       title: "Confirm",
                       body: Text(
-                          "Do you want to request QR for products ${provider.tagList.join('\n')}"),
+                          "Do you want to request QR for products ${remainingItem.join('\n')}"),
                       okFunc: () {
-                        provider.requestQrDamaged(provider.tagList);
+                        provider.requestQrDamaged(remainingItem);
 
                         navigatePop(context);
                       },
@@ -78,8 +78,6 @@ class DamagedScanScreen extends BaseScanScreen {
                       body: Text(
                           "Product Scanned \n${provider.tagList.join('\n')}"),
                       okFunc: () {
-                        final remainingItem = provider.getUnscannedTags();
-
                         if (qr) {
                           provider.markDamaged(provider.tagList);
                         } else {
