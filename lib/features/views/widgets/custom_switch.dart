@@ -29,7 +29,7 @@ class CustomSwitchState extends State<CustomSwitch> {
     return Consumer<HomeProvider>(builder: (_, value, __) {
       return GestureDetector(
         onTap: () {
-          value.toggleOnlineStatus(isFromWarehouse: widget.fromWareHouse);
+          value.toggleOnlineStatus(context, isFromWarehouse: widget.fromWareHouse);
         },
         child: Container(
           width: widget.width,

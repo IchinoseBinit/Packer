@@ -70,7 +70,7 @@ class OrderNotificationList extends StatelessWidget {
               onPressed: () async {
                 FirebaseAPI()
                     .cancelCallNotification(notification.orderId.toInt());
-                homeProvider.initialize(isFirstTime: true);
+                homeProvider.initialize(context, isFirstTime: true);
                 Provider.of<OrderProvider>(context, listen: false)
                     .onOrderAcceptOrGetDetail(notification.orderId.toInt(),
                         fromCall: false, context: context);

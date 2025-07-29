@@ -134,7 +134,7 @@ class _ScanScreenState extends State<ScanScreen> {
       final topicName = data['topicName'];
       try {
         Provider.of<HomeProvider>(context, listen: false)
-            .updateAvailability(topicName: topicName);
+            .updateAvailability(context, topicName: topicName);
         removeLoading(context);
         hasScanned = false;
         Navigator.pop(context);

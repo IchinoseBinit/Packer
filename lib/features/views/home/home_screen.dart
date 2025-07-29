@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     final provider = Provider.of<HomeProvider>(context, listen: false);
 
-    provider.initialize(isFirstTime: true);
+    provider.initialize(context, isFirstTime: true);
     provider.fetchpackerSummary();
     getToken();
     WidgetsBinding.instance.addObserver(this);
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (refetch && state == AppLifecycleState.resumed) {
       final provider = Provider.of<HomeProvider>(context, listen: false);
 
-      provider.initialize(isFirstTime: true);
+      provider.initialize(context, isFirstTime: true);
       provider.fetchpackerSummary();
       refetch = false;
     } else if (state == AppLifecycleState.hidden ||
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         padding: AppConstants.padding,
         child: RefreshIndicator(
           onRefresh: () {
-            provider.initialize(isFirstTime: true);
+            provider.initialize(context, isFirstTime: true);
             if (provider.isAvailable) {
               provider.fetchCreatedOrders();
             }
