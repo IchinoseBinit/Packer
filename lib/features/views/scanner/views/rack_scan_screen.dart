@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -10,7 +8,6 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
-import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -72,7 +69,6 @@ class RackScanScreen extends BaseScanScreen {
           if (context.mounted) handleInvalidCode(context, controller, code);
         }
       } else if (forCarton) {
-
         final result = await Provider.of<StockProvider>(context, listen: false)
             .updateRack(context, code, productId, true);
 
@@ -80,11 +76,9 @@ class RackScanScreen extends BaseScanScreen {
           navigatePop(context, true);
           showToast("Rack Assigned successfully");
         } else {
-
           if (context.mounted) await controller.start();
         }
       } else if (context.mounted) {
-        debugger();
         showLoading(context);
 
         // final isMainStore =
