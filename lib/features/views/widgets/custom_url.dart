@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomUrlManager {
@@ -13,8 +15,8 @@ class CustomUrlManager {
     return prefs.getString(_key);
   }
 
-  // static Future<void> clearCustomUrl() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   await prefs.remove(_key);
-  // }
+  static Future<void> clearCustomUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
 }
