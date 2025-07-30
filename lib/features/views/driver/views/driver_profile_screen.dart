@@ -21,31 +21,46 @@ class DriverProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
-          title: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(100),
-            ),
-            height: myToolBarHeight,
-            child: Column(
-              children: [
-                Spacer(),
-                CustomProfileListTile(
-                  profileImage: AppAssets.profileImage,
-                  name: homeProvider.user.name,
-                  id: homeProvider.user.id,
-                  phoneNumber: homeProvider.user.phoneNumber ?? homeProvider.user.role.name,
-                ),
-              ],
-            ),
+        title: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
           ),
-          toolbarHeight: myToolBarHeight,
+          height: myToolBarHeight,
+          child: Column(
+            children: [
+              Spacer(),
+              CustomProfileListTile(
+                profileImage: AppAssets.profileImage,
+                name: homeProvider.user.name,
+                id: homeProvider.user.id,
+                phoneNumber: homeProvider.user.phoneNumber ??
+                    homeProvider.user.role.name,
+              ),
+            ],
+          ),
         ),
+        toolbarHeight: myToolBarHeight,
+      ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-           
+            ListTile(
+              onTap: () {
+                navigate(context,
+                    route: NavigationConstants.driverInTransitRoute);
+              },
+              titleTextStyle: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w500,
+                fontSize: 16.sp,
+              ),
+              iconColor: AppColors.primaryColor,
+              leading: Icon(Icons.local_shipping),
+              title: Text('In Transit'),
+              trailing: Icon(Icons.chevron_right),
+            ),
             SizedBox(height: .4.sh),
             Center(
               child: Column(

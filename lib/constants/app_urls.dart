@@ -156,4 +156,10 @@ class AppUrls {
   static String damageProductUnitUrl = "$_baseUrl/product_units/";
   static String markDamageUrl = "$_baseUrl/mark-damaged/";
   static String qrDamageUrl = "$_baseUrl/qr-damaged/";
+
+
+  // ---------------------------- driver -------------------------------
+  static String driverScanBasketsUrl = "$_baseUrl/driver/scan-baskets/";
+  // /driver/in-transit-transfers/
+  static String driverInTransitTransfersUrl = "$_baseUrl/driver/in-transit-transfers/";
 }
