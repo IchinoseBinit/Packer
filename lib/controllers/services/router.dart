@@ -42,6 +42,9 @@ import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/product/unit_verify_scanner.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/profile/update_rack_screen.dart';
+import 'package:packer/features/views/receive_baskets/view/basket_in_transit.dart';
+import 'package:packer/features/views/receive_baskets/view/receive_basket_list.dart';
+import 'package:packer/features/views/receive_baskets/view/receive_basket_scanner.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
@@ -252,6 +255,27 @@ class AppRouter {
                 path: NavigationConstants.lowStockDetailRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return LowStockDetails();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.receiveTransferListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return BasketInTransitScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.receiveBasketScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>? ?? {};
+                  return ReceiveBasketScanner(
+                    scanIdentifier: extra['scanIdentifier'] ?? false,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.receiveBasketListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ReceiveBasketList();
                 },
               ),
               GoRoute(

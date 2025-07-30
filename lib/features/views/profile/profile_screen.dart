@@ -44,25 +44,25 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.storeSelectionRoute,
       });
     }
-    // if (value.isStoreManager() &&
-    //     !otherInfoData.any(
-    //         (e) => e['screen'] == NavigationConstants.rackUpdateScreenRoute)) {
-    //   otherInfoData.add({
-    //     'icon': Icons.folder,
-    //     'title': 'Rack Update',
-    //     'screen': NavigationConstants.rackUpdateScreenRoute,
-    //   });
-    // }
-    // productListScreenRoute
-    if (!value.isAuditUser() &&
+    if (!value.isAuditUser() && !value.isMainStore() &&
         !otherInfoData.any(
-            (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
+            (e) => e['screen'] == NavigationConstants.receiveTransferListRoute)) {
       otherInfoData.add({
-        'icon': Icons.list,
-        'title': 'Re-Rack',
-        'screen': NavigationConstants.productListScreenRoute,
+        'icon': Icons.local_shipping_rounded,
+        'title': 'Receive Basket',
+        'screen': NavigationConstants.receiveTransferListRoute,
       });
     }
+    // // productListScreenRoute
+    // if (!value.isAuditUser() &&
+    //     !otherInfoData.any(
+    //         (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
+    //   otherInfoData.add({
+    //     'icon': Icons.list,
+    //     'title': 'Re-Rack',
+    //     'screen': NavigationConstants.productListScreenRoute,
+    //   });
+    // }
 
     if (!value.isAuditUser() && !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Order return')) {

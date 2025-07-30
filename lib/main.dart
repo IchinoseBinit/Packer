@@ -20,6 +20,7 @@ import 'package:packer/features/views/packer_transfer/provider/packer_transfer_p
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/profile/provider/order_return_provider.dart';
 import 'package:packer/features/views/profile/provider/rack_update_provider.dart';
+import 'package:packer/features/views/receive_baskets/controller/receive_basket_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/firebase_options.dart';
@@ -148,6 +149,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => OrderReturnProvider()),
         // driver
         ChangeNotifierProvider(create: (_) => DriverController()),
+        ChangeNotifierProvider(create: (_) => ReceiveBasketController()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

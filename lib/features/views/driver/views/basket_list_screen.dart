@@ -55,8 +55,8 @@ class _BasketListScreenState extends State<BasketListScreen> {
                           basketIdentifier: basketIdentifier,
                           index: index + 1,
                           showStatus: !widget.fromInTransit,
-                          // scanned: driverController
-                          //     .isBasketScanned(basketIdentifier),
+                          scanned: driverController
+                              .isBasketScanned(basketIdentifier),
                         );
                       },
                     ),
