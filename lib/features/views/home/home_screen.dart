@@ -8,6 +8,7 @@ import 'package:packer/features/views/home/widgets/order_list_widget.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/widgets/progress_column.dart';
+import 'package:packer/features/views/widgets/update_url_widget.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -101,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
                 const TodaysProgressWidget(),
                 SizedBox(height: 20.h),
+                // UpdateUrlWidget(),
                 // Container(
                 //   padding: EdgeInsets.all(5),
                 //   decoration: BoxDecoration(

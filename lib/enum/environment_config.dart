@@ -6,6 +6,8 @@ enum EnvironmentType {
 }
 
 class EnvironmentConfig {
+  static EnvironmentType _currentType = EnvironmentType.staging;
+
   // ignore: constant_identifier_names
   static const String PRODUCTION = "production";
   // ignore: constant_identifier_names
@@ -29,6 +31,11 @@ class EnvironmentConfig {
     }
   }
 
+  static void setEnvironment(EnvironmentType type) {
+    _currentType = type;
+  }
+
+  static EnvironmentType get currentType => _currentType;
   static T when<T>({
     required T production,
     required T staging,
@@ -41,3 +48,30 @@ class EnvironmentConfig {
     }
   }
 }
+
+// enum EnvironmentType {
+//   staging,
+//   production,
+// }
+
+// class EnvironmentConfig {
+//   static EnvironmentType _currentType = EnvironmentType.staging;
+
+//   static void setEnvironment(EnvironmentType type) {
+//     _currentType = type;
+//   }
+
+//   static EnvironmentType get type => _currentType;
+
+//   static T when<T>({
+//     required T production,
+//     required T staging,
+//   }) {
+//     switch (_currentType) {
+//       case EnvironmentType.production:
+//         return production;
+//       case EnvironmentType.staging:
+//         return staging;
+//     }
+//   }
+// }

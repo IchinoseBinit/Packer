@@ -1,27 +1,27 @@
+
 import 'package:packer/enum/environment_config.dart';
+import 'package:packer/features/views/widgets/custom_url.dart';
 
 class AppUrls {
-  //static const String _baseUrl = "http://192.168.1.98:8000/categories";
+  static late String _baseUrl;
 
-  static const String _productionDomainnUrl = "fasto.com.np";
-  static const String _stagingdomainURL = "103.187.8.105:8000";
-  // static const String _stagingdomainURL = "192.168.100.78:8000";
-  // static const String _stagingdomainURL = "192.168.80.128:8000";
+  static Future<void> init() async {
+    if (EnvironmentConfig.type == EnvironmentType.staging) {
+      final customUrl = await CustomUrlManager.getCustomUrl();
+      _baseUrl = customUrl != null && customUrl.isNotEmpty
+          ? customUrl
+          : "http://103.187.8.105:8000";
+    } else {
+      _baseUrl = "https://fasto.com.np";
+    }
+  }
+  // static const String _productionDomainUrl = "fasto.com.np";
+  // static const String _stagingDomainUrl = "103.187.8.105:8000";
 
-  // static const String _stagingdomainURL = "dropit.com.np";
-
-  static final String _baseUrl = EnvironmentConfig.when(
-    production: _productionUrl,
-    staging: _stagingURL,
-  );
-
-  static const String _productionUrl = "https://$_productionDomainnUrl";
-  static const String _stagingURL = "http://$_stagingdomainURL";
-
-  static final String baseUrl = EnvironmentConfig.when(
-    production: _productionUrl,
-    staging: _stagingURL,
-  );
+  // static String get _baseUrl => EnvironmentConfig.when(
+  //       production: "https://$_productionDomainUrl",
+  //       staging: "http://$_stagingDomainUrl",
+  //     );
 
   // static const String _domainUrl = "13.211.205.215:8000";
 
@@ -76,7 +76,7 @@ class AppUrls {
   static String packerAvailability = "$_baseUrl/staff/packer/availability/";
 
   static String getOrdersByStatusUrl = "$orderUrl/get-order?status=";
-  static String getLatestOrdersUrl = "$orderUrl/get-order"; 
+  static String getLatestOrdersUrl = "$orderUrl/get-order";
   static String getUnsettledOrdersUrl = "$_packerUrl/unsettled-orders";
   static String createSettlementRequestUrl =
       "$_packerUrl/create-settlement-request";
@@ -107,9 +107,10 @@ class AppUrls {
 
   static String basketClearUrl = "$orderUrl/clear-basket/";
 
-  static String orderReturnUrl = "$baseUrl/staff/order-cancel-request-list/";
+  static String orderReturnUrl = "$_baseUrl/staff/order-cancel-request-list/";
   // clear-cancelled-basket
-  static String clearCancelledBasketUrl = "$_baseUrl/staff/clear-cancelled-basket/";
+  static String clearCancelledBasketUrl =
+      "$_baseUrl/staff/clear-cancelled-basket/";
 
   // staff/scan-basket
   static String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
