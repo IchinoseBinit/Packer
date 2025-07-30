@@ -67,12 +67,12 @@ class BasketScanScreen extends BaseScanScreen {
         return;
       }
 
-
       if (forOrder) {
         showLoading(context);
-        var bucketResult = await Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(context, code);
-      
+        var bucketResult =
+            await Provider.of<OrderProvider>(context, listen: false)
+                .updateBucketData(context, code);
+
         if (fromCall && context.mounted && bucketResult.success) {
           removeLoading(context);
           Provider.of<OrderProvider>(context, listen: false).initState();
@@ -87,9 +87,9 @@ class BasketScanScreen extends BaseScanScreen {
         } else {
           if (bucketResult.message == null) {
             removeLoading(context);
-          controller.start();
-          _processing = false;
-          }else {
+            controller.start();
+            _processing = false;
+          } else {
             removeLoading(context);
             handleInvalidCode(context, controller, code, bucketResult.message);
           }
@@ -108,8 +108,6 @@ class BasketScanScreen extends BaseScanScreen {
           handleInvalidCode(context, controller, code);
         }
       }
-
-      
     } catch (_) {
       if (context.mounted) {
         handleInvalidCode(context, controller, code);
@@ -120,14 +118,15 @@ class BasketScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code, [String? message]) {
+      BuildContext context, MobileScannerController controller, String code,
+      [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
       body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context); // dismiss dialog
-        removeLoading(context);
-        removeLoading(context);
+        // removeLoading(context);
+        // removeLoading(context);
         controller.start();
       },
     ).showAlertDialog(context);
