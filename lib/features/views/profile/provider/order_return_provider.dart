@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -72,7 +73,7 @@ class OrderReturnProvider extends ChangeNotifier {
   void onScanBasketTaped(BuildContext context, OrderReturnModel order) async {
     selectedOrder = order;
     assignProductsToRack();
-    basketBox = await Hive.openBox('order_return_#${order.orderId}');
+    basketBox = await Hive.openBox('${HiveConstants.orderReturn}${order.orderId}');
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
     if (!context.mounted) return;

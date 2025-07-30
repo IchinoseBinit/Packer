@@ -6,12 +6,14 @@ class CustomSwitch extends StatefulWidget {
   final double width;
   final double height;
   final bool fromWareHouse;
+  final Function()? onPressed;
 
   const CustomSwitch({
     super.key,
     this.width = 115,
     this.height = 40,
     this.fromWareHouse = false,
+    this.onPressed,
   });
 
   @override
@@ -29,7 +31,7 @@ class CustomSwitchState extends State<CustomSwitch> {
     return Consumer<HomeProvider>(builder: (_, value, __) {
       return GestureDetector(
         onTap: () {
-          value.toggleOnlineStatus(context, isFromWarehouse: widget.fromWareHouse);
+          value.toggleOnlineStatus(context, isFromWarehouse: widget.fromWareHouse, onPressed: widget.onPressed);
         },
         child: Container(
           width: widget.width,

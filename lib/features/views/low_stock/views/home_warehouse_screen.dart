@@ -97,7 +97,11 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
         return Scaffold(
           appBar: GeneralAppBar(
             needLeading: false,
-            middleWidget: const CustomSwitch(fromWareHouse: true),
+            middleWidget:  CustomSwitch(fromWareHouse: true, onPressed: () {
+              Provider.of<StockProvider>(context, listen: false)
+                  .fetchLowStockProducts(context);
+              
+            }),
             trailingSvgAsset: AppAssets.trolleyIcon,
             trailingOnPressed: () {
               navigate(context,

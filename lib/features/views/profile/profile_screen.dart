@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -44,9 +46,10 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.storeSelectionRoute,
       });
     }
-    if (!value.isAuditUser() && !value.isMainStore() &&
-        !otherInfoData.any(
-            (e) => e['screen'] == NavigationConstants.receiveTransferListRoute)) {
+    if (!value.isAuditUser() &&
+        !value.isMainStore() &&
+        !otherInfoData.any((e) =>
+            e['screen'] == NavigationConstants.receiveTransferListRoute)) {
       otherInfoData.add({
         'icon': Icons.local_shipping_rounded,
         'title': 'Receive Basket',
@@ -64,7 +67,8 @@ class ProfileScreen extends StatelessWidget {
     //   });
     // }
 
-    if (!value.isAuditUser() && !value.isMainStore() &&
+    if (!value.isAuditUser() &&
+        !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Order return')) {
       otherInfoData.add({
         'icon': Icons.repeat_rounded,
@@ -72,6 +76,27 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.orderReturnScreenRoute,
       });
     }
+    // if (!otherInfoData.any((e) => e['title'] == 'Clear Cache')) {
+    //   otherInfoData.add({
+    //     'icon': Icons.delete,
+    //     'title': 'Clear Cache',
+    //     // 'screen': NavigationConstants.clearCacheScreenRoute,
+    //     'onTap': () {
+    //       ShowAlertDialog(
+    //         title: 'Clear Cache',
+    //         body: Text('Are you sure you want to clear cache?'),
+    //         okFunc: () {
+    //           HiveDBService.wipeHiveCompletely();
+    //          navigatePop(context);
+    //         },
+    //         needCancel: true,
+    //         cancelFunc: () {
+    //           navigatePop(context);
+    //         },
+    //       ).showAlertDialog(context);
+    //     }
+    //   });
+    // }
   }
 
   @override
@@ -130,8 +155,10 @@ class ProfileScreen extends StatelessWidget {
                         if (otherInfoData[index]['onTap'] != null) {
                           otherInfoData[index]['onTap']();
                         }
-                        navigate(context,
-                            route: otherInfoData[index]['screen']);
+                        if (otherInfoData[index]['screen'] != null) {
+                          navigate(context,
+                              route: otherInfoData[index]['screen']);
+                        }
                       },
                       titleTextStyle: TextStyle(
                         color: Colors.black,
