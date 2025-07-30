@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
-import 'package:packer/features/views/home/driver_home_screen.dart';
+import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
+import 'package:packer/features/views/driver/views/basket_list_screen.dart';
+import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
+import 'package:packer/features/views/driver/views/driver_home_screen.dart';
+import 'package:packer/features/views/driver/views/in_transit_screen.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
@@ -213,6 +217,29 @@ class AppRouter {
                 path: NavigationConstants.driverHomeRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return DriverHomeScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.driverTransferDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>?;
+                  return BasketListScreen(
+                    transferItem: args?['transferItem'] as DriverTransferModel,
+                    fromInTransit: args?['fromInTransit'] ?? false,
+                  );
+                },
+              ),
+              // driverInTransitRoute
+              GoRoute(
+                path: NavigationConstants.driverInTransitRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return InTransitScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.driverBasketScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return DriverBasketScanner();
                 },
               ),
               GoRoute(

@@ -77,4 +77,8 @@ class NavigationConstants {
 
   // ------------------ for driver -------
   static const String driverHomeRoute = 'driver_home';
+  static const String driverTransferDetailsRoute = 'driver_transfer_details';
+  static const String driverBasketScannerRoute = 'driver_basket_scanner';
+  // driverInTransitRoute
+  static const String driverInTransitRoute = 'driver_in_transit';
 }

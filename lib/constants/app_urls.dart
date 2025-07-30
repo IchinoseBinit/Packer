@@ -151,4 +151,10 @@ class AppUrls {
   static String getAuditViewUrl = "$_baseUrl/audit-view/";
 
   static String postCartonProductTagsUrl = "$_baseUrl/scanned_carton/";
+
+
+  // ---------------------------- driver -------------------------------
+  static String driverScanBasketsUrl = "$_baseUrl/driver/scan-baskets/";
+  // /driver/in-transit-transfers/
+  static String driverInTransitTransfersUrl = "$_baseUrl/driver/in-transit-transfers/";
 }
