@@ -529,6 +529,7 @@ class OrderProvider extends ChangeNotifier {
 
   // UPDATED and flow fixed
   Future<ScanResult> clearBasket(String code) async {
+    debugger();
     try {
       var url = AppUrls.basketClearUrl;
       final response = await DioClient()
