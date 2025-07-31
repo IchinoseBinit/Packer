@@ -17,7 +17,7 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
 
   final List<String> baseUrlOptions = [
     'http://103.187.8.105:8000',
-    'https://Fasto.com.np',
+    'http://192.168.80.114:8000',
   ];
 
   void _openBottomSheet() {
