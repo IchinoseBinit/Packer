@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/damage_products/damage_product_scan_screen.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/driver/views/basket_list_screen.dart';
@@ -500,6 +501,18 @@ class AppRouter {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   return UnitProductScannerScreen(
                     showInfo: args['showInfo'] ?? false,
+                  );
+                },
+              ),
+
+              GoRoute(
+                path: NavigationConstants.damageScanScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return DamagedScanScreen(
+                    showInfo: args['showInfo'] ?? false,
+                    qr: args['qr'],
+                    requestQr: args['requestQr'] ?? false,
                   );
                 },
               ),
