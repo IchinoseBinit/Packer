@@ -37,7 +37,6 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   CustomUrlManager.clearCustomUrl();
-  await AppUrls.init();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

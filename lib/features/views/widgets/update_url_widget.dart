@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_urls.dart';
+import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/enum/environment_config.dart';
-import 'package:packer/features/views/widgets/custom_url.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 
 class UpdateUrlWidget extends StatefulWidget {
@@ -13,13 +13,12 @@ class UpdateUrlWidget extends StatefulWidget {
 }
 
 class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
-  final TextEditingController _controller = TextEditingController();
+  String? _selectedUrl;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final List<String> baseUrlOptions = [
+    'http://103.187.8.105:8000',
+    'https://Fasto.com.np',
+  ];
 
   void _openBottomSheet() {
     showModalBottomSheet(
@@ -37,25 +36,37 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Enter your Baseurl"),
+                const Text("Select a Base URL"),
                 const SizedBox(height: 10),
-                TextField(
-                  controller: _controller,
+                DropdownButtonFormField<String>(
+                  value: _selectedUrl,
+                  items: baseUrlOptions
+                      .map((url) => DropdownMenuItem(
+                            value: url,
+                            child: Text(url, style: TextStyle(fontSize: 10.sp)),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedUrl = value;
+                    });
+                  },
                   decoration: const InputDecoration(
                     labelText: "Base URL",
                     border: OutlineInputBorder(),
                   ),
-                  style: TextStyle(fontSize: 10.sp),
                 ),
                 SizedBox(height: 40.h),
                 GeneralElevatedButton(
                   onPressed: () async {
-                    await CustomUrlManager.setCustomUrl(_controller.text);
-                    await AppUrls
-                        .init(); // Refresh the in-memory URL after saving
-
+                    if (_selectedUrl != null && _selectedUrl!.isNotEmpty) {
+                      DioClient().updateBaseUrl(_selectedUrl!);
+                      AppUrls.setBaseUrl(_selectedUrl!);
+                    }
                     Navigator.pop(context);
-                    setState(() {});
+                    setState(() {
+                      _selectedUrl = null;
+                    });
                   },
                   title: 'Save',
                 ),
@@ -64,7 +75,11 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      setState(() {
+        _selectedUrl = null; // Reset selection if sheet dismissed
+      });
+    });
   }
 
   @override
