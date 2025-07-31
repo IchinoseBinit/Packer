@@ -393,6 +393,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
+        clearBasket(baskets.first.identifier);
         resetState();
         // remove box
         basketDataList.clear();
