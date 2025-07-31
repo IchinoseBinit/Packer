@@ -1,15 +1,19 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/model/custom_exception.dart';
 import 'package:packer/controllers/extensions/debug_print_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
+import 'package:packer/enum/environment_config.dart';
 import 'package:packer/features/views/auth/provider/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'error_handler.dart';
 
@@ -18,6 +22,7 @@ class DioClient {
   late final Dio _dio;
   static late String token;
   static late String refreshToken;
+  late String baseUrl;
 
   factory DioClient() {
     return _dioClient;
@@ -26,6 +31,23 @@ class DioClient {
   DioClient._() {
     token = "";
     _dio = Dio();
+
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    baseUrl = AppUrls.baseUrl;
+
+    if (EnvironmentConfig.type == EnvironmentType.staging) {
+      final prefs = await SharedPreferences.getInstance();
+      final storedUrl = prefs.getString('customBaseUrl');
+      if (storedUrl != null && storedUrl.isNotEmpty) {
+        baseUrl = storedUrl;
+      }
+    }
+
+    _dio.options = BaseOptions(baseUrl: baseUrl);
+
     if (kDebugMode) {
       _dio.interceptors.add(
         LogInterceptor(
@@ -36,6 +58,7 @@ class DioClient {
         ),
       );
     }
+
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -45,23 +68,32 @@ class DioClient {
           if (error.type == DioExceptionType.connectionError) {
             return handler.next(error);
           }
-          if (token.isNotEmpty) {
-            if (error.response!.statusCode == 401) {
-              var isSuccess = await AuthController().refreshToken();
-              if (isSuccess is bool) {
-                Map<String, String> headingWithToken = {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer $token',
-                };
-                error.requestOptions.headers = headingWithToken;
-                return handler.resolve(await _retry(error.requestOptions));
-              }
+
+          if (token.isNotEmpty && error.response?.statusCode == 401) {
+            var isSuccess = await AuthController().refreshToken();
+            if (isSuccess is bool) {
+              Map<String, String> headingWithToken = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              };
+              error.requestOptions.headers = headingWithToken;
+              return handler.resolve(await _retry(error.requestOptions));
             }
           }
           return handler.next(error);
         },
       ),
     );
+  }
+
+  void updateBaseUrl(String newUrl) async {
+    baseUrl = newUrl;
+    _dio.options.baseUrl = newUrl;
+
+    if (EnvironmentConfig.type == EnvironmentType.staging) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('customBaseUrl', newUrl);
+    }
   }
 
   final timeOutDuration = const Duration(seconds: 300);
@@ -75,6 +107,7 @@ class DioClient {
   }) async {
     try {
       Response? resp;
+
       Map<String, String> heading = {
         'Content-Type': 'application/json',
         'Accept': '*/*',
@@ -84,19 +117,16 @@ class DioClient {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       };
+
       switch (requestType) {
         case RequestType.get:
           resp = await _dio
               .get(
                 url,
-                options: Options(
-                  headers: heading,
-                ),
+                options: Options(headers: heading),
                 queryParameters: queryParameters,
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.getWithToken:
           resp = await _dio
@@ -105,93 +135,64 @@ class DioClient {
                 options: Options(headers: headingWithToken),
                 queryParameters: queryParameters,
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.post:
           resp = await _dio
               .post(
                 url.trim(),
                 data: jsonEncode(body),
-                options: Options(
-                  headers: heading,
-                ),
+                options: Options(headers: heading),
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.postWithHeaders:
           resp = await _dio
               .post(
                 url.trim(),
                 data: jsonEncode(body),
-                options: Options(
-                  headers: {...heading, ...headers},
-                ),
+                options: Options(headers: {...heading, ...headers}),
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.postWithToken:
           resp = await _dio
               .post(
                 url,
                 data: jsonEncode(body),
-                options: Options(
-                  headers: headingWithToken,
-                ),
+                options: Options(headers: headingWithToken),
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.postWithTokenFormData:
           resp = await _dio
               .post(
                 url,
                 data: body,
-                options: Options(
-                  headers: headingWithToken,
-                ),
+                options: Options(headers: headingWithToken),
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.deleteWithToken:
           resp = await _dio
               .delete(
                 url,
                 data: jsonEncode(body),
-                options: Options(
-                  headers: headingWithToken,
-                ),
+                options: Options(headers: headingWithToken),
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
         case RequestType.patchWithToken:
           resp = await _dio
               .patch(
                 url,
                 data: jsonEncode(body),
-                options: Options(
-                  headers: headingWithToken,
-                ),
+                options: Options(headers: headingWithToken),
               )
-              .timeout(
-                timeOutDuration,
-              );
+              .timeout(timeOutDuration);
           break;
-        // default:
-        //   resp = await throw RequestTypeNotFoundException(
-        //     "The HTTP request method is not found",
-        //   );
       }
+
       resp.log();
       return resp;
     } on DioException catch (ex) {
@@ -200,13 +201,12 @@ class DioClient {
             route: NavigationConstants.loginRoute);
       }
       if (ex.response?.statusCode == 403) {
-        // remove token
         await AuthController().removeTokens();
         return navigateAndRemoveAllWithRouter(AppRouter.router,
             route: NavigationConstants.loginRoute);
       }
-      if (ex.error.runtimeType == SocketException ||
-          ex.error.runtimeType == HttpException) {
+
+      if (ex.error is SocketException || ex.error is HttpException) {
         throw const SocketException(ErrorHandler.errorMessage);
       } else if (kDebugMode && ex.response?.statusCode == 502) {
         throw "Server in deployment phase";
@@ -223,6 +223,7 @@ class DioClient {
               .contains("token")) {
         throw LogoutException();
       }
+
       throw ex.response?.data?["message"] ??
           ex.response?.data?["error"] ??
           ex.response?.data?["detail"] ??

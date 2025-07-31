@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -24,6 +25,7 @@ import 'package:packer/features/views/profile/provider/rack_update_provider.dart
 import 'package:packer/features/views/receive_baskets/controller/receive_basket_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
+import 'package:packer/features/views/widgets/custom_url.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
@@ -36,6 +38,8 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  CustomUrlManager.clearCustomUrl();
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   NotificationUtils.initializeLocalNotifications();
