@@ -1,5 +1,7 @@
 // ignore_for_file: sized_box_for_whitespace
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -68,10 +70,10 @@ class ProfileScreen extends StatelessWidget {
 
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
-        !otherInfoData.any((e) => e['title'] == 'Order return')) {
+        !otherInfoData.any((e) => e['title'] == 'Order Return')) {
       otherInfoData.add({
         'icon': Icons.repeat_rounded,
-        'title': 'Order return',
+        'title': 'Order Return',
         'screen': NavigationConstants.orderReturnScreenRoute,
       });
     }

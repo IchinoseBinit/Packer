@@ -12,6 +12,7 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
+import 'package:packer/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
@@ -150,6 +151,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         // driver
         ChangeNotifierProvider(create: (_) => DriverController()),
         ChangeNotifierProvider(create: (_) => ReceiveBasketController()),
+        ChangeNotifierProvider(create: (_) => DamageProductController()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

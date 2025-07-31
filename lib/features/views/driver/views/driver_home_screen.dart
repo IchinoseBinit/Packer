@@ -78,38 +78,28 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     );
                   }
 
-                  return SingleChildScrollView(
-                    padding: AppConstants.padding,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: RefreshIndicator(
-                      onRefresh: () async {
-                        final driverController =
-                            Provider.of<DriverController>(context, listen: false);
-                        driverController.fetchDriverTransfers(context, fromBuild: true);
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      final driverController =
+                          Provider.of<DriverController>(context, listen: false);
+                      driverController.fetchDriverTransfers(context,
+                          fromBuild: true);
+                    },
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: driverController.driverTransfers.length,
+                      itemBuilder: (context, index) {
+                        return DriverTransferCard(
+                          transferItem: driverController.driverTransfers[index],
+                          needGoToStore: false,
+                          callback: () {
+                            Provider.of<DriverController>(context,
+                                    listen: false)
+                                .onDetails(context,
+                                    driverController.driverTransfers[index]);
+                          },
+                        );
                       },
-                      child: Column(
-                        children: [
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: driverController.driverTransfers.length,
-                            itemBuilder: (context, index) {
-                              return DriverTransferCard(
-                                transferItem:
-                                    driverController.driverTransfers[index],
-                                needGoToStore: false,
-                                callback: () {
-                                  Provider.of<DriverController>(context,
-                                          listen: false)
-                                      .onDetails(
-                                          context,
-                                          driverController
-                                              .driverTransfers[index]);
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
                     ),
                   );
                 },
