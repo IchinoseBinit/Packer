@@ -28,6 +28,11 @@ class DriverBasketScanner extends BaseScanScreen {
 
       HapticFeedback.heavyImpact();
 
+      if (!code.contains("basket")) {
+        handleInvalidQrCode(context, controller, code);
+        return;
+      }
+
       final value = Provider.of<DriverController>(context, listen: false).onScanBasket(context, code);
       if (value.success && context.mounted) {
         Navigator.pop(context);

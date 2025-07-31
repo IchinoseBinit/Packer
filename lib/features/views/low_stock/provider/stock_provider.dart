@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive/hive.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -801,12 +802,12 @@ class StockProvider extends ChangeNotifier {
       if (scannedList.length == item.quantity) {
         final result = await postTrolleyScannedTags(context, productId);
         scannedList = [];
-        if (result) {
+        if (result is bool && result) {
           trolleyItems = dao.getAll();
           notifyListeners();
           return ScanResult(success: true, message: "Scanned Successfully");
         }else {
-          return ScanResult(success: false, message: "Failed to post scanned tags");
+          return ScanResult(success: false, message: result.toString());
         }
       }
       Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context, "Scan ${item.quantity - scannedList.length} ${item.productName}");
@@ -840,7 +841,7 @@ class StockProvider extends ChangeNotifier {
   }
 
   // trolley item tag post
-  Future<bool> postTrolleyScannedTags(BuildContext context, int productId) async {
+  Future<dynamic> postTrolleyScannedTags(BuildContext context, int productId) async {
     try {
       showLoading(context);
       final response = await DioClient().request(
@@ -864,7 +865,7 @@ class StockProvider extends ChangeNotifier {
     } catch (e) {
       removeLoading(context);
       scannedList.clear();
-      return false;
+      return e.toString();
     } 
   }
 
@@ -966,7 +967,7 @@ class StockProvider extends ChangeNotifier {
   Future<List<LowStockModel>> openBoxForLowStockList(BuildContext context) async {
     List<LowStockModel> list = [];
     for (var element in lowStockList) {
-      final box = await HiveDBService.openProductBox('store_${element.storeId}');
+      final box = await HiveDBService.openProductBox('${HiveConstants.storeId}${element.storeId}');
       final dao = ProductDao(box);
       final trolleyItems = dao.getAll();
       if (trolleyItems.isNotEmpty) {

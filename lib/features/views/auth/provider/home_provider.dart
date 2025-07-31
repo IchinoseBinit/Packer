@@ -270,7 +270,7 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  void toggleOnlineStatus(BuildContext context, {bool isFromWarehouse = false}) async {
+  void toggleOnlineStatus(BuildContext context, {bool isFromWarehouse = false, Function()? onPressed}) async {
     isOnline = !isOnline;
     if (!isOnline) {
       HapticFeedback.heavyImpact();
@@ -282,6 +282,8 @@ class HomeProvider with ChangeNotifier {
       if (!isFromWarehouse) {
         fetchLatestOrders();
         FirebaseAPI().listenTopackerStatusNotifications((order) => _showNotificationPopup(context, order));
+      } else{
+        onPressed?.call();
       }
       notifyListeners();
     } else {

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -164,7 +165,7 @@ class OrderProvider extends ChangeNotifier {
   void onOrderAcceptOrGetDetail(int orderId,
       {bool fromCall = false, BuildContext? context}) async {
     // open box
-    basketBox = await Hive.openBox('order_#$orderId');
+    basketBox = await Hive.openBox('${HiveConstants.order}$orderId');
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
     if (baskets.isNotEmpty && !fromCall) {

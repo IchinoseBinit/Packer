@@ -44,14 +44,14 @@ class _NavigationScreenState extends State<NavigationScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    final home =Provider.of<HomeProvider>(context, listen: false);
+    final home = Provider.of<HomeProvider>(context, listen: false);
     if (home.isAuditUser()) {
       widgets[0] = StoreSelectionScreen();
-    } else if (home.isMainStore() == true) {
-      widgets[0] = HomeWarehouseScreen();
     } else if (home.isDriver()) {
       widgets[0] = DriverHomeScreen();
       widgets[1] = DriverProfileScreen();
+    } else if (home.isMainStore() == true) {
+      widgets[0] = HomeWarehouseScreen();
     }
   }
 

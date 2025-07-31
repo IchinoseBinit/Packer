@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+// import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
+// import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -44,16 +46,27 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.storeSelectionRoute,
       });
     }
-    // if (value.isStoreManager() &&
+    if (!value.isAuditUser() &&
+        !value.isMainStore() &&
+        !otherInfoData.any((e) =>
+            e['screen'] == NavigationConstants.receiveTransferListRoute)) {
+      otherInfoData.add({
+        'icon': Icons.local_shipping_rounded,
+        'title': 'Receive Basket',
+        'screen': NavigationConstants.receiveTransferListRoute,
+      });
+    }
+    // // productListScreenRoute
+    // if (!value.isAuditUser() &&
     //     !otherInfoData.any(
-    //         (e) => e['screen'] == NavigationConstants.rackUpdateScreenRoute)) {
+    //         (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
     //   otherInfoData.add({
-    //     'icon': Icons.folder,
-    //     'title': 'Rack Update',
-    //     'screen': NavigationConstants.rackUpdateScreenRoute,
+    //     'icon': Icons.list,
+    //     'title': 'Re-Rack',
+    //     'screen': NavigationConstants.productListScreenRoute,
     //   });
     // }
-    // productListScreenRoute
+
     if (!value.isAuditUser() &&
         !otherInfoData.any(
             (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
@@ -63,9 +76,9 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.productListScreenRoute,
       });
     }
-    if (!value.isAuditUser() &&
-        !value.isMainStore() &&
-        !otherInfoData.any((e) => e['title'] == 'Order Return')) {
+
+    if (!value.isAuditUser() && !value.isMainStore() &&
+        !otherInfoData.any((e) => e['title'] == 'Order return')) {
       otherInfoData.add({
         'icon': Icons.repeat_rounded,
         'title': 'Order Return',
@@ -87,6 +100,27 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Request QR',
       });
     }
+    // if (!otherInfoData.any((e) => e['title'] == 'Clear Cache')) {
+    //   otherInfoData.add({
+    //     'icon': Icons.delete,
+    //     'title': 'Clear Cache',
+    //     // 'screen': NavigationConstants.clearCacheScreenRoute,
+    //     'onTap': () {
+    //       ShowAlertDialog(
+    //         title: 'Clear Cache',
+    //         body: Text('Are you sure you want to clear cache?'),
+    //         okFunc: () {
+    //           HiveDBService.wipeHiveCompletely();
+    //          navigatePop(context);
+    //         },
+    //         needCancel: true,
+    //         cancelFunc: () {
+    //           navigatePop(context);
+    //         },
+    //       ).showAlertDialog(context);
+    //     }
+    //   });
+    // }
   }
 
   @override
@@ -204,10 +238,12 @@ class ProfileScreen extends StatelessWidget {
                                           ),
                                         ));
                               } else {
-                                navigate(context,
-                                    route: otherInfoData[index]['screen']);
+                                if (otherInfoData[index]['screen'] != null) {
+                          navigate(context,
+                                      route: otherInfoData[index]['screen']);
                               }
-                            },
+                              }
+                      },
                             titleTextStyle: TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.w500,

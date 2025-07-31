@@ -82,4 +82,12 @@ class NavigationConstants {
   static const String driverBasketScannerRoute = 'driver_basket_scanner';
   // driverInTransitRoute
   static const String driverInTransitRoute = 'driver_in_transit';
+
+  /// ============== manager =============
+  //receive_transfer_list
+  static const String receiveTransferListRoute = 'receive_transfer_list';
+  // receive_basket_list
+  static const String receiveBasketListRoute = 'receive_basket_list';
+  // receiveBasketScannerRoute
+  static const String receiveBasketScannerRoute = 'receive_basket_scanner';
 }
