@@ -147,11 +147,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => StockVerificationProvider()),
         ChangeNotifierProvider(create: (_) => RackUpdateProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
-        ChangeNotifierProvider(create: (_) => DamageProductController()),
         ChangeNotifierProvider(create: (_) => OrderReturnProvider()),
         // driver
         ChangeNotifierProvider(create: (_) => DriverController()),
         ChangeNotifierProvider(create: (_) => ReceiveBasketController()),
+        ChangeNotifierProvider(create: (_) => DamageProductController()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

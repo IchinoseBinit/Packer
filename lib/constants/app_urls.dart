@@ -109,7 +109,8 @@ class AppUrls {
 
   static String orderReturnUrl = "$baseUrl/staff/order-cancel-request-list/";
   // clear-cancelled-basket
-  static String clearCancelledBasketUrl = "$_baseUrl/staff/clear-cancelled-basket/";
+  static String clearCancelledBasketUrl =
+      "$_baseUrl/staff/clear-cancelled-basket/";
 
   // staff/scan-basket
   static String scanBasketUrl = "$_baseUrl/staff/scan-basket/";
@@ -152,20 +153,22 @@ class AppUrls {
 
   static String postCartonProductTagsUrl = "$_baseUrl/scanned_carton/";
 
+  // ---------------------------- driver -------------------------------
+  static String driverScanBasketsUrl = "$_baseUrl/driver/scan-baskets/";
+  // /driver/in-transit-transfers/
+  static String driverInTransitTransfersUrl =
+      "$_baseUrl/driver/in-transit-transfers/";
+
+  // ---------------------------- manager -------------------------------
+  // manager/transfers/in-transit/
+  static String managerInTransitTransfersUrl =
+      "$_baseUrl/manager/transfers/in-transit/";
+  // manager/transfers/15/receive
+  static String managerReceiveTransferUrl =
+      "$_baseUrl/manager/transfers/:id/receive/";
+
   //damage product url
   static String damageProductUnitUrl = "$_baseUrl/product_units/";
   static String markDamageUrl = "$_baseUrl/mark-damaged/";
   static String qrDamageUrl = "$_baseUrl/qr-damaged/";
-
-
-  // ---------------------------- driver -------------------------------
-  static String driverScanBasketsUrl = "$_baseUrl/driver/scan-baskets/";
-  // /driver/in-transit-transfers/
-  static String driverInTransitTransfersUrl = "$_baseUrl/driver/in-transit-transfers/";
-
-  // ---------------------------- manager -------------------------------
-  // manager/transfers/in-transit/
-  static String managerInTransitTransfersUrl = "$_baseUrl/manager/transfers/in-transit/";
-  // manager/transfers/15/receive
-  static String managerReceiveTransferUrl = "$_baseUrl/manager/transfers/:id/receive/";
 }

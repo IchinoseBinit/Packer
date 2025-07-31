@@ -1,11 +1,12 @@
 // ignore_for_file: sized_box_for_whitespace
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
-// import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -68,24 +69,14 @@ class ProfileScreen extends StatelessWidget {
     // }
 
     if (!value.isAuditUser() &&
-        !otherInfoData.any(
-            (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
-      otherInfoData.add({
-        'icon': Icons.list,
-        'title': 'Re-Rack',
-        'screen': NavigationConstants.productListScreenRoute,
-      });
-    }
-
-    if (!value.isAuditUser() && !value.isMainStore() &&
-        !otherInfoData.any((e) => e['title'] == 'Order return')) {
+        !value.isMainStore() &&
+        !otherInfoData.any((e) => e['title'] == 'Order Return')) {
       otherInfoData.add({
         'icon': Icons.repeat_rounded,
         'title': 'Order Return',
         'screen': NavigationConstants.orderReturnScreenRoute,
       });
     }
-
     if (!value.isAuditUser() &&
         !otherInfoData.any((e) => e['title'] == 'Report Damage')) {
       otherInfoData.add({
@@ -170,98 +161,100 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 10),
                 ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: otherInfoData.length,
-                    itemBuilder: (context, index) {
-                      final bool isOrderReturn =
-                          otherInfoData[index]['title'] == "Order Return";
-                      return Column(
-                        children: [
-                          ListTile(
-                            onTap: () {
-                              if (otherInfoData[index]['onTap'] != null) {
-                                otherInfoData[index]['onTap']();
-                              }
-                              if (otherInfoData[index]['title'] ==
-                                  "Request QR") {
-                                navigate(context,
-                                    route: NavigationConstants
-                                        .damageScanScreenRoute,
-                                    extra: {'qr': false, 'requestQr': true});
-                              }
-                              if (otherInfoData[index]['title'] ==
-                                  "Report Damage") {
-                                showModalBottomSheet(
-                                    context: context,
-                                    builder: (context) => Container(
-                                          height: 100.h,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 12.w, vertical: 8.h),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    vertical: 16.h,
-                                                  ),
-                                                  child: GeneralElevatedButton(
-                                                    marginH: 6.w,
-                                                    title: "With QR",
-                                                    onPressed: () {
-                                                      navigate(context,
-                                                          route: NavigationConstants
-                                                              .damageScanScreenRoute,
-                                                          extra: {'qr': true});
-                                                    },
-                                                  ),
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: otherInfoData.length,
+                  itemBuilder: (context, index) {
+                    final bool isOrderReturn =
+                        otherInfoData[index]['title'] == "Order Return";
+                    return Column(
+                      children: [
+                        ListTile(
+                          onTap: () {
+                            if (otherInfoData[index]['onTap'] != null) {
+                              otherInfoData[index]['onTap']();
+                            }
+                            if (otherInfoData[index]['screen'] != null) {
+                              navigate(context,
+                                  route: otherInfoData[index]['screen']);
+                            }
+                            if (otherInfoData[index]['title'] == "Request QR") {
+                              navigate(context,
+                                  route:
+                                      NavigationConstants.damageScanScreenRoute,
+                                  extra: {'qr': false, 'requestQr': true});
+                            }
+                            if (otherInfoData[index]['title'] ==
+                                "Report Damage") {
+                              showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) => Container(
+                                        height: 100.h,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 12.w, vertical: 8.h),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 16.h,
+                                                ),
+                                                child: GeneralElevatedButton(
+                                                  marginH: 6.w,
+                                                  title: "With QR",
+                                                  onPressed: () {
+                                                    navigate(context,
+                                                        route: NavigationConstants
+                                                            .damageScanScreenRoute,
+                                                        extra: {'qr': true});
+                                                  },
                                                 ),
                                               ),
-                                              Expanded(
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    vertical: 16.h,
-                                                  ),
-                                                  child: GeneralElevatedButton(
-                                                    marginH: 6.w,
-                                                    title: "Without QR",
-                                                    onPressed: () {
-                                                      navigate(context,
-                                                          route: NavigationConstants
-                                                              .damageScanScreenRoute,
-                                                          extra: {'qr': false});
-                                                    },
-                                                  ),
+                                            ),
+                                            Expanded(
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 16.h,
+                                                ),
+                                                child: GeneralElevatedButton(
+                                                  marginH: 6.w,
+                                                  title: "Without QR",
+                                                  onPressed: () {
+                                                    navigate(context,
+                                                        route: NavigationConstants
+                                                            .damageScanScreenRoute,
+                                                        extra: {'qr': false});
+                                                  },
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ));
-                              } else {
-                                if (otherInfoData[index]['screen'] != null) {
-                          navigate(context,
-                                      route: otherInfoData[index]['screen']);
-                              }
-                              }
-                      },
-                            titleTextStyle: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16.sp,
-                            ),
-                            iconColor: AppColors.primaryColor,
-                            leading: Icon(otherInfoData[index]['icon']),
-                            title: Text(otherInfoData[index]['title']),
-                            trailing: Icon(Icons.chevron_right),
+                                            ),
+                                          ],
+                                        ),
+                                      ));
+                            } else {
+                              navigate(context,
+                                  route: otherInfoData[index]['screen']);
+                            }
+                          },
+                          titleTextStyle: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16.sp,
                           ),
-                          if (isOrderReturn)
-                            Divider(
-                              color: Colors.grey.withValues(alpha: .5),
-                              thickness: 1,
-                            ),
-                        ],
-                      );
-                    }),
+                          iconColor: AppColors.primaryColor,
+                          leading: Icon(otherInfoData[index]['icon']),
+                          title: Text(otherInfoData[index]['title']),
+                          trailing: Icon(Icons.chevron_right),
+                        ),
+                        if (isOrderReturn)
+                          Divider(
+                            color: Colors.grey.withValues(alpha: .5),
+                            thickness: 1,
+                          ),
+                      ],
+                    );
+                  },
+                ),
                 SizedBox(height: .4.sh),
                 Center(
                   child: Column(

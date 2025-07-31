@@ -505,6 +505,8 @@ class AppRouter {
                   );
                 },
               ),
+             
+
               GoRoute(
                 path: NavigationConstants.damageScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
