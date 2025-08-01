@@ -57,6 +57,17 @@
                 "lib/main.dart",
                 "--dart-define=APIType=production"
             ]
+        },
+        {
+            "name": "packer (release stag)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": [
+                "--target",
+                "lib/main.dart",
+                "--dart-define=APIType=staging"
+            ]
         }
     ]
 }
