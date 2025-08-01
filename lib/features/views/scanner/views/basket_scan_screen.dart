@@ -55,7 +55,6 @@ class BasketScanScreen extends BaseScanScreen {
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
-    debugger();
     if (_processing) return;
     _processing = true;
     Provider.of<OrderProvider>(context, listen: false)

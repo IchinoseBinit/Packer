@@ -1,17 +1,10 @@
-
 import 'package:packer/enum/environment_config.dart';
 
 class AppUrls {
-  static late String baseUrl;
-
-  // static Future<void> init() async {
-  //   if (EnvironmentConfig.type == EnvironmentType.staging) {
-  //     baseUrl =
-  //         : "http://103.187.8.105:8000";
-  //   } else {
-  //     baseUrl = "https://fasto.com.np";
-  //   }
-  // }
+  static String baseUrl = EnvironmentConfig.type == EnvironmentType.staging
+      ? "http://103.187.8.105:8000" // or any sensible default
+      : "https://fasto.com.np";
+  
 
   static void setBaseUrl(String url) {
     if (EnvironmentConfig.type == EnvironmentType.staging) {
@@ -179,8 +172,6 @@ class AppUrls {
   // manager/transfers/15/receive
   static String get managerReceiveTransferUrl =>
       "$baseUrl/manager/transfers/:id/receive/";
-
-  
 
   //damage product url
   static String get damageProductUnitUrl => "$baseUrl/product_units/";
