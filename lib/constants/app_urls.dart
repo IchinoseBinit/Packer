@@ -1,7 +1,5 @@
-import 'dart:developer';
 
 import 'package:packer/enum/environment_config.dart';
-import 'package:packer/features/views/widgets/custom_url.dart';
 
 class AppUrls {
   static late String baseUrl;
