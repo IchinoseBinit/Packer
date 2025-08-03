@@ -1,10 +1,13 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
+
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/enum/environment_config.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
+
 
 class UpdateUrlWidget extends StatefulWidget {
   const UpdateUrlWidget({super.key});
@@ -66,6 +69,7 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
                     if (_middleController.text.isNotEmpty) {
                       final fullUrl =
                           "$_prefix${_middleController.text.trim()}$_suffix";
+                      log(fullUrl);
                       DioClient().updateBaseUrl(fullUrl);
                       AppUrls.setBaseUrl(fullUrl);
                     }
