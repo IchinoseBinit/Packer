@@ -87,8 +87,9 @@ class DioClient {
   }
 
   void updateBaseUrl(String newUrl) async {
-    baseUrl = newUrl;
-    _dio.options.baseUrl = newUrl;
+    await AppUrls.setBaseUrl(newUrl);
+
+    _dio.options.baseUrl = AppUrls.baseUrl;
 
     if (EnvironmentConfig.type == EnvironmentType.staging) {
       final prefs = await SharedPreferences.getInstance();

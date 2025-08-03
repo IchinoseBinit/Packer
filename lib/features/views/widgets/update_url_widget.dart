@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_urls.dart';
@@ -13,12 +15,16 @@ class UpdateUrlWidget extends StatefulWidget {
 }
 
 class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
-  String? _selectedUrl;
+  final TextEditingController _middleController = TextEditingController();
 
-  final List<String> baseUrlOptions = [
-    'http://103.187.8.105:8000',
-    'http://192.168.80.114:8000',
-  ];
+  final String _prefix = "http://192.168.80.";
+  final String _suffix = ":8000";
+
+  @override
+  void dispose() {
+    _middleController.dispose();
+    super.dispose();
+  }
 
   void _openBottomSheet() {
     showModalBottomSheet(
@@ -36,36 +42,38 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Select a Base URL"),
+                const Text("Enter Base URL Segment"),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  value: _selectedUrl,
-                  items: baseUrlOptions
-                      .map((url) => DropdownMenuItem(
-                            value: url,
-                            child: Text(url, style: TextStyle(fontSize: 10.sp)),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedUrl = value;
-                    });
-                  },
-                  decoration: const InputDecoration(
-                    labelText: "Base URL",
-                    border: OutlineInputBorder(),
-                  ),
+                Row(
+                  children: [
+                    Text(_prefix, style: TextStyle(fontSize: 10.sp)),
+                    Expanded(
+                      child: TextField(
+                        controller: _middleController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          hintText: 'X.X (e.g.114)',
+                          border: OutlineInputBorder(),
+                        ),
+                        style: TextStyle(fontSize: 10.sp),
+                      ),
+                    ),
+                    Text(_suffix, style: TextStyle(fontSize: 10.sp)),
+                  ],
                 ),
                 SizedBox(height: 40.h),
                 GeneralElevatedButton(
-                  onPressed: () async {
-                    if (_selectedUrl != null && _selectedUrl!.isNotEmpty) {
-                      DioClient().updateBaseUrl(_selectedUrl!);
-                      AppUrls.setBaseUrl(_selectedUrl!);
+                  onPressed: () {
+                    if (_middleController.text.isNotEmpty) {
+                      final fullUrl =
+                          "$_prefix${_middleController.text.trim()}$_suffix";
+                      log(fullUrl);
+                      DioClient().updateBaseUrl(fullUrl);
+                      AppUrls.setBaseUrl(fullUrl);
                     }
                     Navigator.pop(context);
                     setState(() {
-                      _selectedUrl = null;
+                      _middleController.clear();
                     });
                   },
                   title: 'Save',
@@ -77,7 +85,7 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
       },
     ).whenComplete(() {
       setState(() {
-        _selectedUrl = null; // Reset selection if sheet dismissed
+        _middleController.clear();
       });
     });
   }

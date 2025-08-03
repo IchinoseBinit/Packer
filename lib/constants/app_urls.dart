@@ -1,21 +1,9 @@
-import 'dart:developer';
-
 import 'package:packer/enum/environment_config.dart';
-import 'package:packer/features/views/widgets/custom_url.dart';
 
 class AppUrls {
-  static late String baseUrl;
+  static String baseUrl = "http://103.187.8.105:8000";
 
-  // static Future<void> init() async {
-  //   if (EnvironmentConfig.type == EnvironmentType.staging) {
-  //     baseUrl =
-  //         : "http://103.187.8.105:8000";
-  //   } else {
-  //     baseUrl = "https://fasto.com.np";
-  //   }
-  // }
-
-  static void setBaseUrl(String url) {
+  static setBaseUrl(String url) {
     if (EnvironmentConfig.type == EnvironmentType.staging) {
       baseUrl = url;
     } else {
