@@ -1,4 +1,8 @@
+import 'dart:developer';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -33,9 +37,11 @@ class CustomSwitchState extends State<CustomSwitch> {
       return GestureDetector(
         onTap: () async {
           showLoading(context);
-          await value.toggleOnlineStatus(context,
-              isFromWarehouse: widget.fromWareHouse,
-              onPressed: widget.onPressed);
+          final result = await value.toggleOnlineStatus(
+            context,
+            isFromWarehouse: widget.fromWareHouse,
+            onPressed: widget.onPressed,
+          );
           removeLoading(context);
         },
         child: Container(

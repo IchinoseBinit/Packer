@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +21,7 @@ import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:provider/provider.dart';
 
 class HomeProvider with ChangeNotifier {
@@ -220,24 +223,37 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updatepackerStatus(bool status) async {
+  Future<bool> updatepackerStatus(bool status, BuildContext context) async {
     try {
       final response = await DioClient().request(
         requestType: RequestType.patchWithToken,
         url: AppUrls.packerOnlineStatus,
         body: {"is_online": status},
       );
-      if (response.statusCode == 200) {
-        if (status) {
-          showToast("Your marked yourself as Online. ");
-        } else {
-          showToast("Your marked yourself as Offline. ");
-        }
-      }
-    } catch (ex) {
-      showToast(ex as String);
 
+      if (response.statusCode == 200) {
+        status
+            ? showToast("You are marked as Online")
+            : showToast("You are marked as Offline");
+        return true;
+      }
+      return false;
+    } catch (ex) {
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Error"),
+          content: Text(ex.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
       print('Error: $ex');
+      return false;
     }
   }
 
@@ -262,8 +278,11 @@ class HomeProvider with ChangeNotifier {
     if (!isOnline) {
       HapticFeedback.heavyImpact();
     }
+    final result = await updatepackerStatus(isOnline, context);
+    result ? (isOnline = isOnline) : (isOnline = !isOnline);
+
     notifyListeners();
-    await updatepackerStatus(isOnline);
+
     if (isOnline) {
       FirebaseAPI().requestPermission();
       if (!isFromWarehouse) {

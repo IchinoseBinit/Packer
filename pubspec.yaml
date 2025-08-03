@@ -64,6 +64,8 @@ dependencies:
   flutter_callkeep: 
     path: ./flutter_callkeep
   pinput: ^3.0.1
+  connectivity_plus: ^6.0.3
+
 
   # callkeep: ^0.4.0
   uuid: ^4.5.1
