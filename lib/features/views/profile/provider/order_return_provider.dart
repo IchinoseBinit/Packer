@@ -31,24 +31,27 @@ class OrderReturnProvider extends ChangeNotifier {
   List<String> scannedTagsList = [];
 
   Future<List<OrderReturnModel>> fetchOrderReturns() async {
-    final response = await DioClient().request(
-      url: AppUrls.orderReturnUrl,
-      requestType: RequestType.getWithToken,
-    );
+    try {
+      final response = await DioClient().request(
+        url: AppUrls.orderReturnUrl,
+        requestType: RequestType.getWithToken,
+      );
 
-    if (response.statusCode == 200) {
-      returnOrder = (response.data as List)
-          .map((order) => OrderReturnModel.fromJson(order))
-          .toList();
-    } else {
-      throw Exception('Failed to load order returns');
+      if (response.statusCode == 200) {
+        returnOrder = (response.data as List)
+            .map((order) => OrderReturnModel.fromJson(order))
+            .toList();
+      } else {
+        throw Exception('Failed to load order returns');
+      }
+
+      // returnOrder = demoData.map((order) => OrderReturnModel.fromJson(order)).toList();
+
+      // notifyListeners();
+      return returnOrder;
+    } catch (e) {
+      return [];
     }
-
-
-    // returnOrder = demoData.map((order) => OrderReturnModel.fromJson(order)).toList();
-
-    // notifyListeners();
-    return returnOrder;
   }
 
   // assign selected model product according to rack
@@ -58,22 +61,22 @@ class OrderReturnProvider extends ChangeNotifier {
     for (final items in selectedOrder?.orderItems ?? <OrderItems>[]) {
       if (rackNames.contains(items.rackName)) {
         rackToOrderItems[items.rackName]!.add(items);
-      }else {
+      } else {
         rackNames.add(items.rackName);
         rackToOrderItems[items.rackName] = [items];
       }
     }
-    
+
     // sort rack names
     rackNames.sort();
     notifyListeners();
   }
 
-
   void onScanBasketTaped(BuildContext context, OrderReturnModel order) async {
     selectedOrder = order;
     assignProductsToRack();
-    basketBox = await Hive.openBox('${HiveConstants.orderReturn}${order.orderId}');
+    basketBox =
+        await Hive.openBox('${HiveConstants.orderReturn}${order.orderId}');
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
     if (!context.mounted) return;
