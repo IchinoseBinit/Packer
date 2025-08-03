@@ -11,10 +11,12 @@ import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/demo.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:provider/provider.dart';
@@ -87,7 +89,8 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> initialize(BuildContext context, {bool isFirstTime = false}) async {
+  Future<void> initialize(BuildContext context,
+      {bool isFirstTime = false}) async {
     if (!isFirstTime) {
       clearLatestOrder();
     }
@@ -95,9 +98,10 @@ class HomeProvider with ChangeNotifier {
     if (isOnline) {
       FirebaseAPI().requestPermission();
       if (isAvailable) {
-        fetchCreatedOrders();
+        // fetchCreatedOrders();
       }
-      FirebaseAPI().listenTopackerStatusNotifications((order) => _showNotificationPopup(context, order));
+      FirebaseAPI().listenTopackerStatusNotifications(
+          (order) => _showNotificationPopup(context, order));
       fetchLatestOrders(isFirstTime: isFirstTime);
     }
   }
@@ -157,7 +161,7 @@ class HomeProvider with ChangeNotifier {
           data.map((order) => OrderNotification.fromJson(order)).toList();
 
       if (latestOrder.isEmpty) {
-        fetchCreatedOrders();
+        // fetchCreatedOrders();
       }
       isLoading = false;
 
@@ -166,41 +170,34 @@ class HomeProvider with ChangeNotifier {
       print('Error: $ex');
       isLoading = false;
       notifyListeners();
-      throw Exception('Failed to load carts: $ex');
+      // throw Exception('Failed to load carts: $ex');
     }
   }
-
-  // void initScanMessage(int productId) {
-  //   if (kDebugMode) {
-  //     showToast('Item Id: $productId');
-  //   }
-  //   for (var element in orderDetailModel?.productDetails ?? []) {
-  //     if (element.id == productId) {
-  //       scanMessage =
-  //           "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
-  //       notifyListeners();
-  //       return;
-  //     }
-  //   }
-  // }
 
   void _showNotificationPopup(BuildContext context, OrderNotification order) {
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
     bool hasNotification = false;
-    
+
     if (notifications.any((element) => element.orderId == order.orderId)) {
-     hasNotification = true;
-    } else if (orderProvider.orders.any((element) => element.orderId == order.orderId)) {
-     hasNotification = true;
-    }else if (orderProvider.orderDetails?.data.id.toString() == order.orderId){
       hasNotification = true;
-    }else if (orderProvider.orderPickedDetails?.id.toString() == order.orderId){
+    } else if (orderProvider.orders
+        .any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
-    }else if (orderProvider.completedOrderDetails?.id.toString() == order.orderId){
+    } else if (orderProvider.orderDetails?.data.id.toString() ==
+        order.orderId) {
       hasNotification = true;
-    }else if (orderProvider.unsettledOrders?.data.any((element) => element.id.toString() == order.orderId) ?? false){
+    } else if (orderProvider.orderPickedDetails?.id.toString() ==
+        order.orderId) {
       hasNotification = true;
-    } else if (orderProvider.latestOrder.any((element) => element.orderId == order.orderId)){
+    } else if (orderProvider.completedOrderDetails?.id.toString() ==
+        order.orderId) {
+      hasNotification = true;
+    } else if (orderProvider.unsettledOrders?.data
+            .any((element) => element.id.toString() == order.orderId) ??
+        false) {
+      hasNotification = true;
+    } else if (orderProvider.latestOrder
+        .any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
     }
 
@@ -223,23 +220,6 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  // Future<void> acknowledgeOrder(int index) async {
-  //   try {
-  //     final id = notifications[index].orderId;
-  //     final response = await DioClient().request(
-  //       requestType: RequestType.postWithToken,
-  //       url: AppUrls.acknowledgeOrderUrl.replaceAll("id", id),
-  //     );
-  //     if (response.statusCode == 200) {
-  //       notifications.removeWhere((element) => element.orderId == id);
-  //       notifyListeners();
-  //     }
-  //   } catch (ex) {
-  //     showToast(ex.toString());
-  //     print('Error: $ex');
-  //   }
-  // }
-
   Future<void> updatepackerStatus(bool status) async {
     try {
       final response = await DioClient().request(
@@ -260,14 +240,15 @@ class HomeProvider with ChangeNotifier {
         body: {"is_available": status},
       );
       isAvailable = status;
-      fetchCreatedOrders();
+      // fetchCreatedOrders();
       notifyListeners();
     } catch (ex) {
       rethrow;
     }
   }
 
-  void toggleOnlineStatus(BuildContext context, {bool isFromWarehouse = false}) async {
+  void toggleOnlineStatus(BuildContext context,
+      {bool isFromWarehouse = false, Function()? onPressed}) async {
     isOnline = !isOnline;
     if (!isOnline) {
       HapticFeedback.heavyImpact();
@@ -277,8 +258,12 @@ class HomeProvider with ChangeNotifier {
     if (isOnline) {
       FirebaseAPI().requestPermission();
       if (!isFromWarehouse) {
+        notifications.clear();
         fetchLatestOrders();
-        FirebaseAPI().listenTopackerStatusNotifications((order) => _showNotificationPopup(context, order));
+        FirebaseAPI().listenTopackerStatusNotifications(
+            (order) => _showNotificationPopup(context, order));
+      } else {
+        onPressed?.call();
       }
       notifyListeners();
     } else {
@@ -306,11 +291,11 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  updateAvailability(BuildContext context, {String? topicName}) async {
+  updateAvailability(BuildContext context, bool isAvailable) async {
     try {
-      if (topicName != null) {
+      if (isAvailable) {
         await updatepackerAvailability(true);
-        toggleFirebaseTopic(context, topicName: topicName);
+        toggleFirebaseTopic(context);
       } else {
         await updatepackerAvailability(false);
         toggleFirebaseTopic(context);
@@ -320,16 +305,8 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  toggleFirebaseTopic(BuildContext context, {String? topicName}) {
-    if (topicName != null) {
-      FirebaseAPI().packerStatus(topicName);
-      FirebaseAPI().listenTopackerStatusNotifications((order) => _showNotificationPopup(context, order));
-    } else {
-      if (FirebaseAPI().topicName.isEmpty) {
-        // TODO: Check here
-        // FirebaseAPI().topicName = packerSummary?.topicName ?? "";
-      }
-      FirebaseAPI().unsubscribepackerStatus();
-    }
+  toggleFirebaseTopic(BuildContext context) {
+    FirebaseAPI().listenTopackerStatusNotifications(
+        (order) => _showNotificationPopup(context, order));
   }
 }

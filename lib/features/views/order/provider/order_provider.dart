@@ -6,10 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
@@ -62,7 +64,6 @@ class OrderProvider extends ChangeNotifier {
   late BasketDao basketDao;
 
   List<Basket> baskets = [];
-  // String bucketData = ""; // current basket code
   // List<String> basketDataList = []; // stores basket codes
   // Map<String, List<String>> scannedDataPerBasket =
   //     {}; // map product tag with basket code
@@ -102,6 +103,7 @@ class OrderProvider extends ChangeNotifier {
       basketDao.addOrUpdateBasket(
           Basket(identifier: basketId, productIdentifiers: [productTag]));
     }
+    baskets = basketDao.getAll();
   }
 
   bool allCartItemScanned() {
@@ -131,6 +133,15 @@ class OrderProvider extends ChangeNotifier {
     scannedDataList.clear();
     scannedDataList =
         baskets.map((e) => e.productIdentifiers).expand((x) => x).toList();
+
+    // check number of product scanned with required quantity for productCount
+    for (var element in _orderDetails?.productDetails ?? <ProductDetails>[]) {
+      if (element.quantity == countScannedItem(element.id)){
+        incrementPackedOnce(element.id);
+      }
+    }
+   
+    
     // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
   }
 
@@ -164,10 +175,11 @@ class OrderProvider extends ChangeNotifier {
   void onOrderAcceptOrGetDetail(int orderId,
       {bool fromCall = false, BuildContext? context}) async {
     // open box
-    basketBox = await Hive.openBox('order_#$orderId');
+    basketBox = await Hive.openBox('${HiveConstants.order}$orderId');
     basketDao = BasketDao(basketBox);
     baskets = basketDao.getAll();
     if (baskets.isNotEmpty && !fromCall) {
+      bucket = baskets.first.identifier;
       initState();
       navigate(context!,
           route: NavigationConstants.orderDetailsRoute, extra: orderId);
@@ -355,6 +367,7 @@ class OrderProvider extends ChangeNotifier {
         if (index >= 0) {
           notifications.removeAt(index);
         }
+        initState();
 
         fetchLatestOrders();
         notifyListeners();
@@ -384,11 +397,17 @@ class OrderProvider extends ChangeNotifier {
     try {
       log(postBasketRequest.toJson().toString(), name: "productPost body data");
 
+      print("${postBasketRequest.toJson()}productPost body data");
+
+      showLoading(context);
+
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.productPostDetail,
         body: postBasketRequest.toJson(),
       );
+
+      removeLoading(context);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
@@ -405,6 +424,7 @@ class OrderProvider extends ChangeNotifier {
         return false;
       }
     } catch (e) {
+      removeLoading(context);
       log('Error posting basket data: $e', name: "basket data response");
       ErrorHandler.alertDialog(context, e.toString());
       notifyListeners();

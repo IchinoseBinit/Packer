@@ -81,7 +81,6 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   ),
                   child: GeneralElevatedButton(
                     onPressed: () async {
-                      showLoading(context);
 
                       final parsedOrderId =
                           int.tryParse(widget.order.data.id.toString()) ?? 0;
@@ -91,11 +90,7 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                         listen: false,
                       ).productPost(context, parsedOrderId);
 
-                      if (!mounted) return;
-
-                      removeLoading(context);
-
-                      if (success) {
+                      if (success && mounted) {
                         Provider.of<HomeProvider>(context, listen: false)
                             .fetchLatestOrders();
 

@@ -14,3 +14,10 @@ class AppConstants {
   
 
 }
+
+class HiveConstants {
+  static const String hivePath = "fasto_packer_data";
+  static const String storeId = "store_";
+  static const String order = "order_#";
+  static const String orderReturn = "order_return_#";
+}

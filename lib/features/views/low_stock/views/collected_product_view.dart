@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
@@ -26,7 +27,10 @@ class _CollectedProductViewState extends State<CollectedProductView> {
         title: const Text("Collected Product"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+             Provider.of<StockProvider>(context, listen: false).fetchLowStockProducts(context);
+            Navigator.pop(context);
+          },
         ),
       ),
       body: Padding(

@@ -1,48 +1,15 @@
-const List<Map<String, dynamic>> demoData = [
-    
-    {
-        "id": 1,
-        "order": 3864,
-        "basket": "basket-Dhumbarahi DS-db961b",
-        "created_at": "2025-07-20T13:55:57.041570+05:45",
-        "order_items": [
-            {
-                "product_id": 1912,
-                "product_name": "Pahadi Original Himalayan Blend Green Tea 37.5g MRP 170",
-                "size": "37.50",
-                "rack_name": "MAR-0-A-4",
-                "measurement": "g",
-                "image_url": "",
-                "unit_tags": [
-                    "1912-1-56-20-1",
-                    "1912-1-56-20-2"
-                ]
-            },
-            {
-                "product_id": 1915,
-                "product_name": "Pahadi Original Himalayan Blend Green Tea 37.5g MRP 170",
-                "size": "37.50",
-                "rack_name": "MAR-0-A-3",
-                "measurement": "g",
-                "image_url": "",
-                "unit_tags": [
-                    "1912-1-56-20-1",
-                    "1912-1-56-20-2"
-                ]
-            },
-            {
-                "product_id": 1918,
-                "product_name": "Pahadi Original Himalayan Blend Green Tea 37.5g MRP 170",
-                "size": "37.50",
-                "rack_name": "MAR-0-A-3",
-                "measurement": "g",
-                "image_url": "",
-                "unit_tags": [
-                    "1912-1-56-20-1",
-                    "1912-1-56-20-2"
-                ]
-            }
-        ]
-    }
-
-];
+// const  Map<String, dynamic> demoData = {
+//     "transfers": [
+//         {
+//             "transfer_id": 15,
+//             "transfer_identifier": "transfer-Mother Warehouse-Nayabazar DS-566642",
+//             "source_store": "Mother Warehouse",
+//             "vehicle_plate": "BA-12-PA-3456",
+//             "driver_name": "Heavy Driver",
+//             "basket_identifiers": [
+//                 "basket-Nayabazar DS-328c62"
+//             ],
+//             "total_baskets": 1
+//         }
+//     ]
+// };

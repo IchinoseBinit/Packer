@@ -20,7 +20,7 @@ class FirebaseAPI {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   // Topic name
-  var topicName = "";
+  // var topicName = "";
 
   // Request permission for notifications
   Future<void> requestPermission() async {
@@ -107,19 +107,19 @@ class FirebaseAPI {
   }
 
   // Subscribe to a topic for packer status
-  Future<void> packerStatus(String topicName) async {
-    this.topicName = topicName;
-    await _firebaseMessaging.subscribeToTopic(topicName);
-  }
+  // Future<void> packerStatus(String topicName) async {
+  //   this.topicName = topicName;
+  //   await _firebaseMessaging.subscribeToTopic(topicName);
+  // }
 
-  // Unsubscribe from the topic
-  Future<void> unsubscribepackerStatus() async {
-    try {
-      await _firebaseMessaging.unsubscribeFromTopic(topicName);
-    }   catch (e) {
-      // TODO
-    }
-  }
+  // // Unsubscribe from the topic
+  // Future<void> unsubscribepackerStatus() async {
+  //   try {
+  //     await _firebaseMessaging.unsubscribeFromTopic(topicName);
+  //   }   catch (e) {
+  //     // TODO
+  //   }
+  // }
 
   // Listen to notifications related to packer status
   void listenTopackerStatusNotifications(

@@ -44,6 +44,32 @@ class PackerTransferProvider extends ChangeNotifier {
     hasScanned = false;
   }
 
+  List<String> rackList = [];
+  Map<String, List<TransferItemModel>> rackMap = {};
+
+
+  arrangeRackTransferItem(){
+    rackMap.clear();
+    rackList.clear();
+
+
+    selectedTransferModel?.items?.forEach((element) {
+      if (!rackList.contains(element.rack)) {
+        rackList.add(element.rack ?? '');
+      }
+
+      rackMap.putIfAbsent(element.rack ?? '', () => []);
+      rackMap[element.rack ?? '']!.add(element);
+    });
+
+    rackList.sort((a, b) => a.compareTo(b));
+    // TODO: Remove
+    rackList = rackList.reversed.toList();
+
+    notifyListeners();
+    
+  }
+
   String getScanMessage(int id) {
     log("Message Product Id: $id");
     for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
@@ -69,14 +95,14 @@ class PackerTransferProvider extends ChangeNotifier {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     if (homeProvider.isMainStore() == false) {
       selectedTransferModel = data;
-      final navigateResult = await navigate(
-        context,
-        route: NavigationConstants.inventoryScanScreenRoute,
-        extra: {
-          "identifier": data.identifier,
-        },
-      );
-      if ((navigateResult ?? false) && context.mounted) {
+      // final navigateResult = await navigate(
+      //   context,
+      //   route: NavigationConstants.inventoryScanScreenRoute,
+      //   extra: {
+      //     "identifier": data.identifier,
+      //   },
+      // );
+      if (context.mounted) {
         scanTagsList.clear();
         notifyListeners();
         fetchTransferDetails(context, selectedTransferModel?.id ?? 0);
@@ -337,7 +363,7 @@ class PackerTransferProvider extends ChangeNotifier {
           (basket) =>
               basket.identifier.toLowerCase().contains(code.toLowerCase()),
         );
-        removeLoading(context);
+        // removeLoading(context);
         fetchBasketDetails(context, selectedBasketModel?.identifier ?? "");
         return true;
       }
@@ -559,6 +585,7 @@ class PackerTransferProvider extends ChangeNotifier {
             TransferItemModel.fromMap(element),
           );
         }
+        arrangeRackTransferItem();
       } else {
         ErrorHandler.alertDialog(context, 'Failed to fetch basket details');
       }

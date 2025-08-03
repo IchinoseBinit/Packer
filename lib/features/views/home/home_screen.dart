@@ -79,9 +79,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         padding: AppConstants.padding,
         child: RefreshIndicator(
           onRefresh: () {
-            provider.initialize(context, isFirstTime: true);
+            provider.initialize(context, isFirstTime: false);
             if (provider.isAvailable) {
-              provider.fetchCreatedOrders();
+              // provider.fetchCreatedOrders();
             }
             return provider.fetchLatestOrders();
           },

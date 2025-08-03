@@ -59,6 +59,8 @@ class NavigationConstants {
   static const String cartonScanScreenRoute = 'carton_scan_screen';
   static const String damageScanScreenRoute = 'damage_scan_screen';
 
+  static const String damageScanScreenRoute = 'damage_scan_screen';
+
 //carton list screen
   static const String orderReturnScreenRoute = 'order_return_screen';
   // rack update screen
@@ -75,7 +77,18 @@ class NavigationConstants {
   // orderReturnScannerRoute
   static const String orderReturnScannerRoute = 'order_return_scanner';
 
-
   // ------------------ for driver -------
   static const String driverHomeRoute = 'driver_home';
+  static const String driverTransferDetailsRoute = 'driver_transfer_details';
+  static const String driverBasketScannerRoute = 'driver_basket_scanner';
+  // driverInTransitRoute
+  static const String driverInTransitRoute = 'driver_in_transit';
+
+  /// ============== manager =============
+  //receive_transfer_list
+  static const String receiveTransferListRoute = 'receive_transfer_list';
+  // receive_basket_list
+  static const String receiveBasketListRoute = 'receive_basket_list';
+  // receiveBasketScannerRoute
+  static const String receiveBasketScannerRoute = 'receive_basket_scanner';
 }

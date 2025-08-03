@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/damage_products/damage_product_scan_screen.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
-import 'package:packer/features/views/home/driver_home_screen.dart';
+import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
+import 'package:packer/features/views/driver/views/basket_list_screen.dart';
+import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
+import 'package:packer/features/views/driver/views/driver_home_screen.dart';
+import 'package:packer/features/views/driver/views/in_transit_screen.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
@@ -37,6 +42,9 @@ import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/product/unit_verify_scanner.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/profile/update_rack_screen.dart';
+import 'package:packer/features/views/receive_baskets/view/basket_in_transit.dart';
+import 'package:packer/features/views/receive_baskets/view/receive_basket_list.dart';
+import 'package:packer/features/views/receive_baskets/view/receive_basket_scanner.dart';
 import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
@@ -217,6 +225,29 @@ class AppRouter {
                 },
               ),
               GoRoute(
+                path: NavigationConstants.driverTransferDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>?;
+                  return BasketListScreen(
+                    transferItem: args?['transferItem'] as DriverTransferModel,
+                    fromInTransit: args?['fromInTransit'] ?? false,
+                  );
+                },
+              ),
+              // driverInTransitRoute
+              GoRoute(
+                path: NavigationConstants.driverInTransitRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return InTransitScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.driverBasketScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return DriverBasketScanner();
+                },
+              ),
+              GoRoute(
                 path: NavigationConstants.lowStockRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return HomeWarehouseScreen();
@@ -226,6 +257,27 @@ class AppRouter {
                 path: NavigationConstants.lowStockDetailRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return LowStockDetails();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.receiveTransferListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return BasketInTransitScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.receiveBasketScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final extra = state.extra as Map<String, dynamic>? ?? {};
+                  return ReceiveBasketScanner(
+                    scanIdentifier: extra['scanIdentifier'] ?? false,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.receiveBasketListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ReceiveBasketList();
                 },
               ),
               GoRoute(
@@ -454,6 +506,7 @@ class AppRouter {
                   );
                 },
               ),
+
               GoRoute(
                 path: NavigationConstants.damageScanScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
