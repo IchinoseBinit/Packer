@@ -227,7 +227,16 @@ class HomeProvider with ChangeNotifier {
         url: AppUrls.packerOnlineStatus,
         body: {"is_online": status},
       );
+      if (response.statusCode == 200) {
+        if (status) {
+          showToast("Your marked yourself as Online. ");
+        } else {
+          showToast("Your marked yourself as Offline. ");
+        }
+      }
     } catch (ex) {
+      showToast(ex as String);
+
       print('Error: $ex');
     }
   }
@@ -247,7 +256,7 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  void toggleOnlineStatus(BuildContext context,
+  toggleOnlineStatus(BuildContext context,
       {bool isFromWarehouse = false, Function()? onPressed}) async {
     isOnline = !isOnline;
     if (!isOnline) {
