@@ -82,8 +82,6 @@ class ProfileScreen extends StatelessWidget {
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Order Return')) {
-        !value.isMainStore() &&
-        !otherInfoData.any((e) => e['title'] == 'Order Return'){
       otherInfoData.add({
         'icon': Icons.repeat_rounded,
         'title': 'Order Return',
@@ -333,4 +331,6 @@ class ProfileScreen extends StatelessWidget {
     });
   }
 }
-}
+
+
+

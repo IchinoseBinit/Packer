@@ -174,21 +174,16 @@ class AppUrls {
   static String get qrDamageUrl => "$baseUrl/qr-damaged/";
 
   // ---------------------------- driver -------------------------------
-  static String driverScanBasketsUrl = "$_baseUrl/driver/scan-baskets/";
+  static String driverScanBasketsUrl = "$baseUrl/driver/scan-baskets/";
   // /driver/in-transit-transfers/
   static String driverInTransitTransfersUrl =
-      "$_baseUrl/driver/in-transit-transfers/";
+      "$baseUrl/driver/in-transit-transfers/";
 
   // ---------------------------- manager -------------------------------
   // manager/transfers/in-transit/
-  static String managerInTransitTransfersUrl =
-      "$_baseUrl/manager/transfers/in-transit/";
+  static String get managerInTransitTransfersUrl =>
+      "$baseUrl/manager/transfers/in-transit/";
   // manager/transfers/15/receive
-  static String managerReceiveTransferUrl =
-      "$_baseUrl/manager/transfers/:id/receive/";
-
-  //damage product url
-  static String damageProductUnitUrl = "$_baseUrl/product_units/";
-  static String markDamageUrl = "$_baseUrl/mark-damaged/";
-  static String qrDamageUrl = "$_baseUrl/qr-damaged/";
+  static String get managerReceiveTransferUrl =>
+      "$baseUrl/manager/transfers/:id/receive/";
 }

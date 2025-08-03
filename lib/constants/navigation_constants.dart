@@ -59,7 +59,6 @@ class NavigationConstants {
   static const String cartonScanScreenRoute = 'carton_scan_screen';
   static const String damageScanScreenRoute = 'damage_scan_screen';
 
-  static const String damageScanScreenRoute = 'damage_scan_screen';
 
 //carton list screen
   static const String orderReturnScreenRoute = 'order_return_screen';
