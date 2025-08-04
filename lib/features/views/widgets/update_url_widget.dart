@@ -8,7 +8,6 @@ import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/enum/environment_config.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 
-
 class UpdateUrlWidget extends StatefulWidget {
   const UpdateUrlWidget({super.key});
 
@@ -19,7 +18,7 @@ class UpdateUrlWidget extends StatefulWidget {
 class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
   final TextEditingController _middleController = TextEditingController();
 
-  final String _prefix = "http://192.168.80.";
+  final String _prefix = "http://192.168.";
   final String _suffix = ":8000";
 
   @override
@@ -54,7 +53,7 @@ class _UpdateUrlWidgetState extends State<UpdateUrlWidget> {
                         controller: _middleController,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                          hintText: 'X.X',
+                          hintText: 'X.X 80.111',
                           border: OutlineInputBorder(),
                         ),
                         style: TextStyle(fontSize: 10.sp),
