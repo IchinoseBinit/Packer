@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';

@@ -20,7 +20,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/widgets/password_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -44,20 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
       authProvider
           .validateLogin(context, username, password)
           .then((value) async {
-        usernameController.clear();
-        passwordController.clear();
         if (value is bool) {
+          usernameController.clear();
+          passwordController.clear();
           Provider.of<HomeProvider>(context, listen: false)
               .fetchpackerSummary()
               .then((v) {
             removeLoading(context);
-            // final home = Provider.of<HomeProvider>(context, listen: false);
-            // log(home.user.toString());
-            // if (home.isDriver()) {
-            //   navigateAndRemoveAllWithRouter(AppRouter.router,
-            //       route: NavigationConstants.driverHomeRoute);
-            //   return;
-            // }
 
             navigate(context, route: NavigationConstants.dashboardRoute);
           });

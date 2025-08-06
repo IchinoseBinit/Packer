@@ -249,10 +249,14 @@ class ProfileScreen extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               showLoading(context);
+                              await Provider.of<HomeProvider>(context,
+                                      listen: false)
+                                  .updatepackerStatus(false, context);
+
                               AuthController().logout().then(
-                                (value) async {
+                                (value) {
                                   removeLoading(context);
                                   Provider.of<HomeProvider>(context,
                                           listen: false)
