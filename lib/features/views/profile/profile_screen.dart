@@ -154,18 +154,16 @@ class ProfileScreen extends StatelessWidget {
                           onTap: () {
                             if (otherInfoData[index]['onTap'] != null) {
                               otherInfoData[index]['onTap']();
-                            }
-                            if (otherInfoData[index]['screen'] != null) {
+                            } else if (otherInfoData[index]['screen'] != null) {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);
-                            }
-                            if (otherInfoData[index]['title'] == "Request QR") {
+                            } else if (otherInfoData[index]['title'] ==
+                                "Request QR") {
                               navigate(context,
                                   route:
                                       NavigationConstants.damageScanScreenRoute,
                                   extra: {'qr': false, 'requestQr': true});
-                            }
-                            if (otherInfoData[index]['title'] ==
+                            } else if (otherInfoData[index]['title'] ==
                                 "Report Damage") {
                               showModalBottomSheet(
                                   context: context,
