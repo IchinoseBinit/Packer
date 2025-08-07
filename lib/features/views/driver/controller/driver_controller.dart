@@ -28,15 +28,16 @@ class DriverController extends ChangeNotifier {
     selectedModel = transferItem;
     navigate(context,
         route: NavigationConstants.driverTransferDetailsRoute,
-        extra: {"transferItem" : transferItem});
+        extra: {"transferItem": transferItem});
   }
 
-  void onDetailsFromInTransit(BuildContext context, DriverTransferModel transferItem) {
+  void onDetailsFromInTransit(
+      BuildContext context, DriverTransferModel transferItem) {
     scannedBasketIdentifiers.clear();
     selectedModel = transferItem;
     navigate(context,
         route: NavigationConstants.driverTransferDetailsRoute,
-        extra: {"transferItem" : transferItem, "fromInTransit" : true});
+        extra: {"transferItem": transferItem, "fromInTransit": true});
   }
 
   bool isBasketScanned(String basketIdentifier) {

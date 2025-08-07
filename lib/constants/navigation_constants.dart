@@ -57,17 +57,17 @@ class NavigationConstants {
   static const String inventoryScanScreenRoute = 'inventory_scan_screen';
   static const String productScanScreenRoute = 'product_scan_screen';
   static const String cartonScanScreenRoute = 'carton_scan_screen';
-
   static const String damageScanScreenRoute = 'damage_scan_screen';
 
-//carton list screen
 
+//carton list screen
   static const String orderReturnScreenRoute = 'order_return_screen';
   // rack update screen
   static const String rackUpdateScreenRoute = 'rack_update_screen';
 
   // product list screen
   static const String productListScreenRoute = 'product_list_screen';
+
   // unitVerifyScannerRoute
   static const String unitVerifyScannerRoute = 'unit_verify_scanner';
   // unit_product_scanner

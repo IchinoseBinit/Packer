@@ -1,6 +1,6 @@
 echo "Building your app"
 
-flutter build apk --release --dart-define=APIType=production
+flutter build apk --release --dart-define=APIType=staging
 
 mkdir -p ./gen/
 

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
-import 'package:packer/damage_products/damage_product_scan_screen.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/driver/views/basket_list_screen.dart';
@@ -21,7 +20,6 @@ import 'package:packer/features/views/order/models/see_order_details_packer.dart
 import 'package:packer/features/views/order/views/order_return_detail.dart';
 import 'package:packer/features/views/order/views/order_return_list.dart';
 import 'package:packer/features/views/order/views/order_return_scanner.dart';
-import 'package:packer/features/views/order/views/otp_screen.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
@@ -50,6 +48,7 @@ import 'package:packer/features/views/scan/scan_screen.dart';
 import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/carton_scan_screen.dart';
+import 'package:packer/features/views/scanner/views/damaged_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
@@ -144,6 +143,7 @@ class AppRouter {
                   return const PhotoSelection();
                 },
               ),
+
               GoRoute(
                 path: NavigationConstants.drivingLicenseScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -486,6 +486,7 @@ class AppRouter {
                   );
                 },
               ),
+
               GoRoute(
                 path: NavigationConstants.unitVerifyScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -504,6 +505,7 @@ class AppRouter {
                   );
                 },
               ),
+             
 
               GoRoute(
                 path: NavigationConstants.damageScanScreenRoute,

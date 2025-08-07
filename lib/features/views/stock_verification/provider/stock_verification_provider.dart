@@ -60,7 +60,7 @@ class StockVerificationProvider extends ChangeNotifier {
               extra: {
                 "changeRack": false,
               });
-        }else {
+        } else {
           ErrorHandler.alertDialog(context, 'Failed to get audit view');
         }
       }

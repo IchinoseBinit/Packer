@@ -195,7 +195,7 @@ class OrderProvider extends ChangeNotifier {
           },
         );
       } else {
-       await navigate(context!,
+        await navigate(context!,
             route: NavigationConstants.basketScanScreenRoute,
             extra: {
               'forOrder': true,
@@ -207,7 +207,7 @@ class OrderProvider extends ChangeNotifier {
         //   initState();
         //   navigate(context,
         //       route: NavigationConstants.orderDetailsRoute, extra: orderId);
-        // } 
+        // }
       }
     }
     // scan basket
@@ -410,8 +410,10 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
+        clearBasket(baskets.first.identifier);
         resetState();
         // remove box
+        basketDataList.clear();
         basketDao.clearAll();
         scannedDataList.clear();
         notifyListeners();
@@ -528,11 +530,12 @@ class OrderProvider extends ChangeNotifier {
   }
 
   // UPDATED and flow fixed
-  Future<ScanResult> updateBucketData(BuildContext context, String? data) async {
+  Future<ScanResult> updateBucketData(
+      BuildContext context, String? data) async {
     if (data != null) {
       log("Basket code scanned from order acknowledge $data");
 
-      final result = await clearBasket( data);
+      final result = await clearBasket(data);
       if (!result.success) {
         return result;
       }

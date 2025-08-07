@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -15,7 +17,6 @@ class ErrorHandler {
     print(ex);
     final isFormatException = ex.runtimeType.toString() == "_TypeError";
 
-
     if (isFormatException) {
       Navigator.pop(context);
       showToast(ex.toString(), color: AppColors.primaryColor);
@@ -26,14 +27,17 @@ class ErrorHandler {
   }
 
   // alert dialog
-  static void alertDialog(BuildContext context, String message,[Function()? okFunc]) {
+  static Future<void> alertDialog(BuildContext context, String message,
+      [Function()? okFunc]) async {
     if (!context.mounted) return;
     ShowAlertDialog(
-      disableBackground: true,
-      body: Text(message),
-      okFunc: okFunc ?? () {navigatePop(context);}
-    ).showAlertDialog(context);
+            disableBackground: true,
+            body: Text(message),
+            okFunc: okFunc ??
+                () {
+                  navigatePop(context);
+                  
+                })
+        .showAlertDialog(context);
   }
-
-  
 }
