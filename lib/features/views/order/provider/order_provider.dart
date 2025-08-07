@@ -227,39 +227,38 @@ class OrderProvider extends ChangeNotifier {
     log("Message Product Id: $productId");
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
-        return "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
+        return "Scan ${element.quantity - countScannedItem(productId)} ${element.productName}";
       }
     }
     return "";
   }
 
   // UPDATED
-  bool scanProduct(BuildContext context, int cartItemId, String code) {
+  ScanResult scanProduct(BuildContext context, int cartItemId, String code) {
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          ErrorHandler.alertDialog(context, "QR: $code already scanned");
-          return false;
+          return ScanResult(success: false, message: "QR: $code already scanned");
         }
         updateProductList(code);
         if (countScannedItem(cartItemId) == element.quantity) {
-          showToast("Item scanned successfully");
+          
 
           //aaaaa
           incrementPackedOnce(element.id);
 
           notifyListeners();
-          return true;
+          return ScanResult(success: true, message: "Scanned Successfully");
         } else {
           final scanMessage =
               "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
           Provider.of<ScanMessageProvider>(context, listen: false)
               .setMessage(context, scanMessage);
-          return false;
+          return ScanResult(success: false);
         }
       }
     }
-    return false;
+    return ScanResult(success: false, message: "Product not found");
   }
 
   /// Use order type to pass multiple values

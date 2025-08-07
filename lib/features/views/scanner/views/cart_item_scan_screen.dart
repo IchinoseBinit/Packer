@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -31,11 +32,10 @@ class CartItemScanScreen extends BaseScanScreen {
   }
 
   @override
-  Widget? buildFloatingButton(BuildContext context,
-      MobileScannerController controller) {
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
     return SizedBox.shrink();
   }
-
 
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
@@ -46,7 +46,7 @@ class CartItemScanScreen extends BaseScanScreen {
 
       controller.stop();
       HapticFeedback.heavyImpact();
-      showLoading(context);
+      // showLoading(context);
 
       // split code to get product id
       final prodId = int.tryParse(code.split('-').first) ?? 0;
@@ -57,14 +57,19 @@ class CartItemScanScreen extends BaseScanScreen {
 
       final result = Provider.of<OrderProvider>(context, listen: false)
           .scanProduct(context, productId, code);
-      if (result && context.mounted) {
+      if (result.success && context.mounted) {
         hasScanned = false;
-        removeLoading(context);
+        if (result.message != null) {
+          showToast(result.message ?? '');
+        }
         Navigator.pop(context, true);
       } else if (context.mounted) {
-        removeLoading(context);
-        hasScanned = false;
-        controller.start();
+        if (result.message != null) {
+          handleInvalidCode(context, controller, code, result.message);
+        } else {
+          hasScanned = false;
+          controller.start();
+        }
       }
     } catch (e) {
       handleInvalidCode(context, controller, code);
@@ -72,11 +77,11 @@ class CartItemScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code) {
-    removeLoading(context);
+      BuildContext context, MobileScannerController controller, String code,
+      [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
-      body: Text("Invalid QR ${detectQrMessage(code)}"),
+      body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context);
         controller.start();
