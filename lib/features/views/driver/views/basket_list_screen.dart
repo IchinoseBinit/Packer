@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -11,7 +13,8 @@ import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
 class BasketListScreen extends StatefulWidget {
-  const BasketListScreen({super.key, required this.transferItem, this.fromInTransit = false});
+  const BasketListScreen(
+      {super.key, required this.transferItem, this.fromInTransit = false});
 
   final DriverTransferModel transferItem;
   final bool fromInTransit;
@@ -66,25 +69,30 @@ class _BasketListScreenState extends State<BasketListScreen> {
             ],
           ),
         ),
-        bottomNavigationBar: widget.fromInTransit ? null : Consumer<DriverController>(
-          builder: (context, driverController, child) {
-            return Padding(
-              padding: AppConstants.padding,
-              child: GeneralElevatedButton(
-                  title: driverController.isAllBasketScanned()
-                      ? "Complete"
-                      : "Scan Basket",
-                  onPressed: () {
-                    driverController.isAllBasketScanned()
-                        ? Provider.of<DriverController>(context, listen: false).completeTransfer(context)
-                        : navigate(
-                            context,
-                            route: NavigationConstants.driverBasketScannerRoute,
-                          );
-                  }),
-            );
-          },
-        ));
+        bottomNavigationBar: widget.fromInTransit
+            ? null
+            : Consumer<DriverController>(
+                builder: (context, driverController, child) {
+                  return Padding(
+                    padding: AppConstants.padding,
+                    child: GeneralElevatedButton(
+                        title: driverController.isAllBasketScanned()
+                            ? "Complete"
+                            : "Scan Basket",
+                        onPressed: () {
+                          driverController.isAllBasketScanned()
+                              ? Provider.of<DriverController>(context,
+                                      listen: false)
+                                  .completeTransfer(context)
+                              : navigate(
+                                  context,
+                                  route: NavigationConstants
+                                      .driverBasketScannerRoute,
+                                );
+                        }),
+                  );
+                },
+              ));
   }
 }
 
@@ -144,13 +152,16 @@ class BasketCard extends StatelessWidget {
                 ],
               ),
             ),
-            showStatus ? Text(
-              scanned ? 'Scanned' : 'Not Scanned',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color:
-                        scanned ? AppColors.green700 : AppColors.primaryColor,
-                  ),
-            ) : const SizedBox(),
+            showStatus
+                ? Text(
+                    scanned ? 'Scanned' : 'Not Scanned',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scanned
+                              ? AppColors.green700
+                              : AppColors.primaryColor,
+                        ),
+                  )
+                : const SizedBox(),
           ],
         ),
       ),

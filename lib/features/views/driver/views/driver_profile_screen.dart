@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -63,28 +65,75 @@ class DriverProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: .4.sh),
             Center(
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        showLoading(context);
-                        AuthController().logout().then(
-                          (value) async {
-                            removeLoading(context);
-                            Provider.of<HomeProvider>(context, listen: false)
-                                .resetUser();
-                            if (value is bool) {
-                              navigateAndRemoveAll(context,
-                                  route: NavigationConstants.loginRoute);
-                            } else {
-                              ErrorHandler().errorHandler(context, value);
-                            }
+                  SizedBox(
+                    width: 170.w,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryColor,
+                        ),
+                        onPressed: () {
+                          showLoading(context);
+                          AuthController().logout().then(
+                            (value) async {
+                              removeLoading(context);
+                              Provider.of<HomeProvider>(context, listen: false)
+                                  .resetUser();
+                              if (value is bool) {
+                                navigateAndRemoveAll(context,
+                                    route: NavigationConstants.loginRoute);
+                              } else {
+                                ErrorHandler().errorHandler(context, value);
+                              }
+                            },
+                          );
+                        },
+                        child: Text(
+                          'Logout',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: AppColors.backgroundColor),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 170.w,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w),
+                      child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                          ),
+                          onPressed: () {
+                            ShowAlertDialog(
+                              title: 'Clear Cache',
+                              body:
+                                  Text('Are you sure you want to clear cache?'),
+                              okFunc: () {
+                                HiveDBService.wipeHiveCompletely();
+                                navigatePop(context);
+                              },
+                              needCancel: true,
+                              cancelFunc: () {
+                                navigatePop(context);
+                              },
+                            ).showAlertDialog(context);
                           },
-                        );
-                      },
-                      child: Text('Logout'),
+                          child: Text(
+                            "Clear Cache",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.backgroundColor,
+                                ),
+                          )),
                     ),
                   ),
                 ],

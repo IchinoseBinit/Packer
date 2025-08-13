@@ -6,7 +6,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';

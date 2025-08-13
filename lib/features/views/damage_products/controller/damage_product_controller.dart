@@ -1,6 +1,4 @@
 
-import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';

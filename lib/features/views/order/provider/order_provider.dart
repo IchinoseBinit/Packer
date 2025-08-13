@@ -195,7 +195,7 @@ class OrderProvider extends ChangeNotifier {
           },
         );
       } else {
-       await navigate(context!,
+        await navigate(context!,
             route: NavigationConstants.basketScanScreenRoute,
             extra: {
               'forOrder': true,
@@ -207,7 +207,7 @@ class OrderProvider extends ChangeNotifier {
         //   initState();
         //   navigate(context,
         //       route: NavigationConstants.orderDetailsRoute, extra: orderId);
-        // } 
+        // }
       }
     }
     // scan basket
@@ -227,39 +227,38 @@ class OrderProvider extends ChangeNotifier {
     log("Message Product Id: $productId");
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
-        return "Scan ${element.quantity - element.itemScanCount} ${element.productName}";
+        return "Scan ${element.quantity - countScannedItem(productId)} ${element.productName}";
       }
     }
     return "";
   }
 
   // UPDATED
-  bool scanProduct(BuildContext context, int cartItemId, String code) {
+  ScanResult scanProduct(BuildContext context, int cartItemId, String code) {
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          ErrorHandler.alertDialog(context, "QR: $code already scanned");
-          return false;
+          return ScanResult(success: false, message: "QR: $code already scanned");
         }
         updateProductList(code);
         if (countScannedItem(cartItemId) == element.quantity) {
-          showToast("Item scanned successfully");
+          
 
           //aaaaa
           incrementPackedOnce(element.id);
 
           notifyListeners();
-          return true;
+          return ScanResult(success: true, message: "Scanned Successfully");
         } else {
           final scanMessage =
               "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
           Provider.of<ScanMessageProvider>(context, listen: false)
               .setMessage(context, scanMessage);
-          return false;
+          return ScanResult(success: false);
         }
       }
     }
-    return false;
+    return ScanResult(success: false, message: "Product not found");
   }
 
   /// Use order type to pass multiple values
@@ -411,8 +410,10 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
+        clearBasket(baskets.first.identifier);
         resetState();
         // remove box
+        basketDataList.clear();
         basketDao.clearAll();
         scannedDataList.clear();
         notifyListeners();
@@ -529,11 +530,12 @@ class OrderProvider extends ChangeNotifier {
   }
 
   // UPDATED and flow fixed
-  Future<ScanResult> updateBucketData(BuildContext context, String? data) async {
+  Future<ScanResult> updateBucketData(
+      BuildContext context, String? data) async {
     if (data != null) {
       log("Basket code scanned from order acknowledge $data");
 
-      final result = await clearBasket( data);
+      final result = await clearBasket(data);
       if (!result.success) {
         return result;
       }

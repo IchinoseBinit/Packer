@@ -2,11 +2,9 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
@@ -21,6 +19,7 @@ import 'package:provider/provider.dart';
 
 import 'base_scan_screen.dart';
 
+// ignore: must_be_immutable
 class ProductScanScreen extends BaseScanScreen {
   final int productId;
   bool hasScanned = false;

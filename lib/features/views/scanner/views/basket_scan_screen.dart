@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -16,6 +18,7 @@ import 'base_scan_screen.dart';
 class BasketScanScreen extends BaseScanScreen {
   final String? basketCode;
   final bool forOrder;
+  @override
   final bool fromCall;
   final int orderId;
 
@@ -54,7 +57,8 @@ class BasketScanScreen extends BaseScanScreen {
       MobileScannerController controller) async {
     if (_processing) return;
     _processing = true;
-
+    Provider.of<OrderProvider>(context, listen: false)
+        .clearBasket(code); // Set the basket code for order provider
     try {
       controller.stop();
       HapticFeedback.heavyImpact();
@@ -64,12 +68,12 @@ class BasketScanScreen extends BaseScanScreen {
         return;
       }
 
-
       if (forOrder) {
         showLoading(context);
-        var bucketResult = await Provider.of<OrderProvider>(context, listen: false)
-            .updateBucketData(context, code);
-      
+        var bucketResult =
+            await Provider.of<OrderProvider>(context, listen: false)
+                .updateBucketData(context, code);
+
         if (fromCall && context.mounted && bucketResult.success) {
           removeLoading(context);
           Provider.of<OrderProvider>(context, listen: false).initState();
@@ -79,13 +83,14 @@ class BasketScanScreen extends BaseScanScreen {
         } else if (bucketResult.success && context.mounted) {
           removeLoading(context);
           Navigator.pop(context, true);
+
           return;
         } else {
           if (bucketResult.message == null) {
             removeLoading(context);
-          controller.start();
-          _processing = false;
-          }else {
+            controller.start();
+            _processing = false;
+          } else {
             removeLoading(context);
             handleInvalidCode(context, controller, code, bucketResult.message);
           }
@@ -104,8 +109,6 @@ class BasketScanScreen extends BaseScanScreen {
           handleInvalidCode(context, controller, code);
         }
       }
-
-      
     } catch (_) {
       if (context.mounted) {
         handleInvalidCode(context, controller, code);
@@ -116,12 +119,15 @@ class BasketScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code, [String? message]) {
+      BuildContext context, MobileScannerController controller, String code,
+      [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
       body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
         Navigator.pop(context); // dismiss dialog
+        // removeLoading(context);
+        // removeLoading(context);
         controller.start();
       },
     ).showAlertDialog(context);

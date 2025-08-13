@@ -2,11 +2,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/controllers/services/router.dart';
+import 'package:packer/enum/environment_config.dart';
+import 'package:packer/features/views/widgets/update_url_widget.dart';
 import 'package:provider/provider.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/controllers/services/validation_mixin.dart';
 import 'package:packer/features/views/auth/provider/auth_provider.dart';
@@ -130,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
+                UpdateUrlWidget()
               ],
             ),
           ),
