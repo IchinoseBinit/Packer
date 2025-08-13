@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +55,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
       controller?.start();
 
       widget.onScreenCreated(context);
+      Provider.of<DamageProductController>(context, listen: false).reset();
 
       controller?.addListener(_onControllerChanged);
     });
