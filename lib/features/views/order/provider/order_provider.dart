@@ -1,23 +1,20 @@
 import 'dart:developer';
+import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
-import 'package:packer/controllers/extensions/list_extension.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -31,7 +28,6 @@ import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/post_basket_model.dart';
-import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 class OrderProvider extends ChangeNotifier {
@@ -136,12 +132,11 @@ class OrderProvider extends ChangeNotifier {
 
     // check number of product scanned with required quantity for productCount
     for (var element in _orderDetails?.productDetails ?? <ProductDetails>[]) {
-      if (element.quantity == countScannedItem(element.id)){
+      if (element.quantity == countScannedItem(element.id)) {
         incrementPackedOnce(element.id);
       }
     }
-   
-    
+
     // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
   }
 
@@ -238,12 +233,11 @@ class OrderProvider extends ChangeNotifier {
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          return ScanResult(success: false, message: "QR: $code already scanned");
+          return ScanResult(
+              success: false, message: "QR: $code already scanned");
         }
         updateProductList(code);
         if (countScannedItem(cartItemId) == element.quantity) {
-          
-
           //aaaaa
           incrementPackedOnce(element.id);
 
@@ -561,6 +555,62 @@ class OrderProvider extends ChangeNotifier {
       return ScanResult(success: false, message: "Failed to clear basket");
     } catch (e) {
       return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  Future uploadImages(
+    List<File> files,
+    BuildContext context,
+    String productId,
+  ) async {
+    debugger();
+    try {
+      var formData = FormData();
+
+      // Add product_id field
+      formData.fields.add(MapEntry("product_id", productId));
+
+      // Add each image file
+      for (int i = 0; i < files.length; i++) {
+        formData.files.add(
+          MapEntry(
+            "images[]", // Change to "images" if API doesn't expect []
+            await MultipartFile.fromFile(files[i].path),
+          ),
+        );
+      }
+
+      final response = await DioClient().request(
+        requestType: RequestType.postWithTokenFormData,
+        url: AppUrls.damageProductImageUpload,
+        body: formData,
+      );
+
+      if (response.statusCode == 200) {
+        hasUploadedHomeImage = true;
+        notifyListeners();
+        return true;
+      } else {
+        hasUploadedHomeImage = false;
+        throw response.data;
+      }
+    } catch (e) {
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Error"),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+
+      hasUploadedHomeImage = false;
+      return e;
     }
   }
 

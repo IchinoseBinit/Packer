@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
+import 'package:packer/features/views/damage_products/rack_product_list.dart';
 import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/driver/views/basket_list_screen.dart';
 import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
@@ -472,7 +473,7 @@ class AppRouter {
                 },
               ),
               GoRoute(
-                path: NavigationConstants.productListScreenRoute,
+                path: NavigationConstants.productlistScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return ProductListScreen();
                 },
@@ -505,7 +506,12 @@ class AppRouter {
                   );
                 },
               ),
-             
+              GoRoute(
+                path: NavigationConstants.rackProductListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return RackProductList();
+                },
+              ),
 
               GoRoute(
                 path: NavigationConstants.damageScanScreenRoute,
@@ -514,6 +520,7 @@ class AppRouter {
                   return DamagedScanScreen(
                     showInfo: args['showInfo'] ?? false,
                     qr: args['qr'],
+                    scanRack: args['scanRack'] ?? false,
                     requestQr: args['requestQr'] ?? false,
                   );
                 },

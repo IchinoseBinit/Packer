@@ -207,6 +207,31 @@ class ProfileScreen extends StatelessWidget {
                                                 ),
                                               ),
                                             ),
+                                            Expanded(
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 16.h,
+                                                ),
+                                                child: GeneralElevatedButton(
+                                                  marginH: 6.w,
+                                                  title: "With Rack",
+                                                  textStyle: TextStyle(
+                                                      fontSize: 13.sp,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      color: Colors.white),
+                                                  onPressed: () {
+                                                    navigate(context,
+                                                        route: NavigationConstants
+                                                            .damageScanScreenRoute,
+                                                        extra: {
+                                                          'scanRack': true,
+                                                          'qr': false,
+                                                        });
+                                                  },
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ));

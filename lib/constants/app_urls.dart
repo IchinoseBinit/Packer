@@ -4,7 +4,6 @@ class AppUrls {
   static String baseUrl = EnvironmentConfig.type == EnvironmentType.staging
       ? "http://103.187.8.105:8000" // or any sensible default
       : "https://fasto.com.np";
-  
 
   static void setBaseUrl(String url) {
     if (EnvironmentConfig.type == EnvironmentType.staging) {
@@ -50,6 +49,9 @@ class AppUrls {
   //http://13.211.205.215:8000/admin/product/productimage/
   static String get cartUrl => "$baseUrl/cart-items";
   // static  String get increamentCartUrl => "$baseUrl/cart-items";
+
+    static String get damageProductImageUpload => "$baseUrl/damaged-products/upload/";
+
 
   //login api path
   static String get loginUrldemo => "$_authUrl/api/token/";
@@ -177,4 +179,5 @@ class AppUrls {
   static String get damageProductUnitUrl => "$baseUrl/product_units/";
   static String get markDamageUrl => "$baseUrl/mark-damaged/";
   static String get qrDamageUrl => "$baseUrl/qr-damaged/";
+  static String get scanRackDamageUrl => "$baseUrl/rack/products/";
 }

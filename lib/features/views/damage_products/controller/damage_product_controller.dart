@@ -1,17 +1,22 @@
+import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/damage_products/model/rack_product_model.dart';
 
 class DamageProductController extends ChangeNotifier {
   bool isLoading = false;
   List<String> tagList = [];
   List<String> difference = [];
   List<String> productUnits = [];
+  List<Product> rackProductList = [];
+
   Future<void> postProductTag(String code) async {
     try {
+      debugger();
       isLoading = true;
       notifyListeners();
 
@@ -77,6 +82,37 @@ class DamageProductController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
       showToast("...Failed...");
+    }
+  }
+
+  Future<bool> getProductList(String code) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: AppUrls.scanRackDamageUrl,
+          body: {'unique_identifier': code});
+
+      if (response.statusCode == 200) {
+        final productsResponse = ProductsResponse.fromJson(response.data);
+
+        rackProductList = productsResponse.products;
+        isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        rackProductList = [];
+        isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      showToast("Failed to fetch product list");
+      return false;
     }
   }
 
