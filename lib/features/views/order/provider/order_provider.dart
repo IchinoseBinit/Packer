@@ -668,6 +668,31 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  void damageProductReceived(BuildContext context) async {
+    final Map<String, dynamic> body = {
+      "product_tags": scannedDamageProductList,
+    };
+
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.damagedProductReceiveUrl,
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        scannedDamageProductList.clear();
+        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
+        notifyListeners();
+      } else {
+        // Handle server error gracefully
+        showToast(response.data['error'] ?? "Failed to receive products");
+      }
+    } catch (e) {
+      showToast("Error: $e");
+    }
+  }
+
   void incrementPackedOnce(int productId) {
     if (_alreadyIncremented.contains(productId)) return;
 

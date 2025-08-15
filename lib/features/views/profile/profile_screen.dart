@@ -80,6 +80,7 @@ class ProfileScreen extends StatelessWidget {
       });
     }
     if (!value.isAuditUser() &&
+        !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Report Damage')) {
       otherInfoData.add({
         'icon': Icons.report,
@@ -87,6 +88,7 @@ class ProfileScreen extends StatelessWidget {
       });
     }
     if (!value.isAuditUser() &&
+        !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Request QR')) {
       otherInfoData.add({
         'icon': Icons.qr_code,
@@ -95,10 +97,18 @@ class ProfileScreen extends StatelessWidget {
     }
 
     if (!value.isAuditUser() &&
+        !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Transfer Damaged Products')) {
       otherInfoData.add({
         'icon': Icons.transfer_within_a_station,
         'title': 'Transfer Damaged Products',
+      });
+    }
+    if (!value.isAuditUser() &&
+        !otherInfoData.any((e) => e['title'] == 'Receive Damaged Products')) {
+      otherInfoData.add({
+        'icon': Icons.transfer_within_a_station,
+        'title': 'Receive Damaged Products',
       });
     }
   }
@@ -165,6 +175,12 @@ class ProfileScreen extends StatelessWidget {
                             } else if (otherInfoData[index]['screen'] != null) {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);
+                            } else if (otherInfoData[index]['title'] ==
+                                "Receive Damaged Products") {
+                              navigate(context,
+                                  route: NavigationConstants
+                                      .productScanScreenRoute,
+                                  extra: {'forDamageReceive': true});
                             } else if (otherInfoData[index]['title'] ==
                                 "Request QR") {
                               navigate(context,

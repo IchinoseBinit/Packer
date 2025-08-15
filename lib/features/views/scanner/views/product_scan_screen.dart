@@ -29,6 +29,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool fromTransfer = false;
   bool forCarton = false;
   bool forDamageTransfer;
+  bool forDamageReceive;
 
   ProductScanScreen({
     super.key,
@@ -38,6 +39,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.fromTransfer = false,
     this.forCarton = false,
     this.forDamageTransfer = false,
+    this.forDamageReceive = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -86,6 +88,14 @@ class ProductScanScreen extends BaseScanScreen {
               .damageProductTransfer(context);
         },
         title: "Confirm Transfer",
+      );
+    }
+    if (forDamageReceive) {
+      return GeneralElevatedButton(
+        onPressed: () async {
+          
+        },
+        title: "Receive Transfer",
       );
     }
     if (fromTransfer) {
@@ -248,7 +258,14 @@ class ProductScanScreen extends BaseScanScreen {
         showToast("Product Scanned Successfully");
         hasScanned = false;
         controller.start();
-      } else if (fromStockVerification) {
+      } else if (forDamageReceive) {
+        Provider.of<OrderProvider>(context, listen: false)
+            .scannedDamageProduct(code);
+        showToast("Product Scanned Successfully");
+        hasScanned = false;
+        controller.start();
+      } 
+      else if (fromStockVerification) {
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
         // If other cartoon check is needed

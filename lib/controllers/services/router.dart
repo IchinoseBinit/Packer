@@ -450,6 +450,7 @@ class AppRouter {
                     fromTransfer: args['forTransfer'] ?? false,
                     forCarton: args['forCarton'] ?? false,
                     forDamageTransfer: args['forDamageTransfer'] ?? false,
+                    forDamageReceive: args['forDamageReceive'] ?? false,
                   );
                 },
               ),

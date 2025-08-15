@@ -142,6 +142,8 @@ class AppUrls {
   //damage product transfer
   static String get damagedProductTransfer =>
       "$baseUrl/transfer-damaged-products/";
+  static String get damagedProductReceiveUrl =>
+      "$baseUrl/change-damaged-products-store/";
 
   // getStockItemsUrl :/stores/products/
   static String get getStoreUrl => "$baseUrl/stores/";
