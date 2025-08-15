@@ -125,7 +125,7 @@ class DamagedScanScreen extends BaseScanScreen {
         final success = await provider.getProductList(code);
 
         if (success) {
-          navigate(context,
+          navigateReplacement(context,
               route: NavigationConstants.rackProductListScreenRoute);
         }
       } else {

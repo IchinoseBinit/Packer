@@ -93,6 +93,14 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Request QR',
       });
     }
+
+    if (!value.isAuditUser() &&
+        !otherInfoData.any((e) => e['title'] == 'Transfer Damaged Products')) {
+      otherInfoData.add({
+        'icon': Icons.transfer_within_a_station,
+        'title': 'Transfer Damaged Products',
+      });
+    }
   }
 
   @override
@@ -221,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
                                                           FontWeight.w900,
                                                       color: Colors.white),
                                                   onPressed: () {
-                                                    navigate(context,
+                                                    navigateReplacement(context,
                                                         route: NavigationConstants
                                                             .damageScanScreenRoute,
                                                         extra: {
@@ -235,6 +243,14 @@ class ProfileScreen extends StatelessWidget {
                                           ],
                                         ),
                                       ));
+                            } else if (otherInfoData[index]['title'] ==
+                                'Transfer Damaged Products') {
+                              navigateReplacement(context,
+                                  route:
+                                      NavigationConstants.basketScanScreenRoute,
+                                  extra: {
+                                    'forTransfer': true,
+                                  });
                             } else {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);

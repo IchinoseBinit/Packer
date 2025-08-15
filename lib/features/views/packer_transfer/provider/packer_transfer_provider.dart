@@ -337,6 +337,8 @@ class PackerTransferProvider extends ChangeNotifier {
     return false;
   }
 
+ 
+
   // remove particular productid scan tags
   void removeScanTags(int productId) {
     scanTagsList

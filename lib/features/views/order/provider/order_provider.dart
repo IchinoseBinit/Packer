@@ -15,6 +15,7 @@ import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -48,6 +49,7 @@ class OrderProvider extends ChangeNotifier {
   UnsettledOrders? unsettledOrders;
   List<OrderNotification> latestOrder = [];
   bool hasScanned = false;
+  List<String> damagedProductTags = [];
 
   set isAvailable(val) {
     _isAvailable = val;
@@ -563,7 +565,6 @@ class OrderProvider extends ChangeNotifier {
     BuildContext context,
     String productId,
   ) async {
-    debugger();
     try {
       var formData = FormData();
 
@@ -574,20 +575,22 @@ class OrderProvider extends ChangeNotifier {
       for (int i = 0; i < files.length; i++) {
         formData.files.add(
           MapEntry(
-            "images[]", // Change to "images" if API doesn't expect []
+            "images", // Change to "images" if API doesn't expect []
             await MultipartFile.fromFile(files[i].path),
           ),
         );
       }
-
       final response = await DioClient().request(
         requestType: RequestType.postWithTokenFormData,
         url: AppUrls.damageProductImageUpload,
         body: formData,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        removeLoading(context);
+        damagedProductTags = List<String>.from(response.data['tags'] ?? []);
         hasUploadedHomeImage = true;
+
         notifyListeners();
         return true;
       } else {
@@ -611,6 +614,57 @@ class OrderProvider extends ChangeNotifier {
 
       hasUploadedHomeImage = false;
       return e;
+    }
+  }
+
+  final List<String> scannedDamageProductList = [];
+
+  scanDamagedProductBasket(String code) {
+    bucketData = "";
+
+    if (code.isEmpty) {
+      return;
+    } else {
+      bucketData = code;
+      notifyListeners();
+    }
+  }
+
+  scannedDamageProduct(String code) {
+    scannedDamageProductList.clear();
+
+    if (code.isEmpty) {
+      return;
+    } else {
+      scannedDamageProductList.add(code);
+      notifyListeners();
+    }
+  }
+
+  void damageProductTransfer(BuildContext context) async {
+    final Map<String, dynamic> body = {
+      "identifier": bucketData,
+      "product_tags": scannedDamageProductList,
+    };
+
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.damagedProductTransfer,
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        scannedDamageProductList.clear();
+        bucketData = "";
+        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
+        notifyListeners();
+      } else {
+        // Handle server error gracefully
+        showToast(response.data['error'] ?? "Failed to transfer products");
+      }
+    } catch (e) {
+      showToast("Error: $e");
     }
   }
 

@@ -50,8 +50,8 @@ class AppUrls {
   static String get cartUrl => "$baseUrl/cart-items";
   // static  String get increamentCartUrl => "$baseUrl/cart-items";
 
-    static String get damageProductImageUpload => "$baseUrl/damaged-products/upload/";
-
+  static String get damageProductImageUpload =>
+      "$baseUrl/damaged-products/upload/";
 
   //login api path
   static String get loginUrldemo => "$_authUrl/api/token/";
@@ -138,6 +138,10 @@ class AppUrls {
 
   // /basket/<str:identifier>/
   static String get basketUrl => "$baseUrl/basket/:id/";
+
+  //damage product transfer
+  static String get damagedProductTransfer =>
+      "$baseUrl/transfer-damaged-products/";
 
   // getStockItemsUrl :/stores/products/
   static String get getStoreUrl => "$baseUrl/stores/";

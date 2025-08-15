@@ -8,6 +8,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
@@ -27,6 +28,7 @@ class ProductScanScreen extends BaseScanScreen {
   int? cartonId;
   bool fromTransfer = false;
   bool forCarton = false;
+  bool forDamageTransfer;
 
   ProductScanScreen({
     super.key,
@@ -35,6 +37,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.cartonId,
     this.fromTransfer = false,
     this.forCarton = false,
+    this.forDamageTransfer = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -74,6 +77,15 @@ class ProductScanScreen extends BaseScanScreen {
               .showCartonProductTags(context);
         },
         child: const Icon(Icons.info, color: Colors.white),
+      );
+    }
+    if (forDamageTransfer) {
+      return GeneralElevatedButton(
+        onPressed: () async {
+          Provider.of<OrderProvider>(context, listen: false)
+              .damageProductTransfer(context);
+        },
+        title: "Confirm Transfer",
       );
     }
     if (fromTransfer) {
@@ -230,6 +242,12 @@ class ProductScanScreen extends BaseScanScreen {
             hasScanned = false;
           });
         }
+      } else if (forDamageTransfer) {
+        Provider.of<OrderProvider>(context, listen: false)
+            .scannedDamageProduct(code);
+        showToast("Product Scanned Successfully");
+        hasScanned = false;
+        controller.start();
       } else if (fromStockVerification) {
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);

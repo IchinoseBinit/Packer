@@ -21,12 +21,14 @@ class BasketScanScreen extends BaseScanScreen {
   @override
   final bool fromCall;
   final int orderId;
+  final bool forTransfer;
 
   BasketScanScreen({
     super.key,
     this.basketCode,
     this.forOrder = false,
     this.fromCall = false,
+    this.forTransfer = false,
     this.orderId = 0,
   }) : super(
           scanTitle: "Basket Scanner",
@@ -95,6 +97,14 @@ class BasketScanScreen extends BaseScanScreen {
             handleInvalidCode(context, controller, code, bucketResult.message);
           }
         }
+      } else if (forTransfer) {
+        Provider.of<OrderProvider>(context, listen: false)
+            .scanDamagedProductBasket(code);
+        navigateReplacement(context,
+            route: NavigationConstants.productScanScreenRoute,
+            extra: {
+              'forDamageTransfer': true,
+            });
       } else {
         var result = Provider.of<PackerTransferProvider>(context, listen: false)
             .scanBasketCode(context, code);

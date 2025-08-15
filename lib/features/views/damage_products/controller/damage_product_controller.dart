@@ -1,6 +1,9 @@
 import 'dart:developer';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -16,7 +19,6 @@ class DamageProductController extends ChangeNotifier {
 
   Future<void> postProductTag(String code) async {
     try {
-      debugger();
       isLoading = true;
       notifyListeners();
 

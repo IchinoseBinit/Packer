@@ -407,6 +407,7 @@ class AppRouter {
                     basketCode: args['basketCode'],
                     forOrder: args['forOrder'] ?? false,
                     fromCall: args['fromCall'] ?? false,
+                    forTransfer: args['forTransfer'] ?? false,
                     orderId: args['orderId'].toString().toInt(),
                   );
                 },
@@ -448,6 +449,7 @@ class AppRouter {
                     cartonId: args['cartonId'],
                     fromTransfer: args['forTransfer'] ?? false,
                     forCarton: args['forCarton'] ?? false,
+                    forDamageTransfer: args['forDamageTransfer'] ?? false,
                   );
                 },
               ),
