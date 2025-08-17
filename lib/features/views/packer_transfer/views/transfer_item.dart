@@ -141,8 +141,6 @@ class TransferItemsList extends StatelessWidget {
           child: provider.showCompleteButton()
               ? GeneralElevatedButton(
                   onPressed: () {
-                    debugger();
-
                     // if(packerRole=='main'){Provider.of<>}
                     Provider.of<PackerTransferProvider>(context, listen: false)
                         .completeTransfer(context);

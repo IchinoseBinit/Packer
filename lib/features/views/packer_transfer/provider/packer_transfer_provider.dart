@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -280,7 +281,6 @@ class PackerTransferProvider extends ChangeNotifier {
 
   Future<bool> scanProduct(BuildContext context, int productId, String code,
       MobileScannerController controller) async {
-    debugger();
     if (scanTagsList.contains(code)) {
       removeLoading(context);
       ErrorHandler.alertDialog(context, "Tag already scanned");
@@ -316,6 +316,7 @@ class PackerTransferProvider extends ChangeNotifier {
     final isScanned = scanCountOrder(context, productId);
     if (isScanned) {
       if (role == "main") {
+        await controller.stop();
         final result = await navigateReplacement(
           context,
           route: NavigationConstants.scanRackRoute,
@@ -509,8 +510,8 @@ class PackerTransferProvider extends ChangeNotifier {
 
   Future<bool> postDamageProductTags(
       BuildContext context, int productId, String rackName) async {
-    debugger();
     try {
+      debugger();
       showLoading(context);
       final url = AppUrls.verifyDamageProductUrl;
       final urlValue =
@@ -538,12 +539,12 @@ class PackerTransferProvider extends ChangeNotifier {
           return true;
         } else {
           ErrorHandler.alertDialog(context, 'Failed to post tags');
-          removeLoading(context);
           return false;
         }
       }
     } catch (ex) {
       ErrorHandler.alertDialog(context, ex.toString());
+
       removeLoading(context);
       return false;
     }
@@ -614,6 +615,7 @@ class PackerTransferProvider extends ChangeNotifier {
         selectedTransferModel?.baskets?.removeWhere(
           (element) => element.identifier == selectedBasketModel?.identifier,
         );
+        navigatePop(context, true);
         removeLoading(context);
       } else {
         ErrorHandler.alertDialog(context, 'Failed to complete transfer');

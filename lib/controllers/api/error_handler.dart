@@ -29,6 +29,7 @@ class ErrorHandler {
   // alert dialog
   static Future<void> alertDialog(BuildContext context, String message,
       [Function()? okFunc]) async {
+    debugger();
     if (!context.mounted) return;
     ShowAlertDialog(
             disableBackground: true,
@@ -36,7 +37,6 @@ class ErrorHandler {
             okFunc: okFunc ??
                 () {
                   navigatePop(context);
-                  
                 })
         .showAlertDialog(context);
   }

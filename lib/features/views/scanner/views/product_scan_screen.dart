@@ -319,7 +319,6 @@ class ProductScanScreen extends BaseScanScreen {
         }
       } else if (fromTransfer) {
         try {
-          await controller.stop();
           final result =
               await Provider.of<PackerTransferProvider>(context, listen: false)
                   .scanProduct(context, productId, code, controller);

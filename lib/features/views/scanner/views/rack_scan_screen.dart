@@ -70,8 +70,8 @@ class RackScanScreen extends BaseScanScreen {
           await controller.dispose();
           if (context.mounted) {
             navigatePop(context, true);
+            showToast("Rack scanned successfully");
           }
-          showToast("Rack scanned successfully");
         } else {
           if (context.mounted) handleInvalidCode(context, controller, code);
         }
@@ -87,16 +87,19 @@ class RackScanScreen extends BaseScanScreen {
         }
       } else if (forDamage) {
         try {
-          Provider.of<PackerTransferProvider>(context, listen: false)
-              .postDamageProductTags(context, productId, code);
+          final result =
+              await Provider.of<PackerTransferProvider>(context, listen: false)
+                  .postDamageProductTags(context, productId, code);
 
-          await controller.stop();
+          if (!result)
+            controller.start();
+          else
+            controller.stop();
 
           if (context.mounted) {
             showToast("Rack Scanned Successfully");
 
             navigatePop(context, true);
-           
           } else {
             if (context.mounted) {
               showToast("Rack update failed");
