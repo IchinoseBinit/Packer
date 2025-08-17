@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
+import 'package:packer/features/views/damage_products/damage_product_list.dart';
 import 'package:packer/features/views/damage_products/rack_product_list.dart';
 import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/driver/views/basket_list_screen.dart';
@@ -212,6 +213,7 @@ class AppRouter {
                     rackCode: data['rack'],
                     productId: data['productId'] ?? 0,
                     forCarton: data['forCarton'] ?? false,
+                    forDamage: data['forDamage'] ?? false,
                     // updateRack: data['updateRack'] ?? false,
                     // cartonProduct: data['cartonProduct'] ?? false,
                     // message: data['message'] ?? '',
@@ -450,7 +452,7 @@ class AppRouter {
                     fromTransfer: args['forTransfer'] ?? false,
                     forCarton: args['forCarton'] ?? false,
                     forDamageTransfer: args['forDamageTransfer'] ?? false,
-                    forDamageReceive: args['forDamageReceive'] ?? false,
+                    // forDamageReceive: args['forDamageReceive'] ?? false,
                   );
                 },
               ),
@@ -479,6 +481,12 @@ class AppRouter {
                 path: NavigationConstants.productlistScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return ProductListScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.damageProductReturnList,
+                builder: (BuildContext context, GoRouterState state) {
+                  return DamageProductList();
                 },
               ),
               GoRoute(

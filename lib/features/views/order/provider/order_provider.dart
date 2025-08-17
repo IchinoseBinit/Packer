@@ -74,6 +74,7 @@ class OrderProvider extends ChangeNotifier {
 
   // current basket code
   String bucketData = "";
+  String damageProductId = '';
 
   set bucket(String value) {
     final basket = basketDao.getBasket(value);
@@ -631,11 +632,14 @@ class OrderProvider extends ChangeNotifier {
   }
 
   scannedDamageProduct(String code) {
-    scannedDamageProductList.clear();
-
+    damageProductId = code.split("-").first;
     if (code.isEmpty) {
       return;
     } else {
+      if (scannedDamageProductList.contains(code)) {
+        showToast("Product already scanned");
+        return false;
+      }
       scannedDamageProductList.add(code);
       notifyListeners();
     }
@@ -668,30 +672,30 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  void damageProductReceived(BuildContext context) async {
-    final Map<String, dynamic> body = {
-      "product_tags": scannedDamageProductList,
-    };
+  // void damageProductReceived(BuildContext context, String rackName) async {
+  //   try {
+  //     final response = await DioClient().request(
+  //       requestType: RequestType.postWithToken,
+  //       url: AppUrls.damagedProductReceiveUrl,
+  //       body: {
+  //         "rack_identifier": rackName,
+  //         "product_unit_tags": scannedDamageProductList
+  //       },
+  //     );
 
-    try {
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: AppUrls.damagedProductReceiveUrl,
-        body: body,
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        scannedDamageProductList.clear();
-        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
-        notifyListeners();
-      } else {
-        // Handle server error gracefully
-        showToast(response.data['error'] ?? "Failed to receive products");
-      }
-    } catch (e) {
-      showToast("Error: $e");
-    }
-  }
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       scannedDamageProductList.clear();
+  //       showToast("Products received successfully");
+  //       navigateReplacement(context, route: NavigationConstants.dashboardRoute);
+  //       notifyListeners();
+  //     } else {
+  //       // Handle server error gracefully
+  //       showToast(response.data['error'] ?? "Failed to receive products");
+  //     }
+  //   } catch (e) {
+  //     showToast("Error: $e");
+  //   }
+  // }
 
   void incrementPackedOnce(int productId) {
     if (_alreadyIncremented.contains(productId)) return;

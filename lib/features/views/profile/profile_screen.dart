@@ -1,7 +1,5 @@
 // ignore_for_file: sized_box_for_whitespace
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -104,11 +102,13 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Transfer Damaged Products',
       });
     }
-    if (!value.isAuditUser() &&
+    if (value.isStoreManager() &&
+        // value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Receive Damaged Products')) {
       otherInfoData.add({
         'icon': Icons.transfer_within_a_station,
         'title': 'Receive Damaged Products',
+        'screen': NavigationConstants.transferListRoute
       });
     }
   }
@@ -175,13 +175,16 @@ class ProfileScreen extends StatelessWidget {
                             } else if (otherInfoData[index]['screen'] != null) {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);
-                            } else if (otherInfoData[index]['title'] ==
-                                "Receive Damaged Products") {
-                              navigate(context,
-                                  route: NavigationConstants
-                                      .productScanScreenRoute,
-                                  extra: {'forDamageReceive': true});
-                            } else if (otherInfoData[index]['title'] ==
+                            }
+                            //  else if (otherInfoData[index]['title'] ==
+                            //     "Receive Damaged Products") {
+                            //   navigate(
+                            //     context,
+                            //     route:
+                            //         NavigationConstants.damageProductReturnList,
+                            //   );
+                            // }
+                            else if (otherInfoData[index]['title'] ==
                                 "Request QR") {
                               navigate(context,
                                   route:
@@ -245,7 +248,7 @@ class ProfileScreen extends StatelessWidget {
                                                           FontWeight.w900,
                                                       color: Colors.white),
                                                   onPressed: () {
-                                                    navigateReplacement(context,
+                                                    navigate(context,
                                                         route: NavigationConstants
                                                             .damageScanScreenRoute,
                                                         extra: {
@@ -261,7 +264,7 @@ class ProfileScreen extends StatelessWidget {
                                       ));
                             } else if (otherInfoData[index]['title'] ==
                                 'Transfer Damaged Products') {
-                              navigateReplacement(context,
+                              navigate(context,
                                   route:
                                       NavigationConstants.basketScanScreenRoute,
                                   extra: {

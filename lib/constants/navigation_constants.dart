@@ -45,6 +45,8 @@ class NavigationConstants {
 
   static const String cartonListScreenRoute = 'carton_list_screen';
   static const String productlistScreenRoute = 'product_list_screen';
+    // static const String productlistScreenRoute = 'product_list_screen';
+
 
   // stock_verification
   static const String stockVerificationRoute = 'stock_verification_screen';
@@ -75,6 +77,8 @@ class NavigationConstants {
   static const String orderReturnDetailsRoute = 'order_return_details';
   // orderReturnScannerRoute
   static const String orderReturnScannerRoute = 'order_return_scanner';
+
+  static const String damageProductReturnList = 'product_return_list';
 
   // ------------------ for driver -------
   static const String driverHomeRoute = 'driver_home';

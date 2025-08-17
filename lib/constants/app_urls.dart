@@ -103,6 +103,9 @@ class AppUrls {
   // verify-units
   static String get verifyUnitsUrl =>
       "$baseUrl/store/transfers/id/verify-units/";
+
+  static String get verifyDamageProductUrl =>
+      "$baseUrl/transfers/id/receive-damaged-units/";
   // updateRackUrl
   static String get updateRackUrl =>
       "$baseUrl/update-product-availabilty-rack/";
@@ -143,7 +146,7 @@ class AppUrls {
   static String get damagedProductTransfer =>
       "$baseUrl/transfer-damaged-products/";
   static String get damagedProductReceiveUrl =>
-      "$baseUrl/change-damaged-products-store/";
+      "$baseUrl/damaged-units/assign/";
 
   // getStockItemsUrl :/stores/products/
   static String get getStoreUrl => "$baseUrl/stores/";

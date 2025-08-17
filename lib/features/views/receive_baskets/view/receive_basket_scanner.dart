@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/widgets.dart';
-import 'package:mobile_scanner/src/mobile_scanner_controller.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -13,7 +12,7 @@ import 'package:provider/provider.dart';
 
 class ReceiveBasketScanner extends BaseScanScreen {
   final bool scanIdentifier;
-  ReceiveBasketScanner({this.scanIdentifier = false})
+  ReceiveBasketScanner({super.key, this.scanIdentifier = false})
       : super(scanTitle: scanIdentifier ? "Scan Identifier" : "Scan Basket");
 
   bool hasScanned = false;
@@ -39,7 +38,8 @@ class ReceiveBasketScanner extends BaseScanScreen {
             Provider.of<ReceiveBasketController>(context, listen: false)
                 .onScanIdentifier(context, code);
         if (value.success && context.mounted) {
-          navigateReplacement(context, route: NavigationConstants.receiveBasketListRoute);
+          navigateReplacement(context,
+              route: NavigationConstants.receiveBasketListRoute);
           if (value.message != null) {
             showToast(value.message!);
           }
