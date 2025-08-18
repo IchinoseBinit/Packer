@@ -511,7 +511,6 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<bool> postDamageProductTags(
       BuildContext context, int productId, String rackName) async {
     try {
-      debugger();
       showLoading(context);
       final url = AppUrls.verifyDamageProductUrl;
       final urlValue =
@@ -538,14 +537,18 @@ class PackerTransferProvider extends ChangeNotifier {
           removeLoading(context);
           return true;
         } else {
-          ErrorHandler.alertDialog(context, 'Failed to post tags');
+          removeLoading(context);
+          if (context.mounted) {
+            await ErrorHandler.alertDialog(context, 'Failed to post tags');
+          }
           return false;
         }
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
-
       removeLoading(context);
+
+      await ErrorHandler.alertDialog(context, ex.toString());
+
       return false;
     }
   }

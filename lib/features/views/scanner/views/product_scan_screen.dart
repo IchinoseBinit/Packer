@@ -2,11 +2,9 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
@@ -277,7 +275,7 @@ class ProductScanScreen extends BaseScanScreen {
           });
         }
       } else if (forDamageTransfer) {
-        final success = Provider.of<OrderProvider>(context, listen: false)
+        final success = await Provider.of<OrderProvider>(context, listen: false)
             .scannedDamageProduct(code);
         if (success) showToast("Product Scanned Successfully");
         hasScanned = false;
@@ -339,6 +337,9 @@ class ProductScanScreen extends BaseScanScreen {
       }
     } catch (e) {
       handleInvalidCode(context, controller, code);
+
+      // await controller.start();
+      // rethrow;
     }
   }
 

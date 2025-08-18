@@ -175,7 +175,9 @@ class DamagedScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    final message = "Scan the rack to get the product list";
+    final message = scanRack!
+        ? "Scan the Rack to get the list of products"
+        : "Scan the product to get the details";
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, message);
   }

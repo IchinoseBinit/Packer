@@ -206,8 +206,13 @@ class ProfileScreen extends StatelessWidget {
                                                   vertical: 16.h,
                                                 ),
                                                 child: GeneralElevatedButton(
-                                                  marginH: 6.w,
+                                                  marginH: 4.w,
                                                   title: "With QR",
+                                                  textStyle: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,
                                                         route: NavigationConstants
@@ -223,8 +228,13 @@ class ProfileScreen extends StatelessWidget {
                                                   vertical: 16.h,
                                                 ),
                                                 child: GeneralElevatedButton(
-                                                  marginH: 6.w,
+                                                  marginH: 4.w,
                                                   title: "Without QR",
+                                                  textStyle: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,
                                                         route: NavigationConstants
@@ -240,10 +250,10 @@ class ProfileScreen extends StatelessWidget {
                                                   vertical: 16.h,
                                                 ),
                                                 child: GeneralElevatedButton(
-                                                  marginH: 6.w,
+                                                  marginH: 4.w,
                                                   title: "With Rack",
                                                   textStyle: TextStyle(
-                                                      fontSize: 13.sp,
+                                                      fontSize: 16.sp,
                                                       fontWeight:
                                                           FontWeight.w900,
                                                       color: Colors.white),

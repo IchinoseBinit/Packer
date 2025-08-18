@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +6,6 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
@@ -51,7 +49,6 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
-    debugger();
     if (code.isEmpty) return;
     if (_isProcessing) return;
     _isProcessing = true;
@@ -91,12 +88,12 @@ class RackScanScreen extends BaseScanScreen {
               await Provider.of<PackerTransferProvider>(context, listen: false)
                   .postDamageProductTags(context, productId, code);
 
-          if (!result)
+          if (!result) {
             controller.start();
-          else
+          } else {
             controller.stop();
-
-          if (context.mounted) {
+          }
+          if (result && context.mounted) {
             showToast("Rack Scanned Successfully");
 
             navigatePop(context, true);
@@ -112,11 +109,6 @@ class RackScanScreen extends BaseScanScreen {
         }
       } else if (context.mounted) {
         showLoading(context);
-
-        // final isMainStore =
-        //     Provider.of<StockVerificationProvider>(context, listen: false)
-        //         .storeList
-        //         .any((store) => store.isMainStore);
 
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)

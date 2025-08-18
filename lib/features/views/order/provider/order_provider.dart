@@ -632,7 +632,6 @@ class OrderProvider extends ChangeNotifier {
   }
 
   scannedDamageProduct(String code) {
-    damageProductId = code.split("-").first;
     if (code.isEmpty) {
       return;
     } else {
@@ -642,6 +641,7 @@ class OrderProvider extends ChangeNotifier {
       }
       scannedDamageProductList.add(code);
       notifyListeners();
+      return true;
     }
   }
 

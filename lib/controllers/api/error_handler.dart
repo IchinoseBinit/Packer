@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -29,7 +27,6 @@ class ErrorHandler {
   // alert dialog
   static Future<void> alertDialog(BuildContext context, String message,
       [Function()? okFunc]) async {
-    debugger();
     if (!context.mounted) return;
     ShowAlertDialog(
             disableBackground: true,
