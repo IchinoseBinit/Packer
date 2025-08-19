@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
+import 'package:packer/features/views/damage_products/damage_product_list.dart';
+import 'package:packer/features/views/damage_products/rack_product_list.dart';
 import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/driver/views/basket_list_screen.dart';
 import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
@@ -211,6 +213,7 @@ class AppRouter {
                     rackCode: data['rack'],
                     productId: data['productId'] ?? 0,
                     forCarton: data['forCarton'] ?? false,
+                    forDamage: data['forDamage'] ?? false,
                     // updateRack: data['updateRack'] ?? false,
                     // cartonProduct: data['cartonProduct'] ?? false,
                     // message: data['message'] ?? '',
@@ -406,6 +409,7 @@ class AppRouter {
                     basketCode: args['basketCode'],
                     forOrder: args['forOrder'] ?? false,
                     fromCall: args['fromCall'] ?? false,
+                    forTransfer: args['forTransfer'] ?? false,
                     orderId: args['orderId'].toString().toInt(),
                   );
                 },
@@ -447,6 +451,8 @@ class AppRouter {
                     cartonId: args['cartonId'],
                     fromTransfer: args['forTransfer'] ?? false,
                     forCarton: args['forCarton'] ?? false,
+                    forDamageTransfer: args['forDamageTransfer'] ?? false,
+                    // forDamageReceive: args['forDamageReceive'] ?? false,
                   );
                 },
               ),
@@ -472,9 +478,15 @@ class AppRouter {
                 },
               ),
               GoRoute(
-                path: NavigationConstants.productListScreenRoute,
+                path: NavigationConstants.productlistScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return ProductListScreen();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.damageProductReturnList,
+                builder: (BuildContext context, GoRouterState state) {
+                  return DamageProductList();
                 },
               ),
               GoRoute(
@@ -505,7 +517,12 @@ class AppRouter {
                   );
                 },
               ),
-             
+              GoRoute(
+                path: NavigationConstants.rackProductListScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return RackProductList();
+                },
+              ),
 
               GoRoute(
                 path: NavigationConstants.damageScanScreenRoute,
@@ -514,7 +531,7 @@ class AppRouter {
                   return DamagedScanScreen(
                     showInfo: args['showInfo'] ?? false,
                     qr: args['qr'],
-                    requestQr: args['requestQr'] ?? false,
+                    scanRack: args['scanRack'] ?? false,
                   );
                 },
               ),

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -36,7 +34,6 @@ class ErrorHandler {
             okFunc: okFunc ??
                 () {
                   navigatePop(context);
-                  
                 })
         .showAlertDialog(context);
   }

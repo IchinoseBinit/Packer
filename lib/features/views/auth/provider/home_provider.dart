@@ -1,27 +1,18 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:packer/constants/app_urls.dart';
-import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
-import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/demo.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/model/user.dart';
-import 'package:packer/features/views/driver/model/driver_transfer_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:provider/provider.dart';
 
 class HomeProvider with ChangeNotifier {

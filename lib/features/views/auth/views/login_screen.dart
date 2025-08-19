@@ -43,20 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
       authProvider
           .validateLogin(context, username, password)
           .then((value) async {
-        usernameController.clear();
-        passwordController.clear();
         if (value is bool) {
+          usernameController.clear();
+          passwordController.clear();
           Provider.of<HomeProvider>(context, listen: false)
               .fetchpackerSummary()
               .then((v) {
             removeLoading(context);
-            // final home = Provider.of<HomeProvider>(context, listen: false);
-            // log(home.user.toString());
-            // if (home.isDriver()) {
-            //   navigateAndRemoveAllWithRouter(AppRouter.router,
-            //       route: NavigationConstants.driverHomeRoute);
-            //   return;
-            // }
 
             navigate(context, route: NavigationConstants.dashboardRoute);
           });

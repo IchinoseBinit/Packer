@@ -8,6 +8,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
@@ -27,6 +28,7 @@ class ProductScanScreen extends BaseScanScreen {
   int? cartonId;
   bool fromTransfer = false;
   bool forCarton = false;
+  bool forDamageTransfer;
 
   ProductScanScreen({
     super.key,
@@ -35,6 +37,8 @@ class ProductScanScreen extends BaseScanScreen {
     this.cartonId,
     this.fromTransfer = false,
     this.forCarton = false,
+    this.forDamageTransfer = false,
+    // this.forDamageReceive = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -56,6 +60,10 @@ class ProductScanScreen extends BaseScanScreen {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, "Scan Product Code");
     }
+    // else if (forDamageReceive) {
+    //   Provider.of<ScanMessageProvider>(context, listen: false)
+    //       .setMessage(context, "Scan Product Code Received");
+    // }
   }
 
   bool isProcessing = false;
@@ -66,6 +74,8 @@ class ProductScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
+    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+
     if (forCarton) {
       return FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
@@ -76,6 +86,39 @@ class ProductScanScreen extends BaseScanScreen {
         child: const Icon(Icons.info, color: Colors.white),
       );
     }
+    if (forDamageTransfer) {
+      return GeneralElevatedButton(
+        onPressed: () async {
+          orderProvider.damageProductTransfer(context);
+        },
+        title: "Confirm Transfer",
+      );
+    }
+    // if (forDamageReceive) {
+    //   return Padding(
+    //     padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
+    //     child: GeneralElevatedButton(
+    //       onPressed: () async {
+    //         final productId = Provider.of<OrderProvider>(context, listen: false)
+    //             .damageProductId;
+    //         controller.stop();
+    //         final result = await navigateReplacement(
+    //           context,
+    //           route: NavigationConstants.scanRackRoute,
+    //           extra: {
+    //             'productId': productId.toInt(),
+    //             'forDamage': true,
+    //           },
+    //         );
+
+    //         if (result == true) {
+    //           showToast("Damage product scanned & rack updated!");
+    //         }
+    //       },
+    //       title: "Done",
+    //     ),
+    //   );
+    // }
     if (fromTransfer) {
       return FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
@@ -146,6 +189,7 @@ class ProductScanScreen extends BaseScanScreen {
               disableBackground: true,
               body: Text(result['message']),
               okFunc: () {
+                removeLoading(context);
                 Navigator.pop(context);
                 controller.start();
               },
@@ -230,6 +274,12 @@ class ProductScanScreen extends BaseScanScreen {
             hasScanned = false;
           });
         }
+      } else if (forDamageTransfer) {
+        final success = await Provider.of<OrderProvider>(context, listen: false)
+            .scannedDamageProduct(code);
+        if (success) showToast("Product Scanned Successfully");
+        hasScanned = false;
+        controller.start();
       } else if (fromStockVerification) {
         final provider =
             Provider.of<StockVerificationProvider>(context, listen: false);
@@ -266,21 +316,30 @@ class ProductScanScreen extends BaseScanScreen {
           });
         }
       } else if (fromTransfer) {
-        // showLoading(context);
-        final result =
-            await Provider.of<PackerTransferProvider>(context, listen: false)
-                .scanProduct(context, productId, code);
-        if (result && context.mounted) {
-          // removeLoading(context);
-          Navigator.pop(context, true);
-        } else if (context.mounted) {
-          // removeLoading(context);
-          controller.start();
-          hasScanned = false;
+        try {
+          final result =
+              await Provider.of<PackerTransferProvider>(context, listen: false)
+                  .scanProduct(context, productId, code, controller);
+
+          if (result && context.mounted) {
+            Navigator.pop(context, true);
+          } else if (context.mounted) {
+            await controller.start();
+            hasScanned = false;
+          }
+        } catch (e) {
+          if (context.mounted) {
+            showToast("Error: $e");
+            await controller.start();
+            hasScanned = false;
+          }
         }
       }
     } catch (e) {
       handleInvalidCode(context, controller, code);
+
+      // await controller.start();
+      // rethrow;
     }
   }
 

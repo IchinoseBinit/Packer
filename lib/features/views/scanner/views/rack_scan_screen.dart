@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -17,12 +18,14 @@ class RackScanScreen extends BaseScanScreen {
   final String? rackCode;
   final int productId;
   final bool forCarton;
+  final bool forDamage;
 
   RackScanScreen({
     super.key,
     this.rackCode,
     required this.productId,
     this.forCarton = false,
+    this.forDamage = false,
   }) : super(
           scanTitle: 'Rack Scanner',
           showFlash: true,
@@ -46,6 +49,7 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
+    if (code.isEmpty) return;
     if (_isProcessing) return;
     _isProcessing = true;
 
@@ -63,8 +67,8 @@ class RackScanScreen extends BaseScanScreen {
           await controller.dispose();
           if (context.mounted) {
             navigatePop(context, true);
+            showToast("Rack scanned successfully");
           }
-          showToast("Rack scanned successfully");
         } else {
           if (context.mounted) handleInvalidCode(context, controller, code);
         }
@@ -78,13 +82,33 @@ class RackScanScreen extends BaseScanScreen {
         } else {
           if (context.mounted) await controller.start();
         }
+      } else if (forDamage) {
+        try {
+          final result =
+              await Provider.of<PackerTransferProvider>(context, listen: false)
+                  .postDamageProductTags(context, productId, code);
+
+          if (!result) {
+            controller.start();
+          } else {
+            controller.stop();
+          }
+          if (result && context.mounted) {
+            showToast("Rack Scanned Successfully");
+
+            navigatePop(context, true);
+          } else {
+            if (context.mounted) {
+              showToast("Rack update failed");
+            }
+          }
+        } catch (e) {
+          if (context.mounted) {
+            showToast("Error: $e");
+          }
+        }
       } else if (context.mounted) {
         showLoading(context);
-
-        // final isMainStore =
-        //     Provider.of<StockVerificationProvider>(context, listen: false)
-        //         .storeList
-        //         .any((store) => store.isMainStore);
 
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
@@ -128,9 +152,9 @@ class RackScanScreen extends BaseScanScreen {
       disableBackground: true,
       canDismiss: true,
       body: Text("Invalid QR ${detectQrMessage(code)}"),
-      okFunc: () {
+      okFunc: () async {
         Navigator.pop(context);
-        controller.start();
+        await controller.start();
       },
     ).showAlertDialog(context);
   }

@@ -1,7 +1,5 @@
 // ignore_for_file: sized_box_for_whitespace
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -79,18 +77,31 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.orderReturnScreenRoute,
       });
     }
+
     if (!value.isAuditUser() &&
-        !otherInfoData.any((e) => e['title'] == 'Report Damage')) {
-      otherInfoData.add({
-        'icon': Icons.report,
-        'title': 'Report Damage',
-      });
-    }
-    if (!value.isAuditUser() &&
+        !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Request QR')) {
       otherInfoData.add({
         'icon': Icons.qr_code,
         'title': 'Request QR',
+      });
+    }
+
+    if (!value.isAuditUser() &&
+        !value.isMainStore() &&
+        !otherInfoData.any((e) => e['title'] == 'Transfer Damaged Products')) {
+      otherInfoData.add({
+        'icon': Icons.transfer_within_a_station,
+        'title': 'Transfer Damaged Products',
+      });
+    }
+    if (value.isStoreManager() &&
+        // value.isMainStore() &&
+        !otherInfoData.any((e) => e['title'] == 'Receive Damaged Products')) {
+      otherInfoData.add({
+        'icon': Icons.transfer_within_a_station,
+        'title': 'Receive Damaged Products',
+        'screen': NavigationConstants.transferListRoute
       });
     }
   }
@@ -157,14 +168,24 @@ class ProfileScreen extends StatelessWidget {
                             } else if (otherInfoData[index]['screen'] != null) {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);
-                            } else if (otherInfoData[index]['title'] ==
+                            }
+                            //  else if (otherInfoData[index]['title'] ==
+                            //     "Receive Damaged Products") {
+                            //   navigate(
+                            //     context,
+                            //     route:
+                            //         NavigationConstants.damageProductReturnList,
+                            //   );
+                            // }
+                            // else if (otherInfoData[index]['title'] ==
+                            //     "Request QR") {
+                            //   navigate(context,
+                            //       route:
+                            //           NavigationConstants.damageScanScreenRoute,
+                            //       extra: {'qr': false, 'requestQr': true});
+                            // }
+                            else if (otherInfoData[index]['title'] ==
                                 "Request QR") {
-                              navigate(context,
-                                  route:
-                                      NavigationConstants.damageScanScreenRoute,
-                                  extra: {'qr': false, 'requestQr': true});
-                            } else if (otherInfoData[index]['title'] ==
-                                "Report Damage") {
                               showModalBottomSheet(
                                   context: context,
                                   builder: (context) => Container(
@@ -179,8 +200,13 @@ class ProfileScreen extends StatelessWidget {
                                                   vertical: 16.h,
                                                 ),
                                                 child: GeneralElevatedButton(
-                                                  marginH: 6.w,
+                                                  marginH: 4.w,
                                                   title: "With QR",
+                                                  textStyle: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,
                                                         route: NavigationConstants
@@ -196,13 +222,45 @@ class ProfileScreen extends StatelessWidget {
                                                   vertical: 16.h,
                                                 ),
                                                 child: GeneralElevatedButton(
-                                                  marginH: 6.w,
+                                                  marginH: 4.w,
                                                   title: "Without QR",
+                                                  textStyle: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,
                                                         route: NavigationConstants
                                                             .damageScanScreenRoute,
-                                                        extra: {'qr': false});
+                                                        extra: {
+                                                          'qr': false,
+                                                        });
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 16.h,
+                                                ),
+                                                child: GeneralElevatedButton(
+                                                  marginH: 4.w,
+                                                  title: "With Rack",
+                                                  textStyle: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Colors.white),
+                                                  onPressed: () {
+                                                    navigate(context,
+                                                        route: NavigationConstants
+                                                            .damageScanScreenRoute,
+                                                        extra: {
+                                                          'scanRack': true,
+                                                          'qr': false,
+                                                        });
                                                   },
                                                 ),
                                               ),
@@ -210,6 +268,14 @@ class ProfileScreen extends StatelessWidget {
                                           ],
                                         ),
                                       ));
+                            } else if (otherInfoData[index]['title'] ==
+                                'Transfer Damaged Products') {
+                              navigate(context,
+                                  route:
+                                      NavigationConstants.basketScanScreenRoute,
+                                  extra: {
+                                    'forTransfer': true,
+                                  });
                             } else {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);
@@ -247,10 +313,14 @@ class ProfileScreen extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               showLoading(context);
+                              await Provider.of<HomeProvider>(context,
+                                      listen: false)
+                                  .updatepackerStatus(false, context);
+
                               AuthController().logout().then(
-                                (value) async {
+                                (value) {
                                   removeLoading(context);
                                   Provider.of<HomeProvider>(context,
                                           listen: false)

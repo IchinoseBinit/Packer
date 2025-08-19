@@ -4,7 +4,6 @@ class AppUrls {
   static String baseUrl = EnvironmentConfig.type == EnvironmentType.staging
       ? "http://103.187.8.105:8000" // or any sensible default
       : "https://fasto.com.np";
-  
 
   static void setBaseUrl(String url) {
     if (EnvironmentConfig.type == EnvironmentType.staging) {
@@ -50,6 +49,9 @@ class AppUrls {
   //http://13.211.205.215:8000/admin/product/productimage/
   static String get cartUrl => "$baseUrl/cart-items";
   // static  String get increamentCartUrl => "$baseUrl/cart-items";
+
+  static String get damageProductImageUpload =>
+      "$baseUrl/damaged-products/upload/";
 
   //login api path
   static String get loginUrldemo => "$_authUrl/api/token/";
@@ -101,6 +103,9 @@ class AppUrls {
   // verify-units
   static String get verifyUnitsUrl =>
       "$baseUrl/store/transfers/id/verify-units/";
+
+  static String get verifyDamageProductUrl =>
+      "$baseUrl/transfers/id/receive-damaged-units/";
   // updateRackUrl
   static String get updateRackUrl =>
       "$baseUrl/update-product-availabilty-rack/";
@@ -136,6 +141,12 @@ class AppUrls {
 
   // /basket/<str:identifier>/
   static String get basketUrl => "$baseUrl/basket/:id/";
+
+  //damage product transfer
+  static String get damagedProductTransfer =>
+      "$baseUrl/transfer-damaged-products/";
+  static String get damagedProductReceiveUrl =>
+      "$baseUrl/damaged-units/assign/";
 
   // getStockItemsUrl :/stores/products/
   static String get getStoreUrl => "$baseUrl/stores/";
@@ -177,4 +188,5 @@ class AppUrls {
   static String get damageProductUnitUrl => "$baseUrl/product_units/";
   static String get markDamageUrl => "$baseUrl/mark-damaged/";
   static String get qrDamageUrl => "$baseUrl/qr-damaged/";
+  static String get scanRackDamageUrl => "$baseUrl/rack/products/";
 }

@@ -108,7 +108,7 @@ class TransferItemsList extends StatelessWidget {
                                       return ProductCard(
                                         width: width,
                                         onTap: () {
-                                          log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product?.id}");
+                                          log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
                                           if (status == ItemStatus.done) return;
                                           provider.itemTaped(context, product);
                                         },
@@ -127,6 +127,8 @@ class TransferItemsList extends StatelessWidget {
       ),
       bottomNavigationBar:
           Consumer<PackerTransferProvider>(builder: (context, provider, child) {
+        final packerRole =
+            Provider.of<PackerTransferProvider>(context, listen: false).role;
         if (provider.selectedTransferModel == null) {
           return const SizedBox.shrink();
         }
@@ -139,15 +141,11 @@ class TransferItemsList extends StatelessWidget {
           child: provider.showCompleteButton()
               ? GeneralElevatedButton(
                   onPressed: () {
+                    // if(packerRole=='main'){Provider.of<>}
                     Provider.of<PackerTransferProvider>(context, listen: false)
                         .completeTransfer(context);
                   },
-                  title: Provider.of<PackerTransferProvider>(context,
-                                  listen: false)
-                              .role ==
-                          'packer'
-                      ? 'Complete'
-                      : 'Accept',
+                  title: packerRole == 'packer' ? 'Complete' : 'Accept',
                 )
               : Column(
                   mainAxisSize: MainAxisSize.min,

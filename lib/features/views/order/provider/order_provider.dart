@@ -1,11 +1,10 @@
 import 'dart:developer';
+import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -32,7 +31,6 @@ import 'package:packer/features/views/summary/models/daily_summary.dart';
 import 'package:packer/features/views/summary/models/weekly_summary.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/post_basket_model.dart';
-import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 class OrderProvider extends ChangeNotifier {
@@ -53,6 +51,7 @@ class OrderProvider extends ChangeNotifier {
   UnsettledOrders? unsettledOrders;
   List<OrderNotification> latestOrder = [];
   bool hasScanned = false;
+  List<String> damagedProductTags = [];
 
   set isAvailable(val) {
     _isAvailable = val;
@@ -77,6 +76,7 @@ class OrderProvider extends ChangeNotifier {
 
   // current basket code
   String bucketData = "";
+  String damageProductId = '';
 
   set bucket(String value) {
     final basket = basketDao.getBasket(value);
@@ -137,12 +137,11 @@ class OrderProvider extends ChangeNotifier {
 
     // check number of product scanned with required quantity for productCount
     for (var element in _orderDetails?.productDetails ?? <ProductDetails>[]) {
-      if (element.quantity == countScannedItem(element.id)){
+      if (element.quantity == countScannedItem(element.id)) {
         incrementPackedOnce(element.id);
       }
     }
-   
-    
+
     // remainingquantity = orderDetails?.productDetails[0].quantity ?? 0;
   }
 
@@ -157,7 +156,6 @@ class OrderProvider extends ChangeNotifier {
 
   // check by item id in scan list with required quantity
   bool checkItem(int productId) {
-    // debugger();
     for (ProductDetails element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
         // get from scanned data list split by -
@@ -239,12 +237,11 @@ class OrderProvider extends ChangeNotifier {
     for (var element in _orderDetails?.productDetails ?? []) {
       if (element.id == cartItemId) {
         if (scannedDataList.contains(code)) {
-          return ScanResult(success: false, message: "QR: $code already scanned");
+          return ScanResult(
+              success: false, message: "QR: $code already scanned");
         }
         updateProductList(code);
         if (countScannedItem(cartItemId) == element.quantity) {
-          
-
           //aaaaa
           incrementPackedOnce(element.id);
 
@@ -574,6 +571,142 @@ class OrderProvider extends ChangeNotifier {
       return ScanResult(success: false, message: e.toString());
     }
   }
+
+  Future uploadImages(
+    List<File> files,
+    BuildContext context,
+    String productId,
+  ) async {
+    try {
+      var formData = FormData();
+
+      // Add product_id field
+      formData.fields.add(MapEntry("product_id", productId));
+
+      // Add each image file
+      for (int i = 0; i < files.length; i++) {
+        formData.files.add(
+          MapEntry(
+            "images", // Change to "images" if API doesn't expect []
+            await MultipartFile.fromFile(files[i].path),
+          ),
+        );
+      }
+      final response = await DioClient().request(
+        requestType: RequestType.postWithTokenFormData,
+        url: AppUrls.damageProductImageUpload,
+        body: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        removeLoading(context);
+        damagedProductTags = List<String>.from(response.data['tags'] ?? []);
+        hasUploadedHomeImage = true;
+
+        notifyListeners();
+        return true;
+      } else {
+        hasUploadedHomeImage = false;
+        throw response.data;
+      }
+    } catch (e) {
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Error"),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+
+      hasUploadedHomeImage = false;
+      return e;
+    }
+  }
+
+  final List<String> scannedDamageProductList = [];
+
+  scanDamagedProductBasket(String code) {
+    bucketData = "";
+
+    if (code.isEmpty) {
+      return;
+    } else {
+      bucketData = code;
+      notifyListeners();
+    }
+  }
+
+  scannedDamageProduct(String code) {
+    if (code.isEmpty) {
+      return;
+    } else {
+      if (scannedDamageProductList.contains(code)) {
+        showToast("Product already scanned");
+        return false;
+      }
+      scannedDamageProductList.add(code);
+      notifyListeners();
+      return true;
+    }
+  }
+
+  void damageProductTransfer(BuildContext context) async {
+    final Map<String, dynamic> body = {
+      "identifier": bucketData,
+      "product_tags": scannedDamageProductList,
+    };
+
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.damagedProductTransfer,
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        scannedDamageProductList.clear();
+        bucketData = "";
+        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
+        notifyListeners();
+      } else {
+        // Handle server error gracefully
+        showToast(response.data['error'] ?? "Failed to transfer products");
+      }
+    } catch (e) {
+      showToast("Error: $e");
+    }
+  }
+
+  // void damageProductReceived(BuildContext context, String rackName) async {
+  //   try {
+  //     final response = await DioClient().request(
+  //       requestType: RequestType.postWithToken,
+  //       url: AppUrls.damagedProductReceiveUrl,
+  //       body: {
+  //         "rack_identifier": rackName,
+  //         "product_unit_tags": scannedDamageProductList
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       scannedDamageProductList.clear();
+  //       showToast("Products received successfully");
+  //       navigateReplacement(context, route: NavigationConstants.dashboardRoute);
+  //       notifyListeners();
+  //     } else {
+  //       // Handle server error gracefully
+  //       showToast(response.data['error'] ?? "Failed to receive products");
+  //     }
+  //   } catch (e) {
+  //     showToast("Error: $e");
+  //   }
+  // }
 
   void incrementPackedOnce(int productId) {
     if (_alreadyIncremented.contains(productId)) return;

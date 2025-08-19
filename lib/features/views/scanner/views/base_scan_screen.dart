@@ -53,7 +53,6 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller?.start();
-      Provider.of<DamageProductController>(context, listen: false).reset();
 
       widget.onScreenCreated(context);
 

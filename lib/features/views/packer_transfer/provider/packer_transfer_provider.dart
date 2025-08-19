@@ -1,25 +1,22 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
-import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
-import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
@@ -47,11 +44,9 @@ class PackerTransferProvider extends ChangeNotifier {
   List<String> rackList = [];
   Map<String, List<TransferItemModel>> rackMap = {};
 
-
-  arrangeRackTransferItem(){
+  arrangeRackTransferItem() {
     rackMap.clear();
     rackList.clear();
-
 
     selectedTransferModel?.items?.forEach((element) {
       if (!rackList.contains(element.rack)) {
@@ -67,7 +62,6 @@ class PackerTransferProvider extends ChangeNotifier {
     rackList = rackList.reversed.toList();
 
     notifyListeners();
-    
   }
 
   String getScanMessage(int id) {
@@ -285,8 +279,8 @@ class PackerTransferProvider extends ChangeNotifier {
     );
   }
 
-  Future<bool> scanProduct(
-      BuildContext context, int productId, String code) async {
+  Future<bool> scanProduct(BuildContext context, int productId, String code,
+      MobileScannerController controller) async {
     if (scanTagsList.contains(code)) {
       removeLoading(context);
       ErrorHandler.alertDialog(context, "Tag already scanned");
@@ -321,7 +315,25 @@ class PackerTransferProvider extends ChangeNotifier {
     }
     final isScanned = scanCountOrder(context, productId);
     if (isScanned) {
+      if (role == "main") {
+        await controller.stop();
+        final result = await navigateReplacement(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "productId": productId,
+            "forDamage": true,
+          },
+        );
+
+        if (result != true) {
+          await controller.start();
+        }
+
+        return true;
+      }
       final success = await postScannedTags(context, productId);
+
       if (success) {
         return true;
       } else {
@@ -496,6 +508,51 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> postDamageProductTags(
+      BuildContext context, int productId, String rackName) async {
+    try {
+      showLoading(context);
+      final url = AppUrls.verifyDamageProductUrl;
+      final urlValue =
+          url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
+      if (scanTagsList.isEmpty) {
+        ErrorHandler.alertDialog(context, 'No tags to post');
+        removeLoading(context);
+        return false;
+      } else {
+        final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: urlValue,
+          body: {
+            "product_id": productId,
+            "unit_tags": scanTagsList,
+            "rack_identifier": rackName,
+            "basket_identifier": selectedBasketModel?.identifier,
+          },
+        );
+        if (response.statusCode == 200) {
+          showToast('Tags posted successfully');
+          scanTagsList.clear();
+          notifyListeners();
+          removeLoading(context);
+          return true;
+        } else {
+          removeLoading(context);
+          if (context.mounted) {
+            await ErrorHandler.alertDialog(context, 'Failed to post tags');
+          }
+          return false;
+        }
+      }
+    } catch (ex) {
+      removeLoading(context);
+
+      await ErrorHandler.alertDialog(context, ex.toString());
+
+      return false;
+    }
+  }
+
   // update product rack
   void updateRackOnModel(int productId, String rack) {
     for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
@@ -541,7 +598,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<void> completeTransfer(BuildContext context) async {
     try {
       showLoading(context);
-      final id = selectedTransferModel?.id; 
+      final id = selectedTransferModel?.id;
       if (id == null) {
         ErrorHandler.alertDialog(context, 'Transfer ID is null');
         return;
@@ -561,6 +618,7 @@ class PackerTransferProvider extends ChangeNotifier {
         selectedTransferModel?.baskets?.removeWhere(
           (element) => element.identifier == selectedBasketModel?.identifier,
         );
+        navigatePop(context, true);
         removeLoading(context);
       } else {
         ErrorHandler.alertDialog(context, 'Failed to complete transfer');
