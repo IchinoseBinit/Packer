@@ -2,9 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/widgets/order_progress_card.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 import '/constants/app_constants.dart';
@@ -37,6 +39,34 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<OrderProvider>(context, listen: false).resetPackedTracking();
     });
+  }
+
+  // dialog for order cancelled
+  void showOrderCancelledDialog(BuildContext context) {
+    ShowAlertDialog(
+      title: 'Order Cancelled',
+      body: Text(
+        'This order has been cancelled by the customer. Do you want to proceed with returning the items to inventory?',
+      ),
+      disableBackground: true,
+      okTitle: "Yes, Proceed",
+      okFunc: () {
+        navigatePop(context);
+
+        navigateReplacement(
+          context,
+          route: NavigationConstants.orderReturnScreenRoute,
+        );
+      },
+      needCancel: false,
+      // cancelFunc: () {
+      //   navigatePop(context);
+      //   navigateAndRemoveAll(
+      //     context,
+      //     route: NavigationConstants.dashboardRoute,
+      //   );
+      // },
+    ).showAlertDialog(context);
   }
 
   @override
@@ -83,23 +113,31 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   ),
                   child: GeneralElevatedButton(
                     onPressed: () async {
-
                       final parsedOrderId =
                           int.tryParse(widget.order.data.id.toString()) ?? 0;
 
-                      final success = await Provider.of<OrderProvider>(
+                      final response = await Provider.of<OrderProvider>(
                         context,
                         listen: false,
                       ).productPost(context, parsedOrderId);
 
-                      if (success && mounted) {
+                      if (response['success'].toString().toBool(false) &&
+                          mounted) {
                         Provider.of<HomeProvider>(context, listen: false)
                             .fetchLatestOrders();
 
-                        navigateAndRemoveAll(
-                          context,
-                          route: NavigationConstants.dashboardRoute,
-                        );
+                        if (response['isCancelRequest']
+                            .toString()
+                            .toBool(false)) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            showOrderCancelledDialog(context);
+                          });
+                        } else {
+                          navigateAndRemoveAll(
+                            context,
+                            route: NavigationConstants.dashboardRoute,
+                          );
+                        }
                       }
                     },
 

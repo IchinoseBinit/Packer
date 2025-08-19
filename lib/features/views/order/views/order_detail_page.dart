@@ -91,56 +91,64 @@ class _OrderDetailsState extends State<OrderDetails> {
             },
           ),
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: InkWell(
-                onTap: () {
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text(
-                            'Do you want to add another basket?',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
+            Consumer<OrderProvider>(
+              builder: (context, state, _) {
+                final orderProvider = Provider.of<OrderProvider>(context);
+                if (orderProvider.orderDetails == null) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: InkWell(
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text(
+                                'Do you want to add another basket?',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('No'),
                                 ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('No'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                                navigate(context,
-                                    route: NavigationConstants
-                                        .basketScanScreenRoute,
-                                    extra: {
-                                      'forOrder': true,
-                                    });
-                              },
-                              child: const Text('Yes'),
-                            ),
-                          ],
-                        );
-                      });
-                },
-                child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    child: Icon(
-                      Icons.shopping_cart,
-                      size: 24.sp,
-                      color: AppColors.primaryColor,
-                    )),
-              ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    navigate(context,
+                                        route: NavigationConstants
+                                            .basketScanScreenRoute,
+                                        extra: {
+                                          'forOrder': true,
+                                        });
+                                  },
+                                  child: const Text('Yes'),
+                                ),
+                              ],
+                            );
+                          });
+                    },
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
+                        child: Icon(
+                          Icons.shopping_cart,
+                          size: 24.sp,
+                          color: AppColors.primaryColor,
+                        )),
+                  ),
+                );
+              },
             )
           ],
         ),
