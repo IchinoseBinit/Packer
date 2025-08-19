@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:packer/constants/app_constants.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/driver/widgets/driver_transfer_card.dart';
@@ -58,6 +57,8 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
               return Consumer<DriverController>(
                 builder: (context, driverController, child) {
+                  int initialTransferId = 0;
+
                   if (driverController.isLoading) {
                     return const Center(
                       child: CircularProgressIndicator(),
@@ -87,6 +88,15 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                       shrinkWrap: true,
                       itemCount: driverController.driverTransfers.length,
                       itemBuilder: (context, index) {
+                        if (initialTransferId ==
+                            driverController
+                                .driverTransfers[index].inventoryTransferId) {
+                          SizedBox.shrink();
+                          return null;
+                        } else {
+                          initialTransferId = driverController
+                              .driverTransfers[index].inventoryTransferId;
+                        }
                         return DriverTransferCard(
                           transferItem: driverController.driverTransfers[index],
                           needGoToStore: false,

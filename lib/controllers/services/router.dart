@@ -532,7 +532,6 @@ class AppRouter {
                     showInfo: args['showInfo'] ?? false,
                     qr: args['qr'],
                     scanRack: args['scanRack'] ?? false,
-                    requestQr: args['requestQr'] ?? false,
                   );
                 },
               ),

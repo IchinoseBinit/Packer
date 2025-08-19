@@ -77,14 +77,7 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.orderReturnScreenRoute,
       });
     }
-    if (!value.isAuditUser() &&
-        !value.isMainStore() &&
-        !otherInfoData.any((e) => e['title'] == 'Report Damage')) {
-      otherInfoData.add({
-        'icon': Icons.report,
-        'title': 'Report Damage',
-      });
-    }
+
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Request QR')) {
@@ -184,14 +177,15 @@ class ProfileScreen extends StatelessWidget {
                             //         NavigationConstants.damageProductReturnList,
                             //   );
                             // }
+                            // else if (otherInfoData[index]['title'] ==
+                            //     "Request QR") {
+                            //   navigate(context,
+                            //       route:
+                            //           NavigationConstants.damageScanScreenRoute,
+                            //       extra: {'qr': false, 'requestQr': true});
+                            // }
                             else if (otherInfoData[index]['title'] ==
                                 "Request QR") {
-                              navigate(context,
-                                  route:
-                                      NavigationConstants.damageScanScreenRoute,
-                                  extra: {'qr': false, 'requestQr': true});
-                            } else if (otherInfoData[index]['title'] ==
-                                "Report Damage") {
                               showModalBottomSheet(
                                   context: context,
                                   builder: (context) => Container(
@@ -209,9 +203,9 @@ class ProfileScreen extends StatelessWidget {
                                                   marginH: 4.w,
                                                   title: "With QR",
                                                   textStyle: TextStyle(
-                                                      fontSize: 16.sp,
+                                                      fontSize: 14.sp,
                                                       fontWeight:
-                                                          FontWeight.w900,
+                                                          FontWeight.w800,
                                                       color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,
@@ -231,15 +225,17 @@ class ProfileScreen extends StatelessWidget {
                                                   marginH: 4.w,
                                                   title: "Without QR",
                                                   textStyle: TextStyle(
-                                                      fontSize: 16.sp,
+                                                      fontSize: 14.sp,
                                                       fontWeight:
-                                                          FontWeight.w900,
+                                                          FontWeight.w800,
                                                       color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,
                                                         route: NavigationConstants
                                                             .damageScanScreenRoute,
-                                                        extra: {'qr': false});
+                                                        extra: {
+                                                          'qr': false,
+                                                        });
                                                   },
                                                 ),
                                               ),
@@ -253,9 +249,9 @@ class ProfileScreen extends StatelessWidget {
                                                   marginH: 4.w,
                                                   title: "With Rack",
                                                   textStyle: TextStyle(
-                                                      fontSize: 16.sp,
+                                                      fontSize: 14.sp,
                                                       fontWeight:
-                                                          FontWeight.w900,
+                                                          FontWeight.w800,
                                                       color: Colors.white),
                                                   onPressed: () {
                                                     navigate(context,

@@ -1,21 +1,23 @@
 import 'dart:developer';
-import 'dart:io';
 
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/damage_products/model/rack_product_model.dart';
+import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:provider/provider.dart';
 
 class DamageProductController extends ChangeNotifier {
   bool isLoading = false;
   List<String> tagList = [];
   List<String> difference = [];
   List<String> productUnits = [];
+  String productName = 'Products';
   List<Product> rackProductList = [];
+  int scanCount = 0;
 
   Future<void> postProductTag(String code) async {
     try {
@@ -32,6 +34,11 @@ class DamageProductController extends ChangeNotifier {
         productUnits = (response.data as List)
             .map((item) => item['tag'].toString())
             .toList();
+
+        productName = (response.data as List)
+            .map((item) => item['product_name'].toString())
+            .toList()
+            .first;
       } else {
         productUnits = [];
       }
@@ -45,45 +52,35 @@ class DamageProductController extends ChangeNotifier {
     }
   }
 
-  Future<void> markDamaged(List<String> code) async {
+  Future<void> markDamaged(List<String> code, BuildContext context) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      await DioClient().request(
+      final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.markDamageUrl,
         body: {"tags": code},
       );
 
-      isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      isLoading = false;
-      notifyListeners();
-      showToast("...Failed...");
-    }
-  }
-
-  Future<void> requestQrDamaged(List<String> code) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-
-      await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: AppUrls.qrDamageUrl,
-        body: {"tags": code},
-      );
-
-      showToast("QR Requested Successfully");
+      if (response.statusCode == 200) {
+        reset();
+        showToast("${response.data['message']}");
+      } else {
+        showToast("Failed to mark as damaged");
+      }
 
       isLoading = false;
       notifyListeners();
     } catch (e) {
       isLoading = false;
       notifyListeners();
-      showToast("...Failed...");
+      ShowAlertDialog(
+        body: Text(e.toString()),
+        okFunc: () {
+          Navigator.pop(context);
+        },
+      ).showAlertDialog(context);
     }
   }
 
@@ -118,8 +115,21 @@ class DamageProductController extends ChangeNotifier {
     }
   }
 
-  void scannedTags(String code) {
+  void scannedTags(String code, BuildContext context) async {
+    if (tagList.contains(code)) {
+      await ShowAlertDialog(
+        disableBackground: true,
+        body: Text("Tag already scanned: $code"),
+        okFunc: () {
+          Navigator.pop(context);
+        },
+      ).showAlertDialog(context);
+
+      return;
+    }
     tagList.add(code);
+    scanCount++;
+    notifyListeners();
   }
 
   List<String> getUnscannedTags() {
@@ -130,7 +140,23 @@ class DamageProductController extends ChangeNotifier {
 
   void reset() {
     tagList.clear();
+    scanCount = 0;
+    productName = 'Products';
     productUnits.clear();
     notifyListeners();
+  }
+
+  void getMessageForNoQr(BuildContext context, bool scanRack, bool qr) {
+    final message = scanRack
+        ? "Scan the Rack to get the list of products"
+        : (qr)
+            ? (scanCount > 0)
+                ? "Scanned $scanCount Products"
+                : "Scan the Product to get the details"
+            : (scanCount > 0)
+                ? "Scanned $scanCount $productName"
+                : "Scan the $productName to get the details";
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, message);
   }
 }

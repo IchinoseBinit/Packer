@@ -10,7 +10,6 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
-import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -18,13 +17,10 @@ import 'package:provider/provider.dart';
 
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
+// ignore: must_be_immutable
 class DamagedScanScreen extends BaseScanScreen {
   DamagedScanScreen(
-      {super.key,
-      required this.showInfo,
-      required this.qr,
-      this.requestQr,
-      this.scanRack
+      {super.key, required this.showInfo, required this.qr, this.scanRack
       // required this.index,
       })
       : super(
@@ -36,13 +32,9 @@ class DamagedScanScreen extends BaseScanScreen {
 
   bool hasScanned = false;
   bool qr = false;
-  bool? requestQr;
   bool? scanRack;
 
   final bool showInfo;
-  void initState(context) {
-    Provider.of<DamageProductController>(context, listen: false).reset();
-  }
 
   @override
   Widget? buildFloatingButton(
@@ -65,41 +57,28 @@ class DamagedScanScreen extends BaseScanScreen {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 12.h),
           child: GeneralElevatedButton(
-            title: requestQr! ? "Request QR" : "Confirm Verification",
+            title: "Confirm Verification",
             onPressed: () {
               final remainingItem = provider.getUnscannedTags();
-              requestQr!
-                  ? ShowAlertDialog(
-                      title: "Confirm",
-                      body: Text(
-                          "Do you want to request QR for products ${remainingItem.join('\n')}"),
-                      okFunc: () {
-                        provider.requestQrDamaged(remainingItem);
-
-                        navigatePop(context);
-                      },
-                      cancelFunc: () {
-                        navigatePop(context);
-                      },
-                    ).showAlertDialog(context)
-                  : ShowAlertDialog(
-                      title: "Confirm",
-                      body: Text(
-                          "Product Scanned \n${provider.tagList.join('\n')}"),
-                      okFunc: () {
-                        if (qr) {
-                          provider.markDamaged(provider.tagList);
-                        } else {
-                          provider.markDamaged(remainingItem);
-                        }
-                        navigatePop(context);
-                        navigatePop(context);
-                      },
-                      needCancel: true,
-                      cancelFunc: () {
-                        navigatePop(context);
-                      },
-                    ).showAlertDialog(context);
+              ShowAlertDialog(
+                title: "Confirm",
+                body: Text(qr
+                    ? "Product Scanned \n${provider.tagList.join('\n')}"
+                    : "Product left \n${remainingItem.join('\n')}"),
+                okFunc: () {
+                  if (qr) {
+                    provider.markDamaged(provider.tagList, context);
+                  } else {
+                    provider.markDamaged(remainingItem, context);
+                  }
+                  navigatePop(context);
+                  navigatePop(context);
+                },
+                needCancel: true,
+                cancelFunc: () {
+                  navigatePop(context);
+                },
+              ).showAlertDialog(context);
             },
           ),
         );
@@ -116,11 +95,14 @@ class DamagedScanScreen extends BaseScanScreen {
         Provider.of<DamageProductController>(context, listen: false);
     try {
       controller.stop();
+
       HapticFeedback.heavyImpact();
 
       log("code: $code");
       if (qr) {
-        provider.scannedTags(code);
+        provider.scannedTags(code, context);
+        Provider.of<DamageProductController>(context, listen: false)
+            .getMessageForNoQr(context, scanRack!, qr);
       } else if (scanRack!) {
         final success = await provider.getProductList(code);
 
@@ -130,10 +112,11 @@ class DamagedScanScreen extends BaseScanScreen {
         }
       } else {
         await provider.postProductTag(code);
-        provider.scannedTags(code);
+        provider.scannedTags(code, context);
+        Provider.of<DamageProductController>(context, listen: false)
+            .getMessageForNoQr(context, scanRack!, qr);
       }
 
-      // check by spliting code
       if (!scanRack!) {
         final id = code.split("-").first;
         final parsedId = int.tryParse(id);
@@ -169,16 +152,14 @@ class DamagedScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // controller.dispose();
-  }
+  void onDispose(MobileScannerController controller) {}
 
   @override
   void onScreenCreated(BuildContext context) {
-    final message = scanRack!
-        ? "Scan the Rack to get the list of products"
-        : "Scan the product to get the details";
-    Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(context, message);
+    debugger();
+
+    Provider.of<DamageProductController>(context, listen: false).reset();
+    Provider.of<DamageProductController>(context, listen: false)
+        .getMessageForNoQr(context, scanRack!, qr);
   }
 }

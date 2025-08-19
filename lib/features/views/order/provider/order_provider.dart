@@ -154,7 +154,6 @@ class OrderProvider extends ChangeNotifier {
 
   // check by item id in scan list with required quantity
   bool checkItem(int productId) {
-    // debugger();
     for (ProductDetails element in _orderDetails?.productDetails ?? []) {
       if (element.id == productId) {
         // get from scanned data list split by -

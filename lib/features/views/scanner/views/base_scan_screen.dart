@@ -55,7 +55,6 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
       controller?.start();
 
       widget.onScreenCreated(context);
-      Provider.of<DamageProductController>(context, listen: false).reset();
 
       controller?.addListener(_onControllerChanged);
     });

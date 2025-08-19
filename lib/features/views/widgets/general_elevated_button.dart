@@ -22,7 +22,7 @@ class GeneralElevatedButton extends StatelessWidget {
   final Color? borderColor;
 
   const GeneralElevatedButton({
-    Key? key,
+    super.key,
     this.isSmallText = false,
     required this.title,
     this.bgColor,
@@ -39,7 +39,7 @@ class GeneralElevatedButton extends StatelessWidget {
     this.isFittedBox = false,
     this.icon,
     this.borderColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,7 @@ class GeneralElevatedButton extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: 600,
             );
-            print(textStyle);
+        print(textStyle);
       } else {
         textStyle = Theme.of(context).textTheme.headlineMedium!.copyWith(
               color: fgColor ?? Colors.white,
@@ -67,13 +67,13 @@ class GeneralElevatedButton extends StatelessWidget {
       child: ElevatedButton(
         key: key,
         style: ButtonStyle(
-          elevation: MaterialStateProperty.all(elevation),
-          backgroundColor: MaterialStateProperty.all(
+          elevation: WidgetStateProperty.all(elevation),
+          backgroundColor: WidgetStateProperty.all(
             isDisabled
                 ? Theme.of(context).disabledColor
                 : bgColor ?? Theme.of(context).primaryColor,
           ),
-          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          shape: WidgetStateProperty.all<RoundedRectangleBorder>(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(borderRadius ?? 5.r),
               side: BorderSide(
@@ -102,9 +102,12 @@ class GeneralElevatedButton extends StatelessWidget {
                 // }
               },
         child: Builder(builder: (context) {
-          final child = Text(
-            title,
-            style: textStyle,
+          final child = Center(
+            child: Text(
+              title,
+              style: textStyle,
+              textAlign: TextAlign.center,
+            ),
           );
           if (isFittedBox) {
             return FittedBox(
