@@ -372,12 +372,21 @@ class OrderProvider extends ChangeNotifier {
         print('Error acknowledging order: ${response.statusCode}');
       }
     } catch (e) {
+      if (e is String) {
+        if (e.contains("cancelled")) {
+          latestOrder.removeWhere((element) => element.orderId == orderId);
+          Provider.of<HomeProvider>(context, listen: false)
+              .removeFromLatestOrder(orderId);
+        }
+        showToast(e);
+      }
       print('Error acknowledging order: $e');
       // rethrow;
     }
   }
 
-  Future<Map<String, bool>> productPost(BuildContext context, int orderId) async {
+  Future<Map<String, bool>> productPost(
+      BuildContext context, int orderId) async {
     // List<Basket> baskets = basketDataList.map((identifier) {
     //   return Basket(
     //     identifier: identifier,
@@ -414,11 +423,12 @@ class OrderProvider extends ChangeNotifier {
         basketDataList.clear();
         basketDao.clearAll();
         scannedDataList.clear();
-        
+
         notifyListeners();
         return {
           "success": true,
-          "isCancelRequest": response.data['is_cancel_request'].toString().toBool(false),
+          "isCancelRequest":
+              response.data['is_cancel_request'].toString().toBool(false),
         };
       } else {
         ErrorHandler.alertDialog(context, "Failed to post basket data");
@@ -719,6 +729,4 @@ class OrderProvider extends ChangeNotifier {
   void resetPackedTracking() {
     _alreadyIncremented.clear();
   }
-
-  
 }
