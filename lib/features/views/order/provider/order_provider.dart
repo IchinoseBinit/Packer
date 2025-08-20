@@ -10,6 +10,8 @@ import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
+import 'package:packer/controllers/extensions/string_extension.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
@@ -375,7 +377,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> productPost(BuildContext context, int orderId) async {
+  Future<Map<String, bool>> productPost(BuildContext context, int orderId) async {
     // List<Basket> baskets = basketDataList.map((identifier) {
     //   return Basket(
     //     identifier: identifier,
@@ -412,20 +414,30 @@ class OrderProvider extends ChangeNotifier {
         basketDataList.clear();
         basketDao.clearAll();
         scannedDataList.clear();
+        
         notifyListeners();
-        return true;
+        return {
+          "success": true,
+          "isCancelRequest": response.data['is_cancel_request'].toString().toBool(false),
+        };
       } else {
         ErrorHandler.alertDialog(context, "Failed to post basket data");
         log('Error posting basket data: ${response.statusCode}',
             name: "basket data response");
-        return false;
+        return {
+          "success": false,
+          "isCancelRequest": false,
+        };
       }
     } catch (e) {
       removeLoading(context);
       log('Error posting basket data: $e', name: "basket data response");
       ErrorHandler.alertDialog(context, e.toString());
       notifyListeners();
-      return false;
+      return {
+        "success": false,
+        "isCancelRequest": false,
+      };
     }
   }
 
@@ -684,4 +696,6 @@ class OrderProvider extends ChangeNotifier {
   void resetPackedTracking() {
     _alreadyIncremented.clear();
   }
+
+  
 }
