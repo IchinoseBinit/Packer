@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -19,6 +18,7 @@ class RackScanScreen extends BaseScanScreen {
   final int productId;
   final bool forCarton;
   final bool forDamage;
+  final bool needAPICallCarton;
 
   RackScanScreen({
     super.key,
@@ -26,6 +26,7 @@ class RackScanScreen extends BaseScanScreen {
     required this.productId,
     this.forCarton = false,
     this.forDamage = false,
+    this.needAPICallCarton = false,
   }) : super(
           scanTitle: 'Rack Scanner',
           showFlash: true,
@@ -62,12 +63,28 @@ class RackScanScreen extends BaseScanScreen {
         return;
       }
 
-      if (rackCode != null) {
+      if (rackCode != null && !needAPICallCarton) {
         if (code.contains(rackCode!)) {
-          await controller.dispose();
+          await controller.stop();
           if (context.mounted) {
             navigatePop(context, true);
             showToast("Rack scanned successfully");
+          }
+        } else {
+          if (context.mounted) handleInvalidCode(context, controller, code);
+        }
+      } else if (rackCode != null && needAPICallCarton) {
+        if (code.contains(rackCode!)) {
+          await controller.stop();
+          final result =
+              await Provider.of<StockProvider>(context, listen: false)
+                  .updateRack(context, code, productId, true);
+
+          if (result && context.mounted) {
+            navigatePop(context, true);
+            showToast("Rack Assigned successfully");
+          } else {
+            if (context.mounted) await controller.start();
           }
         } else {
           if (context.mounted) handleInvalidCode(context, controller, code);

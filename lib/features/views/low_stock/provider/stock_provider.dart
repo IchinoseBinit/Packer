@@ -427,13 +427,21 @@ class StockProvider extends ChangeNotifier {
             return true;
           }
         } else if (context.mounted) {
-          navigateReplacement(
+         final result = await navigateReplacement(
             context,
             route: NavigationConstants.scanRackRoute,
             extra: {
               'rack': cartonModel?.rackName,
+              'needAPICallCarton': true,
+              'productId': cartonModel!.productId,
             },
           );
+          if (result ?? false) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+                navigateReplacement(context,
+                    route: NavigationConstants.dashboardRoute);
+              });
+          }
           return true;
         }
       }
