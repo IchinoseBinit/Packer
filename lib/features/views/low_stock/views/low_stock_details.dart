@@ -130,12 +130,14 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                                 },
                                                 productModel: CommonProductModel
                                                     .fromProductModel(product),
-                                                status: state.checkScanCount(
+                                                status: state.getScannedList(
                                                         product.productId)
+                                                    .length ==
+                                                    product.quantity
                                                     ? ItemStatus.done
                                                     : ItemStatus.remaining,
-                                                quantity: state.getScanCount(
-                                                    product.productId),
+                                                quantity: product.quantity - state.getScannedList(
+                                                    product.productId).length,
                                                 statusToShow: state.trolleyItems
                                                     .firstWhereOrNull(
                                                         (element) =>

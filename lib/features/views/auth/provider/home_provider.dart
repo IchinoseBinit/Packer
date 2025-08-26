@@ -137,6 +137,11 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  void removeFromLatestOrder(String orderId) {
+    latestOrder.removeWhere((element) => element.orderId == orderId);
+    notifyListeners();
+  }
+
   /// if online call this cause, they can't be viewing the latest orders
   Future<void> fetchLatestOrders({bool isFirstTime = false}) async {
     try {

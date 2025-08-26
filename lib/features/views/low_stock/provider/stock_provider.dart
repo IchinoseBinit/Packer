@@ -59,9 +59,6 @@ class StockProvider extends ChangeNotifier {
   List<TrolleyItem> trolleyItems = [];
   LowStockModel? trolleyLowStockModel;
 
-
-
-
   void initRackProductMap() {
     rackNameList.clear();
     rackProductMap.clear();
@@ -107,7 +104,8 @@ class StockProvider extends ChangeNotifier {
     return 0;
   }
 
-  Future<void> fetchLowStockProducts(BuildContext context, {bool isFromBuild = false}) async {
+  Future<void> fetchLowStockProducts(BuildContext context,
+      {bool isFromBuild = false}) async {
     try {
       isLoading = true;
       isError = false;
@@ -429,13 +427,21 @@ class StockProvider extends ChangeNotifier {
             return true;
           }
         } else if (context.mounted) {
-          navigateReplacement(
+         final result = await navigateReplacement(
             context,
             route: NavigationConstants.scanRackRoute,
             extra: {
               'rack': cartonModel?.rackName,
+              'needAPICallCarton': true,
+              'productId': cartonModel!.productId,
             },
           );
+          if (result ?? false) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+                navigateReplacement(context,
+                    route: NavigationConstants.dashboardRoute);
+              });
+          }
           return true;
         }
       }
@@ -456,7 +462,7 @@ class StockProvider extends ChangeNotifier {
         if (matchedModel != null) {
           if (matchedModel.productId == cartonModel!.productId) {
             if (checkScanCount(matchedModel.productId)) {
-              removeLoading(context);
+              // removeLoading(context);
               ShowAlertDialog(
                 disableBackground: false,
                 body: Text("Already Scanned"),
@@ -558,7 +564,7 @@ class StockProvider extends ChangeNotifier {
     selectedModel = lowStockModel;
     initRackProductMap();
     basketId = "";
-  
+
     box = await HiveDBService.openProductBox('store_${lowStockModel.storeId}');
     dao = ProductDao(box);
 
@@ -570,10 +576,22 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
+  List<String> getScannedList(int productId) {
+    return trolleyItems
+        .where((element) => element.productId == productId)
+        .expand((element) => element.tags)
+        .toList();
+  }
+
   void onProductDetailsTaped(BuildContext context, ProductModel model) {
-    scannedList = [];
+    trolleyItems = dao.getAll();
+    scannedList = getScannedList(model.productId);
     selectedProduct = model;
-    scanMessage = "Scan ${model.quantity} ${model.productName} ";
+    if (scannedList.isNotEmpty) {
+      scanMessage = "Scan ${model.quantity - scannedList.length} ${model.productName} More";
+    } else {
+      scanMessage = "Scan ${model.quantity} ${model.productName} ";
+    }
     navigateReplacement(
       context,
       route: NavigationConstants.lowStockScannerRoute,
@@ -616,28 +634,26 @@ class StockProvider extends ChangeNotifier {
       }
 
       scannedList.add(code);
+      await dao.addOrUpdateProduct(TrolleyItem(
+        productId: selectedProduct!.productId,
+        productName: selectedProduct!.productName,
+        image: selectedProduct!.imageUrl,
+        tags: scannedList,
+        quantity: scannedList.length,
+      ));
 
-      selectedProduct!.scannedCount++;
+      trolleyItems = dao.getAll();
+
+      // selectedProduct!.scannedCount++;
+      final scannedCount = scannedList.length;
       scanMessage =
-          "Scan ${(selectedProduct?.quantity ?? 0) - (selectedProduct?.scannedCount ?? 0)} ${selectedProduct?.productName} More";
+          "Scan ${(selectedProduct?.quantity ?? 0) - (scannedCount)} ${selectedProduct?.productName} More";
 
       if (scannedList.length == selectedProduct?.quantity) {
-        await dao.addOrUpdateProduct(TrolleyItem(
-          productId: selectedProduct!.productId,
-          productName: selectedProduct!.productName,
-          image: selectedProduct!.imageUrl,
-          tags: scannedList,
-          quantity: scannedList.length,
-        ));
-
-        trolleyItems = dao.getAll();
         scannedList = [];
         notifyListeners();
-          navigateReplacement(context,
-              route: NavigationConstants.lowStockDetailRoute);
-          showToast("Scanned Successfully");
+        showToast("Scanned Successfully");
         return true;
-        
       }
       notifyListeners();
 
@@ -743,7 +759,8 @@ class StockProvider extends ChangeNotifier {
       removeLoading(context);
       if (response.statusCode == 200) {
         int storeId = response.data['store_id'].toString().toInt();
-        trolleyLowStockModel = lowStockList.firstWhere((element) => element.storeId == storeId);
+        trolleyLowStockModel =
+            lowStockList.firstWhere((element) => element.storeId == storeId);
         box = await HiveDBService.openProductBox('store_$storeId');
         dao = ProductDao(box);
         trolleyItems = dao.getAll();
@@ -756,7 +773,7 @@ class StockProvider extends ChangeNotifier {
       removeLoading(context);
       ErrorHandler.alertDialog(context, e.toString());
       return false;
-    } 
+    }
   }
 
   Future<bool?> showYesNo(BuildContext context) {
@@ -779,19 +796,22 @@ class StockProvider extends ChangeNotifier {
   }
 
   /// FOR TROLLEY Items
-  /// 
+  ///
   /// on scan trolley items
-  Future<ScanResult> onScanTrolleyItems(BuildContext context, int productId, String code) async {
+  Future<ScanResult> onScanTrolleyItems(
+      BuildContext context, int productId, String code) async {
     try {
       // check if scannedList contains code
       // split code and check first part is productId
       if (code.split("-").first != productId.toString()) {
-        return ScanResult(success: false, message: "Invalid QR - Product ID does not match");
+        return ScanResult(
+            success: false, message: "Invalid QR - Product ID does not match");
       }
       if (scannedList.contains(code)) {
         return ScanResult(success: false, message: "Tag Already scanned");
       }
-      final item = trolleyItems.firstWhereOrNull((element) => element.productId == productId);
+      final item = trolleyItems
+          .firstWhereOrNull((element) => element.productId == productId);
       if (item == null) {
         return ScanResult(success: false, message: "Product not found");
       }
@@ -806,11 +826,13 @@ class StockProvider extends ChangeNotifier {
           trolleyItems = dao.getAll();
           notifyListeners();
           return ScanResult(success: true, message: "Scanned Successfully");
-        }else {
+        } else {
           return ScanResult(success: false, message: result.toString());
         }
       }
-      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context, "Scan ${item.quantity - scannedList.length} ${item.productName}");
+      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+          context,
+          "Scan ${item.quantity - scannedList.length} ${item.productName}");
       notifyListeners();
       return ScanResult(success: false);
     } catch (e) {
@@ -819,29 +841,38 @@ class StockProvider extends ChangeNotifier {
   }
 
   /// getMessageForTrolleyItem
-  /// 
+  ///
   /// example message: Scan 10 Cadburys
-  Future<void> getMessageForTrolleyItem(BuildContext context, int productId) async {
+  Future<void> getMessageForTrolleyItem(
+      BuildContext context, int productId) async {
     scannedList.clear();
-    final product = trolleyItems.firstWhere((element) => element.productId == productId);
+    final product =
+        trolleyItems.firstWhere((element) => element.productId == productId);
     var message = "Scan ${product.quantity} ${product.productName}";
-    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context, message);
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, message);
   }
 
   /// get tags of product in trolley whether scanned or not
-  /// 
+  ///
   /// return list of tags
   List<String> getTagsOfProductInTrolley(int productId, bool remaining) {
-    final product = trolleyItems.firstWhere((element) => element.productId == productId);
+    final product =
+        trolleyItems.firstWhere((element) => element.productId == productId);
     if (remaining) {
-      return product.tags.where((element) => !scannedList.contains(element)).toList();
+      return product.tags
+          .where((element) => !scannedList.contains(element))
+          .toList();
     } else {
-      return product.tags.where((element) => scannedList.contains(element)).toList();
+      return product.tags
+          .where((element) => scannedList.contains(element))
+          .toList();
     }
   }
 
   // trolley item tag post
-  Future<dynamic> postTrolleyScannedTags(BuildContext context, int productId) async {
+  Future<dynamic> postTrolleyScannedTags(
+      BuildContext context, int productId) async {
     try {
       showLoading(context);
       final response = await DioClient().request(
@@ -856,7 +887,8 @@ class StockProvider extends ChangeNotifier {
       removeLoading(context);
       if (response.statusCode == 200 || response.statusCode == 201) {
         dao.deleteProduct(productId.toString());
-        selectedModel?.products.removeWhere((element) => element.productId == productId);
+        selectedModel?.products
+            .removeWhere((element) => element.productId == productId);
         initRackProductMap();
         return true;
       } else {
@@ -866,7 +898,7 @@ class StockProvider extends ChangeNotifier {
       removeLoading(context);
       scannedList.clear();
       return e.toString();
-    } 
+    }
   }
 
   /// Display TAGS scanned or remaining
@@ -964,10 +996,12 @@ class StockProvider extends ChangeNotifier {
   }
 
   /// Open box for low stock list if there is product of store
-  Future<List<LowStockModel>> openBoxForLowStockList(BuildContext context) async {
+  Future<List<LowStockModel>> openBoxForLowStockList(
+      BuildContext context) async {
     List<LowStockModel> list = [];
     for (var element in lowStockList) {
-      final box = await HiveDBService.openProductBox('${HiveConstants.storeId}${element.storeId}');
+      final box = await HiveDBService.openProductBox(
+          '${HiveConstants.storeId}${element.storeId}');
       final dao = ProductDao(box);
       final trolleyItems = dao.getAll();
       if (trolleyItems.isNotEmpty) {
@@ -976,8 +1010,6 @@ class StockProvider extends ChangeNotifier {
     }
     return list;
   }
-
- 
 
   // Future<bool> updateRack(
   //     BuildContext context, String code, int productId) async {

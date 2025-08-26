@@ -72,7 +72,7 @@ class CartonScanScreen extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       showLoading(context);
-      log("Carton Code: $code");
+      log("Carton Code : $code");
 
       if (!code.toLowerCase().contains("carton")) {
         if (context.mounted) {
