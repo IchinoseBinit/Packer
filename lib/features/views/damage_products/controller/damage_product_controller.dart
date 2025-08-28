@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -48,7 +46,7 @@ class DamageProductController extends ChangeNotifier {
     } catch (e) {
       isLoading = false;
       notifyListeners();
-      showToast("...Failed...");
+      showToast(e.toString());
     }
   }
 
