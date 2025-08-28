@@ -321,11 +321,18 @@ class ProductScanScreen extends BaseScanScreen {
               await Provider.of<PackerTransferProvider>(context, listen: false)
                   .scanProduct(context, productId, code, controller);
 
-          if (result && context.mounted) {
+          if (result.success && context.mounted) {
             Navigator.pop(context, true);
+            if (result.message != null) {
+              showToast(result.message ?? '');
+            }
           } else if (context.mounted) {
-            await controller.start();
-            hasScanned = false;
+            if (result.message != null) {
+              handleInvalidCode(context, controller, code, result.message);
+            } else {
+              await controller.start();
+              hasScanned = false;
+            }
           }
         } catch (e) {
           if (context.mounted) {

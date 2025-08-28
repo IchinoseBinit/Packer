@@ -15,6 +15,7 @@ import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
+import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -279,13 +280,13 @@ class PackerTransferProvider extends ChangeNotifier {
     );
   }
 
-  Future<bool> scanProduct(BuildContext context, int productId, String code,
+  Future<ScanResult> scanProduct(BuildContext context, int productId, String code,
       MobileScannerController controller) async {
     if (scanTagsList.contains(code)) {
-      removeLoading(context);
-      ErrorHandler.alertDialog(context, "Tag already scanned");
+      // removeLoading(context);
+      // ErrorHandler.alertDialog(context, "Tag already scanned");
 
-      return false;
+      return ScanResult(success:  false, message: "Tag already scanned");
     }
 
     final item = selectedTransferModel?.items?.firstWhere(
@@ -301,10 +302,8 @@ class PackerTransferProvider extends ChangeNotifier {
         Provider.of<ScanMessageProvider>(context, listen: false)
             .setMessage(context, scanMessage);
       } else {
-        removeLoading(context);
-        await ErrorHandler.alertDialog(
-            context, "Invalid QR ${detectQrMessage(code)}");
-        return false;
+        // removeLoading(context);
+        return ScanResult(success: false, message: "Invalid QR ${detectQrMessage(code)}");
       }
     } else {
       scanTagsList.add(code);
@@ -330,23 +329,23 @@ class PackerTransferProvider extends ChangeNotifier {
           await controller.start();
         }
 
-        return true;
+        return ScanResult(success: true, message: "Scanned Successfully");
       }
       final success = await postScannedTags(context, productId);
 
       if (success) {
-        return true;
+        return ScanResult(success: true, message: "Scanned Successfully");
       } else {
         removeScanTags(productId);
         item?.itemScanCount = 0;
-        ErrorHandler.alertDialog(context, "Failed to submit scan tag");
+        // ErrorHandler.alertDialog(context, "Failed to submit scan tag");
         scanTagsList.clear();
         notifyListeners();
-        return false;
+        return ScanResult(success: false, message: "Failed to submit scan tag");
       }
     }
-    removeLoading(context);
-    return false;
+    // removeLoading(context);
+    return ScanResult(success: false);
   }
 
   // remove particular productid scan tags
@@ -405,19 +404,19 @@ class PackerTransferProvider extends ChangeNotifier {
       if (item.rack != null && item.rack!.isNotEmpty) {
         final result = await navigate(context,
             route: NavigationConstants.scanRackRoute,
-            extra: {"rack": item.rack, "productId": item.product});
-        if (result == true && context.mounted) {
-          Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(context, scanMessage);
-          navigate(
-            context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "forTransfer": true,
-              "productId": item.product,
-            },
-          );
-        }
+            extra: {"rack": item.rack, "productId": item.product, "forTransfer": true});
+        // if (result == true && context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(context, scanMessage);
+        //   navigate(
+        //     context,
+        //     route: NavigationConstants.productScanScreenRoute,
+        //     extra: {
+        //       "forTransfer": true,
+        //       "productId": item.product,
+        //     },
+        //   );
+        // }
         return;
       }
       showYesNo(context).then((value) async {
@@ -563,7 +562,7 @@ class PackerTransferProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updateRack(
+  Future<ScanResult> updateRack(
       BuildContext context, String code, int productId) async {
     try {
       final url = AppUrls.updateRackUrl;
@@ -583,14 +582,14 @@ class PackerTransferProvider extends ChangeNotifier {
         Provider.of<ScanMessageProvider>(context, listen: false)
             .setMessage(context, getScanMessage(productId));
 
-        return true;
+        return ScanResult(success: true, message: "Rack updated successfully");
       } else {
-        ErrorHandler.alertDialog(context, 'Failed to update rack');
-        return false;
+        // ErrorHandler.alertDialog(context, 'Failed to update rack');
+        return ScanResult(success: false, message: "Failed to update rack");
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
-      return false;
+      // ErrorHandler.alertDialog(context, ex.toString());
+      return ScanResult(success: false, message: ex.toString());
     }
   }
 

@@ -214,6 +214,7 @@ class AppRouter {
                     productId: data['productId'] ?? 0,
                     forCarton: data['forCarton'] ?? false,
                     forDamage: data['forDamage'] ?? false,
+                    forTransfer: data['forTransfer'] ?? false,
                     needAPICallCarton: data['needAPICallCarton'] ?? false,
                     // updateRack: data['updateRack'] ?? false,
                     // cartonProduct: data['cartonProduct'] ?? false,
