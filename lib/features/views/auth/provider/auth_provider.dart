@@ -47,6 +47,7 @@ class AuthController {
         body: body,
       );
 
+
       if (otpResponse.statusCode == 200) {
         await removeTokens();
         return true;

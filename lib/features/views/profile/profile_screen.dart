@@ -317,7 +317,8 @@ class ProfileScreen extends StatelessWidget {
                               showLoading(context);
                               await Provider.of<HomeProvider>(context,
                                       listen: false)
-                                  .updatepackerStatus(false, context);
+                                  .updatepackerStatus(false, context,
+                                      showErrorDialog: false);
 
                               AuthController().logout().then(
                                 (value) {
@@ -329,7 +330,11 @@ class ProfileScreen extends StatelessWidget {
                                     navigateAndRemoveAll(context,
                                         route: NavigationConstants.loginRoute);
                                   } else {
-                                    ErrorHandler().errorHandler(context, value);
+                                    ErrorHandler.alertDialog(context,
+                                        "Something went wrong. Please try again later",
+                                        () {
+                                      navigatePop(context);
+                                    });
                                   }
                                 },
                               );

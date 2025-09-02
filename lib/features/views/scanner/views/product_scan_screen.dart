@@ -318,7 +318,7 @@ class ProductScanScreen extends BaseScanScreen {
         try {
           final result =
               await Provider.of<PackerTransferProvider>(context, listen: false)
-                  .scanProduct(context, productId, code, controller);
+                  .scanProductForInventoryTransfer(context, productId, code);
 
           if (result.success && context.mounted) {
             Navigator.pop(context, true);
