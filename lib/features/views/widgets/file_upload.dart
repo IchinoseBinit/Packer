@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -59,14 +58,14 @@ Future<void> fileUpload(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "Enter code to report damage",
+                "Enter code to Product Id:",
                 style: TextStyle(fontSize: 20),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: textController,
                 decoration: const InputDecoration(
-                  hintText: "Report Damage",
+                  hintText: "Product Id",
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -74,7 +73,7 @@ Future<void> fileUpload(
               GeneralElevatedButton(
                 title: "Submit",
                 onPressed: () async {
-                  if (textController.text.trim() != 'Report Damage') {
+                  if (textController.text.trim() != '$productId') {
                     showToast("Enter valid code.");
                     return;
                   }

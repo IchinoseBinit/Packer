@@ -56,31 +56,33 @@ class DamagedScanScreen extends BaseScanScreen {
       builder: (context, provider, _) {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 12.h),
-          child: GeneralElevatedButton(
-            title: "Confirm Verification",
-            onPressed: () {
-              final remainingItem = provider.getUnscannedTags();
-              ShowAlertDialog(
-                title: "Confirm",
-                body: Text(qr
-                    ? "Product Scanned \n${provider.tagList.join('\n')}"
-                    : "Product left \n${remainingItem.join('\n')}"),
-                okFunc: () {
-                  if (qr) {
-                    provider.markDamaged(provider.tagList, context);
-                  } else {
-                    provider.markDamaged(remainingItem, context);
-                  }
-                  navigatePop(context);
-                  navigatePop(context);
-                },
-                needCancel: true,
-                cancelFunc: () {
-                  navigatePop(context);
-                },
-              ).showAlertDialog(context);
-            },
-          ),
+          child: scanRack!
+              ? null
+              : GeneralElevatedButton(
+                  title: "Confirm Verification",
+                  onPressed: () {
+                    final remainingItem = provider.getUnscannedTags();
+                    ShowAlertDialog(
+                      title: "Confirm",
+                      body: Text(qr
+                          ? "Product Scanned \n${provider.tagList.join('\n')}"
+                          : "Product left \n${remainingItem.join('\n')}"),
+                      okFunc: () {
+                        if (qr) {
+                          provider.markDamaged(provider.tagList, context);
+                        } else {
+                          provider.markDamaged(remainingItem, context);
+                        }
+                        navigatePop(context);
+                        navigatePop(context);
+                      },
+                      needCancel: true,
+                      cancelFunc: () {
+                        navigatePop(context);
+                      },
+                    ).showAlertDialog(context);
+                  },
+                ),
         );
       },
     );
@@ -156,8 +158,6 @@ class DamagedScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
-    debugger();
-
     Provider.of<DamageProductController>(context, listen: false).reset();
     Provider.of<DamageProductController>(context, listen: false)
         .getMessageForNoQr(context, scanRack!, qr);
