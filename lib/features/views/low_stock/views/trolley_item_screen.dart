@@ -36,7 +36,7 @@ class TrolleyItemScreen extends StatelessWidget {
                       okFunc: () {
                         navigatePop(context);
                         navigate(context,
-                            route: NavigationConstants.lowStockScannerRoute,
+                            route: NavigationConstants.trolleyScannerRoute,
                             extra: {"changeBasket": true});
                       },
                       needCancel: true,
@@ -91,8 +91,11 @@ class TrolleyItemScreen extends StatelessWidget {
 
                                     navigate(context,
                                         route: NavigationConstants
-                                            .trolleyItemScannerRoute,
-                                        extra: product.productId);
+                                            .trolleyScannerRoute,
+                                        extra: {
+                                          "productId": product.productId,
+                                          "forProduct": true,
+                                        });
                                   },
                                 );
                               })

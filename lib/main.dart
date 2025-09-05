@@ -20,11 +20,12 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
-import 'package:packer/features/views/profile/provider/order_return_provider.dart';
+import 'package:packer/features/views/order_return/provider/order_return_provider.dart';
 import 'package:packer/features/views/profile/provider/rack_update_provider.dart';
 import 'package:packer/features/views/receive_baskets/controller/receive_basket_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
+import 'package:packer/features/views/warehouse_carton/provider/warehouse_carton_provider.dart';
 import 'package:packer/features/views/widgets/custom_url.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
@@ -143,19 +144,24 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     FirebaseMessaging.instance.getToken().then((v) => dev.log(v.toString()));
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => HomeProvider()),
-        ChangeNotifierProvider(create: (_) => OrderProvider()),
-        ChangeNotifierProvider(create: (_) => PackerTransferProvider()),
-        ChangeNotifierProvider(create: (_) => StockProvider()),
-        ChangeNotifierProvider(create: (_) => ScanMessageProvider()),
-        ChangeNotifierProvider(create: (_) => StockVerificationProvider()),
         ChangeNotifierProvider(create: (_) => RackUpdateProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
-        ChangeNotifierProvider(create: (_) => OrderReturnProvider()),
-        // driver
-        ChangeNotifierProvider(create: (_) => DriverController()),
         ChangeNotifierProvider(create: (_) => ReceiveBasketController()),
         ChangeNotifierProvider(create: (_) => DamageProductController()),
+        // FOR DARK_STORE
+        ChangeNotifierProvider(create: (context) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => OrderReturnProvider()),
+        ChangeNotifierProvider(create: (_) => PackerTransferProvider()),
+        // FOR DRIVER
+        ChangeNotifierProvider(create: (_) => DriverController()),
+        // FOR MAIN_STORE
+        ChangeNotifierProvider(create: (_) => WarehouseCartonProvider()),
+        ChangeNotifierProvider(create: (_) => StockProvider()),
+        // FOR MANAGER AND AUDITOR
+        ChangeNotifierProvider(create: (_) => StockVerificationProvider()),
+        // FOR BASE_SCANNER
+        ChangeNotifierProvider(create: (_) => ScanMessageProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

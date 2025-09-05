@@ -97,15 +97,19 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
         return Scaffold(
           appBar: GeneralAppBar(
             needLeading: false,
-            middleWidget:  CustomSwitch(fromWareHouse: true, onPressed: () {
-              Provider.of<StockProvider>(context, listen: false)
-                  .fetchLowStockProducts(context);
-              
-            }),
+            middleWidget: CustomSwitch(
+              fromWareHouse: true,
+              onPressed: () {
+                Provider.of<StockProvider>(context, listen: false)
+                    .fetchLowStockProducts(context);
+              },
+            ),
             trailingSvgAsset: AppAssets.trolleyIcon,
             trailingOnPressed: () {
-              navigate(context,
-                  route: NavigationConstants.collectedProductViewRoute);
+              navigate(
+                context,
+                route: NavigationConstants.collectedProductViewRoute,
+              );
             },
           ),
           body: !_initialized
@@ -113,14 +117,15 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
               : homeProvider.isOnline
                   ? RefreshIndicator(
                       onRefresh: () async {
-                        await Provider.of<StockProvider>(context,
-                                listen: false)
+                        await Provider.of<StockProvider>(context, listen: false)
                             .fetchLowStockProducts(context);
                       },
                       child: SafeArea(
                         child: Padding(
                           padding: EdgeInsets.symmetric(
-                              horizontal: 16.w, vertical: 16.h),
+                            horizontal: 16.w,
+                            vertical: 16.h,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -129,8 +134,8 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                                   builder: (context, value, _) {
                                     if (value.isLoading) {
                                       return const Center(
-                                          child:
-                                              CircularProgressIndicator());
+                                        child: CircularProgressIndicator(),
+                                      );
                                     } else if (value.isError) {
                                       return Center(
                                         child: Text(
@@ -142,23 +147,20 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                                       );
                                     } else {
                                       return ListView.builder(
-                                        itemCount:
-                                            value.lowStockList.length,
+                                        itemCount: value.lowStockList.length,
                                         itemBuilder: (context, index) {
                                           return LowStockCard(
-                                            model:
-                                                value.lowStockList[index],
+                                            model: value.lowStockList[index],
                                             primaryColor:
-                                                Theme.of(context)
-                                                    .primaryColor,
+                                                Theme.of(context).primaryColor,
                                             callback: () {
                                               Provider.of<StockProvider>(
                                                       context,
                                                       listen: false)
                                                   .onDetailsTaped(
-                                                      context,
-                                                      value.lowStockList[
-                                                          index]);
+                                                context,
+                                                value.lowStockList[index],
+                                              );
                                             },
                                           );
                                         },
@@ -171,9 +173,11 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                               GeneralElevatedButton(
                                 title: 'Scan Carton',
                                 onPressed: () {
-                                  navigate(context,
-                                      route: NavigationConstants
-                                          .cartonScanScreenRoute);
+                                  navigate(
+                                    context,
+                                    route: NavigationConstants
+                                        .warehouseCartonScannerRoute,
+                                  );
                                 },
                               ),
                               SizedBox(height: 20.h),
@@ -203,7 +207,6 @@ class LowStockCard extends StatelessWidget {
   final VoidCallback? callback;
   final String basketId;
   final int? count;
-
 
   const LowStockCard({
     super.key,

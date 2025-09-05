@@ -94,31 +94,6 @@ class RackScanScreen extends BaseScanScreen {
         } else {
           if (context.mounted) handleInvalidCode(context, controller, code);
         }
-      } else if (rackCode != null && needAPICallCarton) {
-        if (code.contains(rackCode!)) {
-          final result =
-              await Provider.of<StockProvider>(context, listen: false)
-                  .updateRack(context, code, productId, true);
-
-          if (result && context.mounted) {
-            navigatePop(context, true);
-            showToast("Rack Assigned successfully");
-          } else {
-            if (context.mounted) await controller.start();
-          }
-        } else {
-          if (context.mounted) handleInvalidCode(context, controller, code);
-        }
-      } else if (forCarton) {
-        final result = await Provider.of<StockProvider>(context, listen: false)
-            .updateRack(context, code, productId, true);
-
-        if (result && context.mounted) {
-          navigatePop(context, true);
-          showToast("Rack Assigned successfully");
-        } else {
-          if (context.mounted) await controller.start();
-        }
       } else if (forDamage) {
         try {
           final result =

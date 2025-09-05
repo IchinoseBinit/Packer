@@ -5,15 +5,11 @@ import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
-import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/carton/model/carton_list_model.dart';
-import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
+import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
-import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/model/store_model.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:provider/provider.dart';
@@ -21,29 +17,183 @@ import 'package:provider/provider.dart';
 class StockVerificationProvider extends ChangeNotifier {
   bool isLoading = false;
 
-  List<StockItemModel> stockItems = [];
-  List<String> rackList = [];
-  Map<String, List<StockItemModel>> rackProductMap = {};
-
-  StockItemModel? selectedStockItem;
+  List<Store> storeList = [];
+  Store? selectedStore;
 
   List<String> scannedUnits = [];
-  Store? selectedStore;
-  CartonListModel? selectedCarton;
-
-  List<Store> storeList = [];
-  // cartonList
-  List<CartonListModel> cartonList = [];
 
   String scannedRackCode = "";
   String cartonId = "";
   int auditId = 0;
 
+  /// ==================== Utility Functions START =====================
+
+  // show change rack button
+  bool showChangeRackButton() {
+    final mainStore = selectedStore?.isMainStore ?? false;
+    // if main store and carton id is empty
+    if (mainStore && cartonId.isEmpty) {
+      return true;
+    }
+    // if not main store and scanned units is empty
+    if (!mainStore && scannedUnits.isEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  // show complete button
+  bool showCompleteButton() {
+    // if scanned units is not empty
+    if (scannedUnits.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  // reset : clear scanned units, scanned rack code, carton id
+  void reset() {
+    scannedUnits.clear();
+    scannedRackCode = "";
+    cartonId = "";
+    notifyListeners();
+  }
+
+  // setScanMessage : set scan message based on scanned units and rack code
+  // if scanned rack code is empty, show "Scan Rack Code"
+  // if main store and carton id is empty, show "Scan Carton Code"
+  // if not main store and scanned units is not empty, show "Scan Product Code"
+  // else show "Scan Product Code - ${scannedUnits.length} units scanned"
+  void setScanMessage(BuildContext context) {
+    var message = "Scan Rack Code";
+    if (scannedRackCode.isEmpty) {
+      message = "Scan Rack Code";
+    } else if ((selectedStore?.isMainStore ?? false) && cartonId.isEmpty) {
+      message = "Scan Carton Code";
+    } else if (scannedUnits.isEmpty) {
+      message = "Scan Product Code";
+    } else {
+      message = "Scan Product Code - ${scannedUnits.length} units scanned";
+    }
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, message);
+  }
+
+  /// ==================== Utility Functions END =====================
+  
+
+  /// ==================== CODE DETECTION LOGIC START HERE ================
+
+  /// [onRackScan] : scan rack code
+  ///
+  /// starts with scanning rack code
+  /// assign code to variable
+  ///
+  /// if main store; navigate to carton scan screen
+  /// else navigate to product scan screen
+  ScanResult onRackScan(BuildContext context, String code) {
+    try {
+      // step 1: assign code to scannedRackCode
+      scannedRackCode = code;
+      // step 2: clear scannedUnits
+      scannedUnits.clear();
+      // step 3: set scan message
+      setScanMessage(context);
+
+      // step 4: navigate to next screen
+      if (selectedStore?.isMainStore ?? false) {
+        navigateReplacement(context,
+            route: NavigationConstants.stockVerificationScannerRoute,
+            extra: {
+              'forCarton': true,
+            });
+      } else {
+        navigateReplacement(context,
+            route: NavigationConstants.stockVerificationScannerRoute,
+            extra: {
+              'forProduct': true,
+            });
+      }
+      // step 5: return success
+      return ScanResult(success: true, message: "Rack Scanned Successfully");
+    } catch (e) {
+      // if error, return failure
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  // onScanProduct
+  ScanResult onScanProduct(BuildContext context, String code) {
+    // step 1: check if main store and then check if product carton id matches carton id
+    if (selectedStore?.isMainStore ?? false) {
+      final productCartonId = code.split("-")[2];
+      if (productCartonId != cartonId) {
+        return ScanResult(
+            success: false, message: "Product does not match carton");
+      }
+    }
+    // step 2: check if scannedUnits is empty; if yes, add code to scannedUnits
+    if (scannedUnits.isEmpty) {
+      scannedUnits.add(code);
+    } 
+    // else; check if scannedUnits contains code; if yes, return failure
+    else if (scannedUnits.contains(code)) {
+      return ScanResult(success: false, message: "Tag Already scanned");
+    } 
+    // else; scanned unit first tag split .first is same as code split .first
+    else {
+      // check if scanned unit first tag split .first is same as code split .first
+      final scannedUnitFirstTag = scannedUnits.first.split('-').first;
+      final codeFirstTag = code.split('-').first;
+      // if not same, return failure
+      if (scannedUnitFirstTag != codeFirstTag) {
+        return ScanResult(success: false, message: "Product does not match");
+      }
+      // if same, add code to scannedUnits
+      scannedUnits.add(code);
+    }
+    // step 3: set scan message
+    setScanMessage(context);
+    notifyListeners();
+    // step 4: return success
+    return ScanResult(success: false);
+  }
+
+  /// =================== CODE DETECTION LOGIC END HERE ===================
+
+  /// =================== API CALLS START HERE ===================
+  ///
+
+  // store selection screen : fetch stores and display in list
+  Future<void> fetchStores() async {
+    try {
+      
+      // step 1: fetch stores
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.getStoreUrl,
+      );
+      // step 2: assign response to storeList
+      storeList =
+          (response.data as List).map((e) => Store.fromJson(e)).toList();
+      notifyListeners();
+    } catch (e) {
+      // if error, log error
+      log("Error while getting value $e");
+      notifyListeners();
+    }
+  }
+
+  // call from store_selection_screen :: start audit
   void setSelectedStore(BuildContext context, Store store) async {
+    // step 1: set selected store and reset
     selectedStore = store;
     auditId = 0;
+    reset();
     try {
+      // step 2: show loading
       showLoading(context);
+      // step 3: call api
       final apiResponse = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.getAuditViewUrl,
@@ -51,494 +201,80 @@ class StockVerificationProvider extends ChangeNotifier {
           "store_id": store.id,
         },
       );
+      // step 4: check response
       if (context.mounted) {
         removeLoading(context);
-        if (apiResponse.statusCode == 200) {
-          auditId = apiResponse.data['audit_id'].toString().toInt();
-          navigate(context,
-              route: NavigationConstants.stockRackScanScreenRoute,
-              extra: {
-                "changeRack": false,
-              });
-        } else {
+        // step 5: check response if not 200 then show error dialog
+        if (apiResponse.statusCode != 200) {
           ErrorHandler.alertDialog(context, 'Failed to get audit view');
+          return;
         }
+        // step 6: assign audit id
+        auditId = apiResponse.data['audit_id'].toString().toInt();
+        navigate(
+          context,
+          route: NavigationConstants.stockVerificationScannerRoute,
+        );
+        // step 7: set scan message
+        setScanMessage(context);
       }
     } catch (e) {
-      removeLoading(context);
-      log("Error while getting audit view $e");
-      ErrorHandler.alertDialog(context, e.toString());
-    }
-  }
-
-  void setSelectedCarton(CartonListModel carton) {
-    scannedUnits.clear();
-    selectedCarton = carton;
-  }
-
-  void arrangeStockItems() {
-    rackList.clear();
-    rackProductMap.clear();
-    for (var element in stockItems) {
-      if (!rackList.contains(element.rackName)) {
-        rackList.add(element.rackName);
-      }
-      if (rackProductMap.containsKey(element.rackName)) {
-        rackProductMap[element.rackName]!.add(element);
-      } else {
-        rackProductMap[element.rackName] = [element];
-      }
-    }
-
-    // sort
-    rackList.sort((a, b) => a.compareTo(b));
-    notifyListeners();
-  }
-
-  Future<void> fetchCartonList(BuildContext context, int productId) async {
-    try {
-      final url = AppUrls.cartonListUrl
-          .replaceFirst('product_id', productId.toString());
-
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: url,
-      );
-
-      if (response.statusCode == 200) {
-        cartonList = (response.data as List)
-            .map((item) => CartonListModel.fromJson(item))
-            .toList();
-      } else {
-        return;
-      }
-    } catch (e) {
-      log('Error fetching carton list: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> fetchStores() async {
-    try {
-      if (storeList.isNotEmpty) {
-        return;
-      }
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.getStoreUrl,
-      );
-      storeList =
-          (response.data as List).map((e) => Store.fromJson(e)).toList();
-      // if (storeList.isNotEmpty) {
-      // } else {
-      //   selectedStore = null;
-      // }
-
-      notifyListeners();
-    } catch (e) {
-      log("Error while getting value $e");
-      notifyListeners();
-    }
-  }
-
-  void getMessage(BuildContext context) {
-    var message = "Scan Product Code";
-    if (scannedUnits.isNotEmpty) {
-      message += " Scanned ${scannedUnits.length} units";
-    }
-    Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(context, message);
-  }
-
-  // fetch
-  Future<void> fetchStockItems(BuildContext context, String storeId) async {
-    try {
-      rackList.clear();
-      rackProductMap.clear();
-      isLoading = true;
-      notifyListeners();
-      await Future.delayed(const Duration(seconds: 0));
-
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.getStockItemsUrl.replaceAll("value", storeId),
-      );
-      stockItems = (response.data as List)
-          .map((e) => StockItemModel.fromJson(e))
-          .toList();
-      isLoading = false;
+      // if error, handle error
       if (context.mounted) {
-        navigate(context,
-            route: NavigationConstants.stockRackScanScreenRoute,
-            extra: {
-              "changeRack": false,
-            });
-      }
-    } catch (e) {
-      log("Error while getting value $e");
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // onRackScan
-  bool onRackScan(BuildContext context, String code) {
-    try {
-      scannedRackCode = code;
-      scannedUnits.clear();
-
-      if (selectedStore?.isMainStore ?? false) {
-        navigateReplacement(context,
-            route: NavigationConstants.cartonScanScreenRoute,
-            extra: {
-              'isMainStoreAudit': true,
-            });
-      } else {
-        navigateReplacement(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              'fromStockVerification': true,
-            });
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // onRackChangeScan
-  bool onRackChangeScan(BuildContext context, String code) {
-    try {
-      scannedRackCode = code;
-      if (selectedStore?.isMainStore ?? false) {
-        navigate(context,
-            route: NavigationConstants.stockRackScanScreenRoute,
-            extra: {
-              "changeRack": true,
-            });
-      } else {
-        navigateReplacement(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              'fromStockVerification': true,
-            });
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<String> getCartonIdentifier(BuildContext context, int id) async {
-    try {
-      final url = AppUrls.cartonDetailUrl.replaceFirst(':id', id.toString());
-
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: url,
-      );
-      if (context.mounted) {
-        if (response.statusCode == 200) {
-          return response.data['unique_identifier']
-              .toString()
-              .toStringConversion();
-        } else {
-          if (context.mounted) {
-            ErrorHandler.alertDialog(context, 'Failed to get carton info');
-          }
-          return "";
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
+        removeLoading(context);
         ErrorHandler.alertDialog(context, e.toString());
       }
+      log("Error while getting audit view $e");
     }
-    return "";
   }
 
-  Future<int> getCartonId(BuildContext context, String identifier) async {
+  /// [setCartonId] : set carton id if selected store is main store
+  /// 
+  /// if selected store is main store, then set carton id
+  /// scans carton code and fetches carton id from api
+  /// 
+  Future<ScanResult> setCartonId(
+      BuildContext context, String identifier) async {
     try {
+      // step 1: show loading
+      showLoading(context);
+      // step 2: create url
       final url = AppUrls.cartonByIdentifierUrl
           .replaceFirst(':identifier', identifier.toString());
-
+      // step 3: call api
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: url,
       );
+      // step 4: remove loading
       if (context.mounted) {
-        if (response.statusCode == 200) {
-          return response.data['id'].toString().toInt();
-        } else {
-          if (context.mounted) {
-            ErrorHandler.alertDialog(context, 'Failed to get carton info');
-          }
-          return 0;
-        }
+        removeLoading(context);
       }
+      // step 5: check response; if not 200 then return failure; else set carton id & set message
+      if (response.statusCode == 200) {
+        cartonId = response.data['id'].toString();
+        if (context.mounted) {
+          setScanMessage(context);
+        }
+        return ScanResult(success: true, message: 'Carton Detail Found');
+      }
+      return ScanResult(success: false, message: 'Failed to get carton info');
     } catch (e) {
       if (context.mounted) {
-        ErrorHandler.alertDialog(context, e.toString());
+        removeLoading(context);
       }
+      return ScanResult(success: false, message: e.toString());
     }
-    return 0;
-  }
-
-  Future<void> getCartonInfo(BuildContext context, int id, String tag) async {
-    try {
-      final url = AppUrls.cartonDetailUrl.replaceFirst(':id', id.toString());
-
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: url,
-      );
-      if (context.mounted) {
-        if (response.statusCode == 200) {
-          await navigateReplacement(context,
-              route: NavigationConstants.cartonScanScreenRoute,
-              extra: {
-                'cartonId': id,
-                'matchCode': true,
-                'code': response.data['unique_identifier']
-                    .toString()
-                    .toStringConversion(),
-                'tag': tag,
-              });
-        } else {
-          if (context.mounted) {
-            ErrorHandler.alertDialog(context, 'Failed to get carton info');
-          }
-        }
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ErrorHandler.alertDialog(context, e.toString());
-      }
-    }
-  }
-
-  // single verification
-  Future<bool> singleVerification(
-      BuildContext context, int id, String tag) async {
-    final url = AppUrls.singleUnitVerificationUrl;
-    if (checkCartonExist(id)) {
-      getMessage(context);
-      await navigateReplacement(context,
-          route: NavigationConstants.productScanScreenRoute,
-          extra: {
-            "productId": selectedStockItem!.productId,
-            "productUnits": selectedStockItem!.productUnits,
-            "fromStockVerification": true,
-          });
-      return true;
-    }
-
-    try {
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url,
-        body: {
-          "carton_id": id,
-          "product_unit": tag,
-          "audit_id": auditId,
-          "rack_id": scannedRackCode,
-        },
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        showToast("Verification successful");
-        getMessage(context);
-        await navigateReplacement(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "fromStockVerification": true,
-            });
-
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<void> onItemTap(BuildContext context, StockItemModel item) async {
-    selectedStockItem = item;
-    selectedCarton = null;
-
-    scannedUnits.clear();
-    if (selectedStockItem != null) {
-      if (selectedStockItem!.rackName.isNotEmpty) {
-        final result = await navigate(context,
-            route: NavigationConstants.scanRackRoute,
-            extra: {
-              "rack": selectedStockItem!.rackName,
-              "productId": selectedStockItem!.productId
-            });
-
-        if (context.mounted && result) {
-          if (selectedStore?.isMainStore ?? false) {
-            final cartonListResults = await navigate(
-              context,
-              route: NavigationConstants.cartonListScreenRoute,
-              extra: selectedStockItem!.productId,
-            );
-            // if (cartonListResults ?? false) {
-            //   final productScanResults = await navigate(context,
-            //       route: NavigationConstants.productScanScreenRoute,
-            //       extra: {
-            //         "productId": selectedStockItem!.productId,
-            //         "productUnits": selectedStockItem!.productUnits,
-            //         "fromStockVerification": true,
-            //       });
-            //   if (productScanResults ?? false) {
-            //     // sacn product
-            //   }
-            // }
-          } else if (result ?? false) {
-            // sacn product
-            final scanResults = await navigate(context,
-                route: NavigationConstants.productScanScreenRoute,
-                extra: {
-                  "productId": selectedStockItem!.productId,
-                  "productUnits": selectedStockItem!.productUnits,
-                  "fromStockVerification": true,
-                });
-            if (scanResults ?? false) {
-              // sacn product
-            }
-          }
-        }
-      } else {
-        // scan product
-        if (selectedStore?.isMainStore ?? false) {
-          final cartonListResults = await navigate(
-            context,
-            route: NavigationConstants.cartonListScreenRoute,
-            extra: selectedStockItem!.productId,
-          );
-        } else {
-          final result = await navigate(context,
-              route: NavigationConstants.productScanScreenRoute,
-              extra: {
-                "productId": selectedStockItem!.productId,
-                "productUnits": selectedStockItem!.productUnits,
-                "fromStockVerification": true,
-              });
-          if (result ?? false) {
-            // navigate(context, route: NavigationConstants.cartonListScreenRoute, extra: {
-            //   'product'
-            // })
-            // sacn product
-          }
-        }
-      }
-    }
-  }
-
-  // onScanCarton
-  onScanCarton(BuildContext context, String code, {String? cartonCode}) async {
-    cartonId = (await getCartonId(context, code)).toString();
-
-    log("Carton ID Set $cartonId");
-
-    // if (cartonCode == null) {
-    //   // Find the carton by ID
-    //   final carton = cartonList.firstWhereOrNull(
-    //     (carton) => carton.uniqueIdentifier == code,
-    //   );
-
-    //   // Check if the carton exists and the code matches the unique identifier
-    //   if (carton != null) {
-    //     setSelectedCarton(carton);
-    //     navigateReplacement(context,
-    //         route: NavigationConstants.productScanScreenRoute,
-    //         extra: {
-    //           "productId": selectedStockItem!.productId,
-    //           "productUnits": selectedStockItem!.productUnits,
-    //           "fromStockVerification": true,
-    //           'cartonId': selectedCarton!.id,
-    //         });
-    //     return true;
-    //   } else {
-    //     return false;
-    //   }
-    // } else if (selectedCarton != null) {
-    //   if (selectedCarton!.uniqueIdentifier
-    //       .toLowerCase()
-    //       .contains(code.toLowerCase())) {
-    //     navigateReplacement(context,
-    //         route: NavigationConstants.productScanScreenRoute,
-    //         extra: {
-    //           "productId": selectedStockItem!.productId,
-    //           "productUnits": selectedStockItem!.productUnits,
-    //           "fromStockVerification": true,
-    //           'cartonId': selectedCarton!.id,
-    //         });
-    //     return true;
-    //   }
-    // }
-
-    // return false;
-  }
-
-  // onScanProduct
-  bool onScanProduct(BuildContext context, int productId, String code,
-      {bool fromStockVerification = false}) {
-    // If carton scan is needed
-    // if (selectedStore?.isMainStore ?? false) {
-    //   final productCartonId = code.split("-")[2];
-    //   if (productCartonId != cartonId) {
-    //     return false;
-    //   }
-    // }
-    if (scannedUnits.isEmpty) {
-      scannedUnits.add(code);
-    } else if (scannedUnits.contains(code)) {
-      return false;
-    } else {
-      // check if scanned unit first tag split .first is same as code split .first
-      final scannedUnitFirstTag = scannedUnits.first.split('-').first;
-      final codeFirstTag = code.split('-').first;
-      if (scannedUnitFirstTag != codeFirstTag) {
-        return false;
-      }
-
-      scannedUnits.add(code);
-    }
-
-    if (fromStockVerification) {
-      final quantity = scannedUnits.length;
-
-      var message = "Scan Product Code";
-      if (quantity > 0) {
-        message += " Scanned $quantity units";
-      }
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, message);
-    } else {
-      // check for the remaining or not
-      var scanMessage = "";
-      if (scannedUnits.length >= selectedStockItem!.productUnits.length) {
-        scanMessage = "Scanned ${scannedUnits.length} units";
-      } else {
-        scanMessage =
-            "Scan ${selectedStockItem!.productUnits.length - scannedUnits.length} more units";
-      }
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, scanMessage);
-    }
-
-    notifyListeners();
-
-    return true;
   }
 
   // This should only be called when the button on the ui is clicked.
   // The button would only be visible when the scanned units are equal to the product units.
   // The person can scan other units as well but the button would not be visible.
-  Future<Map<String, dynamic>> onVerify() async {
+  Future<ScanResult> onVerify(BuildContext context) async {
     try {
+      // step 1: show loading
+      showLoading(context);
+      // step 2: call api
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.stockVerificationUrl,
@@ -550,52 +286,40 @@ class StockVerificationProvider extends ChangeNotifier {
           if (selectedStore?.isMainStore ?? false) "carton_id": cartonId,
         },
       );
+      // step 3: remove loading
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      // step 4: check response; if success then clear scanned units & carton id & set message
       if (response.statusCode == 200 || response.statusCode == 201) {
         scannedUnits.clear();
-        cartonId = "";
-        showToast("Verification successful");
+        if (selectedStore?.isMainStore ?? false) {
+          cartonId = "";
+        }
+        if (context.mounted) {
+          setScanMessage(context);
+        }
         notifyListeners();
-        return {
-          'success': true,
-          'message': 'Verification successful',
-        };
+        return ScanResult(success: true, message: "Verification successful");
       }
-      return {
-        'success': false,
-        'message': 'Verification failed',
-      };
-    } catch (e) {
+      // step 5: if failure then clear scanned units & carton id & set message & return failure
       scannedUnits.clear();
-      return {
-        'success': false,
-        'message': e.toString(),
-      };
-    }
-  }
-
-  completeCarton() {
-    if (selectedCarton != null) removeStockItem(selectedStockItem!);
-    selectedCarton = null;
-    notifyListeners();
-  }
-
-  bool checkCartonExist(int cartonId) {
-    return cartonList.any((carton) => carton.id == cartonId);
-  }
-
-  void removeStockItem(StockItemModel item) {
-    final rackName = item.rackName;
-
-    if (rackProductMap.containsKey(rackName)) {
-      rackProductMap[rackName]!.remove(item);
-
-      // If no more items in this rack, remove rack from list and map
-      if (rackProductMap[rackName]!.isEmpty) {
-        rackProductMap.remove(rackName);
-        rackList.remove(rackName);
+      if (context.mounted) {
+        setScanMessage(context);
       }
-
       notifyListeners();
+      return ScanResult(success: false, message: "Verification failed");
+    } catch (e) {
+      // if errror occurs then clear scanned units & carton id & set message & return failure with error message
+      scannedUnits.clear();
+      if (context.mounted) {
+        removeLoading(context);
+        setScanMessage(context);
+      }
+      notifyListeners();
+      return ScanResult(success: false, message: e.toString());
     }
   }
+
+  /// =================== API CALLS END HERE ===================
 }

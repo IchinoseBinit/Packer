@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/features/views/order/models/order_return_model.dart';
-import 'package:packer/features/views/order/views/order_return_card.dart';
-import 'package:packer/features/views/profile/provider/order_return_provider.dart';
+import 'package:packer/features/views/order_return/model/order_return_model.dart';
+import 'package:packer/features/views/order_return/views/order_return_card.dart';
+import 'package:packer/features/views/order_return/provider/order_return_provider.dart';
+import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:provider/provider.dart';
 
 class OrderReturnList extends StatelessWidget {
@@ -11,8 +12,8 @@ class OrderReturnList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Order Return List'),
+      appBar: GeneralAppBar(
+        middleWidget: const Text('Order Return List'),
       ),
       body: FutureBuilder<List<OrderReturnModel>>(
         future: Provider.of<OrderReturnProvider>(context, listen: false)

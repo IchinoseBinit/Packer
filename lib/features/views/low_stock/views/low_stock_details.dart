@@ -9,7 +9,6 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
 
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -18,8 +17,8 @@ import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/product/product_card.dart';
+import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
-import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 class LowStockDetails extends StatefulWidget {
@@ -48,33 +47,35 @@ class _LowStockDetailsState extends State<LowStockDetails> {
         navigatePop(context);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Low Stock Details'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Provider.of<StockProvider>(context, listen: false).reset();
-              navigatePop(context);
-            },
+        appBar: GeneralAppBar(
+          middleWidget: Text(
+            'Low Stock Details',
           ),
-          
+          leadingOnPressed: () {
+            Provider.of<StockProvider>(context, listen: false).reset();
+            navigatePop(context);
+          },
         ),
         body: Consumer<StockProvider>(
           builder: (context, state, child) {
             final model = state.selectedModel ?? LowStockModel();
             return SafeArea(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 16.h,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     LowStockCard(
                       model: model,
-                      // basketId: state.basketId,
                       primaryColor: Theme.of(context).primaryColor,
                     ),
                     // 20.h
-                    SizedBox(height: 20.h),
+                    SizedBox(
+                      height: 20.h,
+                    ),
                     Expanded(
                       child: RefreshIndicator(
                         onRefresh: () {
@@ -82,72 +83,89 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                   listen: false)
                               .fetchLowStockProducts(context);
                         },
-                        child: ListView.builder(
+                        child: ListView.separated(
                           itemCount: state.rackNameList.length,
+                          separatorBuilder: (context, index) {
+                            return SizedBox(
+                              height: 12.h,
+                            );
+                          },
                           itemBuilder: (context, index) {
                             final rackName = state.rackNameList[index];
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 RichText(
-                                    text: TextSpan(children: [
-                                  TextSpan(
-                                      text: "Rack Name: ",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge),
-                                  TextSpan(
-                                      text: rackName,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontSize: 16.sp,
-                                          )),
-                                ])),
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: "Rack Name: ",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelLarge,
+                                      ),
+                                      TextSpan(
+                                        text: rackName,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontSize: 16.sp,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                                 // 8.h
-                                SizedBox(height: 8.h),
+                                SizedBox(
+                                  height: 8.h,
+                                ),
                                 if (state.rackProductMap[rackName] != null)
                                   IntrinsicGridView.vertical(
-                                      columnCount: 2,
-                                      verticalSpace: 12.w,
-                                      horizontalSpace: 12.w,
-                                      children: [
-                                        ...state.rackProductMap[rackName]!.map(
-                                          (product) {
-                                            final width =
-                                                (1.sw - 12.w - 32.w) / 2;
-                                            return ProductCard(
-                                                width: width,
-                                                onTap: () {
-                                                  if (state.checkScanCount(
-                                                      product.productId)) {
-                                                    return;
-                                                  }
-                                                  ErrorHandler.alertDialog(
-                                                      context,
-                                                      "Scan Carton First");
-                                                },
-                                                productModel: CommonProductModel
-                                                    .fromProductModel(product),
-                                                status: state.getScannedList(
-                                                        product.productId)
-                                                    .length ==
-                                                    product.quantity
-                                                    ? ItemStatus.done
-                                                    : ItemStatus.remaining,
-                                                quantity: product.quantity - state.getScannedList(
-                                                    product.productId).length,
-                                                statusToShow: state.trolleyItems
-                                                    .firstWhereOrNull(
-                                                        (element) =>
-                                                            element.productId ==
-                                                            product.productId)
-                                                    ?.status
-                                                    .name);
-                                          },
-                                        ),
-                                      ]),
+                                    columnCount: 2,
+                                    verticalSpace: 12.w,
+                                    horizontalSpace: 12.w,
+                                    children: [
+                                      ...state.rackProductMap[rackName]!.map(
+                                        (product) {
+                                          final width =
+                                              (1.sw - 12.w - 32.w) / 2;
+                                          return ProductCard(
+                                              width: width,
+                                              onTap: () {
+                                                if (state.checkScanCount(
+                                                    product.productId)) {
+                                                  return;
+                                                }
+                                                ErrorHandler.alertDialog(
+                                                  context,
+                                                  "Please scan the carton first.\n\nTap the scan button below to scan the carton before selecting a product.",
+                                                );
+                                              },
+                                              productModel: CommonProductModel
+                                                  .fromProductModel(product),
+                                              status: state
+                                                          .getScannedList(
+                                                              product.productId)
+                                                          .length ==
+                                                      product.quantity
+                                                  ? ItemStatus.done
+                                                  : ItemStatus.remaining,
+                                              quantity: product.quantity -
+                                                  state
+                                                      .getScannedList(
+                                                          product.productId)
+                                                      .length,
+                                              statusToShow: state.trolleyItems
+                                                  .firstWhereOrNull((element) =>
+                                                      element.productId ==
+                                                      product.productId)
+                                                  ?.status
+                                                  .name);
+                                        },
+                                      ),
+                                    ],
+                                  ),
                               ],
                             );
                           },
@@ -155,71 +173,21 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                       ),
                     ),
                     // 20.h
-                    SizedBox(height: 20.h),
-                    // state.showCompleteButton()
-                    //     ? GeneralElevatedButton(
-                    //         onPressed: () {
-                    //           // debugger();
-
-                    //           state.transferBasket(context);
-                    //         },
-                    //         title: "Scan Basket",
-                    //       )
-                    //     : GeneralElevatedButton(
-                    //         title: "Scan Carton",
-                    //         onPressed: () {
-                    //           navigate(
-                    //             context,
-                    //             route: NavigationConstants.qrScanScreenRoute,
-                    //             extra: {
-                    //               'scanCarton': true,
-                    //               'isLowStockCarton': true,
-                    //             },
-                    //           );
-                    //         }),
-                    // 20.h
+                    SizedBox(
+                      height: 20.h,
+                    ),
                     GeneralElevatedButton(
                       onPressed: () {
-                            navigate(
-                              context,
-                              route: NavigationConstants.qrScanScreenRoute,
-                              extra: {
-                                'scanCarton': true,
-                                'isLowStockCarton': true,
-                              },
-                            );
-                        // ShowAlertDialog(
-                        //   canDismiss: true,
-                        //   needCancel: true,
-                        //   title: 'Scan',
-                        //   body: const Text('What do you want to scan?'),
-                        //   okTitle: 'Carton',
-                        //   cancelTitle: 'View Products',
-                        //   okFunc: () {
-                        //     // pop
-                        //     navigatePop(context);
-                        //     navigate(
-                        //       context,
-                        //       route: NavigationConstants.qrScanScreenRoute,
-                        //       extra: {
-                        //         'scanCarton': true,
-                        //         'isLowStockCarton': true,
-                        //       },
-                        //     );
-                        //   },
-                        //   cancelFunc: () {
-                        //     navigatePop(context);
-                        //     navigate(
-                        //       context,
-                        //       route: NavigationConstants.collectedProductViewRoute,
-                        //     );
-                            
-                        //   },
-                        // ).showAlertDialog(context);
+                        navigate(
+                          context,
+                          route: NavigationConstants.stockScannerRoute,
+                        );
                       },
                       title: "Scan",
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(
+                      height: 8.h,
+                    ),
                   ],
                 ),
               ),

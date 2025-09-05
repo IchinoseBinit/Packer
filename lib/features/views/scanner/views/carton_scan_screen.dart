@@ -45,19 +45,19 @@ class CartonScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    if (isMainStoreAudit) {
-      return GeneralElevatedButton(
-        marginH: 16,
-        title: 'Change Rack',
-        onPressed: () {
-          navigateReplacement(context,
-              route: NavigationConstants.stockRackScanScreenRoute,
-              extra: {
-                'changeRack': false,
-              });
-        },
-      );
-    }
+    // if (isMainStoreAudit) {
+    //   return GeneralElevatedButton(
+    //     marginH: 16,
+    //     title: 'Change Rack',
+    //     onPressed: () {
+    //       navigateReplacement(context,
+    //           route: NavigationConstants.stockRackScanScreenRoute,
+    //           extra: {
+    //             'changeRack': false,
+    //           });
+    //     },
+    //   );
+    // }
     return SizedBox.shrink();
   }
 
@@ -85,29 +85,26 @@ class CartonScanScreen extends BaseScanScreen {
       bool back = false;
 
       if (isMainStoreAudit) {
-        await Provider.of<StockVerificationProvider>(context, listen: false)
-            .onScanCarton(context, code);
-        removeLoading(context);
-        navigateReplacement(context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              'fromStockVerification': true,
-            });
-        return;
+        // await Provider.of<StockVerificationProvider>(context, listen: false)
+        //     .onScanCarton(context, code);
+        // removeLoading(context);
+        // navigateReplacement(context,
+        //     route: NavigationConstants.productScanScreenRoute,
+        //     extra: {
+        //       'fromStockVerification': true,
+        //     });
+        // return;
       } else if (!fromVerification &&
           cartonCode != null &&
           code.toLowerCase() == cartonCode!.toLowerCase()) {
-        result =
-            await Provider.of<StockVerificationProvider>(context, listen: false)
-                .singleVerification(context, cartonId!, tag!);
-      } else if (!fromVerification && context.mounted) {
-        result = await Provider.of<StockProvider>(context, listen: false)
-            .onScanCarton(context, code, cartonId: cartonId);
+        // result =
+        //     await Provider.of<StockVerificationProvider>(context, listen: false)
+        //         .singleVerification(context, cartonId!, tag!);
       } else if (fromVerification && context.mounted) {
-        await Provider.of<StockVerificationProvider>(context, listen: false)
-            .onScanCarton(context, code, cartonCode: cartonCode);
-        removeLoading(context);
-        return;
+        // await Provider.of<StockVerificationProvider>(context, listen: false)
+        //     .onScanCarton(context, code, cartonCode: cartonCode);
+        // removeLoading(context);
+        // return;
       }
 
       if (!result && context.mounted) {

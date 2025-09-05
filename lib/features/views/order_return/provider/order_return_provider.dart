@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:packer/constants/app_constants.dart';
@@ -8,7 +7,7 @@ import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/order/models/order_return_model.dart';
+import 'package:packer/features/views/order_return/model/order_return_model.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -16,6 +15,7 @@ import 'package:packer/features/views/widgets/post_basket_model.dart';
 import 'package:provider/provider.dart';
 
 class OrderReturnProvider extends ChangeNotifier {
+  /// ============= VARIABLES START HERE =============
   OrderReturnModel? selectedOrder;
   List<OrderReturnModel> returnOrder = [];
   late Box<Basket> basketBox;
@@ -27,29 +27,9 @@ class OrderReturnProvider extends ChangeNotifier {
 
   List<String> scannedTagsList = [];
 
-  Future<List<OrderReturnModel>> fetchOrderReturns() async {
-    try {
-      final response = await DioClient().request(
-        url: AppUrls.orderReturnUrl,
-        requestType: RequestType.getWithToken,
-      );
+  /// ============= VARIABLES END HERE =============
 
-      if (response.statusCode == 200) {
-        returnOrder = (response.data as List)
-            .map((order) => OrderReturnModel.fromJson(order))
-            .toList();
-      } else {
-        throw Exception('Failed to load order returns');
-      }
-
-      // returnOrder = demoData.map((order) => OrderReturnModel.fromJson(order)).toList();
-
-      // notifyListeners();
-      return returnOrder;
-    } catch (e) {
-      return [];
-    }
-  }
+  /// ============= UTILS METHODS START HERE =============
 
   // assign selected model product according to rack
   void assignProductsToRack() {
@@ -99,6 +79,16 @@ class OrderReturnProvider extends ChangeNotifier {
     return true;
   }
 
+  void initScannedTagsList() {
+    // scannedTagsList.clear();
+    scannedTagsList = baskets
+        .map((basket) => basket.productIdentifiers)
+        .expand((x) => x)
+        .toList();
+    print(scannedTagsList);
+    notifyListeners();
+  }
+
   // messages
   Future<void> getProductIntialMessage(
       BuildContext context, int productId) async {
@@ -121,6 +111,22 @@ class OrderReturnProvider extends ChangeNotifier {
     Provider.of<ScanMessageProvider>(context, listen: false)
         .setMessage(context, "Scan Basket code ${selectedOrder?.basket}");
   }
+
+  bool isItemCompleted(int productId) {
+    final product = selectedOrder?.orderItems
+        .where((element) => element.productId == productId)
+        .firstOrNull;
+    if (product == null) return false;
+    return product.unitTags.length ==
+        scannedTagsList
+            .where(
+                (element) => element.split("-").first == productId.toString())
+            .length;
+  }
+
+  /// ================ UTILS METHODS END HERE ================
+
+  /// ================ CODE DETECTION LOGIC END HERE ================
 
   // on scan basket
   Future<ScanResult> onScanBasket(BuildContext context, String code) async {
@@ -154,16 +160,6 @@ class OrderReturnProvider extends ChangeNotifier {
       return ScanResult(
           success: false, message: "Invalid Rack Qr does not match");
     }
-  }
-
-  void initScannedTagsList() {
-    // scannedTagsList.clear();
-    scannedTagsList = baskets
-        .map((basket) => basket.productIdentifiers)
-        .expand((x) => x)
-        .toList();
-    print(scannedTagsList);
-    notifyListeners();
   }
 
   // onScanProduct
@@ -210,16 +206,28 @@ class OrderReturnProvider extends ChangeNotifier {
     return ScanResult(success: false);
   }
 
-  bool isItemCompleted(int productId) {
-    final product = selectedOrder?.orderItems
-        .where((element) => element.productId == productId)
-        .firstOrNull;
-    if (product == null) return false;
-    return product.unitTags.length ==
-        scannedTagsList
-            .where(
-                (element) => element.split("-").first == productId.toString())
-            .length;
+  /// ================ CODE DETECTION LOGIC END HERE ================
+
+  /// ================ API CALLS START HERE ================
+
+  Future<List<OrderReturnModel>> fetchOrderReturns() async {
+    try {
+      final response = await DioClient().request(
+        url: AppUrls.orderReturnUrl,
+        requestType: RequestType.getWithToken,
+      );
+
+      if (response.statusCode == 200) {
+        returnOrder = (response.data as List)
+            .map((order) => OrderReturnModel.fromJson(order))
+            .toList();
+      } else {
+        throw Exception('Failed to load order returns');
+      }
+      return returnOrder;
+    } catch (e) {
+      return [];
+    }
   }
 
   // post order return
@@ -230,7 +238,9 @@ class OrderReturnProvider extends ChangeNotifier {
           url: AppUrls.clearCancelledBasketUrl,
           requestType: RequestType.postWithToken,
           body: baskets.first.toPostBasketRequest());
-      removeLoading(context);
+      if (context.mounted) {
+        removeLoading(context);
+      }
       if (response.statusCode == 200) {
         basketDao.deleteBasket(baskets.first.identifier);
         baskets = basketDao.getAll();
@@ -240,31 +250,12 @@ class OrderReturnProvider extends ChangeNotifier {
             success: false, message: "Failed to post order return");
       }
     } catch (e) {
-      removeLoading(context);
+      if (context.mounted) {
+        removeLoading(context);
+      }
       return ScanResult(success: false, message: e.toString());
     }
   }
 
-  // scan basket
-  Future<ScanResult> scanBasket(BuildContext context, String code) async {
-    try {
-      showLoading(context);
-      final response = await DioClient().request(
-          url: AppUrls.clearCancelledBasketUrl,
-          requestType: RequestType.postWithToken,
-          body: baskets.first.toJson());
-      removeLoading(context);
-      if (response.statusCode == 200) {
-        basketDao.deleteBasket(baskets.first.identifier);
-        baskets = basketDao.getAll();
-        return ScanResult(success: true);
-      } else {
-        return ScanResult(
-            success: false, message: "Failed to post order return");
-      }
-    } catch (e) {
-      removeLoading(context);
-      return ScanResult(success: false, message: e.toString());
-    }
-  }
+  /// ================ API CALLS END HERE ================
 }

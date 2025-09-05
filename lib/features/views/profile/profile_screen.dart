@@ -37,7 +37,7 @@ class ProfileScreen extends StatelessWidget {
       });
     }
 
-    // Add Stock Verification screen only if user is a store manager and not already added
+    // Add Stock Verification screen only if user is a store manager(any store) and not already added
     if (value.isStoreManager() &&
         !otherInfoData.any(
             (e) => e['screen'] == NavigationConstants.storeSelectionRoute)) {
@@ -47,6 +47,8 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.storeSelectionRoute,
       });
     }
+
+    // Add Receive Basket screen only if user is NOT_AUDIT_USER and NOT_MAIN_STORE and not already added
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) =>
@@ -68,6 +70,7 @@ class ProfileScreen extends StatelessWidget {
     //   });
     // }
 
+    // Add Order Return screen only if user is NOT_AUDIT_USER and NOT_MAIN_STORE and not already added
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Order Return')) {
@@ -78,6 +81,7 @@ class ProfileScreen extends StatelessWidget {
       });
     }
 
+    // Add Request QR screen only if user is NOT_AUDIT_USER and NOT_MAIN_STORE and not already added
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Request QR')) {
@@ -87,6 +91,7 @@ class ProfileScreen extends StatelessWidget {
       });
     }
 
+    // Add Transfer Damaged Products screen only if user is NOT_AUDIT_USER and NOT_MAIN_STORE and not already added
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Transfer Damaged Products')) {
@@ -95,6 +100,8 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Transfer Damaged Products',
       });
     }
+    
+    // Add Receive Damaged Products screen only if user is STORE_MANAGER and not already added
     if (value.isStoreManager() &&
         // value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Receive Damaged Products')) {

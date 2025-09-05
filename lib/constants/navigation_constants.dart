@@ -36,23 +36,25 @@ class NavigationConstants {
   // LowStockScreen
   static const String lowStockRoute = 'low_stock';
   static const String lowStockDetailRoute = 'low_stock_detail';
-  static const String lowStockScannerRoute = 'low_stock_scanner';
+  static const String stockScannerRoute = 'stock_scanner';
   // trolley_item_screen
   // CollectedProductView
   static const String collectedProductViewRoute = 'collected_product_view';
   static const String trolleyItemScreenRoute = 'trolley_item_screen';
-  static const String trolleyItemScannerRoute = 'trolley_item_scanner';
+  static const String trolleyScannerRoute = 'trolley_scanner';
 
-  static const String cartonListScreenRoute = 'carton_list_screen';
+  // static const String cartonListScreenRoute = 'carton_list_screen';
   static const String productlistScreenRoute = 'product_list_screen';
     // static const String productlistScreenRoute = 'product_list_screen';
 
 
   // stock_verification
-  static const String stockVerificationRoute = 'stock_verification_screen';
+  // static const String stockVerificationRoute = 'stock_verification_screen';
   static const String storeSelectionRoute = 'store_selection_screen';
   // stock_rack_scan_screen
-  static const String stockRackScanScreenRoute = 'stock_rack_scan_screen';
+  // static const String stockRackScanScreenRoute = 'stock_rack_scan_screen';
+  // stock_verification_scanner
+  static const String stockVerificationScannerRoute = 'stock_verification_scanner';
 
   // basket scan screen
   static const String basketScanScreenRoute = 'basket_scan_screen';
@@ -79,6 +81,9 @@ class NavigationConstants {
   static const String orderReturnScannerRoute = 'order_return_scanner';
 
   static const String damageProductReturnList = 'product_return_list';
+
+  // ----------------- Main store -----------------
+  static const String warehouseCartonScannerRoute = 'warehouse_carton_scanner';
 
   // ------------------ for driver -------
   static const String driverHomeRoute = 'driver_home';

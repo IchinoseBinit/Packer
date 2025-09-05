@@ -14,14 +14,13 @@ import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/driver/views/in_transit_screen.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
-import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
+import 'package:packer/features/views/low_stock/views/trolley_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
+import 'package:packer/features/views/low_stock/views/stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/trolley_item_screen.dart';
-import 'package:packer/features/views/low_stock/views/trolley_scan_screen.dart';
-import 'package:packer/features/views/order/models/see_order_details_packer.dart';
-import 'package:packer/features/views/order/views/order_return_detail.dart';
-import 'package:packer/features/views/order/views/order_return_list.dart';
-import 'package:packer/features/views/order/views/order_return_scanner.dart';
+import 'package:packer/features/views/order_return/views/order_return_detail.dart';
+import 'package:packer/features/views/order_return/views/order_return_list.dart';
+import 'package:packer/features/views/order_return/views/order_return_scanner.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
@@ -54,11 +53,11 @@ import 'package:packer/features/views/scanner/views/damaged_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
-import 'package:packer/features/views/stock_verification/views/stock_rack_scan_screen.dart';
-import 'package:packer/features/views/stock_verification/views/stock_verification_screen.dart';
+import 'package:packer/features/views/stock_verification/views/stock_verification_scanner.dart';
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
+import 'package:packer/features/views/warehouse_carton/views/warehouse_carton_scanner.dart';
 
 class AppRouter {
   static late GoRouter router;
@@ -173,12 +172,24 @@ class AppRouter {
                 },
               ),
 
+              // GoRoute(
+              //   path: NavigationConstants.cartonListScreenRoute,
+              //   builder: (BuildContext context, GoRouterState state) {
+              //     final productId = state.extra as int;
+              //     return CartonListScreen(
+              //       productId: productId,
+              //     );
+              //   },
+              // ),
               GoRoute(
-                path: NavigationConstants.cartonListScreenRoute,
+                path: NavigationConstants.warehouseCartonScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  final productId = state.extra as int;
-                  return CartonListScreen(
-                    productId: productId,
+                  final args = state.extra as Map<String, dynamic>?;
+                  return WarehouseCartonScanner(
+                    productId: args?['productId'] ?? 0,
+                    forProduct: args?['forProduct'] ?? false,
+                    forRack: args?['forRack'] ?? false,
+                    rack: args?['rack'] ?? '',
                   );
                 },
               ),
@@ -285,14 +296,6 @@ class AppRouter {
                 },
               ),
               GoRoute(
-                path: NavigationConstants.trolleyItemScannerRoute,
-                builder: (BuildContext context, GoRouterState state) {
-                  return TrolleyScanScreen(
-                    productId: state.extra.toString().toInt(),
-                  );
-                },
-              ),
-              GoRoute(
                 path: NavigationConstants.orderReturnScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   final extra = state.extra as Map<String, dynamic>? ?? {};
@@ -317,14 +320,28 @@ class AppRouter {
                 },
               ),
               GoRoute(
-                path: NavigationConstants.lowStockScannerRoute,
+                path: NavigationConstants.stockScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   final args = state.extra as Map<String, dynamic>? ?? {};
                   final forProduct = args['forProduct'] ?? false;
+                  final productId = args['productId'] ?? 0;
+                  return StockScanner(
+                    forProduct: forProduct,
+                    productId: productId,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.trolleyScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  final forProduct = args['forProduct'] ?? false;
+                  final productId = args['productId'] ?? 0;
                   final changeBasket = args['changeBasket'] ?? false;
-                  return LowStockScanner(
+                  return TrolleyScanner(
                     forProduct: forProduct,
                     changeBasket: changeBasket,
+                    productId: productId,
                   );
                 },
               ),
@@ -384,11 +401,22 @@ class AppRouter {
                   return const TransferItemsList();
                 },
               ),
+              // GoRoute(
+              //   path: NavigationConstants.stockVerificationRoute,
+              //   builder: (BuildContext context, GoRouterState state) {
+              //     return StockVerificationScreen(
+              //         storeId: state.extra as String);
+              //   },
+              // ),
               GoRoute(
-                path: NavigationConstants.stockVerificationRoute,
+                path: NavigationConstants.stockVerificationScannerRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return StockVerificationScreen(
-                      storeId: state.extra as String);
+                  final args = state.extra as Map<String, dynamic>?;
+                  return StockVerificationScanner(
+                    changeRack: args?['changeRack'] ?? false,
+                    forCarton: args?['forCarton'] ?? false,
+                    forProduct: args?['forProduct'] ?? false,
+                  );
                 },
               ),
               GoRoute(
@@ -491,15 +519,15 @@ class AppRouter {
                   return DamageProductList();
                 },
               ),
-              GoRoute(
-                path: NavigationConstants.stockRackScanScreenRoute,
-                builder: (BuildContext context, GoRouterState state) {
-                  final args = state.extra as Map<String, dynamic>? ?? {};
-                  return StockRackScanScreen(
-                    changeRack: args['changeRack'] ?? false,
-                  );
-                },
-              ),
+              // GoRoute(
+              //   path: NavigationConstants.stockRackScanScreenRoute,
+              //   builder: (BuildContext context, GoRouterState state) {
+              //     final args = state.extra as Map<String, dynamic>? ?? {};
+              //     return StockRackScanScreen(
+              //       changeRack: args['changeRack'] ?? false,
+              //     );
+              //   },
+              // ),
 
               GoRoute(
                 path: NavigationConstants.unitVerifyScannerRoute,

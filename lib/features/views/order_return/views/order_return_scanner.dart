@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/profile/provider/order_return_provider.dart';
+import 'package:packer/features/views/order_return/provider/order_return_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -84,47 +85,11 @@ class _ScanScreenState extends State<ScanScreen> {
     log(code, name: "qr code data");
 
     HapticFeedback.heavyImpact();
-    if (widget.scanCarton) {
-      if (code.isNotEmpty) {
-        bool? val;
-        if (widget.isLowStockCarton) {
-          val = await Provider.of<StockProvider>(context, listen: false)
-              .lowStockCartonScan(context, code);
-        } else {
-          val = await Provider.of<StockProvider>(context, listen: false)
-              .onScanCarton(context, code);
-        }
-        if (val == false) {
-          controller?.start();
-        }
-      }
-      hasScanned = false;
+    
+    ErrorHandler.alertDialog(context, "NOT IMPLEMENTED");
+    return;
 
-      // navigatePop(context, code);
-
-      return;
-    }
-
-    if (widget.forBasket) {
-      if (code.isNotEmpty) {
-        Future<void> val;
-        if (widget.isFromPackerTransfer) {
-          // val = Provider.of<PackerTransferProvider>(context, listen: false)
-          //     .checkBasketQr(context, controller, code, true);
-        } else {
-          // val = Provider.of<PackerTransferProvider>(context, listen: false)
-          //     .checkBasketQr(context, controller, code, false);
-        }
-        // if (val == false) {
-        //   controller?.start();
-        // }
-      }
-      hasScanned = false;
-
-      navigatePop(context, code);
-
-      return;
-    }
+    
 
     showLoading(context);
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_constants.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:provider/provider.dart';
@@ -12,10 +11,11 @@ class StoreSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     return Scaffold(
       appBar: GeneralAppBar(
         middleWidget: Text("Store Selection"),
-        needLeading: false,
+        needLeading: !homeProvider.isAuditUser(),
       ),
       body: FutureBuilder(
           future: Provider.of<StockVerificationProvider>(context, listen: false)
@@ -32,7 +32,9 @@ class StoreSelectionScreen extends StatelessWidget {
               padding: AppConstants.padding,
               child: ListView.separated(
                 separatorBuilder: (context, index) {
-                  return const SizedBox(height: 16);
+                  return SizedBox(
+                    height: 16.h,
+                  );
                 },
                 itemCount: storeList.length,
                 itemBuilder: (context, index) {

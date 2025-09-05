@@ -2,14 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive/hive.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
-import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
@@ -18,7 +15,6 @@ import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/hive_db/product_dao.dart';
 import 'package:packer/controllers/services/hive_db/trolley_item.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
@@ -26,42 +22,55 @@ import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
-import 'package:packer/features/views/widgets/show_alert_dialog.dart';
-import 'package:packer/utils/qr_message.dart';
+import 'package:packer/features/views/widgets/product_tag_sheet.dart';
 import 'package:provider/provider.dart';
 
 class StockProvider extends ChangeNotifier {
-  List<LowStockModel> lowStockList = [];
-  bool isLoading = false;
-  bool isError = false;
-  String errorMessage = "";
+  /// === STATE VARIABLES START ===
+  List<LowStockModel> lowStockList =
+      []; // List of low stock items [main_store dashboard]
+  bool isLoading = false; // Loading state [main_store dashboard]
+  bool isError = false; // Error state [main_store dashboard]
+  String errorMessage = ""; // Error message [main_store dashboard]
 
-  String scanMessage = "";
+  String scanMessage = ""; // Scan message for scanner screen
 
-  LowStockModel? selectedModel;
-  CartonModel? cartonModel;
-  List<String> scannedList = [];
-  List<int> completeProductId = [];
-  ProductModel? selectedProduct;
-  List<CartonListModel> cartonList = [];
+  LowStockModel? selectedModel; // Selected low stock model from dashboard
+  CartonModel? cartonModel; // assign carton model after scanning carton code
+  List<String> scannedList = []; // List of scanned items
+  ProductModel?
+      selectedProduct; // assign product model after carton model matches product
 
-  bool hasScanned = false;
+  String basketId =
+      ""; // Holds the basket identifier for tranfering trolley items to basket
 
-  String basketId = "";
+  // FOR Item Screen
   List<String> rackNameList = [];
   Map<String, List<ProductModel>> rackProductMap = {};
 
-  List<String> scannedCartonProductTagsList = [];
+  late Box<TrolleyItem> box; // Open box for trolley items [local db]
+  late ProductDao dao; // Initialize dao for trolley items [local db]
+  List<TrolleyItem> trolleyItems =
+      []; // Get all trolley items [local db] for selected store
+  LowStockModel? trolleyLowStockModel; // Assign from collected product View
 
-  late Box<TrolleyItem> box;
-  late ProductDao dao;
-  List<TrolleyItem> trolleyItems = [];
-  LowStockModel? trolleyLowStockModel;
+  /// === STATE VARIABLES END ===
 
+  /// === METHODS START ===
+
+  /// Initialize rack product map
+  ///
+  /// [rackNameList] is initialized with [selectedModel?.products]
+  /// [rackProductMap] is initialized with [selectedModel?.products]
+  /// [rackNameList] is sorted
+  ///
+  /// [rackNameList] is reversed
   void initRackProductMap() {
+    // step 1: clear rack name list and rack product map
     rackNameList.clear();
     rackProductMap.clear();
 
+    // step 2: add rack name to rack name list & add product to rack product map
     selectedModel?.products.forEach((element) {
       if (!rackNameList.contains(element.rackName)) {
         rackNameList.add(element.rackName);
@@ -71,12 +80,12 @@ class StockProvider extends ChangeNotifier {
       rackProductMap[element.rackName]!.add(element);
     });
 
+    // step 3: sort rack name list
     rackNameList.sort((a, b) => a.compareTo(b));
-    // TODO: Remove
     rackNameList = rackNameList.reversed.toList();
   }
 
-  // reset
+  /// Reset all variables of the provider
   void reset() {
     scannedList = [];
     isLoading = false;
@@ -87,459 +96,58 @@ class StockProvider extends ChangeNotifier {
     rackProductMap = {};
   }
 
+  /// Called from main_store home_screen store_detail
+  ///
+  /// It takes [LowStockModel] and navigate to [NavigationConstants.lowStockDetailRoute]
+  ///
+  /// [selectedModel] is set to [lowStockModel]
+  /// [initRackProductMap] is called to show product according to rack
+  /// [basketId] is set to empty string
+  ///
+  /// [box] is opened with [HiveDBService.openProductBox]
+  /// [dao] is initialized with [ProductDao]
+  ///
+  /// [trolleyItems] is set to [dao.getAll()] to get all products that were added to trolley
+  /// [updateLowStockModel] is called to update [LowStockModel] with trolley items
+  /// [navigate] is called to navigate to [NavigationConstants.lowStockDetailRoute]
+  ///
+  /// [notifyListeners] is called
+  void onDetailsTaped(
+    BuildContext context,
+    LowStockModel lowStockModel,
+  ) async {
+    // step 1: assign selected model, show product according to rack also clear basket id
+    selectedModel = lowStockModel;
+    initRackProductMap();
+    basketId = "";
+
+    // step 2: open box for low stock list
+    box = await HiveDBService.openProductBox(
+        '${HiveConstants.storeId}${lowStockModel.storeId}');
+    dao = ProductDao(box);
+
+    // step 3: get all products that were added to trolley & update low stock model
+    if (context.mounted) {
+      trolleyItems = dao.getAll();
+      updateLowStockModel();
+      navigate(context, route: NavigationConstants.lowStockDetailRoute);
+      notifyListeners();
+    }
+  }
+
+  /// ======== UTILITIES START ========
+  
+  /// to check if the product required quantity is scanned or not [LowStockDetailScreen]
   bool checkScanCount(int productId) {
     final prod = selectedModel?.products
         .firstWhere((element) => element.productId == productId);
     return prod?.scannedCount == prod?.quantity;
   }
 
-  int getScanCount(int productId) {
-    for (ProductModel element in selectedModel?.products ?? []) {
-      if (element.productId == productId) {
-        // get from scanned data list split by -
-        return element.quantity - element.scannedCount;
-      }
-    }
-    return 0;
-  }
 
-  Future<void> fetchLowStockProducts(BuildContext context,
-      {bool isFromBuild = false}) async {
-    try {
-      isLoading = true;
-      isError = false;
-      errorMessage = "";
-      FirebaseAPI().cancelScheduledNotification();
-      if (context.mounted && !isFromBuild) {
-        notifyListeners();
-      }
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.lowStockUrl,
-      );
-      if (response.statusCode == 200) {
-        lowStockList = [];
-        for (var item in response.data) {
-          lowStockList.add(LowStockModel.fromJson(item));
-        }
-      } else {
-        isError = true;
-        errorMessage = "No data found";
-      }
-      FirebaseAPI().scheduleNotification();
-    } catch (e) {
-      isError = true;
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  /// Get carton info
-  Future callCartonInfoApi(BuildContext context, String code) async {
-    try {
-      showLoading(context);
-      if (!code.contains("carton")) {
-        throw "Invalid Carton QR";
-      }
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.cartonInfoUrl.replaceAll(':id', code),
-      );
-      log("Carton Info: ${response.statusCode}");
-
-      if (context.mounted) {
-        removeLoading(context);
-      }
-      if (response.statusCode == 200) {
-        cartonModel = CartonModel.fromJson(response.data, code);
-      }
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// FOR SCAN CARTON BUTTON
+  /// update [LowStockModel] with trolley items if found the status change to ItemStatus.done
   ///
-  /// EX Message: Scan 10 Cadburys
-  void getMessageForCartonProduct(BuildContext context) {
-    scannedCartonProductTagsList.clear();
-    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(context,
-        "Scan ${cartonModel?.productUnits.length} ${cartonModel?.productName}");
-  }
-
-  /// Return TAGS scanned or remaining
-  List<String> getTagsRemaining(bool remaining) {
-    if (remaining) {
-      // Return tags that have NOT been scanned
-      return cartonModel?.productUnits
-              .where((tag) => !scannedCartonProductTagsList.contains(tag))
-              .toList() ??
-          [];
-    } else {
-      // Return tags that HAVE been scanned
-      return cartonModel?.productUnits
-              .where((tag) => scannedCartonProductTagsList.contains(tag))
-              .toList() ??
-          [];
-    }
-  }
-
-  /// Display TAGS scanned or remaining
-  void showCartonProductTags(BuildContext context) {
-    final remainingTags = getTagsRemaining(true);
-    final completedTags = getTagsRemaining(false);
-    // show modal bottom sheet
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: .8.sh,
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Text("Product Tags"),
-              ),
-              // 12.h
-              SizedBox(height: 12.h),
-              if (remainingTags.isNotEmpty) ...[
-                Text("Remaining Tags",
-                    style: Theme.of(context).textTheme.labelLarge),
-                // 12.h
-                SizedBox(height: 12.h),
-                Expanded(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: remainingTags.length,
-                    itemBuilder: (context, index) {
-                      return Text(remainingTags[index],
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontSize: 13.sp,
-                              ));
-                    },
-                    separatorBuilder: (context, index) {
-                      return SizedBox(height: 12.h);
-                    },
-                  ),
-                ),
-              ],
-              // 12.h
-              SizedBox(height: 12.h),
-              if (completedTags.isNotEmpty) ...[
-                Text("Completed Tags",
-                    style: Theme.of(context).textTheme.labelLarge),
-                // 12.h
-                SizedBox(height: 12.h),
-                Expanded(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    separatorBuilder: (context, index) {
-                      return SizedBox(height: 12.h);
-                    },
-                    itemCount: completedTags.length,
-                    itemBuilder: (context, index) {
-                      return Row(
-                        children: [
-                          Expanded(
-                              child: Text(completedTags[index],
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(
-                                        color: Colors.green,
-                                        fontSize: 13.sp,
-                                      ))),
-                          const Icon(Icons.check_circle, color: Colors.green),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Logic for scanning carton products
-  ///
-  /// [TODO]:
-  // onScanCartonProduct(BuildContext context, String code)
-  Future<ScanResult> onScanCartonProduct(
-      BuildContext context, String code) async {
-    try {
-      // check if code is already scanned
-      if (scannedCartonProductTagsList.contains(code)) {
-        return ScanResult(success: false, message: 'Tag already scanned');
-      }
-      // check if code is from carton product units
-      if (!cartonModel!.productUnits.contains(code)) {
-        return ScanResult(success: false, message: 'Invalid tag');
-      }
-      scannedCartonProductTagsList.add(code);
-      // check if required tags are scanned
-      if (scannedCartonProductTagsList.length ==
-          cartonModel!.productUnits.length) {
-        // call api to post
-        final result = await postCartonProductTags(context);
-        if (result) {
-          return ScanResult(success: true, message: 'Tag scanned successfully');
-        } else {
-          getMessageForCartonProduct(context);
-          return ScanResult(success: false, message: 'Failed to scan tag');
-        }
-      }
-      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
-          context,
-          "Scan ${cartonModel!.productUnits.length - scannedCartonProductTagsList.length} ${cartonModel!.productName} more");
-      return ScanResult(success: false);
-    } catch (e) {
-      return ScanResult(success: false, message: e.toString());
-    }
-  }
-
-  /// Post carton product tags
-  Future<bool> postCartonProductTags(BuildContext context) async {
-    try {
-      final url = AppUrls.postCartonProductTagsUrl;
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url,
-        body: {
-          "carton_id": cartonModel!.cartonCode,
-          "unit_tags": scannedCartonProductTagsList,
-        },
-      );
-      if (response.statusCode == 200 && context.mounted) {
-        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
-        return true;
-      } else {
-        return false;
-      }
-    } catch (ex) {
-      return false;
-    }
-  }
-
-  /// Updates the rack for a product of catron
-  Future<bool> updateRack(
-      BuildContext context, String code, int productId, bool isCarton) async {
-    try {
-      showLoading(context);
-      final url = AppUrls.updateRackUrl;
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url,
-        body: {
-          "rack_identifier": code,
-          "product_id": productId,
-          if (isCarton && cartonModel != null)
-            "carton_identifier": cartonModel!.cartonCode,
-        },
-      );
-      removeLoading(context);
-      if (response.statusCode == 200 && context.mounted) {
-        navigateReplacement(context, route: NavigationConstants.dashboardRoute);
-        return true;
-      } else {
-        ErrorHandler.alertDialog(context, 'Failed to update rack');
-        return false;
-      }
-    } catch (ex) {
-      removeLoading(context);
-      ErrorHandler.alertDialog(context, ex.toString());
-      return false;
-    }
-  }
-
-  Future onScanCarton(BuildContext context, String code,
-      {int? cartonId}) async {
-    try {
-      await callCartonInfoApi(context, code);
-      if (cartonId != null && cartonModel != null) {
-        final result = await navigateReplacement(
-          context,
-          route: NavigationConstants.productScanScreenRoute,
-          extra: {
-            'cartonId': cartonId,
-            'productId': cartonModel!.productId,
-          },
-        );
-        if (result ?? false) {
-          navigatePop(context);
-        }
-        return true;
-      } else {
-        if (cartonModel != null && cartonModel!.productUnits.isNotEmpty) {
-          if (context.mounted) {
-            final result = await navigateReplacement(
-              context,
-              route: NavigationConstants.productScanScreenRoute,
-              extra: {
-                'productId': cartonModel!.productId,
-                'forCarton': true,
-              },
-            );
-            if (result ?? false) {
-              navigatePop(context);
-            }
-            return true;
-          }
-        } else if (cartonModel != null && cartonModel!.rackName.isEmpty) {
-          if (context.mounted) {
-            final result = await navigateReplacement(context,
-                route: NavigationConstants.scanRackRoute,
-                extra: {
-                  'forCarton': true,
-                  'productId': cartonModel!.productId
-                });
-            if (result ?? false) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                navigateReplacement(context,
-                    route: NavigationConstants.dashboardRoute);
-              });
-            }
-            return true;
-          }
-        } else if (context.mounted) {
-         final result = await navigateReplacement(
-            context,
-            route: NavigationConstants.scanRackRoute,
-            extra: {
-              'rack': cartonModel?.rackName,
-              'needAPICallCarton': true,
-              'productId': cartonModel!.productId,
-            },
-          );
-          if (result ?? false) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-                navigateReplacement(context,
-                    route: NavigationConstants.dashboardRoute);
-              });
-          }
-          return true;
-        }
-      }
-    } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
-      return false;
-    }
-  }
-
-  Future lowStockCartonScan(BuildContext context, String code) async {
-    try {
-      await callCartonInfoApi(context, code);
-
-      if (cartonModel != null) {
-        final matchedModel = selectedModel?.products.firstWhereOrNull(
-            (element) => element.productId == cartonModel!.productId);
-
-        if (matchedModel != null) {
-          if (matchedModel.productId == cartonModel!.productId) {
-            if (checkScanCount(matchedModel.productId)) {
-              // removeLoading(context);
-              ShowAlertDialog(
-                disableBackground: false,
-                body: Text("Already Scanned"),
-                okFunc: () {
-                  navigatePop(context);
-                },
-              ).showAlertDialog(context);
-              return false;
-            }
-            onProductDetailsTaped(context, matchedModel);
-          }
-        } else {
-          ErrorHandler.alertDialog(context, "No Matching Product found");
-          return false;
-        }
-      } else {
-        ErrorHandler.alertDialog(context, "No Matching Carton found");
-        return false;
-      }
-    } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
-      return false;
-    }
-  }
-
-  void verifyCarton(BuildContext context, String code, String productId) async {
-    try {
-      showLoading(context);
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        body: {
-          "unique_identifier": code,
-          "product_id": productId,
-        },
-        url: AppUrls.verifyCartonUrl,
-      );
-      log("Carton Info: ${response.statusCode}");
-
-      if (context.mounted) {
-        removeLoading(context);
-      }
-      if (response.statusCode == 200) {
-        if (lowStockList.isNotEmpty) {
-          final matchedModel = lowStockList.firstWhere(
-            (element) => element.products.any(
-              (product) => product.productId.toString() == productId,
-            ),
-          );
-          if (matchedModel.products.isNotEmpty) {
-            log("CartonInfo: $productId");
-          }
-        }
-      }
-    } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
-      removeLoading(context);
-    }
-  }
-
-  Future<void> fetchCartonList(BuildContext context, int productId) async {
-    try {
-      final url = AppUrls.cartonListUrl
-          .replaceFirst('product_id', productId.toString());
-
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: url,
-      );
-
-      if (response.statusCode == 200) {
-        cartonList = (response.data as List)
-            .map((item) => CartonListModel.fromJson(item))
-            .toList();
-      } else {
-        return;
-      }
-    } catch (e) {
-      log('Error fetching carton list: $e');
-      rethrow;
-    }
-  }
-
-  // update [LowStockModel] with trolley items if found the status change to ItemStatus.done
+  /// [selectedModel] is updated with [trolleyItems]
   void updateLowStockModel() {
     for (var element in selectedModel?.products ?? []) {
       for (var item in trolleyItems) {
@@ -551,25 +159,9 @@ class StockProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onDetailsTaped(
-    BuildContext context,
-    LowStockModel lowStockModel,
-  ) async {
-    selectedModel = lowStockModel;
-    initRackProductMap();
-    basketId = "";
-
-    box = await HiveDBService.openProductBox('store_${lowStockModel.storeId}');
-    dao = ProductDao(box);
-
-    if (context.mounted) {
-      trolleyItems = dao.getAll();
-      updateLowStockModel();
-      navigate(context, route: NavigationConstants.lowStockDetailRoute);
-      notifyListeners();
-    }
-  }
-
+  /// check from the trolley items list for the specific product id
+  ///
+  /// return list of tags
   List<String> getScannedList(int productId) {
     return trolleyItems
         .where((element) => element.productId == productId)
@@ -577,261 +169,42 @@ class StockProvider extends ChangeNotifier {
         .toList();
   }
 
+  /// called after carton scanned
+  ///
+  /// [model] is set to [selectedProduct]
   void onProductDetailsTaped(BuildContext context, ProductModel model) {
     trolleyItems = dao.getAll();
     scannedList = getScannedList(model.productId);
     selectedProduct = model;
     if (scannedList.isNotEmpty) {
-      scanMessage = "Scan ${model.quantity - scannedList.length} ${model.productName} More";
+      scanMessage =
+          "Scan ${model.quantity - scannedList.length} ${model.productName} More";
     } else {
       scanMessage = "Scan ${model.quantity} ${model.productName} ";
     }
+    Provider.of<ScanMessageProvider>(context, listen: false)
+        .setMessage(context, scanMessage);
     navigateReplacement(
       context,
-      route: NavigationConstants.lowStockScannerRoute,
-      extra: {"forProduct": true},
+      route: NavigationConstants.stockScannerRoute,
+      extra: {"forProduct": true, "productId": model.productId},
     );
   }
 
-  Future<ScanResult> checkBasketQr(BuildContext context, String code) async {
-    scanMessage = "";
-    notifyListeners();
-    HapticFeedback.heavyImpact();
-
-    try {
-      final value = await postBasketCode(context, code);
-      if (value) {
-        basketId = code;
-        return ScanResult(success: true);
-      } else {
-        return ScanResult(success: false);
-      }
-    } catch (e) {
-      return ScanResult(success: false, message: e.toString());
-    }
-  }
-
-  Future<bool> checkItemQr(BuildContext context, String code) async {
-    try {
-      if (scannedList.contains(code)) {
-        await ErrorHandler.alertDialog(context, "Tag Already scanned");
-        return false;
-      }
-      if (selectedProduct?.quantity == scannedList.length) {
-        await ErrorHandler.alertDialog(context, "Product already scanned");
-        return false;
-      }
-      if (!code.startsWith(selectedProduct?.productId.toString() ?? "")) {
-        await ErrorHandler.alertDialog(
-            context, "Invalid QR ${detectQrMessage(code)}");
-        return false;
-      }
-
-      scannedList.add(code);
-      await dao.addOrUpdateProduct(TrolleyItem(
-        productId: selectedProduct!.productId,
-        productName: selectedProduct!.productName,
-        image: selectedProduct!.imageUrl,
-        tags: scannedList,
-        quantity: scannedList.length,
-      ));
-
-      trolleyItems = dao.getAll();
-
-      // selectedProduct!.scannedCount++;
-      final scannedCount = scannedList.length;
-      scanMessage =
-          "Scan ${(selectedProduct?.quantity ?? 0) - (scannedCount)} ${selectedProduct?.productName} More";
-
-      if (scannedList.length == selectedProduct?.quantity) {
-        scannedList = [];
-        notifyListeners();
-        showToast("Scanned Successfully");
-        return true;
-      }
-      notifyListeners();
-
-      return false;
-    } catch (e) {
-      // await ErrorHandler.alertDialog(context, e.toString());
-      // return false;
-      rethrow;
-    }
-  }
-
-  bool showCompleteButton() {
-    if (selectedModel?.products == null) {
-      return false;
-    }
-    // check with all trolley items.id with selected model products.id
-    for (var element in trolleyItems) {
-      if (!selectedModel!.products
-          .any((product) => product.productId == element.productId)) {
-        return false;
+  /// Open box for low stock list if there is product of store
+  Future<List<LowStockModel>> openBoxForLowStockList(
+      BuildContext context) async {
+    List<LowStockModel> list = [];
+    for (var element in lowStockList) {
+      final box = await HiveDBService.openProductBox(
+          '${HiveConstants.storeId}${element.storeId}');
+      final dao = ProductDao(box);
+      final trolleyItems = dao.getAll();
+      if (trolleyItems.isNotEmpty) {
+        list.add(element.copyWith(qty: trolleyItems.length));
       }
     }
-    return true;
-  }
-
-  Future<bool> postScannedTags(BuildContext context) async {
-    try {
-      showLoading(context);
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: AppUrls.addProductsUrl,
-        body: {
-          "store_id": selectedModel?.storeId,
-          "product_units": scannedList,
-          "basket_identifier": basketId,
-        },
-      );
-      if (response.statusCode == 200) {
-        completeProductId.add(selectedProduct?.productId ?? 0);
-        showToast("Scanned Successfully");
-        removeLoading(context);
-        return true;
-      } else {
-        ErrorHandler.alertDialog(context, "Failed to scan basket");
-        return false;
-      }
-    } catch (e) {
-      scannedList.clear();
-
-      removeLoading(context);
-      rethrow;
-    } finally {
-      scannedList = [];
-    }
-  }
-
-  void transferBasket(BuildContext context) async {
-    try {
-      // final response = await DioClient().request(
-      //   requestType: RequestType.postWithToken,
-      //   url: AppUrls.transferBasketInventoryUrl,
-      // );
-      // if (response.statusCode == 200) {
-
-      // } else {
-      //   showToast("Failed to scan basket");
-      // }
-
-      showToast("Transferred Successfully");
-      lowStockList.remove(selectedModel);
-      notifyListeners();
-      navigatePop(context);
-      fetchLowStockProducts(context);
-    } catch (e) {
-      ErrorHandler.alertDialog(context, e.toString());
-    }
-  }
-
-  void _handleInvalidQR(
-      BuildContext context, MobileScannerController? controller) {
-    removeLoading(context);
-    ShowAlertDialog(
-      body: const Text("Invalid QR"),
-      okFunc: () {
-        Navigator.pop(context);
-        controller?.start();
-      },
-    ).showAlertDialog(context);
-  }
-
-  Future<bool> postBasketCode(BuildContext context, String code) async {
-    scannedList = [];
-    try {
-      showLoading(context);
-      final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: AppUrls.scanBasketUrl,
-        body: {
-          "basket_identifier": code,
-        },
-      );
-      print("Basket Code: ${response.data}");
-      removeLoading(context);
-      if (response.statusCode == 200) {
-        int storeId = response.data['store_id'].toString().toInt();
-        trolleyLowStockModel =
-            lowStockList.firstWhere((element) => element.storeId == storeId);
-        box = await HiveDBService.openProductBox('store_$storeId');
-        dao = ProductDao(box);
-        trolleyItems = dao.getAll();
-        return true;
-      } else {
-        ErrorHandler.alertDialog(context, "Failed to scan basket");
-        return false;
-      }
-    } catch (e) {
-      removeLoading(context);
-      ErrorHandler.alertDialog(context, e.toString());
-      return false;
-    }
-  }
-
-  Future<bool?> showYesNo(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Confirmation"),
-          content: const Text("Assign a rack?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Ok"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// FOR TROLLEY Items
-  ///
-  /// on scan trolley items
-  Future<ScanResult> onScanTrolleyItems(
-      BuildContext context, int productId, String code) async {
-    try {
-      // check if scannedList contains code
-      // split code and check first part is productId
-      if (code.split("-").first != productId.toString()) {
-        return ScanResult(
-            success: false, message: "Invalid QR - Product ID does not match");
-      }
-      if (scannedList.contains(code)) {
-        return ScanResult(success: false, message: "Tag Already scanned");
-      }
-      final item = trolleyItems
-          .firstWhereOrNull((element) => element.productId == productId);
-      if (item == null) {
-        return ScanResult(success: false, message: "Product not found");
-      }
-      if (!item.tags.contains(code)) {
-        return ScanResult(success: false, message: "Tag not found");
-      }
-      scannedList.add(code);
-      if (scannedList.length == item.quantity) {
-        final result = await postTrolleyScannedTags(context, productId);
-        scannedList = [];
-        if (result is bool && result) {
-          trolleyItems = dao.getAll();
-          notifyListeners();
-          return ScanResult(success: true, message: "Scanned Successfully");
-        } else {
-          return ScanResult(success: false, message: result.toString());
-        }
-      }
-      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
-          context,
-          "Scan ${item.quantity - scannedList.length} ${item.productName}");
-      notifyListeners();
-      return ScanResult(success: false);
-    } catch (e) {
-      return ScanResult(success: false, message: e.toString());
-    }
+    return list;
   }
 
   /// getMessageForTrolleyItem
@@ -864,11 +237,270 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  // trolley item tag post
-  Future<dynamic> postTrolleyScannedTags(
+  /// Display TAGS scanned or remaining
+  void showTrolleyProductTags(BuildContext context, int productId) {
+    final remainingTags = getTagsOfProductInTrolley(productId, true);
+    final completedTags = getTagsOfProductInTrolley(productId, false);
+    showProductTagSheet(context,
+        remainingTags: remainingTags, completedTags: completedTags);
+  }
+
+  /// ======== UTILITIES END ========
+
+  /// ================ CODE DETECTION FOR LOW STOCK START ====================
+
+  /// [lowStockCartonScan] is called from low_stock_details screen Scan Button
+  ///
+  /// [code] comes from stock_scanner screen
+  Future<ScanResult> lowStockCartonScan(
+      BuildContext context, String code) async {
+    try {
+      await callCartonInfoApi(context, code);
+      if (cartonModel == null) {
+        return ScanResult(success: false, message: "No matching carton found");
+      }
+
+      final matchedModel = selectedModel?.products.firstWhereOrNull(
+          (element) => element.productId == cartonModel!.productId);
+
+      if (matchedModel == null) {
+        return ScanResult(success: false, message: "No matching product found");
+      }
+
+      if (checkScanCount(matchedModel.productId)) {
+        return ScanResult(success: false, message: "Already scanned");
+      }
+      if (context.mounted) {
+        onProductDetailsTaped(context, matchedModel);
+      }
+      return ScanResult(
+          success: true,
+          message: "Carton Scanned : ${cartonModel!.productName}");
+    } catch (e) {
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  /// [checkItemQr] is called from stock_scanner screen
+  ///
+  /// [code] comes from stock_scanner screen
+  /// It is used to scan product tags while adding products in trolley
+  Future<ScanResult> checkItemQr(BuildContext context, String code) async {
+    try {
+      // step 1: check if scannedList contains code
+      if (scannedList.contains(code)) {
+        return ScanResult(success: false, message: "Tag Already scanned");
+      }
+      // step 2: scanned list has only selected product tags
+      if (selectedProduct?.quantity == scannedList.length) {
+        return ScanResult(success: false, message: "Product already scanned");
+      }
+
+      // step 3: add code to scannedList
+      scannedList.add(code);
+      // step 4: add or update product in trolley [local database]
+      await dao.addOrUpdateProduct(TrolleyItem(
+        productId: selectedProduct!.productId,
+        productName: selectedProduct!.productName,
+        image: selectedProduct!.imageUrl,
+        tags: scannedList,
+        quantity: scannedList.length,
+      ));
+      // step 5: get all products that were added to trolley [local database]
+      trolleyItems = dao.getAll();
+
+      // step 6: update scan message
+      final scannedCount = scannedList.length;
+
+      // step 7: update scan message
+      scanMessage =
+          "Scan ${(selectedProduct?.quantity ?? 0) - (scannedCount)} ${selectedProduct?.productName} More";
+      if (context.mounted) {
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(context, scanMessage);
+      }
+
+      // step 8: check if all tags are scanned; if yes then clear scannedList and notify listeners
+      if (scannedList.length == selectedProduct?.quantity) {
+        scannedList = [];
+        notifyListeners();
+        return ScanResult(success: true, message: "Scanned Successfully");
+      }
+
+      // if return false means required number of tags are not scanned
+      notifyListeners();
+      return ScanResult(success: false);
+    } catch (e) {
+      // if exception occurs return false with error message
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  /// ================ CODE DETECTION FOR LOW STOCK END ====================
+
+  /// ================ CODE DETECTION FOR COLLECTED PRODUCT VIEW START ====================
+  
+  /// [checkBasketQr] is called from collected_product_view screen [onTapDetails]
+  /// 
+  /// [code] comes from collected_product_view screen
+  Future<ScanResult> checkBasketQr(BuildContext context, String code) async {
+    scanMessage = "";
+    notifyListeners();
+
+    try {
+      // step 1: check if code contains basket
+      if (!code.contains("basket")){
+        return ScanResult(success: false, message: "Please scan basket code");
+      }
+      // step 2: call api to update scanned tags
+      final value = await postBasketCode(context, code);
+      // step 3: if api call is successful; return true with success message also update basketId
+      if (value) {
+        basketId = code;
+        return ScanResult(success: true, message: "Basket Scanned Successfully");
+      } 
+      // step 4: if api call is not successful; return false with error message
+      else {
+        return ScanResult(success: false, message: "Basket Scanned Failed");
+      }
+    } catch (e) {
+      // if exception occurs; return false with error message
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  /// FOR TROLLEY Items
+  ///
+  /// on scan trolley items
+  Future<ScanResult> onScanTrolleyItems(
+      BuildContext context, int productId, String code) async {
+    try {
+      // check if scannedList contains code
+      // split code and check first part is productId
+
+      // step 1: check if productId matches
+      if (code.split("-").first != productId.toString()) {
+        return ScanResult(
+            success: false, message: "Invalid QR - Product ID does not match");
+      }
+      // step 2: check if scannedList contains code
+      if (scannedList.contains(code)) {
+        return ScanResult(success: false, message: "Tag Already scanned");
+      }
+      // step 3: get item from trolleyItems; to check whether item exist or not [local database]
+      final item = trolleyItems
+          .firstWhereOrNull((element) => element.productId == productId);
+      if (item == null) {
+        return ScanResult(success: false, message: "Product not found");
+      }
+      // step 4: check if tag is already scanned
+      if (!item.tags.contains(code)) {
+        return ScanResult(
+            success: false, message: "Product not found in trolley");
+      }
+      // step 5: add code to scannedList
+      scannedList.add(code);
+      // step 6: check if all tags are scanned
+      if (scannedList.length == item.quantity) {
+        // if true; call api to update scanned tags
+        final result = await postTrolleyScannedTags(context, productId);
+        // if api call is successful; clear scannedList & update trolleyItems & notify listeners
+        scannedList = [];
+        if (result) {
+          trolleyItems = dao.getAll();
+          notifyListeners();
+          return ScanResult(success: true, message: "Scanned Successfully");
+        } 
+        // if api call is not successful; return false with error message
+        else {
+          return ScanResult(
+              success: false,
+              message: "Something went wrong, Please try again");
+        }
+      }
+      // if all tags are not scanned; update scan message
+      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+          context,
+          "Scan ${item.quantity - scannedList.length} ${item.productName} More");
+      notifyListeners();
+      // if all tags are not scanned; return false; it means no message to display keep scanning more tags
+      return ScanResult(success: false);
+    } catch (e) {
+      // if exception occurs; return false with error message
+      return ScanResult(success: false, message: e.toString());
+    }
+  }
+
+  /// ================== API CALLS START ==================
+  ///
+
+  /// It is used to check whether the basket code is valid or not
+  ///
+  /// If valid then it will open the store model and show the products [TrolleyItemScreen]
+  ///
+  /// [code] comes from stock_scanner screen
+  Future<bool> postBasketCode(BuildContext context, String code) async {
+    // step 1: clear scanned list
+    scannedList = [];
+    try {
+      // step 2: show loading
+      showLoading(context);
+      
+      // step 3: call api
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.scanBasketUrl,
+        body: {
+          "basket_identifier": code,
+        },
+      );
+      debugPrint("Basket Code: ${response.data}");
+      
+      // step 4: check response; if not 200 then throw exception
+      if (response.statusCode != 200) {
+        throw "Failed to scan basket";
+      }
+      
+      // step 5: get store id
+      int storeId = response.data['store_id'].toString().toInt();
+      
+      // step 6: get trolley low stock model
+      trolleyLowStockModel =
+          lowStockList.firstWhereOrNull((element) => element.storeId == storeId);
+      if (trolleyLowStockModel == null) {
+        throw "Store not found for low stock";
+      }
+      
+      // step 7: remove loading
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      
+      // step 8: open product box
+      box = await HiveDBService.openProductBox(
+          '${HiveConstants.storeId}$storeId');
+      dao = ProductDao(box);
+      trolleyItems = dao.getAll();
+      
+      // step 9: return true; if everything is fine
+      return true;
+    } catch (e) {
+      // on error: remove loading & rethrow
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      rethrow;
+    }
+  }
+
+  // After scanning trolley product tags 
+  Future<bool> postTrolleyScannedTags(
       BuildContext context, int productId) async {
     try {
+      // step 1: show loading
       showLoading(context);
+      
+      // step 2: call api
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.addProductsUrl,
@@ -878,212 +510,121 @@ class StockProvider extends ChangeNotifier {
           "basket_identifier": basketId,
         },
       );
-      removeLoading(context);
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        dao.deleteProduct(productId.toString());
-        selectedModel?.products
-            .removeWhere((element) => element.productId == productId);
-        initRackProductMap();
-        return true;
+      
+      // step 3: remove loading
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      
+      // step 4: check response
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        scannedList.clear();
+        if (context.mounted) {
+          getMessageForTrolleyItem(context, productId);
+        }
+        throw "Something went wrong, while posting scanned tags";
+      }
+      
+      // step 5: delete product from local database
+      dao.deleteProduct(productId.toString());
+      
+      // step 6: remove product from selected model
+      selectedModel?.products
+          .removeWhere((element) => element.productId == productId);
+      
+      // step 7: init rack product map
+      initRackProductMap();
+      
+      // step 8: return true
+      return true;
+    } catch (e) {
+      // on error: remove loading & show message
+      if (context.mounted) {
+        removeLoading(context);
+        getMessageForTrolleyItem(context, productId);
+      }
+      scannedList.clear();
+      rethrow;
+    }
+  }
+
+  /// get low stock store with products on dashboard for main_store
+  Future<void> fetchLowStockProducts(BuildContext context,
+      {bool isFromBuild = false}) async {
+    try {
+      // step 1: reset variables
+      isLoading = true;
+      isError = false;
+      errorMessage = "";
+
+      // step 2: cancel notification schedule
+      FirebaseAPI().cancelScheduledNotification();
+
+      // step 3: notify listeners if not from build
+      if (context.mounted && !isFromBuild) {
+        notifyListeners();
+      }
+      
+      // step 4: fetch low stock products
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.lowStockUrl,
+      );
+
+      // step 5: update low stock list; else set error
+      if (response.statusCode == 200) {
+        lowStockList = [];
+        for (var item in response.data) {
+          lowStockList.add(LowStockModel.fromJson(item));
+        }
       } else {
-        return false;
+        isError = true;
+        errorMessage = "No data found";
+      }
+      
+      // step 6: schedule notification
+      FirebaseAPI().scheduleNotification();
+    } catch (e) {
+      isError = true;
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Get carton info
+  Future callCartonInfoApi(BuildContext context, String code) async {
+    try {
+      // step 1: reset carton model & show loading
+      cartonModel = null;
+      showLoading(context);
+
+      // step 2: check if code is carton code
+      if (!code.contains("carton")) {
+        throw "Invalid Carton QR";
+      }
+
+      // step 3: call api
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.cartonInfoUrl.replaceAll(':id', code),
+      );
+      debugPrint("Carton Info response code: ${response.statusCode}");
+
+      // step 4: update carton model & remove loading
+      if (context.mounted) {
+        removeLoading(context);
+      }
+      if (response.statusCode == 200) {
+        cartonModel = CartonModel.fromJson(response.data, code);
       }
     } catch (e) {
-      removeLoading(context);
-      scannedList.clear();
-      return e.toString();
-    }
-  }
-
-  /// Display TAGS scanned or remaining
-  void showTrolleyProductTags(BuildContext context, int productId) {
-    final remainingTags = getTagsOfProductInTrolley(productId, true);
-    final completedTags = getTagsOfProductInTrolley(productId, false);
-    // show modal bottom sheet
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: .8.sh,
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: Text("Product Tags"),
-              ),
-              // 12.h
-              SizedBox(height: 12.h),
-              if (remainingTags.isNotEmpty) ...[
-                Text("Remaining Tags",
-                    style: Theme.of(context).textTheme.labelLarge),
-                // 12.h
-                SizedBox(height: 12.h),
-                Expanded(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: remainingTags.length,
-                    itemBuilder: (context, index) {
-                      return Text(remainingTags[index],
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontSize: 13.sp,
-                              ));
-                    },
-                    separatorBuilder: (context, index) {
-                      return SizedBox(height: 12.h);
-                    },
-                  ),
-                ),
-              ],
-              // 12.h
-              SizedBox(height: 12.h),
-              if (completedTags.isNotEmpty) ...[
-                Text("Completed Tags",
-                    style: Theme.of(context).textTheme.labelLarge),
-                // 12.h
-                SizedBox(height: 12.h),
-                Expanded(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    separatorBuilder: (context, index) {
-                      return SizedBox(height: 12.h);
-                    },
-                    itemCount: completedTags.length,
-                    itemBuilder: (context, index) {
-                      return Row(
-                        children: [
-                          Expanded(
-                              child: Text(completedTags[index],
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(
-                                        color: Colors.green,
-                                        fontSize: 13.sp,
-                                      ))),
-                          const Icon(Icons.check_circle, color: Colors.green),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Open box for low stock list if there is product of store
-  Future<List<LowStockModel>> openBoxForLowStockList(
-      BuildContext context) async {
-    List<LowStockModel> list = [];
-    for (var element in lowStockList) {
-      final box = await HiveDBService.openProductBox(
-          '${HiveConstants.storeId}${element.storeId}');
-      final dao = ProductDao(box);
-      final trolleyItems = dao.getAll();
-      if (trolleyItems.isNotEmpty) {
-        list.add(element.copyWith(qty: trolleyItems.length));
+      // on error: remove loading & rethrow
+      if (context.mounted) {
+        removeLoading(context);
       }
+      rethrow;
     }
-    return list;
   }
-
-  // Future<bool> updateRack(
-  //     BuildContext context, String code, int productId) async {
-  //   try {
-  //     final url = AppUrls.updateRackUrl;
-  //     final response = await DioClient().request(
-  //       requestType: RequestType.postWithToken,
-  //       url: url,
-  //       body: {
-  //         "rack_identifier": code,
-  //         "product_id": productId,
-  //       },
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       // debugger();
-  //       showToast("Rack updated successfully");
-  //       // WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       //   navigateAndRemoveAll(context,
-  //       //       route: NavigationConstants.dashboardRoute);
-  //       // });
-  //       return true;
-  //     } else {
-  //       showToast('Failed to update rack');
-  //       return false;
-  //       // navigateAndRemoveAll(context,
-  //       //     route: NavigationConstants.dashboardRoute);
-  //     }
-  //   } catch (ex) {
-  //     showToast(ex.toString());
-  //     return false;
-  //     // showDialog(
-  //     //   context: context,
-  //     //   builder: (context) => AlertDialog(
-  //     //     title: Row(
-  //     //       children: [
-  //     //         Icon(Icons.error, color: Colors.red),
-  //     //         SizedBox(width: 8),
-  //     //         Text(
-  //     //           "Product Availability Failed",
-  //     //           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-  //     //                 fontSize: 12.sp,
-  //     //                 fontWeight: FontWeight.w400,
-  //     //               ),
-  //     //         ),
-  //     //       ],
-  //     //     ),
-  //     //     content: Column(
-  //     //       mainAxisSize: MainAxisSize.min,
-  //     //       children: [
-  //     //         Text("Do you want to scan again?"),
-  //     //         SizedBox(height: 20),
-  //     //         Row(
-  //     //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //     //           children: [
-  //     //             TextButton(
-  //     //               onPressed: () {
-  //     //                 Navigator.of(context).pop(); // Close dialog
-  //     //                 navigate(context,
-  //     //                     route: NavigationConstants.qrScanScreenRoute,
-  //     //                     extra: {
-  //     //                       'scanCarton': true,
-  //     //                     });
-  //     //               },
-  //     //               child: Text("Yes"),
-  //     //             ),
-  //     //             TextButton(
-  //     //               onPressed: () {
-  //     //                 Navigator.of(context).pop(); // Close dialog
-  //     //                 navigate(context,
-  //     //                     route: NavigationConstants.dashboardRoute);
-  //     //               },
-  //     //               child: Text("No"),
-  //     //             ),
-  //     //           ],
-  //     //         )
-  //     //       ],
-  //     //     ),
-  //     //   ),
-  //     // );
-  //   }
-  // }
 }
