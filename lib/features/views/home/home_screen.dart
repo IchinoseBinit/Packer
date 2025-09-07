@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 // ),
                 // SizedBox(height: 20.h),
 
-                const TodaysProgressWidget(),
+              const TodaysProgressWidget(),
                 SizedBox(height: 20.h),
                 
                 SizedBox(height: 48.h),
