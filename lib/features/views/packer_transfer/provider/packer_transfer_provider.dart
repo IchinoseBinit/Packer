@@ -688,20 +688,23 @@ class PackerTransferProvider extends ChangeNotifier {
       final response = await DioClient().request(
           requestType: RequestType.postWithToken,
           url: url.replaceAll('id', id.toString()),
-          body: {
-            "basket_identifier": selectedBasketModel?.identifier,
-          });
+          // body: {
+          //   "basket_identifier": selectedBasketModel?.identifier,
+          // }
+          );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
           (element) => element.identifier == selectedBasketModel?.identifier,
         );
-        navigatePop(context, true);
         removeLoading(context);
+        navigatePop(context, true);
       } else {
+        removeLoading(context);
         ErrorHandler.alertDialog(context, 'Failed to complete transfer');
       }
     } catch (ex) {
+      removeLoading(context);
       ErrorHandler.alertDialog(context, ex.toString());
     }
   }

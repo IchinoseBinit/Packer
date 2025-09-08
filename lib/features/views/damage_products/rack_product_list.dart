@@ -29,54 +29,48 @@ class _RackProductListState extends State<RackProductList> {
           },
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Column(
-            children: [
-              ListView.separated(
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 8.0),
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    onTap: () {
-                      fileUpload(context, productList[index].id,
-                          productList[index].quantity);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.primaryColor),
-                        borderRadius: BorderRadius.circular(8.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: ListTile(
-                        title: Text(productList[index].name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("ID: ${productList[index].id}"),
-                            Text("Quantity: ${productList[index].quantity}"),
-                          ],
-                        ),
-                      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: ListView.separated(
+          separatorBuilder: (context, index) =>
+              const SizedBox(height: 8.0),
+          itemBuilder: (context, index) {
+            final item = productList[index];
+            return InkWell(
+              onTap: () {
+                fileUpload(context, item.id, item.quantity);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.primaryColor),
+                  borderRadius: BorderRadius.circular(8.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
                     ),
-                  );
-                },
-                itemCount: productList.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                  ],
+                ),
+                child: ListTile(
+                  title: Text(item.name),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("ID: ${item.id}"),
+                      Text("Quantity: ${item.quantity}"),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
+            );
+          },
+          itemCount: productList.length,
+          shrinkWrap: true,
+          physics: AlwaysScrollableScrollPhysics(),
         ),
       ),
     );
