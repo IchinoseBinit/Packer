@@ -1,9 +1,7 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/enum/environment_config.dart';
 import 'package:packer/features/views/widgets/update_url_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';

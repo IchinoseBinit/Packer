@@ -87,13 +87,13 @@ class AppUrls {
   static String get fcmTokenUrl => "$baseUrl/notification/register-device";
 
   // packer_transfer
-  static String get packerTransferUrl => "$baseUrl/store/transfers/";
-  static String get packerTransferDetailsUrl => "$baseUrl/store/transfers/id/";
+  static String get packerTransferUrl => "$baseUrl/packer/transfers/";
+  static String get packerTransferDetailsUrl => "$baseUrl/packer/transfers/id/";
   // scan-unit
-  static String get scanUnitUrl => "$baseUrl/store/transfers/id/scan-units/";
+  static String get scanUnitUrl => "$baseUrl/packer/transfers/id/scan-units/";
   // complete
   static String get completeTransferUrl =>
-      "$baseUrl/store/transfers/id/complete/";
+      "$baseUrl/packer/transfers/id/complete/";
   // low-stock
   static String get lowStockUrl => "$baseUrl/packer/low-stock-products/";
 

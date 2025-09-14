@@ -18,7 +18,6 @@ import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/low_stock/views/trolley_item_screen.dart';
 import 'package:packer/features/views/low_stock/views/trolley_scan_screen.dart';
-import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/views/order_return_detail.dart';
 import 'package:packer/features/views/order/views/order_return_list.dart';
 import 'package:packer/features/views/order/views/order_return_scanner.dart';
@@ -437,7 +436,7 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.orderReturnScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  // final args = state.extra as Map<String, dynamic>? ?? {};
                   return OrderReturnList();
                 },
               ),

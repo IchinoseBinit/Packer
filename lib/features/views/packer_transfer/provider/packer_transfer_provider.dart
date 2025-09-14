@@ -58,7 +58,6 @@ class PackerTransferProvider extends ChangeNotifier {
     });
 
     rackList.sort((a, b) => a.compareTo(b));
-    // TODO: Remove
     rackList = rackList.reversed.toList();
 
     notifyListeners();
