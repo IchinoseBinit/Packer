@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
+import 'package:packer/features/views/packer_transfer/model/transfer_request_model.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -22,9 +24,14 @@ import 'package:provider/provider.dart';
 
 class PackerTransferProvider extends ChangeNotifier {
   var transferList = <TransferModel>[];
+  var transferRequestList = <InventoryTransferRequestModel>[];
+
   var transferListLoading = false;
   String? scanMessage;
   TransferModel? selectedTransferModel;
+  InventoryTransferRequestModel? selectedTransferRequestModel;
+  List<Items>? transferRequestsItem;
+
   BasketModel? selectedBasketModel;
   var selectedTransferModelLoading = false;
   String? role;
@@ -114,8 +121,76 @@ class PackerTransferProvider extends ChangeNotifier {
       transferList.clear();
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
       final url = homeProvider.isMainStore() == true
-          ? AppUrls.packerTransferUrl
-          : AppUrls.managerTransferUrl;
+          ? AppUrls.managerTransferUrl
+          : AppUrls.packerTransferUrl;
+      final response = await DioClient()
+          .request(requestType: RequestType.getWithToken, url: url);
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        for (var item in data) {
+          transferList.add(TransferModel.fromMap(item));
+        }
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      transferListLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void onRequestDetailsTaped(
+      BuildContext context, InventoryTransferRequestModel data) async {
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    if (homeProvider.isMainStore() == false) {
+      selectedTransferRequestModel = data;
+
+      if (context.mounted) {
+        scanTagsList.clear();
+        notifyListeners();
+        fetchTransferDetails(context, selectedTransferModel?.id ?? 0);
+        navigateReplacement(context,
+            route: NavigationConstants.basketListRoute);
+      }
+    } else {
+      fetchTransferDetails(context, data.id ?? 0);
+      navigate(context, route: NavigationConstants.basketListRoute);
+    }
+  }
+
+  Future<void> fetchInventoryTransferRequestList(BuildContext context) async {
+    try {
+      transferRequestList.clear();
+      final url = AppUrls.transferRequestUrl;
+
+      final response = await DioClient()
+          .request(requestType: RequestType.getWithToken, url: url);
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.data);
+        transferRequestList = jsonList
+            .map((json) => InventoryTransferRequestModel.fromJson(json))
+            .toList();
+
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      transferListLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchDamageProductList(BuildContext context) async {
+    try {
+      transferListLoading = true;
+      transferList.clear();
+      final url = AppUrls.managerTransferUrl;
       final response = await DioClient()
           .request(requestType: RequestType.getWithToken, url: url);
       if (response.statusCode == 200) {
@@ -604,8 +679,8 @@ class PackerTransferProvider extends ChangeNotifier {
       }
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
       final url = homeProvider.isMainStore() == true
-          ? AppUrls.completeTransferUrl
-          : AppUrls.acceptTransferUrl;
+          ? AppUrls.acceptTransferUrl
+          : AppUrls.completeTransferUrl;
       final response = await DioClient().request(
           requestType: RequestType.postWithToken,
           url: url.replaceAll('id', id.toString()),
@@ -669,6 +744,33 @@ class PackerTransferProvider extends ChangeNotifier {
       );
       if (response.statusCode == 200) {
         selectedTransferModel = TransferModel.fromMap(response.data);
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      selectedTransferModelLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchTransferRequestDetails(BuildContext context, int id) async {
+    try {
+      selectedTransferModelLoading = true;
+      final url = AppUrls.transferRequestDetailsUrl;
+      final urlValue = url.replaceAll('id', id.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: urlValue,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = response.data;
+        transferRequestsItem =
+            jsonList.map((json) => Items.fromJson(json)).toList();
         notifyListeners();
       } else {
         ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');

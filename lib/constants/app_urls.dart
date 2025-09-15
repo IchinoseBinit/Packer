@@ -120,6 +120,12 @@ class AppUrls {
   static String get clearCancelledBasketUrl =>
       "$baseUrl/staff/clear-cancelled-basket/";
 
+  //transfer request
+  static String get transferRequestUrl =>
+      "$baseUrl/inventory-transfer-requests/";
+  static String get transferRequestDetailsUrl =>
+      "$baseUrl/inventory-transfer-requests/id/";
+
   // staff/scan-basket
   static String get scanBasketUrl => "$baseUrl/staff/scan-basket/";
 
