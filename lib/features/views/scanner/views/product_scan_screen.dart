@@ -1,3 +1,4 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -321,6 +322,7 @@ class ProductScanScreen extends BaseScanScreen {
                   .scanProduct(context, productId, code, controller);
 
           if (result && context.mounted) {
+            controller.dispose();
             Navigator.pop(context, true);
           } else if (context.mounted) {
             await controller.start();
@@ -375,5 +377,6 @@ class ProductScanScreen extends BaseScanScreen {
   @override
   void onDispose(MobileScannerController controller) {
     // Any cleanup specific to cart item scanning
+    controller.dispose(); 
   }
 }

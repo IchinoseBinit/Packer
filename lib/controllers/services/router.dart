@@ -22,7 +22,6 @@ import 'package:packer/features/views/order/views/order_return_detail.dart';
 import 'package:packer/features/views/order/views/order_return_list.dart';
 import 'package:packer/features/views/order/views/order_return_scanner.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
-import 'package:packer/features/views/packer_transfer/views/transfer_request.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -377,12 +376,12 @@ class AppRouter {
                   return const TransferList();
                 },
               ),
-              GoRoute(
-                path: NavigationConstants.transferRequestListRoute,
-                builder: (BuildContext context, GoRouterState state) {
-                  return const TransferRequestList();
-                },
-              ),
+              // GoRoute(
+              //   path: NavigationConstants.transferRequestListRoute,
+              //   builder: (BuildContext context, GoRouterState state) {
+              //     return const TransferRequestList();
+              //   },
+              // ),
 
               GoRoute(
                 path: NavigationConstants.transferDetailsRoute,

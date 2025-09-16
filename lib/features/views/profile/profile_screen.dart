@@ -104,15 +104,15 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.transferListRoute,
       });
     }
-    if (!value.isMainStore() &&
-        !otherInfoData
-            .any((e) => e['title'] == 'Inventory Transfer Requests')) {
-      otherInfoData.add({
-        'icon': Icons.transfer_within_a_station,
-        'title': 'Inventory Transfer Requests',
-        'screen': NavigationConstants.transferRequestListRoute,
-      });
-    }
+    // if (!value.isMainStore() &&
+    //     !otherInfoData
+    //         .any((e) => e['title'] == 'Inventory Transfer Requests')) {
+    //   otherInfoData.add({
+    //     'icon': Icons.transfer_within_a_station,
+    //     'title': 'Inventory Transfer Requests',
+    //     'screen': NavigationConstants.transferRequestListRoute,
+    //   });
+    // }
   }
 
   @override
