@@ -322,7 +322,6 @@ class ProductScanScreen extends BaseScanScreen {
                   .scanProduct(context, productId, code, controller);
 
           if (result && context.mounted) {
-            controller.dispose();
             Navigator.pop(context, true);
           } else if (context.mounted) {
             await controller.start();
@@ -377,6 +376,13 @@ class ProductScanScreen extends BaseScanScreen {
   @override
   void onDispose(MobileScannerController controller) {
     // Any cleanup specific to cart item scanning
-    controller.dispose(); 
+    try {
+      log("disposing scanner");
+
+      controller.stop();
+      controller.dispose();
+    } catch (e) {
+      log("Error disposing scanner: $e");
+    }
   }
 }
