@@ -18,7 +18,7 @@ class RackUpdateProvider extends ChangeNotifier {
 
   Future callCartonInfoApi(BuildContext context, String code) async {
     try {
-      // debugger();
+      //
       if (!code.contains("carton")) {
         throw "Invalid Carton QR";
       }
@@ -39,7 +39,8 @@ class RackUpdateProvider extends ChangeNotifier {
             extra: {'productId': cartonModel?.productId});
       }
     } catch (e) {
-      ErrorHandler.alertDialog(context, "Invalid QR Code ${detectQrMessage(code)}");
+      ErrorHandler.alertDialog(
+          context, "Invalid QR Code ${detectQrMessage(code)}");
       return false;
     }
   }
@@ -91,7 +92,8 @@ class RackUpdateProvider extends ChangeNotifier {
           extra: {'productId': productId});
       return true;
     } catch (e) {
-      ErrorHandler.alertDialog(context, "Invalid QR Code ${detectQrMessage(code)}");
+      ErrorHandler.alertDialog(
+          context, "Invalid QR Code ${detectQrMessage(code)}");
       return false;
     }
   }

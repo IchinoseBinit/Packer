@@ -7,10 +7,12 @@ navigate(BuildContext context, {required String route, Object? extra}) async {
 }
 
 navigatePop<T extends Object?>(BuildContext context, [T? result]) {
-  return context.pop(result);
+  // can pop
+  if (context.canPop()) return context.pop(result);
 }
 
-navigateReplacement(BuildContext context, {required String route, Object? extra}) async {
+navigateReplacement(BuildContext context,
+    {required String route, Object? extra}) async {
   context.replace(route.addSlashInRoute(), extra: extra);
 }
 

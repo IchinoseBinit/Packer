@@ -87,6 +87,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     child: ListView.builder(
                       shrinkWrap: true,
                       itemCount: driverController.driverTransfers.length,
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       itemBuilder: (context, index) {
                         if (initialTransferId ==
                             driverController

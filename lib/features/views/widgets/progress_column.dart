@@ -41,7 +41,7 @@ class TodaysProgressWidget extends StatelessWidget {
             child: Padding(
               padding: AppConstants.padding,
               child: Builder(builder: (context) {
-                // debugger();
+                //
                 final width = (1.sw - 64 - 40.w) / 2;
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
