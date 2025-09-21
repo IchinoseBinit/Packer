@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,10 +6,11 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
+import 'package:packer/main.dart';
 
 abstract class BaseScanScreen extends StatefulWidget {
   final String scanTitle;
@@ -102,6 +104,19 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
             body: Text("Are you sure you want to exit?"),
             needCancel: true,
             okFunc: () {
+              // final navigator = Navigator.of(context);
+              // var stack = navigator.widget.pages.map((p) => p.name).toList();
+
+              // if (stack.last == NavigationConstants.productScanScreenRoute) {
+              //   removeLoading(context);
+              //   stack = navigator.widget.pages.map((p) => p.name).toList();
+              //   log("Current Navigation Stack: $stack");
+              //   navigatePop(context);
+              //   stack = navigator.widget.pages.map((p) => p.name).toList();
+              //   log("Current Navigation Stack: $stack");
+              //   navigatePop(context);
+              // }
+
               navigatePop(context);
               if (widget.fromCall) {
                 navigateReplacement(context,

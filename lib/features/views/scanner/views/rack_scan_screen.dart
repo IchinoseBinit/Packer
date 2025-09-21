@@ -132,6 +132,8 @@ class RackScanScreen extends BaseScanScreen {
         await controller.stop();
         if (context.mounted) {
           showToast("Rack scanned successfully");
+          controller.stop();
+          controller.dispose();
           await navigatePop(context, code);
         }
       } else if (context.mounted) {
@@ -188,6 +190,6 @@ class RackScanScreen extends BaseScanScreen {
 
   @override
   void onDispose(MobileScannerController controller) {
-    // Optional cleanup
+    controller.dispose();
   }
 }

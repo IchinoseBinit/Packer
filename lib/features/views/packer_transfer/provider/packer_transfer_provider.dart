@@ -390,7 +390,10 @@ class PackerTransferProvider extends ChangeNotifier {
     //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
-    if (isDamaged) return true;
+    if (isDamaged) {
+      removeLoading(context);
+      return true;
+    }
 
     if (isScanned) {
       if (role == "main") {
@@ -532,7 +535,7 @@ class PackerTransferProvider extends ChangeNotifier {
       // scan all items
       final scanRemainingItem = (item.quantity ?? 0) - item.itemScanCount;
       for (var i = 0; i < scanRemainingItem; i++) {
-        await navigate(
+        final success = await navigate(
           context,
           route: NavigationConstants.productScanScreenRoute,
           extra: {
@@ -541,6 +544,10 @@ class PackerTransferProvider extends ChangeNotifier {
             "forDamageReceive": true
           },
         );
+        if (success != true) {
+          log("Scan cancelled by user");
+          return;
+        }
       }
 
       if (item.product == null) {

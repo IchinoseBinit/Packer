@@ -320,12 +320,15 @@ class ProductScanScreen extends BaseScanScreen {
         try {
           log("Scanning for transfer-$productId-$code");
 
+          debugger();
+
           final result =
               await Provider.of<PackerTransferProvider>(context, listen: false)
                   .scanProduct(
                       context, productId, code, controller, forDamageReceive);
 
           if (result && context.mounted) {
+            controller.stop();
             controller.dispose();
             Navigator.pop(context, true);
           } else if (context.mounted) {
