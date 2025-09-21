@@ -354,13 +354,12 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   Future<bool> scanProduct(BuildContext context, int productId, String code,
-      MobileScannerController controller) async {
+      MobileScannerController controller, bool isDamaged) async {
     if (scanTagsList.contains(code)) {
-      removeLoading(context);
       ErrorHandler.alertDialog(context, "Tag already scanned");
-
       return false;
     }
+    debugger();
 
     final item = selectedTransferModel?.items?.firstWhere(
       (element) => element.product == productId,
@@ -387,7 +386,16 @@ class PackerTransferProvider extends ChangeNotifier {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, scanMessage);
     }
+
+    // if it is damage then no need to navigate to assign
+    //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
+
+    if (isDamaged) {
+      removeLoading(context);
+      return true;
+    }
+
     if (isScanned) {
       if (role == "main") {
         await controller.stop();
@@ -483,6 +491,8 @@ class PackerTransferProvider extends ChangeNotifier {
         if (result == true && context.mounted) {
           Provider.of<ScanMessageProvider>(context, listen: false)
               .setMessage(context, scanMessage);
+          await Future.delayed(const Duration(milliseconds: 300));
+
           navigate(
             context,
             route: NavigationConstants.productScanScreenRoute,
@@ -505,16 +515,60 @@ class PackerTransferProvider extends ChangeNotifier {
         return;
       });
     } else {
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, scanMessage);
-      navigate(
+      //
+
+      // first assign rack
+      final rackCode = await navigate(
         context,
-        route: NavigationConstants.productScanScreenRoute,
+        route: NavigationConstants.scanRackRoute,
         extra: {
-          "forTransfer": true,
           "productId": item.product,
+          "forDamage": true,
         },
       );
+
+      if (rackCode == null || rackCode.toString().isEmpty) {
+        showToast("Rack not assigned, try again");
+        return;
+      }
+
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+
+      // scan all items
+      final scanRemainingItem = (item.quantity ?? 0) - item.itemScanCount;
+      for (var i = 0; i < scanRemainingItem; i++) {
+        final success = await navigate(
+          context,
+          route: NavigationConstants.productScanScreenRoute,
+          extra: {
+            "forTransfer": true,
+            "productId": item.product,
+            "forDamageReceive": true
+          },
+        );
+        if (success != true) {
+          log("Scan cancelled by user");
+          return;
+        }
+      }
+
+      if (item.product == null) {
+        showToast("Unable to find product id, try again");
+        return;
+      }
+
+      final result =
+          await Provider.of<PackerTransferProvider>(context, listen: false)
+              .postDamageProductTags(context, item.product!, rackCode);
+
+      // Provider.of<PackerTransferProvider>(context, listen: false).
+
+      if (result && context.mounted) {
+        showToast("Rack Scanned Successfully");
+      }
+
+      return;
     }
   }
 
@@ -694,6 +748,9 @@ class PackerTransferProvider extends ChangeNotifier {
         );
         navigatePop(context, true);
         removeLoading(context);
+        selectedTransferModel?.baskets?.isEmpty == true
+            ? navigatePop(context, true)
+            : null;
       } else {
         ErrorHandler.alertDialog(context, 'Failed to complete transfer');
       }

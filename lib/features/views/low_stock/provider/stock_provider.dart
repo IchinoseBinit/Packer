@@ -427,7 +427,7 @@ class StockProvider extends ChangeNotifier {
             return true;
           }
         } else if (context.mounted) {
-         final result = await navigateReplacement(
+          final result = await navigateReplacement(
             context,
             route: NavigationConstants.scanRackRoute,
             extra: {
@@ -438,9 +438,9 @@ class StockProvider extends ChangeNotifier {
           );
           if (result ?? false) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-                navigateReplacement(context,
-                    route: NavigationConstants.dashboardRoute);
-              });
+              navigateReplacement(context,
+                  route: NavigationConstants.dashboardRoute);
+            });
           }
           return true;
         }
@@ -588,7 +588,8 @@ class StockProvider extends ChangeNotifier {
     scannedList = getScannedList(model.productId);
     selectedProduct = model;
     if (scannedList.isNotEmpty) {
-      scanMessage = "Scan ${model.quantity - scannedList.length} ${model.productName} More";
+      scanMessage =
+          "Scan ${model.quantity - scannedList.length} ${model.productName} More";
     } else {
       scanMessage = "Scan ${model.quantity} ${model.productName} ";
     }
@@ -1025,7 +1026,7 @@ class StockProvider extends ChangeNotifier {
   //     );
 
   //     if (response.statusCode == 200) {
-  //       // debugger();
+  //       //
   //       showToast("Rack updated successfully");
   //       // WidgetsBinding.instance.addPostFrameCallback((_) {
   //       //   navigateAndRemoveAll(context,

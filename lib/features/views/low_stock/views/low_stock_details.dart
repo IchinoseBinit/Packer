@@ -57,7 +57,6 @@ class _LowStockDetailsState extends State<LowStockDetails> {
               navigatePop(context);
             },
           ),
-          
         ),
         body: Consumer<StockProvider>(
           builder: (context, state, child) {
@@ -130,14 +129,19 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                                 },
                                                 productModel: CommonProductModel
                                                     .fromProductModel(product),
-                                                status: state.getScannedList(
-                                                        product.productId)
-                                                    .length ==
-                                                    product.quantity
+                                                status: state
+                                                            .getScannedList(
+                                                                product
+                                                                    .productId)
+                                                            .length ==
+                                                        product.quantity
                                                     ? ItemStatus.done
                                                     : ItemStatus.remaining,
-                                                quantity: product.quantity - state.getScannedList(
-                                                    product.productId).length,
+                                                quantity: product.quantity -
+                                                    state
+                                                        .getScannedList(
+                                                            product.productId)
+                                                        .length,
                                                 statusToShow: state.trolleyItems
                                                     .firstWhereOrNull(
                                                         (element) =>
@@ -159,7 +163,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     // state.showCompleteButton()
                     //     ? GeneralElevatedButton(
                     //         onPressed: () {
-                    //           // debugger();
+                    //           //
 
                     //           state.transferBasket(context);
                     //         },
@@ -180,14 +184,14 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     // 20.h
                     GeneralElevatedButton(
                       onPressed: () {
-                            navigate(
-                              context,
-                              route: NavigationConstants.qrScanScreenRoute,
-                              extra: {
-                                'scanCarton': true,
-                                'isLowStockCarton': true,
-                              },
-                            );
+                        navigate(
+                          context,
+                          route: NavigationConstants.qrScanScreenRoute,
+                          extra: {
+                            'scanCarton': true,
+                            'isLowStockCarton': true,
+                          },
+                        );
                         // ShowAlertDialog(
                         //   canDismiss: true,
                         //   needCancel: true,
@@ -213,7 +217,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                         //       context,
                         //       route: NavigationConstants.collectedProductViewRoute,
                         //     );
-                            
+
                         //   },
                         // ).showAlertDialog(context);
                       },

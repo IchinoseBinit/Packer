@@ -29,6 +29,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool fromTransfer = false;
   bool forCarton = false;
   bool forDamageTransfer;
+  bool forDamageReceive = false;
 
   ProductScanScreen({
     super.key,
@@ -38,7 +39,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.fromTransfer = false,
     this.forCarton = false,
     this.forDamageTransfer = false,
-    // this.forDamageReceive = false,
+    this.forDamageReceive = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -50,6 +51,7 @@ class ProductScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
+    log("aaaaaaaaaaa");
     if (forCarton) {
       Provider.of<StockProvider>(context, listen: false)
           .getMessageForCartonProduct(context);
@@ -317,11 +319,15 @@ class ProductScanScreen extends BaseScanScreen {
         }
       } else if (fromTransfer) {
         try {
+          log("Scanning for transfer-$productId-$code");
+
           final result =
               await Provider.of<PackerTransferProvider>(context, listen: false)
-                  .scanProduct(context, productId, code, controller);
+                  .scanProduct(
+                      context, productId, code, controller, forDamageReceive);
 
           if (result && context.mounted) {
+            controller.stop();
             Navigator.pop(context, true);
           } else if (context.mounted) {
             await controller.start();
@@ -336,6 +342,8 @@ class ProductScanScreen extends BaseScanScreen {
         }
       }
     } catch (e) {
+      //
+
       handleInvalidCode(context, controller, code);
 
       // await controller.start();
@@ -376,13 +384,5 @@ class ProductScanScreen extends BaseScanScreen {
   @override
   void onDispose(MobileScannerController controller) {
     // Any cleanup specific to cart item scanning
-    try {
-      log("disposing scanner");
-
-      controller.stop();
-      controller.dispose();
-    } catch (e) {
-      log("Error disposing scanner: $e");
-    }
   }
 }
