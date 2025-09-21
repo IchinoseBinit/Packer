@@ -699,6 +699,7 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } catch (ex) {
       ErrorHandler.alertDialog(context, ex.toString());
+      removeLoading(context);
     }
   }
 
