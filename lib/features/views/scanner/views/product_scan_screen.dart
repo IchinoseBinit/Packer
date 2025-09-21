@@ -320,8 +320,6 @@ class ProductScanScreen extends BaseScanScreen {
         try {
           log("Scanning for transfer-$productId-$code");
 
-          debugger();
-
           final result =
               await Provider.of<PackerTransferProvider>(context, listen: false)
                   .scanProduct(
