@@ -36,6 +36,15 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.transferListRoute,
       });
     }
+    if (value.isMainStore() &&
+        !otherInfoData
+            .any((e) => e['screen'] == NavigationConstants.inventoryTransferMainStoreRoute)) {
+      otherInfoData.add({
+        'icon': Icons.inventory,
+        'title': 'Inventory Transfer',
+        'screen': NavigationConstants.inventoryTransferMainStoreRoute,
+      });
+    }
     if (value.isMainStore() == false &&
         !otherInfoData
             .any((e) => e['screen'] == NavigationConstants.inventoryTransferRequestListRoute)) {

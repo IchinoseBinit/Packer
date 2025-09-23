@@ -430,6 +430,7 @@ class InventoryTransferRequestController extends ChangeNotifier {
         url: AppUrls.scanReturnBasketUrl,
         body: {
           "basket_identifier": code,
+          "transfer_id": selectedInventoryTransferRequest!.id,
         },
       );
       if (response.statusCode == 200) {
@@ -478,8 +479,8 @@ class InventoryTransferRequestController extends ChangeNotifier {
         requestType: RequestType.postWithToken,
         url: AppUrls.returnProductToWarehouseUrl,
         body: {
-          "request_id": selectedInventoryTransferRequest!.id,
-          "product_units": localScannedTag,
+          "transfer_id": selectedInventoryTransferRequest!.id,
+          "product_units": localScannedTag.where((tag) => tag.split("-").first == localSelectedItem!.productId.toString()).toList(),
           "basket_identifier": basketCode,
         },
       );

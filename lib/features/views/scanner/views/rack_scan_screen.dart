@@ -126,11 +126,11 @@ class RackScanScreen extends BaseScanScreen {
         //       await Provider.of<PackerTransferProvider>(context, listen: false)
         //           .postDamageProductTags(context, productId, code);
 
-          if (!result) {
-            controller.start();
-          }
-          if (result && context.mounted) {
-            showToast("Rack Scanned Successfully");
+          // if (!result) {
+          //   controller.start();
+          // }
+          // if (result && context.mounted) {
+          //   showToast("Rack Scanned Successfully");
 
         //     navigatePop(context, true);
         //   } else {

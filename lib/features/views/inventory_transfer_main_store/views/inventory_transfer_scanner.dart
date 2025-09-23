@@ -2,42 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/inventory_transfer_request/provider/inventory_transfer_request_controller.dart';
-import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/inventory_transfer_main_store/controller/inventory_transfer_controller.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
-class InventoryTransferRequestScanner extends BaseScanScreen {
-  InventoryTransferRequestScanner({
-    this.scanLocal = false,
+class InventoryTransferScanner extends BaseScanScreen {
+  InventoryTransferScanner({
     this.scanBasket = false,
-  }) : super(scanTitle: scanBasket ? "Basket Scanner" : "Product Scanner", floatingActionButtonLocation: FloatingActionButtonLocation.endFloat);
+    this.scanCarton = false,
+  }) : super(
+          scanTitle: scanBasket
+              ? "Basket Scanner"
+              : scanCarton
+                  ? "Carton Scanner"
+                  : "Product Scanner",
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        );
 
-  final bool scanLocal;
   final bool scanBasket;
+  final bool scanCarton;
 
   bool hasScanned = false;
 
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    if (scanLocal) {
-      return Consumer<InventoryTransferRequestController>(
-        builder: (context, value, child) => value.localSelectedItem == null
-            ? SizedBox.shrink()
-            : FloatingActionButton(
-                backgroundColor: AppColors.primaryColor,
-                onPressed: () async {
-                  Provider.of<InventoryTransferRequestController>(context,
-                          listen: false)
-                      .showProductTags(context);
-                },
-                child: const Icon(Icons.info, color: Colors.white),
-              ),
+    if (!scanBasket && !scanCarton) {
+      return FloatingActionButton(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: () async {
+          Provider.of<InventoryTransferController>(context, listen: false)
+              .showProductTags(context);
+        },
+        child: const Icon(Icons.info, color: Colors.white),
       );
     }
     return null;
@@ -55,17 +57,17 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       if (scanBasket) {
-        final scanResult = await Provider.of<InventoryTransferRequestController>(
+        final scanResult = await Provider.of<InventoryTransferController>(
                 context,
                 listen: false)
             .handleBasketScan(context, code);
-        controller.start();
-        hasScanned = false;
 
         if (scanResult.success && context.mounted) {
           if (scanResult.message != null) {
             showToast(scanResult.message!);
           }
+          navigateReplacement(context,
+              route: NavigationConstants.inventoryTransferItemsRoute);
         } else if (context.mounted) {
           if (scanResult.message == null) {
             controller.start();
@@ -74,18 +76,19 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
             handleInvalidCode(context, controller, code, scanResult.message);
           }
         }
-      } else if (scanLocal) {
-        final scanResult = await Provider.of<InventoryTransferRequestController>(
+      } else if (scanCarton) {
+        final scanResult = await Provider.of<InventoryTransferController>(
                 context,
                 listen: false)
-            .handleLocalProductScan(context, code);
-        controller.start();
-        hasScanned = false;
-  
+            .handleCartonScan(context, code);
+
         if (scanResult.success && context.mounted) {
           if (scanResult.message != null) {
             showToast(scanResult.message!);
           }
+          controller.start();
+          navigateReplacement(context,
+              route: NavigationConstants.inventoryTransferScannerRoute);
         } else if (context.mounted) {
           if (scanResult.message == null) {
             controller.start();
@@ -95,16 +98,16 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
           }
         }
       } else {
-        final scanResult =
-            await Provider.of<InventoryTransferRequestController>(context,
-                    listen: false)
-                .handleProductScan(context, code);
-        await Future.delayed(const Duration(milliseconds: 300));
+        final scanResult = await Provider.of<InventoryTransferController>(
+                context,
+                listen: false)
+            .handleProductScan(context, code);
+
         if (scanResult.success && context.mounted) {
-          Navigator.pop(context);
           if (scanResult.message != null) {
             showToast(scanResult.message!);
           }
+          navigatePop(context);
         } else if (context.mounted) {
           if (scanResult.message == null) {
             controller.start();
@@ -116,6 +119,26 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
       }
     } catch (e) {
       handleInvalidCode(context, controller, code, e.toString());
+    }
+  }
+
+  @override
+  void onDispose(MobileScannerController controller) {
+    // TODO: implement onDispose
+  }
+
+  @override
+  void onScreenCreated(BuildContext context) {
+    // TODO: implement onScreenCreated
+    if (scanBasket) {
+      Provider.of<InventoryTransferController>(context, listen: false)
+          .getBasketScanMessage(context);
+    } else if (scanCarton) {
+      Provider.of<InventoryTransferController>(context, listen: false)
+          .getCartonScanMessage(context);
+    } else {
+      Provider.of<InventoryTransferController>(context, listen: false)
+          .getProductScanMessage(context);
     }
   }
 
@@ -132,22 +155,5 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
       },
     ).showAlertDialog(context);
     hasScanned = false;
-  }
-
-  @override
-  void onDispose(MobileScannerController controller) {}
-
-  @override
-  void onScreenCreated(BuildContext context) {
-    if (scanBasket) {
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, "Scan Basket Code");
-    } else if (scanLocal) {
-      Provider.of<InventoryTransferRequestController>(context, listen: false)
-          .getLocalProductScanMessage(context);
-    } else {
-      Provider.of<InventoryTransferRequestController>(context, listen: false)
-          .getProductScanMessage(context);
-    }
   }
 }

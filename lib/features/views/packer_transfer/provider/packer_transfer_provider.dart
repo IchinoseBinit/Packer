@@ -404,7 +404,8 @@ class PackerTransferProvider extends ChangeNotifier {
           return ScanResult(success: false);
         }
         removeScanTags(productId);
-        selectedTransferModel?.items?.removeWhere((element) => element.product == productId);
+        selectedTransferModel?.items
+            ?.removeWhere((element) => element.product == productId);
         arrangeRackTransferItem();
         notifyListeners();
         return ScanResult(success: true, message: "Scanned Successfully");
@@ -464,10 +465,10 @@ class PackerTransferProvider extends ChangeNotifier {
     //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
-    if (isDamaged) {
-      removeLoading(context);
-      return true;
-    }
+    // if (isDamaged) {
+    //   removeLoading(context);
+    //   return true;
+    // }
 
     if (isScanned) {
       if (role == "main") {
@@ -565,27 +566,27 @@ class PackerTransferProvider extends ChangeNotifier {
               .setMessage(context, scanMessage);
           await Future.delayed(const Duration(milliseconds: 300));
 
-          navigate(
-            context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "rack": item.rack,
-              "productId": item.product,
-              "forTransfer": true
-            });
-        // if (result == true && context.mounted) {
-        //   Provider.of<ScanMessageProvider>(context, listen: false)
-        //       .setMessage(context, scanMessage);
-        //   navigate(
-        //     context,
-        //     route: NavigationConstants.productScanScreenRoute,
-        //     extra: {
-        //       "forTransfer": true,
-        //       "productId": item.product,
-        //     },
-        //   );
-        // }
-        return;
+          navigate(context,
+              route: NavigationConstants.productScanScreenRoute,
+              extra: {
+                "rack": item.rack,
+                "productId": item.product,
+                "forTransfer": true
+              });
+          // if (result == true && context.mounted) {
+          //   Provider.of<ScanMessageProvider>(context, listen: false)
+          //       .setMessage(context, scanMessage);
+          //   navigate(
+          //     context,
+          //     route: NavigationConstants.productScanScreenRoute,
+          //     extra: {
+          //       "forTransfer": true,
+          //       "productId": item.product,
+          //     },
+          //   );
+          // }
+          return;
+        }
       }
       showYesNo(context).then((value) async {
         final result = await navigate(
@@ -823,12 +824,12 @@ class PackerTransferProvider extends ChangeNotifier {
           ? AppUrls.acceptTransferUrl
           : AppUrls.completeTransferUrl;
       final response = await DioClient().request(
-          requestType: RequestType.postWithToken,
-          url: url.replaceAll('id', id.toString()),
-          // body: {
-          //   "basket_identifier": selectedBasketModel?.identifier,
-          // }
-          );
+        requestType: RequestType.postWithToken,
+        url: url.replaceAll('id', id.toString()),
+        // body: {
+        //   "basket_identifier": selectedBasketModel?.identifier,
+        // }
+      );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
