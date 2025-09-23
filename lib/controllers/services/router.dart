@@ -12,6 +12,10 @@ import 'package:packer/features/views/driver/views/basket_list_screen.dart';
 import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/driver/views/in_transit_screen.dart';
+import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request.dart';
+import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_item.dart';
+import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_scanner.dart';
+import 'package:packer/features/views/inventory_transfer_request/views/transfer_request_trolley_item.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
@@ -535,6 +539,36 @@ class AppRouter {
                     qr: args['qr'],
                     scanRack: args['scanRack'] ?? false,
                   );
+                },
+              ),
+
+              GoRoute(
+                path: NavigationConstants.inventoryTransferRequestListRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return InventoryTransferRequest();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.inventoryTransferRequestDetailsRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return InventoryTransferRequestItem();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.inventoryTransferRequestScannerRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return InventoryTransferRequestScanner(
+                    scanLocal: args['scanLocal'] ?? false,
+                    scanBasket: args['scanBasket'] ?? false,
+                  );
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants
+                    .inventoryTrolleyTransferRequestItemRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return TransferRequestTrolleyItem();
                 },
               ),
             ]),

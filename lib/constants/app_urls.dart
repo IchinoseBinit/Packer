@@ -189,4 +189,11 @@ class AppUrls {
   static String get markDamageUrl => "$baseUrl/mark-damaged/";
   static String get qrDamageUrl => "$baseUrl/qr-damaged/";
   static String get scanRackDamageUrl => "$baseUrl/rack/products/";
+
+  // inventory transfer request
+  static String get inventoryTransferRequestList => "$baseUrl/inventory-transfer-requests/";
+  static String get inventoryTransferRequestDetails => "$baseUrl/inventory-transfer-requests/:id/";
+  // scan-return-basket/ return-to-warehouse/
+  static String get scanReturnBasketUrl => "$baseUrl/staff/scan-return-basket/";
+  static String get returnProductToWarehouseUrl => "$baseUrl/staff/return-products-to-warehouse/";
 }

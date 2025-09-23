@@ -94,4 +94,10 @@ class NavigationConstants {
   static const String receiveBasketListRoute = 'receive_basket_list';
   // receiveBasketScannerRoute
   static const String receiveBasketScannerRoute = 'receive_basket_scanner';
+
+  /// inventory transfer request
+  static const String inventoryTransferRequestListRoute = 'inventory_transfer_request_list';
+  static const String inventoryTransferRequestDetailsRoute = 'inventory_transfer_request_details';
+  static const String inventoryTransferRequestScannerRoute = 'inventory_transfer_request_scanner';
+  static const String inventoryTrolleyTransferRequestItemRoute = 'inventory_trolley_transfer_request_item';
 }

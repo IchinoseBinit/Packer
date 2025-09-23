@@ -16,6 +16,7 @@ import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
+import 'package:packer/features/views/inventory_transfer_request/provider/inventory_transfer_request_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -156,6 +157,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => DriverController()),
         ChangeNotifierProvider(create: (_) => ReceiveBasketController()),
         ChangeNotifierProvider(create: (_) => DamageProductController()),
+        ChangeNotifierProvider(create: (_) => InventoryTransferRequestController()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

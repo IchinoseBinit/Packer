@@ -36,6 +36,15 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.transferListRoute,
       });
     }
+    if (value.isMainStore() == false &&
+        !otherInfoData
+            .any((e) => e['screen'] == NavigationConstants.inventoryTransferRequestListRoute)) {
+      otherInfoData.add({
+        'icon': Icons.swap_horiz_rounded,
+        'title': 'Inventory Transfer Request',
+        'screen': NavigationConstants.inventoryTransferRequestListRoute,
+      });
+    }
 
     // Add Stock Verification screen only if user is a store manager and not already added
     if (value.isStoreManager() &&
