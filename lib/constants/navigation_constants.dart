@@ -29,6 +29,9 @@ class NavigationConstants {
   // transfer_list
   static const String transferListRoute = 'transfer_list';
   static const String transferDetailsRoute = 'transfer_details';
+  static const String receiveDamageProductsRoute = 'receive_damage_products';
+  static const String transferRequestListRoute = 'transfer_request_list';
+
   // basket_list
   static const String basketListRoute = 'basket_list';
   // scan_rack
@@ -45,8 +48,7 @@ class NavigationConstants {
 
   static const String cartonListScreenRoute = 'carton_list_screen';
   static const String productlistScreenRoute = 'product_list_screen';
-    // static const String productlistScreenRoute = 'product_list_screen';
-
+  // static const String productlistScreenRoute = 'product_list_screen';
 
   // stock_verification
   static const String stockVerificationRoute = 'stock_verification_screen';

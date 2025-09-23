@@ -28,7 +28,7 @@ class NotificationUtils {
 
     awesomeNotification.setListeners(
         onActionReceivedMethod: onActionReceivedMethod);
-    // debugger();
+    //
 
     return awesomeNotification;
   }
@@ -57,7 +57,8 @@ class NotificationUtils {
         // );
         final context = AppConstants.navigatorKey.currentContext!;
         Provider.of<OrderProvider>(context, listen: false)
-            .onOrderAcceptOrGetDetail(orderId.toString().toInt(), fromCall: true);
+            .onOrderAcceptOrGetDetail(orderId.toString().toInt(),
+                fromCall: true);
       } catch (e) {
         showToast("Failed to navigate to basket scan screen");
       }

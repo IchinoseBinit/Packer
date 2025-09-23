@@ -1,3 +1,4 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +29,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool fromTransfer = false;
   bool forCarton = false;
   bool forDamageTransfer;
+  bool forDamageReceive = false;
 
   ProductScanScreen({
     super.key,
@@ -37,7 +39,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.fromTransfer = false,
     this.forCarton = false,
     this.forDamageTransfer = false,
-    // this.forDamageReceive = false,
+    this.forDamageReceive = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -49,6 +51,7 @@ class ProductScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
+    log("aaaaaaaaaaa");
     if (forCarton) {
       Provider.of<StockProvider>(context, listen: false)
           .getMessageForCartonProduct(context);
@@ -316,6 +319,8 @@ class ProductScanScreen extends BaseScanScreen {
         }
       } else if (fromTransfer) {
         try {
+          log("Scanning for transfer-$productId-$code");
+
           final result =
               await Provider.of<PackerTransferProvider>(context, listen: false)
                   .scanProductForInventoryTransfer(context, productId, code);
@@ -342,6 +347,8 @@ class ProductScanScreen extends BaseScanScreen {
         }
       }
     } catch (e) {
+      //
+
       handleInvalidCode(context, controller, code);
 
       // await controller.start();

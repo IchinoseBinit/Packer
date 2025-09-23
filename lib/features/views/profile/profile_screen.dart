@@ -68,6 +68,7 @@ class ProfileScreen extends StatelessWidget {
     }
     // // productListScreenRoute
     // if (!value.isAuditUser() &&
+
     //     !otherInfoData.any(
     //         (e) => e['screen'] == NavigationConstants.productListScreenRoute)) {
     //   otherInfoData.add({
@@ -104,15 +105,23 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Transfer Damaged Products',
       });
     }
-    if (value.isStoreManager() &&
-        // value.isMainStore() &&
+    if (value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Receive Damaged Products')) {
       otherInfoData.add({
         'icon': Icons.transfer_within_a_station,
         'title': 'Receive Damaged Products',
-        'screen': NavigationConstants.transferListRoute
+        'screen': NavigationConstants.transferListRoute,
       });
     }
+    // if (!value.isMainStore() &&
+    //     !otherInfoData
+    //         .any((e) => e['title'] == 'Inventory Transfer Requests')) {
+    //   otherInfoData.add({
+    //     'icon': Icons.transfer_within_a_station,
+    //     'title': 'Inventory Transfer Requests',
+    //     'screen': NavigationConstants.transferRequestListRoute,
+    //   });
+    // }
   }
 
   @override

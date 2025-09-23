@@ -7,7 +7,6 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +14,7 @@ import 'package:provider/provider.dart';
 class TrolleyScanScreen extends BaseScanScreen {
   final int productId;
 
-  TrolleyScanScreen({required this.productId})
+  TrolleyScanScreen({super.key, required this.productId})
       : super(
             scanTitle: "Trolley Item Scanner",
             floatingActionButtonLocation:
@@ -84,6 +83,7 @@ class TrolleyScanScreen extends BaseScanScreen {
   @override
   void onDispose(MobileScannerController controller) {
     // TODO: implement onDispose
+    controller.dispose();
   }
 
   @override

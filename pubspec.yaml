@@ -2,7 +2,7 @@ name: packer
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.16+19
 
 environment:
-  sdk: '>=3.2.6 <4.0.0'
+  sdk: ">=3.2.6 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -31,11 +31,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  flutter_screenutil: ^5.9.0   
+  flutter_screenutil: ^5.9.0
   svg_flutter: ^0.0.1
   google_maps_flutter: ^2.6.0
   image_picker: ^1.1.2
@@ -51,7 +50,7 @@ dependencies:
   fluttertoast: ^8.2.5
   google_fonts: ^6.2.1
   permission_handler: ^11.3.1
-  # geolocator: ^13.0.2 
+  # geolocator: ^13.0.2
   web_socket_channel: ^3.0.0
   intl: ^0.20.0
   jwt_decode: ^0.3.1
@@ -61,11 +60,10 @@ dependencies:
   mobile_scanner: ^6.0.2
   flutter_image_compress: ^2.3.0
   slidable_button: ^3.0.0+1
-  flutter_callkeep: 
+  flutter_callkeep:
     path: ./flutter_callkeep
-  pinput: ^3.0.1
+  pinput: ^5.0.2
   connectivity_plus: ^6.0.3
-
 
   # callkeep: ^0.4.0
   uuid: ^4.5.1
@@ -81,7 +79,6 @@ dependencies:
 
   # background_locator_2: ^2.0.6
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -94,9 +91,9 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
 
-dependency_overrides: 
+dependency_overrides:
   flutter_compass: ^0.8.1
-  flutter_callkeep_platform_interface: 
+  flutter_callkeep_platform_interface:
     path: ./flutter_callkeep_platform_interface
 
 flutter_launcher_icons:
@@ -104,7 +101,7 @@ flutter_launcher_icons:
   adaptive_icon_background: "#630897"
   ios: true
   # image_path: "assets/images/login_logo.png"
-  image_path: "assets/images/app_icon.png"  
+  image_path: "assets/images/app_icon.png"
   min_sdk_android: 23 # android min sdk min:16, default 21
 
 # For information on the generic Dart part of this file, see the
@@ -112,7 +109,6 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

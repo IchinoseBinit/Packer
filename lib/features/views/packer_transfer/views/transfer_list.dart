@@ -21,7 +21,6 @@ class _TransferListState extends State<TransferList> {
         title: const Text('Transfer List'),
       ),
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
-
         return FutureBuilder(
             future: Provider.of<PackerTransferProvider>(context, listen: false)
                 .fetchTransferList(context),
@@ -111,7 +110,7 @@ class TransferNotificationCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Transfer Request (${transferItem.status})",
+                        "Request ${transferItem.id} -(${transferItem.status})",
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       Text(
@@ -121,7 +120,6 @@ class TransferNotificationCard extends StatelessWidget {
                             .bodyMedium
                             ?.copyWith(color: Colors.grey[700]),
                       ),
-                      
                       Text(
                         'Requested at: ${DateFormatter().formatTimestamp(transferItem.createdAt ?? '')}',
                         style: Theme.of(context)

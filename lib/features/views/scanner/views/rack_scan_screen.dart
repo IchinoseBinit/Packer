@@ -120,10 +120,11 @@ class RackScanScreen extends BaseScanScreen {
           if (context.mounted) await controller.start();
         }
       } else if (forDamage) {
-        try {
-          final result =
-              await Provider.of<PackerTransferProvider>(context, listen: false)
-                  .postDamageProductTags(context, productId, code);
+        // Old code
+        // try {
+        //   final result =
+        //       await Provider.of<PackerTransferProvider>(context, listen: false)
+        //           .postDamageProductTags(context, productId, code);
 
           if (!result) {
             controller.start();
@@ -131,16 +132,27 @@ class RackScanScreen extends BaseScanScreen {
           if (result && context.mounted) {
             showToast("Rack Scanned Successfully");
 
-            navigatePop(context, true);
-          } else {
-            if (context.mounted) {
-              showToast("Rack update failed");
-            }
-          }
-        } catch (e) {
-          if (context.mounted) {
-            showToast("Error: $e");
-          }
+        //     navigatePop(context, true);
+        //   } else {
+        //     if (context.mounted) {
+        //       showToast("Rack update failed");
+        //     }
+        //   }
+        // } catch (e) {
+        //   if (context.mounted) {
+        //     showToast("Error: $e");
+        //   }
+        // }
+
+        // new code
+        // for assigning damage rack
+        // return rack code to previous screen
+        await controller.stop();
+        if (context.mounted) {
+          showToast("Rack scanned successfully");
+          controller.stop();
+          controller.dispose();
+          await navigatePop(context, code);
         }
       } else if (context.mounted) {
         showLoading(context);
@@ -200,6 +212,6 @@ class RackScanScreen extends BaseScanScreen {
 
   @override
   void onDispose(MobileScannerController controller) {
-    // Optional cleanup
+    // controller.stop();
   }
 }

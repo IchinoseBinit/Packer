@@ -110,6 +110,7 @@ class TransferItemsList extends StatelessWidget {
                                         onTap: () {
                                           log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
                                           if (status == ItemStatus.done) return;
+
                                           provider.itemTaped(context, product);
                                         },
                                         productModel: CommonProductModel
