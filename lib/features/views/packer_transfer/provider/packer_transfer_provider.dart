@@ -107,8 +107,7 @@ class PackerTransferProvider extends ChangeNotifier {
         scanTagsList.clear();
         notifyListeners();
         fetchTransferDetails(context, selectedTransferModel?.id ?? 0);
-        navigateReplacement(context,
-            route: NavigationConstants.basketListRoute);
+        navigate(context, route: NavigationConstants.basketListRoute);
       }
     } else {
       fetchTransferDetails(context, data.id ?? 0);
@@ -563,7 +562,7 @@ class PackerTransferProvider extends ChangeNotifier {
         if (result == true && context.mounted) {
           Provider.of<ScanMessageProvider>(context, listen: false)
               .setMessage(context, scanMessage);
-          await Future.delayed(const Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 100));
 
           navigate(context,
               route: NavigationConstants.productScanScreenRoute,
@@ -780,6 +779,7 @@ class PackerTransferProvider extends ChangeNotifier {
 
   Future<ScanResult> updateRack(
       BuildContext context, String code, int productId) async {
+    debugger();
     try {
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(

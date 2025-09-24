@@ -54,7 +54,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
     controller = MobileScannerController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 100));
 
       controller?.start();
 
