@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -50,6 +52,7 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
+    debugger();
     if (code.isEmpty) return;
     if (_isProcessing) return;
     _isProcessing = true;
@@ -190,6 +193,6 @@ class RackScanScreen extends BaseScanScreen {
 
   @override
   void onDispose(MobileScannerController controller) {
-    // controller.stop();
+    controller.dispose();
   }
 }
