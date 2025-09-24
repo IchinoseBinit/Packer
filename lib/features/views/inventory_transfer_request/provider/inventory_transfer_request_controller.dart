@@ -121,7 +121,7 @@ class InventoryTransferRequestController extends ChangeNotifier {
     notifyListeners();
     Provider.of<InventoryTransferRequestController>(context, listen: false)
         .getLocalProductScanMessage(context);
-    navigateReplacement(context,
+    navigate(context,
         route: NavigationConstants.inventoryTransferRequestScannerRoute,
         extra: {"scanLocal": true});
   }
@@ -353,15 +353,16 @@ class InventoryTransferRequestController extends ChangeNotifier {
       if (localScannedTag.contains(code)) {
         return ScanResult(success: false, message: "QR: $code already scanned");
       }
-      if (localScannedTag.isEmpty) {
-        final localItem =
-            inventoryRequestDao.getInventoryRequest(code.split("-").first);
-        if (localItem == null) {
-          return ScanResult(
-              success: false, message: "Invalid QR - Product does not match");
-        }
-        localSelectedItem = localItem;
-      } else if (!localSelectedItem!.tags!.contains(code)) {
+      // if (localScannedTag.isEmpty) {
+      //   final localItem =
+      //       inventoryRequestDao.getInventoryRequest(code.split("-").first);
+      //   if (localItem == null) {
+      //     return ScanResult(
+      //         success: false, message: "Invalid QR - Product does not match");
+      //   }
+      //   localSelectedItem = localItem;
+      // } else
+       if (!localSelectedItem!.tags!.contains(code)) {
         return ScanResult(
             success: false, message: "Invalid QR - Product does not match");
       }

@@ -65,9 +65,6 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
             await Provider.of<InventoryTransferRequestController>(context,
                     listen: false)
                 .handleBasketScan(context, code);
-        controller.start();
-        hasScanned = false;
-
         if (scanResult.success && context.mounted) {
           if (scanResult.message != null) {
             showToast(scanResult.message!);
@@ -85,10 +82,9 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
             await Provider.of<InventoryTransferRequestController>(context,
                     listen: false)
                 .handleLocalProductScan(context, code);
-        controller.start();
-        hasScanned = false;
 
         if (scanResult.success && context.mounted) {
+          navigatePop(context);
           if (scanResult.message != null) {
             showToast(scanResult.message!);
           }
