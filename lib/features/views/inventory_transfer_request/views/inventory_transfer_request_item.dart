@@ -147,7 +147,7 @@ class InventoryTransferRequestItem extends StatelessWidget {
                 title: "Transfer",
                 onPressed: () {
                   provider.initLocal();
-                  navigate(context, route: NavigationConstants.inventoryTrolleyTransferRequestItemRoute);
+                  navigate(context, route: NavigationConstants.inventoryTransferRequestScannerRoute, extra: {"scanBasket": true});
                 },
               ),
             ],

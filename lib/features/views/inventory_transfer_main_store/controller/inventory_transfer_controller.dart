@@ -284,7 +284,8 @@ class InventoryTransferController extends ChangeNotifier {
   onItemScanTapped(BuildContext context, TransferItemModel transferItem) async {
     try {
       selectedTransferItem = transferItem;
-      await fetchCartonInfo(context, transferItem.product.toString());
+      final firstTagCartonId = transferItem.tags?.first.split('-')[2] ?? "0";
+      await fetchCartonInfo(context, firstTagCartonId);
       notifyListeners();
       if (context.mounted) {
         navigate(
@@ -338,7 +339,8 @@ class InventoryTransferController extends ChangeNotifier {
       }
 
       scannedTags.add(code);
-      if (scannedTags.length == selectedTransferItem!.tags!.length) {
+      int scannedCount = getScannedCount(selectedTransferItem!.product ?? 0);
+      if (scannedCount == selectedTransferItem!.quantity) {
         await submitTransfer(context);
         getProductScanMessage(context);
         await fetchBasketDetails(context, selectedBasket!.identifier);
@@ -356,7 +358,7 @@ class InventoryTransferController extends ChangeNotifier {
 
   Future<void> fetchCartonInfo(BuildContext context, String code) async {
     try {
-      final url = AppUrls.cartonListUrl.replaceAll('product_id', code);
+      final url = AppUrls.cartonDetailUrl.replaceAll(':id', code);
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: url,
@@ -366,12 +368,12 @@ class InventoryTransferController extends ChangeNotifier {
         throw response.data;
       }
 
-      final list = response.data as List;
-      if (list.isEmpty) {
-        throw "No Carton Found";
-      }
+      // final list = response.data as List;
+      // if (list.isEmpty) {
+      //   throw "No Carton Found";
+      // }
 
-      cartonModel = InventoryTransferCartonModel.fromJson(list.first);
+      cartonModel = InventoryTransferCartonModel.fromJson(response.data);
       notifyListeners();
     } catch (ex) {
       rethrow;

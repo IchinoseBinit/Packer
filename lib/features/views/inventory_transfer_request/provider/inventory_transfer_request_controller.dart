@@ -111,17 +111,18 @@ class InventoryTransferRequestController extends ChangeNotifier {
     );
   }
 
-  // void setSelectedLocalInventoryTransferRequestItem(
-  //     BuildContext context, InventoryTransferRequestItemModel item) {
-  //   localSelectedItem = item;
-  //   initLocal();
-  //   notifyListeners();
-  //   Provider.of<InventoryTransferRequestController>(context, listen: false)
-  //       .getLocalProductScanMessage(context);
-  //   navigateReplacement(context,
-  //       route: NavigationConstants.inventoryTransferRequestScannerRoute,
-  //       extra: {"scanLocal": true});
-  // }
+
+  void setSelectedLocalInventoryTransferRequestItem(
+      BuildContext context, InventoryTransferRequestItemModel item) {
+    localSelectedItem = item;
+    initLocal();
+    notifyListeners();
+    Provider.of<InventoryTransferRequestController>(context, listen: false)
+        .getLocalProductScanMessage(context);
+    navigateReplacement(context,
+        route: NavigationConstants.inventoryTransferRequestScannerRoute,
+        extra: {"scanLocal": true});
+  }
 
   // remove scanned tag
   void removeScannedTag(String productId,
@@ -329,7 +330,8 @@ class InventoryTransferRequestController extends ChangeNotifier {
       }
       scannedTagsList.add(code);
       // check if required tags are scanned
-      if (scannedTagsList.length ==
+      int scannedCount = getScannedCount(selectedInventoryTransferRequestItem!.productId ?? 0);
+      if (scannedCount ==
           selectedInventoryTransferRequestItem!.quantity) {
         await addItemToLocal();
         return ScanResult(
@@ -366,6 +368,9 @@ class InventoryTransferRequestController extends ChangeNotifier {
       if (localScannedTag.length == localSelectedItem!.tags?.length) {
         await submitProductTags(context);
         getLocalProductScanMessage(context);
+        if (inventoryRequestDao.getAll().isEmpty){
+          navigatePop(context);
+        }
         return ScanResult(
             success: true, message: "Product scanned successfully");
       }
@@ -393,11 +398,14 @@ class InventoryTransferRequestController extends ChangeNotifier {
       localScannedTag.clear();
       localSelectedItem = null;
       notifyListeners();
-      Provider.of<InventoryTransferRequestController>(context, listen: false)
-          .getLocalProductScanMessage(context);
       navigateReplacement(context,
-          route: NavigationConstants.inventoryTransferRequestScannerRoute,
-          extra: {"scanLocal": true});
+          route: NavigationConstants.inventoryTrolleyTransferRequestItemRoute,
+          );
+      // Provider.of<InventoryTransferRequestController>(context, listen: false)
+      //     .getLocalProductScanMessage(context);
+      // navigateReplacement(context,
+      //     route: NavigationConstants.inventoryTransferRequestScannerRoute,
+      //     extra: {"scanLocal": true});
       return ScanResult(success: true, message: "Basket scanned successfully");
     } catch (e) {
       return ScanResult(success: false, message: e.toString());
@@ -466,6 +474,7 @@ class InventoryTransferRequestController extends ChangeNotifier {
       arrangeItemAccordingToRack();
       isLoading = false;
     } catch (e) {
+      inventoryTransferRequestItemList.clear();
       isLoading = false;
       notifyListeners();
     }
