@@ -466,7 +466,6 @@ class PackerTransferProvider extends ChangeNotifier {
     final isScanned = scanCountOrder(context, productId);
 
     // if (isDamaged) {
-    //   removeLoading(context);
     //   return true;
     // }
 
