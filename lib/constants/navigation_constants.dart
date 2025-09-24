@@ -96,4 +96,18 @@ class NavigationConstants {
   static const String receiveBasketListRoute = 'receive_basket_list';
   // receiveBasketScannerRoute
   static const String receiveBasketScannerRoute = 'receive_basket_scanner';
+
+  /// inventory transfer request
+  static const String inventoryTransferRequestListRoute = 'inventory_transfer_request_list';
+  static const String inventoryTransferRequestDetailsRoute = 'inventory_transfer_request_details';
+  static const String inventoryTransferRequestScannerRoute = 'inventory_transfer_request_scanner';
+  static const String inventoryTrolleyTransferRequestItemRoute = 'inventory_trolley_transfer_request_item';
+
+  // inventory transfer main store
+  static const String inventoryTransferMainStoreRoute = 'inventory_transfer_main_store';
+  // InventoryTransferBasketList
+  static const String inventoryTransferBasketListRoute = 'inventory_transfer_basket_list';
+  // InventoryTransferItems
+  static const String inventoryTransferItemsRoute = 'inventory_transfer_items';
+  static const String inventoryTransferScannerRoute = 'inventory_transfer_scanner';
 }

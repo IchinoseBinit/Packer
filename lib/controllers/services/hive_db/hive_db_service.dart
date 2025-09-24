@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/services/hive_db/model_adapter.dart';
 import 'package:packer/controllers/services/hive_db/trolley_item.dart';
+import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HiveDBService {
@@ -14,10 +14,15 @@ class HiveDBService {
     await Hive.initFlutter(hivePath);
     Hive.registerAdapter(TrolleyItemAdapter());
     Hive.registerAdapter(BasketAdapter());
+    Hive.registerAdapter(InventoryTransferRequestItemAdapter());
   }
 
   static Future<Box<TrolleyItem>> openProductBox(String storeId) async {
     return await Hive.openBox<TrolleyItem>('${HiveConstants.storeId}$storeId');
+  }
+
+  static Future<Box<InventoryTransferRequestItemModel>> openInventoryTransferRequestBox(String id) async {
+    return await Hive.openBox<InventoryTransferRequestItemModel>('${HiveConstants.inventoryTransferRequest}$id');
   }
 
   static Future<void> closeAll() async {

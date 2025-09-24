@@ -17,6 +17,7 @@ import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_request_model.dart';
+import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/utils/qr_message.dart';
@@ -74,7 +75,7 @@ class PackerTransferProvider extends ChangeNotifier {
     log("Message Product Id: $id");
     for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
       if (element.product == id) {
-        return "Scan ${(element.quantity ?? 0) - element.itemScanCount} ${element.productName}";
+        return "Scan ${(element.quantity ?? 0) - getScannedCount(id)} ${element.productName}";
       }
     }
     return "";
@@ -352,11 +353,85 @@ class PackerTransferProvider extends ChangeNotifier {
     );
   }
 
-  Future<bool> scanProduct(BuildContext context, int productId, String code,
-      MobileScannerController controller, bool isDamaged) async {
+  int getScannedCount(int productId) => scanTagsList
+      .where((element) => element.split("-").first == productId.toString())
+      .length;
+
+  Future<ScanResult> scanProductForInventoryTransfer(
+      BuildContext context, int productId, String code) async {
     if (scanTagsList.contains(code)) {
-      ErrorHandler.alertDialog(context, "Tag already scanned");
-      return false;
+      return ScanResult(success: false, message: "Tag already scanned");
+    }
+    final item = selectedTransferModel?.items?.firstWhere(
+      (element) => element.product == productId,
+      orElse: () => TransferItemModel(),
+    );
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
+    if (homeProvider.isMainStore() == false) {
+      if (item != null && (item.tags?.contains(code) ?? false)) {
+        scanTagsList.add(code);
+
+        final scanMessage =
+            "Scan ${(item.quantity ?? 0) - getScannedCount(productId)} more ${item.productName}";
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(context, scanMessage);
+      } else {
+        // removeLoading(context);
+        return ScanResult(
+            success: false, message: "Invalid QR ${detectQrMessage(code)}");
+      }
+    } else {
+      scanTagsList.add(code);
+      final scanMessage =
+          "Scan ${(item?.quantity ?? 0) - getScannedCount(productId)} more ${item?.productName}";
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+    }
+    if (getScannedCount(productId) == item?.quantity) {
+      if (homeProvider.isMainStore()) {
+        final result = await navigateReplacement(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "productId": productId,
+            "forDamage": true,
+          },
+        );
+
+        if (result != true) {
+          return ScanResult(success: false);
+        }
+        removeScanTags(productId);
+        selectedTransferModel?.items
+            ?.removeWhere((element) => element.product == productId);
+        arrangeRackTransferItem();
+        notifyListeners();
+        return ScanResult(success: true, message: "Scanned Successfully");
+      } else {
+        final success = await postScannedTags(context, productId);
+        if (success) {
+          selectedTransferModel?.items
+              ?.removeWhere((element) => element.product == productId);
+          arrangeRackTransferItem();
+          notifyListeners();
+          return ScanResult(success: true, message: "Scanned Successfully");
+        } else {
+          removeScanTags(productId);
+          notifyListeners();
+          return ScanResult(
+              success: false, message: "Failed to submit scan tag");
+        }
+      }
+    }
+    notifyListeners();
+    return ScanResult(success: false);
+  }
+
+  Future<ScanResult> scanProduct(BuildContext context, int productId,
+      String code, MobileScannerController controller) async {
+    if (scanTagsList.contains(code)) {
+      return ScanResult(success: false, message: "Tag already scanned");
     }
     debugger();
 
@@ -373,10 +448,9 @@ class PackerTransferProvider extends ChangeNotifier {
         Provider.of<ScanMessageProvider>(context, listen: false)
             .setMessage(context, scanMessage);
       } else {
-        removeLoading(context);
-        await ErrorHandler.alertDialog(
-            context, "Invalid QR ${detectQrMessage(code)}");
-        return false;
+        // removeLoading(context);
+        return ScanResult(
+            success: false, message: "Invalid QR ${detectQrMessage(code)}");
       }
     } else {
       scanTagsList.add(code);
@@ -390,10 +464,10 @@ class PackerTransferProvider extends ChangeNotifier {
     //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
-    if (isDamaged) {
-      removeLoading(context);
-      return true;
-    }
+    // if (isDamaged) {
+    //   removeLoading(context);
+    //   return true;
+    // }
 
     if (isScanned) {
       if (role == "main") {
@@ -411,23 +485,22 @@ class PackerTransferProvider extends ChangeNotifier {
           await controller.start();
         }
 
-        return true;
+        return ScanResult(success: true, message: "Scanned Successfully");
       }
       final success = await postScannedTags(context, productId);
 
       if (success) {
-        return true;
+        return ScanResult(success: true, message: "Scanned Successfully");
       } else {
         removeScanTags(productId);
         item?.itemScanCount = 0;
-        ErrorHandler.alertDialog(context, "Failed to submit scan tag");
-        scanTagsList.clear();
+        // ErrorHandler.alertDialog(context, "Failed to submit scan tag");
         notifyListeners();
-        return false;
+        return ScanResult(success: false, message: "Failed to submit scan tag");
       }
     }
     // removeLoading(context);
-    return false;
+    return ScanResult(success: false);
   }
 
   // remove particular productid scan tags
@@ -492,16 +565,27 @@ class PackerTransferProvider extends ChangeNotifier {
               .setMessage(context, scanMessage);
           await Future.delayed(const Duration(milliseconds: 100));
 
-          navigate(
-            context,
-            route: NavigationConstants.productScanScreenRoute,
-            extra: {
-              "forTransfer": true,
-              "productId": item.product,
-            },
-          );
+          navigate(context,
+              route: NavigationConstants.productScanScreenRoute,
+              extra: {
+                "rack": item.rack,
+                "productId": item.product,
+                "forTransfer": true
+              });
+          // if (result == true && context.mounted) {
+          //   Provider.of<ScanMessageProvider>(context, listen: false)
+          //       .setMessage(context, scanMessage);
+          //   navigate(
+          //     context,
+          //     route: NavigationConstants.productScanScreenRoute,
+          //     extra: {
+          //       "forTransfer": true,
+          //       "productId": item.product,
+          //     },
+          //   );
+          // }
+          return;
         }
-        return;
       }
       showYesNo(context).then((value) async {
         final result = await navigate(
@@ -602,8 +686,8 @@ class PackerTransferProvider extends ChangeNotifier {
       final urlValue =
           url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
       if (scanTagsList.isEmpty) {
-        ErrorHandler.alertDialog(context, 'No tags to post');
         removeLoading(context);
+        ErrorHandler.alertDialog(context, 'No tags to post');
         return false;
       } else {
         final response = await DioClient().request(
@@ -611,26 +695,28 @@ class PackerTransferProvider extends ChangeNotifier {
           url: urlValue,
           body: {
             "product_id": productId,
-            "unit_tags": scanTagsList,
+            "unit_tags": scanTagsList
+                .where((e) => e.split("-").first == productId.toString())
+                .toList(),
             if (homeProvider.isMainStore() == false)
               "basket_identifier": selectedBasketModel?.identifier,
           },
         );
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
-          scanTagsList.clear();
+          removeScanTags(productId);
           notifyListeners();
           removeLoading(context);
           return true;
         } else {
-          ErrorHandler.alertDialog(context, 'Failed to post tags');
           removeLoading(context);
+          ErrorHandler.alertDialog(context, 'Failed to post tags');
           return false;
         }
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
       removeLoading(context);
+      ErrorHandler.alertDialog(context, ex.toString());
       return false;
     }
   }
@@ -652,7 +738,9 @@ class PackerTransferProvider extends ChangeNotifier {
           url: urlValue,
           body: {
             "product_id": productId,
-            "unit_tags": scanTagsList,
+            "unit_tags": scanTagsList
+                .where((e) => e.split("-").first == productId.toString())
+                .toList(),
             "rack_identifier": rackName,
             "basket_identifier": selectedBasketModel?.identifier,
           },
@@ -690,7 +778,7 @@ class PackerTransferProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updateRack(
+  Future<ScanResult> updateRack(
       BuildContext context, String code, int productId) async {
     debugger();
     try {
@@ -711,14 +799,14 @@ class PackerTransferProvider extends ChangeNotifier {
         Provider.of<ScanMessageProvider>(context, listen: false)
             .setMessage(context, getScanMessage(productId));
 
-        return true;
+        return ScanResult(success: true, message: "Rack updated successfully");
       } else {
-        ErrorHandler.alertDialog(context, 'Failed to update rack');
-        return false;
+        // ErrorHandler.alertDialog(context, 'Failed to update rack');
+        return ScanResult(success: false, message: "Failed to update rack");
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
-      return false;
+      // ErrorHandler.alertDialog(context, ex.toString());
+      return ScanResult(success: false, message: ex.toString());
     }
   }
 
@@ -736,25 +824,25 @@ class PackerTransferProvider extends ChangeNotifier {
           ? AppUrls.acceptTransferUrl
           : AppUrls.completeTransferUrl;
       final response = await DioClient().request(
-          requestType: RequestType.postWithToken,
-          url: url.replaceAll('id', id.toString()),
-          body: {
-            "basket_identifier": selectedBasketModel?.identifier,
-          });
+        requestType: RequestType.postWithToken,
+        url: url.replaceAll('id', id.toString()),
+        // body: {
+        //   "basket_identifier": selectedBasketModel?.identifier,
+        // }
+      );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
           (element) => element.identifier == selectedBasketModel?.identifier,
         );
-        navigatePop(context, true);
         removeLoading(context);
-        selectedTransferModel?.baskets?.isEmpty == true
-            ? navigatePop(context, true)
-            : null;
+        navigatePop(context, true);
       } else {
+        removeLoading(context);
         ErrorHandler.alertDialog(context, 'Failed to complete transfer');
       }
     } catch (ex) {
+      removeLoading(context);
       ErrorHandler.alertDialog(context, ex.toString());
       removeLoading(context);
     }

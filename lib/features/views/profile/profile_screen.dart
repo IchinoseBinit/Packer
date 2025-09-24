@@ -36,6 +36,24 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.transferListRoute,
       });
     }
+    if (value.isMainStore() &&
+        !otherInfoData
+            .any((e) => e['screen'] == NavigationConstants.inventoryTransferMainStoreRoute)) {
+      otherInfoData.add({
+        'icon': Icons.inventory,
+        'title': 'Inventory Transfer',
+        'screen': NavigationConstants.inventoryTransferMainStoreRoute,
+      });
+    }
+    if (value.isMainStore() == false &&
+        !otherInfoData
+            .any((e) => e['screen'] == NavigationConstants.inventoryTransferRequestListRoute)) {
+      otherInfoData.add({
+        'icon': Icons.swap_horiz_rounded,
+        'title': 'Inventory Transfer Request',
+        'screen': NavigationConstants.inventoryTransferRequestListRoute,
+      });
+    }
 
     // Add Stock Verification screen only if user is a store manager and not already added
     if (value.isStoreManager() &&
@@ -326,7 +344,8 @@ class ProfileScreen extends StatelessWidget {
                               showLoading(context);
                               await Provider.of<HomeProvider>(context,
                                       listen: false)
-                                  .updatepackerStatus(false, context);
+                                  .updatepackerStatus(false, context,
+                                      showErrorDialog: false);
 
                               AuthController().logout().then(
                                 (value) {
@@ -338,7 +357,11 @@ class ProfileScreen extends StatelessWidget {
                                     navigateAndRemoveAll(context,
                                         route: NavigationConstants.loginRoute);
                                   } else {
-                                    ErrorHandler().errorHandler(context, value);
+                                    ErrorHandler.alertDialog(context,
+                                        "Something went wrong. Please try again later",
+                                        () {
+                                      navigatePop(context);
+                                    });
                                   }
                                 },
                               );

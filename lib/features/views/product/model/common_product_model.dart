@@ -1,3 +1,4 @@
+import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
@@ -98,6 +99,20 @@ class CommonProductModel {
     measurement = stockItemModel.measurement;
     plannedQuantity = stockItemModel.plannedQuantity;
     productUnits = stockItemModel.productUnits;
+    scannedCount = 0;
+    productCompartment = "";
+  }
+  
+  CommonProductModel.fromInventoryTransferRequestItemModel(InventoryTransferRequestItemModel model) {
+    productId = model.productId ?? 0;
+    productName = model.productName ?? "";
+    rackName = model.rackName ?? "";
+    image = model.productImage.toString();
+    quantity = model.quantity ?? 0;
+    size = "";
+    measurement = "";
+    plannedQuantity = 0;
+    productUnits = [];
     scannedCount = 0;
     productCompartment = "";
   }

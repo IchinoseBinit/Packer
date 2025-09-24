@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -23,65 +22,82 @@ class BasketList extends StatelessWidget {
             .fetchTransferList(context);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Basket List"),
-          centerTitle: true,
-        ),
-        body: Consumer<PackerTransferProvider>(
-          builder: (context, provider, child) {
-            if (provider.selectedTransferModelLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            if (provider.selectedTransferModel?.baskets == null) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-            if (provider.selectedTransferModel?.baskets?.isEmpty ?? true) {
-              return const Center(
-                child: Text("No baskets available"),
-              );
-            }
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: provider.selectedTransferModel?.baskets?.length,
-                    padding: EdgeInsets.all(16.w),
-                    itemBuilder: (context, index) {
-                      final data =
-                          provider.selectedTransferModel!.baskets![index];
-                      return BasketCard(
-                        index: index + 1,
-                        model: data,
-                        primaryColor: Theme.of(context).primaryColor,
-                        callback: () {
-                          // Handle item tap
-                          Provider.of<PackerTransferProvider>(context,
-                                  listen: false)
-                              .onBasketScanTapped(context, data);
-                        },
-                      );
-                    },
+          appBar: AppBar(
+            title: const Text("Basket List"),
+            centerTitle: true,
+          ),
+          body: Consumer<PackerTransferProvider>(
+            builder: (context, provider, child) {
+              if (provider.selectedTransferModelLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (provider.selectedTransferModel?.baskets == null) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (provider.selectedTransferModel?.baskets?.isEmpty ?? true) {
+                return const Center(
+                  child: Text("No baskets available"),
+                );
+              }
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount:
+                          provider.selectedTransferModel?.baskets?.length,
+                      padding: EdgeInsets.all(16.w),
+                      itemBuilder: (context, index) {
+                        final data =
+                            provider.selectedTransferModel!.baskets![index];
+                        return BasketCard(
+                          index: index + 1,
+                          model: data,
+                          primaryColor: Theme.of(context).primaryColor,
+                          callback: () {
+                            // Handle item tap
+                            Provider.of<PackerTransferProvider>(context,
+                                    listen: false)
+                                .onBasketScanTapped(context, data);
+                          },
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-        bottomNavigationBar: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-          child: GeneralElevatedButton(
-              marginH: 16.w,
-              title: "Scan Basket",
-              onPressed: () {
-                Provider.of<PackerTransferProvider>(context, listen: false)
-                    .onBasketScanTapped(context, null);
-              }),
-        ),
-      ),
+                ],
+              );
+            },
+          ),
+          bottomNavigationBar: Consumer<PackerTransferProvider>(
+            builder: (context, provider, child) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+                child: GeneralElevatedButton(
+                    marginH: 16.w,
+                    title:
+                        // provider.selectedTransferModel?.baskets?.isEmpty ?? true
+                        //     ? "Complete"
+                        //     : 
+                            "Scan Basket",
+                    onPressed: () {
+                      // if (provider.selectedTransferModel?.baskets?.isEmpty ??
+                      //     true) {
+                      //   Provider.of<PackerTransferProvider>(context,
+                      //           listen: false)
+                      //       .completeTransfer(context);
+                      // } else 
+                      // {
+                        Provider.of<PackerTransferProvider>(context,
+                                listen: false)
+                            .onBasketScanTapped(context, null);
+                      // }
+                    }),
+              );
+            },
+          )),
     );
   }
 }

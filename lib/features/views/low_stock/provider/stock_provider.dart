@@ -23,7 +23,6 @@ import 'package:packer/features/views/carton/model/carton_list_model.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
-import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -114,11 +113,6 @@ class StockProvider extends ChangeNotifier {
       if (context.mounted && !isFromBuild) {
         notifyListeners();
       }
-      // for demo
-      // await Future.delayed(const Duration(seconds: 2));
-      // for (var item in demoData) {
-      //   lowStockList.add(LowStockModel.fromJson(item));
-      // }
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.lowStockUrl,

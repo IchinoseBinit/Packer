@@ -15,7 +15,7 @@ ThemeData lightTheme(BuildContext context) {
     inputDecorationTheme: const InputDecorationTheme(
       fillColor: Color(0xffF3F3F3),
     ),
-    cardTheme:  CardThemeData(
+    cardTheme: const CardThemeData(
       color: Colors.white,
       surfaceTintColor: Colors.white,
       shape: RoundedRectangleBorder(

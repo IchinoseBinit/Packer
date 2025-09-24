@@ -20,6 +20,7 @@ class RackScanScreen extends BaseScanScreen {
   final int productId;
   final bool forCarton;
   final bool forDamage;
+  final bool forTransfer;
   final bool needAPICallCarton;
 
   RackScanScreen({
@@ -28,6 +29,7 @@ class RackScanScreen extends BaseScanScreen {
     required this.productId,
     this.forCarton = false,
     this.forDamage = false,
+    this.forTransfer = false,
     this.needAPICallCarton = false,
   }) : super(
           scanTitle: 'Rack Scanner',
@@ -66,9 +68,28 @@ class RackScanScreen extends BaseScanScreen {
         return;
       }
 
-      if (rackCode != null && !needAPICallCarton) {
+      if (rackCode != null && forTransfer) {
         if (code.contains(rackCode!)) {
-          await controller.stop();
+          if (context.mounted) {
+            Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+                context,
+                Provider.of<PackerTransferProvider>(context, listen: false)
+                    .getScanMessage(productId));
+            navigateReplacement(
+              context,
+              route: NavigationConstants.productScanScreenRoute,
+              extra: {
+                "forTransfer": true,
+                "productId": productId,
+              },
+            );
+            showToast("Rack scanned successfully");
+          }
+        } else {
+          if (context.mounted) handleInvalidCode(context, controller, code);
+        }
+      } else if (rackCode != null && !needAPICallCarton) {
+        if (code.contains(rackCode!)) {
           if (context.mounted) {
             navigatePop(context, true);
             showToast("Rack scanned successfully");
@@ -78,7 +99,6 @@ class RackScanScreen extends BaseScanScreen {
         }
       } else if (rackCode != null && needAPICallCarton) {
         if (code.contains(rackCode!)) {
-          await controller.stop();
           final result =
               await Provider.of<StockProvider>(context, listen: false)
                   .updateRack(context, code, productId, true);
@@ -109,13 +129,11 @@ class RackScanScreen extends BaseScanScreen {
         //       await Provider.of<PackerTransferProvider>(context, listen: false)
         //           .postDamageProductTags(context, productId, code);
 
-        //   if (!result) {
-        //     controller.start();
-        //   } else {
-        //     controller.stop();
-        //   }
-        //   if (result && context.mounted) {
-        //     showToast("Rack Scanned Successfully");
+          // if (!result) {
+          //   controller.start();
+          // }
+          // if (result && context.mounted) {
+          //   showToast("Rack Scanned Successfully");
 
         //     navigatePop(context, true);
         //   } else {
@@ -156,7 +174,7 @@ class RackScanScreen extends BaseScanScreen {
         //   );
         // }
 
-        if (result && context.mounted) {
+        if (result.success && context.mounted) {
           navigateReplacement(
             context,
             route: NavigationConstants.productScanScreenRoute,
@@ -166,12 +184,16 @@ class RackScanScreen extends BaseScanScreen {
             },
           );
         } else {
-          if (context.mounted) await controller.start();
+          if (result.message != null) {
+            handleInvalidCode(context, controller, code, result.message!);
+          }else{
+            if (context.mounted) await controller.start();
+          }
         }
       }
     } catch (e) {
       if (context.mounted) {
-        handleInvalidCode(context, controller, code);
+        handleInvalidCode(context, controller, code, e.toString());
       }
     } finally {
       _isProcessing = false;
@@ -179,11 +201,11 @@ class RackScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code) {
+      BuildContext context, MobileScannerController controller, String code, [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
       canDismiss: true,
-      body: Text("Invalid QR ${detectQrMessage(code)}"),
+      body: Text( message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () async {
         Navigator.pop(context);
         await controller.start();

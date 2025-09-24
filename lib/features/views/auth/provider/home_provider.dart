@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 class HomeProvider with ChangeNotifier {
   User? _user;
 
+  // getter : if _user is null, get user from token
   User get user {
     if (_user == null) {
       final map = Jwt.parseJwt(DioClient.token);
@@ -26,22 +27,27 @@ class HomeProvider with ChangeNotifier {
     return _user!;
   }
 
+  // reset : set _user to null
   void resetUser() {
     _user = null;
   }
 
+  // check if user role is audit
   bool isAuditUser() {
     return user.role == UserRole.audit;
   }
 
+  // check if user role is store manager
   bool isStoreManager() {
     return user.role == UserRole.manager;
   }
 
+  // check if user role is driver
   bool isDriver() {
     return user.role == UserRole.driver;
   }
 
+  // check if user is from main store ; return true if main store ; else false means it is from sub store
   bool isMainStore() {
     return packerSummary?.storeType.contains("main") ?? false;
   }
@@ -51,29 +57,28 @@ class HomeProvider with ChangeNotifier {
   bool isOrder = true;
   bool isOrderPicked = false;
   bool isLoading = false;
-  String customerName = 'Samarth';
-  int packingTime = 2;
   bool isDelivered = false;
-  String paymentMethod = 'Cash on delivery';
-  bool isMapFullScreen = false;
   OrderDetailModel? orderDetailModel;
 
   PackerSummary? packerSummary;
 
   // For audio notification sounds
 
+  // notifications : order that are not assigned to any packer and comes from notification
   List<OrderNotification> notifications = [];
+  // assigned orders : order that are assigned packer and comes from API
   List<OrderNotification> latestOrder = [];
 
-  final dio = Dio();
-  OrderProvider orderProvider = OrderProvider();
 
   set isAvailable(val) {
     _isAvailable = val;
   }
 
   get isAvailable => _isAvailable;
-
+  
+  // [clearLatestOrder] : clear assigned orders 
+  //
+  // if call from payment then clear notifications and mark packer as not available
   clearLatestOrder({bool isFromPayment = true}) {
     latestOrder.clear();
     if (isFromPayment) {
@@ -83,6 +88,12 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+
+  // initialize : initialize the home screen for packer
+  //
+  // if not first time then clear assigned orders
+  //
+  // if online then request permission and toggle firebase topic and fetch latest orders
   Future<void> initialize(BuildContext context,
       {bool isFirstTime = false}) async {
     if (!isFirstTime) {
@@ -91,15 +102,15 @@ class HomeProvider with ChangeNotifier {
 
     if (isOnline) {
       FirebaseAPI().requestPermission();
-      if (isAvailable) {
-        // fetchCreatedOrders();
-      }
-      FirebaseAPI().listenTopackerStatusNotifications(
-          (order) => _showNotificationPopup(context, order));
+      toggleFirebaseTopic(context);
       fetchLatestOrders(isFirstTime: isFirstTime);
     }
   }
 
+
+  // fetchpackerSummary : fetch packer summary
+  //
+  // if online then set isOnline to true
   Future<void> fetchpackerSummary() async {
     try {
       final response = await DioClient().request(
@@ -109,10 +120,9 @@ class HomeProvider with ChangeNotifier {
 
       packerSummary = PackerSummary.fromJson(response.data['data']);
       isOnline = packerSummary?.isOnline ?? false;
-      // isAvailable = packerSummary?.isAvailable ?? false;
       notifyListeners();
     } catch (ex) {
-      print('Error: $ex');
+      debugPrint('Error: $ex');
     }
   }
 
@@ -132,11 +142,15 @@ class HomeProvider with ChangeNotifier {
           data.map((order) => OrderNotification.fromJson(order)).toList();
       notifyListeners();
     } catch (ex) {
-      print('Error: $ex');
-      // throw Exception('Failed to load carts: $ex');
+      debugPrint('Error: $ex');
     }
   }
 
+
+
+  // removeFromLatestOrder : remove order from assigned orders
+  //
+  // if order exists in assigned orders then remove it
   void removeFromLatestOrder(String orderId) {
     latestOrder.removeWhere((element) => element.orderId == orderId);
     notifyListeners();
@@ -145,16 +159,20 @@ class HomeProvider with ChangeNotifier {
   /// if online call this cause, they can't be viewing the latest orders
   Future<void> fetchLatestOrders({bool isFirstTime = false}) async {
     try {
+      // step 1: clear assigned orders if not first time
       if (!isFirstTime) {
         clearLatestOrder(isFromPayment: false);
         isLoading = true;
         notifyListeners();
       }
+      
+      // step 2: fetch assigned orders
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.getLatestOrdersUrl,
       );
 
+      // step 3: update assigned orders
       final List<dynamic> data = response.data;
       latestOrder =
           data.map((order) => OrderNotification.fromJson(order)).toList();
@@ -162,50 +180,76 @@ class HomeProvider with ChangeNotifier {
       if (latestOrder.isEmpty) {
         // fetchCreatedOrders();
       }
-      isLoading = false;
 
+      // step 4: set loading to false
+      isLoading = false;
       notifyListeners();
     } catch (ex) {
-      print('Error: $ex');
+      debugPrint('Error: $ex');
       isLoading = false;
       notifyListeners();
-      // throw Exception('Failed to load carts: $ex');
     }
   }
 
+
+  // _showNotificationPopup : show notification popup
+  //
+  // if order is not in assigned orders then show notification popup
   void _showNotificationPopup(BuildContext context, OrderNotification order) {
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+    // step 1: Declare new variable
     bool hasNotification = false;
 
+    // step 2: Check if order is in assigned orders from notifications
     if (notifications.any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
-    } else if (orderProvider.orders
+    } 
+    
+    // step 3: Check if order is in assigned orders from order provider
+    else if (orderProvider.orders
         .any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
-    } else if (orderProvider.orderDetails?.data.id.toString() ==
+    } 
+    
+    // step 4: Check if order is in order details from order provider
+    else if (orderProvider.orderDetails?.data.id.toString() ==
         order.orderId) {
       hasNotification = true;
-    } else if (orderProvider.orderPickedDetails?.id.toString() ==
+    } 
+    
+    // step 5: Check if order is in order picked details from order provider
+    else if (orderProvider.orderPickedDetails?.id.toString() ==
         order.orderId) {
       hasNotification = true;
-    } else if (orderProvider.completedOrderDetails?.id.toString() ==
+    } 
+    
+    // step 6: Check if order is in completed order details from order provider
+    else if (orderProvider.completedOrderDetails?.id.toString() ==
         order.orderId) {
       hasNotification = true;
-    } else if (orderProvider.unsettledOrders?.data
+    } 
+    
+    // step 7: Check if order is in unsettled orders from order provider
+    else if (orderProvider.unsettledOrders?.data
             .any((element) => element.id.toString() == order.orderId) ??
         false) {
       hasNotification = true;
-    } else if (orderProvider.latestOrder
+    } 
+    
+    // step 8: Check if order is in assigned orders from order provider
+    else if (orderProvider.latestOrder
         .any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
     }
 
+    // step 9: add order to notifications if not found
     if (!hasNotification) {
       notifications.add(order);
       notifyListeners();
     }
   }
 
+  // getpackerStatus : fetch the packer online status from API
   Future<void> getpackerStatus() async {
     try {
       final response = await DioClient().request(
@@ -215,11 +259,13 @@ class HomeProvider with ChangeNotifier {
       isOnline = response.data['is_online'];
       notifyListeners();
     } catch (ex) {
-      print('Error: $ex');
+      debugPrint('Error: $ex');
     }
   }
 
-  Future<bool> updatepackerStatus(bool status, BuildContext context) async {
+  // updatepackerStatus : update the packer online status from API
+  Future<bool> updatepackerStatus(bool status, BuildContext context,
+      {bool showErrorDialog = true}) async {
     try {
       final response = await DioClient().request(
         requestType: RequestType.patchWithToken,
@@ -235,6 +281,10 @@ class HomeProvider with ChangeNotifier {
       }
       return false;
     } catch (ex) {
+      if (!showErrorDialog) {
+        return false;
+      }
+      if (!context.mounted) return false;
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -248,11 +298,12 @@ class HomeProvider with ChangeNotifier {
           ],
         ),
       );
-      print('Error: $ex');
+      debugPrint('Error: $ex');
       return false;
     }
   }
 
+  // not in use
   Future<void> updatepackerAvailability(bool status) async {
     try {
       await DioClient().request(
@@ -261,7 +312,6 @@ class HomeProvider with ChangeNotifier {
         body: {"is_available": status},
       );
       isAvailable = status;
-      // fetchCreatedOrders();
       notifyListeners();
     } catch (ex) {
       rethrow;
@@ -281,17 +331,16 @@ class HomeProvider with ChangeNotifier {
 
     if (isOnline) {
       FirebaseAPI().requestPermission();
-      if (!isFromWarehouse) {
+      if (!isFromWarehouse && context.mounted) {
         notifications.clear();
         fetchLatestOrders();
-        FirebaseAPI().listenTopackerStatusNotifications(
-            (order) => _showNotificationPopup(context, order));
+        toggleFirebaseTopic(context);
       } else {
         onPressed?.call();
       }
       notifyListeners();
     } else {
-      if (!isFromWarehouse) {
+      if (!isFromWarehouse && context.mounted) {
         toggleFirebaseTopic(context);
       }
       isAvailable = false;
@@ -302,12 +351,14 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  // not in use
   void markOrderPicked() {
     isOrder = false;
     isOrderPicked = true;
     notifyListeners();
   }
 
+  // not in use
   void markArrived() {
     isDelivered = true;
     isOrderPicked = false;
@@ -315,17 +366,20 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // not in use
   updateAvailability(BuildContext context, bool isAvailable) async {
     try {
       if (isAvailable) {
         await updatepackerAvailability(true);
+        if (!context.mounted) return;
         toggleFirebaseTopic(context);
       } else {
         await updatepackerAvailability(false);
+        if (!context.mounted) return;
         toggleFirebaseTopic(context);
       }
     } catch (ex) {
-      // rethrow;
+      debugPrint('Error: $ex');
     }
   }
 
