@@ -433,7 +433,6 @@ class PackerTransferProvider extends ChangeNotifier {
     if (scanTagsList.contains(code)) {
       return ScanResult(success: false, message: "Tag already scanned");
     }
-    debugger();
 
     final item = selectedTransferModel?.items?.firstWhere(
       (element) => element.product == productId,
@@ -780,7 +779,6 @@ class PackerTransferProvider extends ChangeNotifier {
 
   Future<ScanResult> updateRack(
       BuildContext context, String code, int productId) async {
-    debugger();
     try {
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(

@@ -136,24 +136,28 @@ class InventoryTransferRequestItem extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: Consumer<InventoryTransferRequestController>(
-          builder: (context, provider, child) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GeneralElevatedButton(
-                title: "Transfer",
-                onPressed: () {
-                  provider.initLocal();
-                  navigate(context, route: NavigationConstants.inventoryTrolleyTransferRequestItemRoute);
-                },
-              ),
-            ],
-          ),
-        );
-      }),
+      bottomNavigationBar: SafeArea(
+        child: Consumer<InventoryTransferRequestController>(
+            builder: (context, provider, child) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GeneralElevatedButton(
+                  title: "Transfer",
+                  onPressed: () {
+                    provider.initLocal();
+                    navigate(context,
+                        route: NavigationConstants
+                            .inventoryTrolleyTransferRequestItemRoute);
+                  },
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }

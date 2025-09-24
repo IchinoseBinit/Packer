@@ -33,13 +33,13 @@ class InventoryTransferBasketList extends StatelessWidget {
           ),
           body: Consumer<InventoryTransferController>(
             builder: (context, provider, child) {
-              
               if (provider.selectedInventoryTransfer?.baskets == null) {
                 return const Center(
                   child: CircularProgressIndicator(),
                 );
               }
-              if (provider.selectedInventoryTransfer?.baskets?.isEmpty ?? true) {
+              if (provider.selectedInventoryTransfer?.baskets?.isEmpty ??
+                  true) {
                 return const Center(
                   child: Text("No baskets available"),
                 );
@@ -61,7 +61,8 @@ class InventoryTransferBasketList extends StatelessWidget {
                           callback: () {
                             // Handle item tap
                             Provider.of<InventoryTransferController>(context,
-                                    listen: false).onBasketScanTapped(context, data);
+                                    listen: false)
+                                .onBasketScanTapped(context, data);
                             //     .o(context, data);
                           },
                         );
@@ -72,35 +73,39 @@ class InventoryTransferBasketList extends StatelessWidget {
               );
             },
           ),
-          bottomNavigationBar: Consumer<InventoryTransferController>(
-            builder: (context, provider, child) {
-              if (provider.selectedInventoryTransfer?.baskets?.isEmpty ?? true) {
-                return const SizedBox.shrink();
-              }
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-                child: GeneralElevatedButton(
-                    marginH: 16.w,
-                    title:
-                        // provider.selectedTransferModel?.baskets?.isEmpty ?? true
-                        //     ? "Complete"
-                        //     : 
-                            "Scan Basket",
-                    onPressed: () {
-                      // if (provider.selectedTransferModel?.baskets?.isEmpty ??
-                      //     true) {
-                      //   Provider.of<PackerTransferProvider>(context,
-                      //           listen: false)
-                      //       .completeTransfer(context);
-                      // } else 
-                      // {
+          bottomNavigationBar: SafeArea(
+            child: Consumer<InventoryTransferController>(
+              builder: (context, provider, child) {
+                if (provider.selectedInventoryTransfer?.baskets?.isEmpty ??
+                    true) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+                  child: GeneralElevatedButton(
+                      marginH: 16.w,
+                      title:
+                          // provider.selectedTransferModel?.baskets?.isEmpty ?? true
+                          //     ? "Complete"
+                          //     :
+                          "Scan Basket",
+                      onPressed: () {
+                        // if (provider.selectedTransferModel?.baskets?.isEmpty ??
+                        //     true) {
+                        //   Provider.of<PackerTransferProvider>(context,
+                        //           listen: false)
+                        //       .completeTransfer(context);
+                        // } else
+                        // {
                         Provider.of<InventoryTransferController>(context,
                                 listen: false)
                             .onBasketScanTapped(context, null);
-                      // }
-                    }),
-              );
-            },
+                        // }
+                      }),
+                );
+              },
+            ),
           )),
     );
   }

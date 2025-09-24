@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -16,6 +18,7 @@ class DamageProductController extends ChangeNotifier {
   String productName = 'Products';
   List<Product> rackProductList = [];
   int scanCount = 0;
+  List<String> damageProducts = [];
 
   Future<void> postProductTag(String code) async {
     try {
@@ -101,6 +104,53 @@ class DamageProductController extends ChangeNotifier {
         return true;
       } else {
         rackProductList = [];
+        isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      showToast("Failed to fetch product list");
+      return false;
+    }
+  }
+
+  bool setDamageProducts(String code, BuildContext context) {
+    if (damageProducts.contains(code)) {
+      ShowAlertDialog(
+        body: Text("Tag already Scanned: $code"),
+        okFunc: () {
+          Navigator.pop(context);
+        },
+      ).showAlertDialog(context);
+      return false;
+    } else {
+      damageProducts.add(code);
+      notifyListeners();
+      return true;
+    }
+  }
+
+  //post product damage in mainStore
+  Future<bool> productDamageRequest(String code) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: AppUrls.damageRequestUrl,
+          body: {'tags': damageProducts, 'rack_identifier': code});
+
+      if (response.statusCode == 200) {
+        showToast("Products Posted Successfully");
+        damageProducts = [];
+        isLoading = false;
+
+        return true;
+      } else {
+        damageProducts = [];
         isLoading = false;
         notifyListeners();
         return false;

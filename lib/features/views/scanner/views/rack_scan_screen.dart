@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -22,6 +23,7 @@ class RackScanScreen extends BaseScanScreen {
   final bool forDamage;
   final bool forTransfer;
   final bool needAPICallCarton;
+  final bool forDamageRequest;
 
   RackScanScreen({
     super.key,
@@ -31,6 +33,7 @@ class RackScanScreen extends BaseScanScreen {
     this.forDamage = false,
     this.forTransfer = false,
     this.needAPICallCarton = false,
+    this.forDamageRequest = false,
   }) : super(
           scanTitle: 'Rack Scanner',
           showFlash: true,
@@ -54,7 +57,6 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
-    debugger();
     if (code.isEmpty) return;
     if (_isProcessing) return;
     _isProcessing = true;
@@ -129,11 +131,11 @@ class RackScanScreen extends BaseScanScreen {
         //       await Provider.of<PackerTransferProvider>(context, listen: false)
         //           .postDamageProductTags(context, productId, code);
 
-          // if (!result) {
-          //   controller.start();
-          // }
-          // if (result && context.mounted) {
-          //   showToast("Rack Scanned Successfully");
+        // if (!result) {
+        //   controller.start();
+        // }
+        // if (result && context.mounted) {
+        //   showToast("Rack Scanned Successfully");
 
         //     navigatePop(context, true);
         //   } else {
@@ -156,6 +158,24 @@ class RackScanScreen extends BaseScanScreen {
           controller.stop();
           controller.dispose();
           await navigatePop(context, code);
+        }
+      } else if (forDamageRequest) {
+        // for assigning damage rack in damage request
+        // return rack code to previous screen
+        await controller.stop();
+        if (context.mounted) {
+          final success =
+              await Provider.of<DamageProductController>(context, listen: false)
+                  .productDamageRequest(code);
+
+          if (success) {
+            showToast("Rack scanned successfully");
+            controller.stop();
+            controller.dispose();
+            navigatePop(context, code);
+          } else {
+            await controller.start();
+          }
         }
       } else if (context.mounted) {
         showLoading(context);
@@ -186,7 +206,7 @@ class RackScanScreen extends BaseScanScreen {
         } else {
           if (result.message != null) {
             handleInvalidCode(context, controller, code, result.message!);
-          }else{
+          } else {
             if (context.mounted) await controller.start();
           }
         }
@@ -201,11 +221,12 @@ class RackScanScreen extends BaseScanScreen {
   }
 
   void handleInvalidCode(
-      BuildContext context, MobileScannerController controller, String code, [String? message]) {
+      BuildContext context, MobileScannerController controller, String code,
+      [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
       canDismiss: true,
-      body: Text( message ?? "Invalid QR ${detectQrMessage(code)}"),
+      body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () async {
         Navigator.pop(context);
         await controller.start();

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive/hive.dart';
@@ -480,7 +482,11 @@ class InventoryTransferRequestController extends ChangeNotifier {
         url: AppUrls.returnProductToWarehouseUrl,
         body: {
           "transfer_id": selectedInventoryTransferRequest!.id,
-          "product_units": localScannedTag.where((tag) => tag.split("-").first == localSelectedItem!.productId.toString()).toList(),
+          "product_units": localScannedTag
+              .where((tag) =>
+                  tag.split("-").first ==
+                  localSelectedItem!.productId.toString())
+              .toList(),
           "basket_identifier": basketCode,
         },
       );

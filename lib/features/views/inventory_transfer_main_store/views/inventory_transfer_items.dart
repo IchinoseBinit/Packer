@@ -45,7 +45,6 @@ class InventoryTransferItems extends StatelessWidget {
         ),
         body: Consumer<InventoryTransferController>(
           builder: (context, provider, child) {
-            
             if (provider.selectedInventoryTransfer == null) {
               return const Center(
                 child: Text("No transfer items available"),
@@ -108,30 +107,37 @@ class InventoryTransferItems extends StatelessWidget {
                                     verticalSpace: 12.w,
                                     horizontalSpace: 12.w,
                                     children: List.generate(
-                                      provider.rackProductMap[rackName]?.length ?? 0,
+                                      provider.rackProductMap[rackName]
+                                              ?.length ??
+                                          0,
                                       (index) {
-                                        final product =
-                                            provider.rackProductMap[rackName]![index];
+                                        final product = provider
+                                            .rackProductMap[rackName]![index];
                                         ItemStatus status =
-                                            (provider.getScannedCount(product.product ?? 0) ==
+                                            (provider.getScannedCount(
+                                                        product.product ?? 0) ==
                                                     product.quantity)
                                                 ? ItemStatus.done
                                                 : ItemStatus.remaining;
                                         final width = (1.sw - 12.w - 24.w) / 2;
-      
+
                                         return ProductCard(
                                           width: width,
                                           onTap: () {
                                             log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.product}");
-                                            if (status == ItemStatus.done) return;
-      
-                                            provider.onItemScanTapped(context, product);
+                                            if (status == ItemStatus.done)
+                                              return;
+
+                                            provider.onItemScanTapped(
+                                                context, product);
                                           },
                                           productModel: CommonProductModel
                                               .fromTransferItemModel(product),
                                           status: status,
                                           statusToShow: "Completed",
-                                          quantity: (product.quantity ?? 0) - provider.getScannedCount(product.product ?? 0),
+                                          quantity: (product.quantity ?? 0) -
+                                              provider.getScannedCount(
+                                                  product.product ?? 0),
                                         );
                                       },
                                     ),
@@ -142,43 +148,49 @@ class InventoryTransferItems extends StatelessWidget {
             );
           },
         ),
-        bottomNavigationBar:
-            Consumer<PackerTransferProvider>(builder: (context, provider, child) {
-          if (provider.selectedTransferModel == null) {
-            return const SizedBox.shrink();
-          }
-          if (provider.selectedTransferModel!.items == null ||
-              provider.selectedTransferModel!.items!.isEmpty) {
-            return const SizedBox.shrink();
-          }
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: provider.showCompleteButton()
-                ? GeneralElevatedButton(
-                    onPressed: () {
-                      // if(packerRole=='main'){Provider.of<>}
-                      Provider.of<PackerTransferProvider>(context, listen: false)
-                          .completeTransfer(context);
-                    },
-                    title: 'Complete',
-                  )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Center(
-                        child: Text(
-                          "Please scan all items to complete the transfer",
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).primaryColor,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
+        bottomNavigationBar: SafeArea(
+          child: Consumer<PackerTransferProvider>(
+              builder: (context, provider, child) {
+            if (provider.selectedTransferModel == null) {
+              return const SizedBox.shrink();
+            }
+            if (provider.selectedTransferModel!.items == null ||
+                provider.selectedTransferModel!.items!.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: provider.showCompleteButton()
+                  ? GeneralElevatedButton(
+                      onPressed: () {
+                        // if(packerRole=='main'){Provider.of<>}
+                        Provider.of<PackerTransferProvider>(context,
+                                listen: false)
+                            .completeTransfer(context);
+                      },
+                      title: 'Complete',
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Center(
+                          child: Text(
+                            "Please scan all items to complete the transfer",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-          );
-        }),
+                      ],
+                    ),
+            );
+          }),
+        ),
       ),
     );
   }

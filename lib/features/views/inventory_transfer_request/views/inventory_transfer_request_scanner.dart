@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -13,9 +15,13 @@ import 'package:provider/provider.dart';
 
 class InventoryTransferRequestScanner extends BaseScanScreen {
   InventoryTransferRequestScanner({
+    super.key,
     this.scanLocal = false,
     this.scanBasket = false,
-  }) : super(scanTitle: scanBasket ? "Basket Scanner" : "Product Scanner", floatingActionButtonLocation: FloatingActionButtonLocation.endFloat);
+  }) : super(
+            scanTitle: scanBasket ? "Basket Scanner" : "Product Scanner",
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.endFloat);
 
   final bool scanLocal;
   final bool scanBasket;
@@ -55,10 +61,10 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
       HapticFeedback.heavyImpact();
 
       if (scanBasket) {
-        final scanResult = await Provider.of<InventoryTransferRequestController>(
-                context,
-                listen: false)
-            .handleBasketScan(context, code);
+        final scanResult =
+            await Provider.of<InventoryTransferRequestController>(context,
+                    listen: false)
+                .handleBasketScan(context, code);
         controller.start();
         hasScanned = false;
 
@@ -75,13 +81,13 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
           }
         }
       } else if (scanLocal) {
-        final scanResult = await Provider.of<InventoryTransferRequestController>(
-                context,
-                listen: false)
-            .handleLocalProductScan(context, code);
+        final scanResult =
+            await Provider.of<InventoryTransferRequestController>(context,
+                    listen: false)
+                .handleLocalProductScan(context, code);
         controller.start();
         hasScanned = false;
-  
+
         if (scanResult.success && context.mounted) {
           if (scanResult.message != null) {
             showToast(scanResult.message!);

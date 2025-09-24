@@ -42,7 +42,7 @@ class TransferRequestTrolleyItem extends StatelessWidget {
                         ? ItemStatus.done
                         : ItemStatus.remaining;
                     final width = (1.sw - 12.w - 24.w) / 2;
-              
+
                     return ProductCard(
                       width: width,
                       onTap: () {
@@ -69,23 +69,25 @@ class TransferRequestTrolleyItem extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: Consumer<InventoryTransferRequestController>(
-          builder: (context, provider, child) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GeneralElevatedButton(
-                title: "Scan Basket",
-                onPressed: () {
-                  provider.scanBasketCode(context);
-                },
-              ),
-            ],
-          ),
-        );
-      }),
+      bottomNavigationBar: SafeArea(
+        child: Consumer<InventoryTransferRequestController>(
+            builder: (context, provider, child) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GeneralElevatedButton(
+                  title: "Scan Basket",
+                  onPressed: () {
+                    provider.scanBasketCode(context);
+                  },
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }

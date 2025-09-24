@@ -71,32 +71,35 @@ class BasketList extends StatelessWidget {
               );
             },
           ),
-          bottomNavigationBar: Consumer<PackerTransferProvider>(
-            builder: (context, provider, child) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-                child: GeneralElevatedButton(
-                    marginH: 16.w,
-                    title:
-                        // provider.selectedTransferModel?.baskets?.isEmpty ?? true
-                        //     ? "Complete"
-                        //     : 
-                            "Scan Basket",
-                    onPressed: () {
-                      // if (provider.selectedTransferModel?.baskets?.isEmpty ??
-                      //     true) {
-                      //   Provider.of<PackerTransferProvider>(context,
-                      //           listen: false)
-                      //       .completeTransfer(context);
-                      // } else 
-                      // {
+          bottomNavigationBar: SafeArea(
+            child: Consumer<PackerTransferProvider>(
+              builder: (context, provider, child) {
+                return Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+                  child: GeneralElevatedButton(
+                      marginH: 16.w,
+                      title:
+                          // provider.selectedTransferModel?.baskets?.isEmpty ?? true
+                          //     ? "Complete"
+                          //     :
+                          "Scan Basket",
+                      onPressed: () {
+                        // if (provider.selectedTransferModel?.baskets?.isEmpty ??
+                        //     true) {
+                        //   Provider.of<PackerTransferProvider>(context,
+                        //           listen: false)
+                        //       .completeTransfer(context);
+                        // } else
+                        // {
                         Provider.of<PackerTransferProvider>(context,
                                 listen: false)
                             .onBasketScanTapped(context, null);
-                      // }
-                    }),
-              );
-            },
+                        // }
+                      }),
+                );
+              },
+            ),
           )),
     );
   }

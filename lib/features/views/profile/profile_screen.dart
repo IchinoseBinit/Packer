@@ -37,8 +37,9 @@ class ProfileScreen extends StatelessWidget {
       });
     }
     if (value.isMainStore() &&
-        !otherInfoData
-            .any((e) => e['screen'] == NavigationConstants.inventoryTransferMainStoreRoute)) {
+        !otherInfoData.any((e) =>
+            e['screen'] ==
+            NavigationConstants.inventoryTransferMainStoreRoute)) {
       otherInfoData.add({
         'icon': Icons.inventory,
         'title': 'Inventory Transfer',
@@ -46,8 +47,9 @@ class ProfileScreen extends StatelessWidget {
       });
     }
     if (value.isMainStore() == false &&
-        !otherInfoData
-            .any((e) => e['screen'] == NavigationConstants.inventoryTransferRequestListRoute)) {
+        !otherInfoData.any((e) =>
+            e['screen'] ==
+            NavigationConstants.inventoryTransferRequestListRoute)) {
       otherInfoData.add({
         'icon': Icons.swap_horiz_rounded,
         'title': 'Inventory Transfer Request',
@@ -120,6 +122,15 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.transfer_within_a_station,
         'title': 'Receive Damaged Products',
         'screen': NavigationConstants.transferListRoute,
+      });
+    }
+
+    if (!value.isAuditUser() &&
+        value.isMainStore() == true &&
+        !otherInfoData.any((e) => e['title'] == 'Product Damage Request')) {
+      otherInfoData.add({
+        'icon': Icons.repeat_rounded,
+        'title': 'Product Damage Request',
       });
     }
     // if (!value.isMainStore() &&
@@ -196,6 +207,7 @@ class ProfileScreen extends StatelessWidget {
                               navigate(context,
                                   route: otherInfoData[index]['screen']);
                             }
+
                             //  else if (otherInfoData[index]['title'] ==
                             //     "Receive Damaged Products") {
                             //   navigate(
@@ -215,84 +227,86 @@ class ProfileScreen extends StatelessWidget {
                                 "Request QR") {
                               showModalBottomSheet(
                                   context: context,
-                                  builder: (context) => Container(
-                                        height: 100.h,
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 12.w, vertical: 8.h),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  vertical: 16.h,
-                                                ),
-                                                child: GeneralElevatedButton(
-                                                  marginH: 4.w,
-                                                  title: "With QR",
-                                                  textStyle: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white),
-                                                  onPressed: () {
-                                                    navigate(context,
-                                                        route: NavigationConstants
-                                                            .damageScanScreenRoute,
-                                                        extra: {'qr': true});
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  vertical: 16.h,
-                                                ),
-                                                child: GeneralElevatedButton(
-                                                  marginH: 4.w,
-                                                  title: "Without QR",
-                                                  textStyle: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white),
-                                                  onPressed: () {
-                                                    navigate(context,
-                                                        route: NavigationConstants
-                                                            .damageScanScreenRoute,
-                                                        extra: {
-                                                          'qr': false,
-                                                        });
-                                                  },
+                                  builder: (context) => SafeArea(
+                                        child: Container(
+                                          height: 100.h,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 12.w, vertical: 8.h),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 16.h,
+                                                  ),
+                                                  child: GeneralElevatedButton(
+                                                    marginH: 4.w,
+                                                    title: "With QR",
+                                                    textStyle: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Colors.white),
+                                                    onPressed: () {
+                                                      navigate(context,
+                                                          route: NavigationConstants
+                                                              .damageScanScreenRoute,
+                                                          extra: {'qr': true});
+                                                    },
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                            Expanded(
-                                              child: Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  vertical: 16.h,
-                                                ),
-                                                child: GeneralElevatedButton(
-                                                  marginH: 4.w,
-                                                  title: "With Rack",
-                                                  textStyle: TextStyle(
-                                                      fontSize: 14.sp,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Colors.white),
-                                                  onPressed: () {
-                                                    navigate(context,
-                                                        route: NavigationConstants
-                                                            .damageScanScreenRoute,
-                                                        extra: {
-                                                          'scanRack': true,
-                                                          'qr': false,
-                                                        });
-                                                  },
+                                              Expanded(
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 16.h,
+                                                  ),
+                                                  child: GeneralElevatedButton(
+                                                    marginH: 4.w,
+                                                    title: "Without QR",
+                                                    textStyle: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Colors.white),
+                                                    onPressed: () {
+                                                      navigate(context,
+                                                          route: NavigationConstants
+                                                              .damageScanScreenRoute,
+                                                          extra: {
+                                                            'qr': false,
+                                                          });
+                                                    },
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                              Expanded(
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 16.h,
+                                                  ),
+                                                  child: GeneralElevatedButton(
+                                                    marginH: 4.w,
+                                                    title: "With Rack",
+                                                    textStyle: TextStyle(
+                                                        fontSize: 14.sp,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Colors.white),
+                                                    onPressed: () {
+                                                      navigate(context,
+                                                          route: NavigationConstants
+                                                              .damageScanScreenRoute,
+                                                          extra: {
+                                                            'scanRack': true,
+                                                            'qr': false,
+                                                          });
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ));
                             } else if (otherInfoData[index]['title'] ==
@@ -302,6 +316,14 @@ class ProfileScreen extends StatelessWidget {
                                       NavigationConstants.basketScanScreenRoute,
                                   extra: {
                                     'forTransfer': true,
+                                  });
+                            } else if (otherInfoData[index]['title'] ==
+                                'Product Damage Request') {
+                              navigate(context,
+                                  route: NavigationConstants
+                                      .productScanScreenRoute,
+                                  extra: {
+                                    'forDamageRequest': true,
                                   });
                             } else {
                               navigate(context,

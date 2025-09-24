@@ -71,27 +71,29 @@ class _BasketListScreenState extends State<BasketListScreen> {
         ),
         bottomNavigationBar: widget.fromInTransit
             ? null
-            : Consumer<DriverController>(
-                builder: (context, driverController, child) {
-                  return Padding(
-                    padding: AppConstants.padding,
-                    child: GeneralElevatedButton(
-                        title: driverController.isAllBasketScanned()
-                            ? "Complete"
-                            : "Scan Basket",
-                        onPressed: () {
-                          driverController.isAllBasketScanned()
-                              ? Provider.of<DriverController>(context,
-                                      listen: false)
-                                  .completeTransfer(context)
-                              : navigate(
-                                  context,
-                                  route: NavigationConstants
-                                      .driverBasketScannerRoute,
-                                );
-                        }),
-                  );
-                },
+            : SafeArea(
+                child: Consumer<DriverController>(
+                  builder: (context, driverController, child) {
+                    return Padding(
+                      padding: AppConstants.padding,
+                      child: GeneralElevatedButton(
+                          title: driverController.isAllBasketScanned()
+                              ? "Complete"
+                              : "Scan Basket",
+                          onPressed: () {
+                            driverController.isAllBasketScanned()
+                                ? Provider.of<DriverController>(context,
+                                        listen: false)
+                                    .completeTransfer(context)
+                                : navigate(
+                                    context,
+                                    route: NavigationConstants
+                                        .driverBasketScannerRoute,
+                                  );
+                          }),
+                    );
+                  },
+                ),
               ));
   }
 }

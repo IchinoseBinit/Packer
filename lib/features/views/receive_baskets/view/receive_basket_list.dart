@@ -71,26 +71,29 @@ class _ReceiveBasketListState extends State<ReceiveBasketList> {
             );
           },
         ),
-        bottomNavigationBar: Consumer<ReceiveBasketController>(
-          builder: (context, controller, child) {
-            return Padding(
-              padding: AppConstants.padding,
-              child: GeneralElevatedButton(
-                  title: controller.isAllBasketScanned()
-                      ? "Complete"
-                      : "Scan Basket",
-                  onPressed: () {
-                    controller.isAllBasketScanned()
-                        ? Provider.of<ReceiveBasketController>(context,
-                                listen: false)
-                            .completeTransfer(context)
-                        : navigate(
-                            context,
-                            route: NavigationConstants.receiveBasketScannerRoute,
-                          );
-                  }),
-            );
-          },
+        bottomNavigationBar: SafeArea(
+          child: Consumer<ReceiveBasketController>(
+            builder: (context, controller, child) {
+              return Padding(
+                padding: AppConstants.padding,
+                child: GeneralElevatedButton(
+                    title: controller.isAllBasketScanned()
+                        ? "Complete"
+                        : "Scan Basket",
+                    onPressed: () {
+                      controller.isAllBasketScanned()
+                          ? Provider.of<ReceiveBasketController>(context,
+                                  listen: false)
+                              .completeTransfer(context)
+                          : navigate(
+                              context,
+                              route:
+                                  NavigationConstants.receiveBasketScannerRoute,
+                            );
+                    }),
+              );
+            },
+          ),
         ));
   }
 }

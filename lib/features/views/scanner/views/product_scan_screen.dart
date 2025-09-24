@@ -2,11 +2,13 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -30,6 +32,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool forCarton = false;
   bool forDamageTransfer;
   bool forDamageReceive = false;
+  bool forDamageRequest;
 
   ProductScanScreen({
     super.key,
@@ -40,6 +43,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.forCarton = false,
     this.forDamageTransfer = false,
     this.forDamageReceive = false,
+    this.forDamageRequest = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -61,11 +65,10 @@ class ProductScanScreen extends BaseScanScreen {
     } else if (!fromTransfer) {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, "Scan Product Code");
+    } else if (forDamageRequest) {
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, "Scan Damage Product Request");
     }
-    // else if (forDamageReceive) {
-    //   Provider.of<ScanMessageProvider>(context, listen: false)
-    //       .setMessage(context, "Scan Product Code Received");
-    // }
   }
 
   bool isProcessing = false;
@@ -96,6 +99,7 @@ class ProductScanScreen extends BaseScanScreen {
         title: "Confirm Transfer",
       );
     }
+
     // if (forDamageReceive) {
     //   return Padding(
     //     padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
@@ -121,6 +125,44 @@ class ProductScanScreen extends BaseScanScreen {
     //     ),
     //   );
     // }
+    if (forDamageRequest) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10.0.h),
+        child: GeneralElevatedButton(
+          onPressed: () async {
+            final productIds =
+                Provider.of<DamageProductController>(context, listen: false)
+                    .damageProducts;
+            ShowAlertDialog(
+              title: "Are you Sure?",
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Scanned Products:"),
+                  const SizedBox(height: 8),
+                  ...productIds.map((id) => Text("• $id")),
+                ],
+              ),
+              okFunc: () async {
+                await navigatePop(context);
+                await controller.stop();
+                navigateReplacement(
+                  context,
+                  route: NavigationConstants.scanRackRoute,
+                  extra: {
+                    'forDamageRequest': true,
+                  },
+                );
+              },
+              needCancel: true,
+              cancelFunc: () => Navigator.pop(context),
+            ).showAlertDialog(context);
+          },
+          title: "Submit Request",
+        ),
+      );
+    }
     if (fromTransfer) {
       return FloatingActionButton(
         backgroundColor: AppColors.primaryColor,
@@ -344,6 +386,18 @@ class ProductScanScreen extends BaseScanScreen {
             await controller.start();
             hasScanned = false;
           }
+        }
+      } else if (forDamageRequest) {
+        final provider =
+            Provider.of<DamageProductController>(context, listen: false);
+        bool success = provider.setDamageProducts(code, context);
+        if (success) {
+          showToast("Product Scanned Successfully");
+          hasScanned = false;
+          controller.start();
+        } else {
+          hasScanned = false;
+          controller.start();
         }
       }
     } catch (e) {

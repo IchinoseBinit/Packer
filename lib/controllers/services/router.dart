@@ -99,6 +99,13 @@ class AppRouter {
                   return const NavigationScreen();
                 },
               ),
+
+              GoRoute(
+                path: NavigationConstants.productDamageRequestRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return const NavigationScreen();
+                },
+              ),
               GoRoute(
                 path: NavigationConstants.documentListScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
@@ -223,6 +230,7 @@ class AppRouter {
                     forDamage: data['forDamage'] ?? false,
                     forTransfer: data['forTransfer'] ?? false,
                     needAPICallCarton: data['needAPICallCarton'] ?? false,
+                    forDamageRequest: data['forDamageRequest'] ?? false,
                     // updateRack: data['updateRack'] ?? false,
                     // cartonProduct: data['cartonProduct'] ?? false,
                     // message: data['message'] ?? '',
@@ -469,6 +477,7 @@ class AppRouter {
                     forCarton: args['forCarton'] ?? false,
                     forDamageTransfer: args['forDamageTransfer'] ?? false,
                     forDamageReceive: args['forDamageReceive'] ?? false,
+                    forDamageRequest: args['forDamageRequest'] ?? false,
                   );
                 },
               ),
