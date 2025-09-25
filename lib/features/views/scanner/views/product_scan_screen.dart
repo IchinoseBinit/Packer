@@ -359,6 +359,30 @@ class ProductScanScreen extends BaseScanScreen {
             hasScanned = false;
           });
         }
+      } else if (forDamageReceive && fromTransfer) {
+        try {
+          log("Scanning for transfer forDamageReceive -$productId-$code");
+
+          final result =
+              await Provider.of<PackerTransferProvider>(context, listen: false)
+                  .scanProduct(context, productId, code, controller,
+                      (forDamageReceive && fromTransfer));
+
+          if (result.success && context.mounted) {
+            controller.stop();
+            controller.dispose();
+            Navigator.pop(context, true);
+          } else if (context.mounted) {
+            await controller.start();
+            hasScanned = false;
+          }
+        } catch (e) {
+          if (context.mounted) {
+            showToast("Error: $e");
+            await controller.start();
+            hasScanned = false;
+          }
+        }
       } else if (fromTransfer) {
         try {
           log("Scanning for transfer-$productId-$code");
@@ -379,30 +403,6 @@ class ProductScanScreen extends BaseScanScreen {
               await controller.start();
               hasScanned = false;
             }
-          }
-        } catch (e) {
-          if (context.mounted) {
-            showToast("Error: $e");
-            await controller.start();
-            hasScanned = false;
-          }
-        }
-      } else if (forDamageReceive) {
-        try {
-          log("Scanning for transfer forDamageReceive -$productId-$code");
-
-          final result =
-              await Provider.of<PackerTransferProvider>(context, listen: false)
-                  .scanProduct(
-                      context, productId, code, controller, forDamageReceive);
-
-          if (result.success && context.mounted) {
-            controller.stop();
-            controller.dispose();
-            Navigator.pop(context, true);
-          } else if (context.mounted) {
-            await controller.start();
-            hasScanned = false;
           }
         } catch (e) {
           if (context.mounted) {

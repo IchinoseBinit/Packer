@@ -453,17 +453,21 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } else {
       scanTagsList.add(code);
+      notifyListeners();
       final scanMessage =
           "Scan ${(item?.quantity ?? 0) - (item?.itemScanCount ?? 0)} more ${item?.productName}";
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, scanMessage);
     }
 
-    // if it is damage then no need to navigate to assign
-    //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
+    debugger();
+
+    // if it is damage then no need to navigate to assign
+    //rack and no need to call post scan tags api
     if (isDamaged) {
+      debugger();
       return ScanResult(success: true, message: "Scanned Successfully");
     }
 
@@ -642,8 +646,6 @@ class PackerTransferProvider extends ChangeNotifier {
       final result =
           await Provider.of<PackerTransferProvider>(context, listen: false)
               .postDamageProductTags(context, item.product!, rackCode);
-
-      // Provider.of<PackerTransferProvider>(context, listen: false).
 
       if (result && context.mounted) {
         showToast("Rack Scanned Successfully");
