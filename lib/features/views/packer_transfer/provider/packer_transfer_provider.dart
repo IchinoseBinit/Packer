@@ -429,7 +429,7 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   Future<ScanResult> scanProduct(BuildContext context, int productId,
-      String code, MobileScannerController controller) async {
+      String code, MobileScannerController controller, isDamaged) async {
     if (scanTagsList.contains(code)) {
       return ScanResult(success: false, message: "Tag already scanned");
     }
@@ -463,9 +463,9 @@ class PackerTransferProvider extends ChangeNotifier {
     //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
-    // if (isDamaged) {
-    //   return true;
-    // }
+    if (isDamaged) {
+      return ScanResult(success: true, message: "Scanned Successfully");
+    }
 
     if (isScanned) {
       if (role == "main") {
