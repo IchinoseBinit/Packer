@@ -369,8 +369,8 @@ class ProductScanScreen extends BaseScanScreen {
                       (forDamageReceive && fromTransfer));
 
           if (result.success && context.mounted) {
-            controller.stop();
-            controller.dispose();
+            await controller.stop();
+            await controller.dispose();
             Navigator.pop(context, true);
           } else if (context.mounted) {
             await controller.start();

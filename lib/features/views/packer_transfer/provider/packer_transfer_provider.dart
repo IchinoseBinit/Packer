@@ -353,9 +353,11 @@ class PackerTransferProvider extends ChangeNotifier {
     );
   }
 
-  int getScannedCount(int productId) => scanTagsList
-      .where((element) => element.split("-").first == productId.toString())
-      .length;
+  int getScannedCount(int productId) {
+    return scanTagsList
+        .where((element) => element.split("-").first == productId.toString())
+        .length;
+  }
 
   Future<ScanResult> scanProductForInventoryTransfer(
       BuildContext context, int productId, String code) async {
@@ -462,12 +464,9 @@ class PackerTransferProvider extends ChangeNotifier {
 
     final isScanned = scanCountOrder(context, productId);
 
-    debugger();
-
     // if it is damage then no need to navigate to assign
     //rack and no need to call post scan tags api
     if (isDamaged) {
-      debugger();
       return ScanResult(success: true, message: "Scanned Successfully");
     }
 
@@ -648,7 +647,7 @@ class PackerTransferProvider extends ChangeNotifier {
               .postDamageProductTags(context, item.product!, rackCode);
 
       if (result && context.mounted) {
-        showToast("Rack Scanned Successfully");
+        showToast("Product has been scan successfully");
       }
 
       return;
@@ -747,7 +746,7 @@ class PackerTransferProvider extends ChangeNotifier {
         );
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
-          scanTagsList.clear();
+          // scanTagsList.clear();
           notifyListeners();
           removeLoading(context);
           return true;
