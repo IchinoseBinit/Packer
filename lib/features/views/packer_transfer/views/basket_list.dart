@@ -7,7 +7,8 @@ import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
 class BasketList extends StatelessWidget {
-  const BasketList({super.key});
+  const BasketList({super.key, this.forDamage = false});
+  final bool forDamage;
 
   @override
   Widget build(BuildContext context) {

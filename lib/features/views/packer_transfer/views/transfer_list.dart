@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/date_formatter.dart';
@@ -7,7 +9,8 @@ import 'package:packer/features/views/packer_transfer/provider/packer_transfer_p
 import 'package:provider/provider.dart';
 
 class TransferList extends StatefulWidget {
-  const TransferList({super.key});
+  const TransferList({super.key, this.forDamage = false});
+  final bool forDamage;
 
   @override
   State<TransferList> createState() => _TransferListState();
@@ -23,7 +26,7 @@ class _TransferListState extends State<TransferList> {
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
         return FutureBuilder(
             future: Provider.of<PackerTransferProvider>(context, listen: false)
-                .fetchTransferList(context),
+                .fetchTransferList(context, damage: widget.forDamage),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
@@ -52,7 +55,8 @@ class _TransferListState extends State<TransferList> {
                       // Handle item tap
                       Provider.of<PackerTransferProvider>(context,
                               listen: false)
-                          .onDetailsTaped(context, data);
+                          .onDetailsTaped(context, data,
+                              damage: widget.forDamage);
                     },
                     transferItem: data,
                     primaryColor: Theme.of(context).primaryColor,
@@ -75,11 +79,11 @@ class TransferNotificationCard extends StatelessWidget {
   final VoidCallback? callback;
 
   const TransferNotificationCard({
-    Key? key,
+    super.key,
     required this.transferItem,
     required this.primaryColor,
     this.callback,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

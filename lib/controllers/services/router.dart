@@ -212,7 +212,8 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.basketListRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return BasketList();
+                  final forDamage = state.extra as bool? ?? false;
+                  return BasketList(forDamage: forDamage);
                 },
               ),
               GoRoute(
@@ -390,7 +391,9 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.transferListRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return const TransferList();
+                  final damage = state.extra as bool? ?? false;
+
+                  return TransferList(forDamage: damage);
                 },
               ),
               // GoRoute(
