@@ -353,9 +353,11 @@ class PackerTransferProvider extends ChangeNotifier {
     );
   }
 
-  int getScannedCount(int productId) => scanTagsList
-      .where((element) => element.split("-").first == productId.toString())
-      .length;
+  int getScannedCount(int productId) {
+    return scanTagsList
+        .where((element) => element.split("-").first == productId.toString())
+        .length;
+  }
 
   Future<ScanResult> scanProductForInventoryTransfer(
       BuildContext context, int productId, String code) async {
@@ -429,7 +431,7 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   Future<ScanResult> scanProduct(BuildContext context, int productId,
-      String code, MobileScannerController controller) async {
+      String code, MobileScannerController controller, isDamaged) async {
     if (scanTagsList.contains(code)) {
       return ScanResult(success: false, message: "Tag already scanned");
     }
@@ -453,19 +455,20 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } else {
       scanTagsList.add(code);
+      notifyListeners();
       final scanMessage =
           "Scan ${(item?.quantity ?? 0) - (item?.itemScanCount ?? 0)} more ${item?.productName}";
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, scanMessage);
     }
 
-    // if it is damage then no need to navigate to assign
-    //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
-    // if (isDamaged) {
-    //   return true;
-    // }
+    // if it is damage then no need to navigate to assign
+    //rack and no need to call post scan tags api
+    if (isDamaged) {
+      return ScanResult(success: true, message: "Scanned Successfully");
+    }
 
     if (isScanned) {
       if (role == "main") {
@@ -643,10 +646,8 @@ class PackerTransferProvider extends ChangeNotifier {
           await Provider.of<PackerTransferProvider>(context, listen: false)
               .postDamageProductTags(context, item.product!, rackCode);
 
-      // Provider.of<PackerTransferProvider>(context, listen: false).
-
       if (result && context.mounted) {
-        showToast("Rack Scanned Successfully");
+        showToast("Product has been scan successfully");
       }
 
       return;
@@ -745,7 +746,7 @@ class PackerTransferProvider extends ChangeNotifier {
         );
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
-          scanTagsList.clear();
+          // scanTagsList.clear();
           notifyListeners();
           removeLoading(context);
           return true;

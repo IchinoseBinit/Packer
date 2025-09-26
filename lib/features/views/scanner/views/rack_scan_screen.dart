@@ -155,8 +155,8 @@ class RackScanScreen extends BaseScanScreen {
         await controller.stop();
         if (context.mounted) {
           showToast("Rack scanned successfully");
-          controller.stop();
-          controller.dispose();
+          await controller.stop();
+          await controller.dispose();
           await navigatePop(context, code);
         }
       } else if (forDamageRequest) {

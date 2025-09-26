@@ -96,10 +96,13 @@ class TransferItemsList extends StatelessWidget {
                                   children: List.generate(
                                     provider.rackMap[rackName]?.length ?? 0,
                                     (index) {
+                                      //
+
                                       final product =
                                           provider.rackMap[rackName]![index];
                                       ItemStatus status =
-                                          (provider.getScannedCount(product.product ?? 0) ==
+                                          (provider.getScannedCount(
+                                                      product.product ?? 0) ==
                                                   product.quantity)
                                               ? ItemStatus.done
                                               : ItemStatus.remaining;
@@ -117,7 +120,9 @@ class TransferItemsList extends StatelessWidget {
                                             .fromTransferItemModel(product),
                                         status: status,
                                         statusToShow: "Completed",
-                                        quantity: (product.quantity ?? 0) - provider.getScannedCount(product.product ?? 0),
+                                        quantity: (product.quantity ?? 0) -
+                                            provider.getScannedCount(
+                                                product.product ?? 0),
                                       );
                                     },
                                   ),
