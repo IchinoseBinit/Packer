@@ -115,14 +115,13 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTransferList(BuildContext context) async {
+  Future<void> fetchTransferList(BuildContext context, {bool isDamage = false}) async {
     try {
       transferListLoading = true;
       transferList.clear();
-      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url = homeProvider.isMainStore() == true
-          ? AppUrls.managerTransferUrl
-          : AppUrls.packerTransferUrl;
+      final url = isDamage == true
+          ? "${AppUrls.managerTransferUrl}?type=damage"
+          : AppUrls.managerTransferUrl;
       final response = await DioClient()
           .request(requestType: RequestType.getWithToken, url: url);
       if (response.statusCode == 200) {
@@ -814,6 +813,7 @@ class PackerTransferProvider extends ChangeNotifier {
       showLoading(context);
       final id = selectedTransferModel?.id;
       if (id == null) {
+        removeLoading(context);
         ErrorHandler.alertDialog(context, 'Transfer ID is null');
         return;
       }
@@ -824,9 +824,9 @@ class PackerTransferProvider extends ChangeNotifier {
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: url.replaceAll('id', id.toString()),
-        // body: {
-        //   "basket_identifier": selectedBasketModel?.identifier,
-        // }
+        body: {
+          "basket_identifier": selectedBasketModel?.identifier,
+        }
       );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
@@ -842,7 +842,6 @@ class PackerTransferProvider extends ChangeNotifier {
     } catch (ex) {
       removeLoading(context);
       ErrorHandler.alertDialog(context, ex.toString());
-      removeLoading(context);
     }
   }
 
@@ -878,9 +877,10 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       selectedTransferModelLoading = true;
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url = homeProvider.isMainStore() == true
-          ? AppUrls.packerTransferDetailsUrl
-          : AppUrls.managerTransferDetailsUrl;
+      final url =  AppUrls.managerTransferDetailsUrl;
+      // homeProvider.isMainStore() == true
+      //     ? AppUrls.managerTransferDetailsUrl
+      //     : AppUrls.packerTransferDetailsUrl;
       final urlValue = url.replaceAll('id', id.toString());
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,

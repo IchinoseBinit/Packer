@@ -7,7 +7,8 @@ import 'package:packer/features/views/packer_transfer/provider/packer_transfer_p
 import 'package:provider/provider.dart';
 
 class TransferList extends StatefulWidget {
-  const TransferList({super.key});
+  const TransferList({super.key, required this.isDamage});
+  final bool isDamage;
 
   @override
   State<TransferList> createState() => _TransferListState();
@@ -23,7 +24,7 @@ class _TransferListState extends State<TransferList> {
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
         return FutureBuilder(
             future: Provider.of<PackerTransferProvider>(context, listen: false)
-                .fetchTransferList(context),
+                .fetchTransferList(context, isDamage: widget.isDamage),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(

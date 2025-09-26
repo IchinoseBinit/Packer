@@ -34,6 +34,10 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.inventory,
         'title': 'Inventory Items',
         'screen': NavigationConstants.transferListRoute,
+        'onTap': () {
+          navigate(context, route:  NavigationConstants.transferListRoute,
+              extra: {'isDamage': false});
+        },
       });
     }
     if (value.isMainStore() &&
@@ -122,6 +126,10 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.transfer_within_a_station,
         'title': 'Receive Damaged Products',
         'screen': NavigationConstants.transferListRoute,
+        'onTap': () {
+          navigate(context, route: NavigationConstants.transferListRoute,
+              extra: {'isDamage': true});
+        },
       });
     }
 
