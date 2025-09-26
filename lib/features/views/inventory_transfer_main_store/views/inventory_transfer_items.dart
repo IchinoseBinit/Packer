@@ -63,6 +63,7 @@ class InventoryTransferItems extends StatelessWidget {
                   child: TransferNotificationCard(
                     primaryColor: Theme.of(context).primaryColor,
                     transferItem: provider.selectedInventoryTransfer!,
+                    basketId: provider.selectedBasket?.identifier ?? '',
                   ),
                 ),
                 SizedBox(height: 8.h),

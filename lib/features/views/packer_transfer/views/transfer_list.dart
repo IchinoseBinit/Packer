@@ -73,12 +73,14 @@ class TransferNotificationCard extends StatelessWidget {
   final TransferModel transferItem;
   final Color primaryColor;
   final VoidCallback? callback;
+  final String? basketId;
 
   const TransferNotificationCard({
     Key? key,
     required this.transferItem,
     required this.primaryColor,
     this.callback,
+    this.basketId,
   }) : super(key: key);
 
   @override
@@ -127,6 +129,15 @@ class TransferNotificationCard extends StatelessWidget {
                             .bodyMedium
                             ?.copyWith(color: Colors.grey[700]),
                       ),
+                      if (basketId != null) ...[
+                        Text(
+                          'Basket ID: $basketId',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Colors.grey[700]),
+                        ),
+                      ],
                     ],
                   ),
                 ),
