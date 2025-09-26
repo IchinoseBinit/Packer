@@ -126,20 +126,13 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTransferList(BuildContext context,
-      {bool? damage = false}) async {
+  Future<void> fetchTransferList(BuildContext context, {bool isDamage = false}) async {
     try {
       transferListLoading = true;
       transferList.clear();
-      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url = damage!
-          ? (homeProvider.isMainStore() == true
-              ? AppUrls.managerTransferUrl
-              : AppUrls.packerTransferUrl)
-          : (homeProvider.isMainStore() == true
-              ? AppUrls.packerTransferUrl
-              : AppUrls.managerTransferUrl);
-
+      final url = isDamage == true
+          ? "${AppUrls.managerTransferUrl}?type=damage"
+          : AppUrls.managerTransferUrl;
       final response = await DioClient()
           .request(requestType: RequestType.getWithToken, url: url);
       if (response.statusCode == 200) {
@@ -370,9 +363,11 @@ class PackerTransferProvider extends ChangeNotifier {
     );
   }
 
-  int getScannedCount(int productId) => scanTagsList
-      .where((element) => element.split("-").first == productId.toString())
-      .length;
+  int getScannedCount(int productId) {
+    return scanTagsList
+        .where((element) => element.split("-").first == productId.toString())
+        .length;
+  }
 
   Future<ScanResult> scanProductForInventoryTransfer(
       BuildContext context, int productId, String code) async {
@@ -446,7 +441,7 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   Future<ScanResult> scanProduct(BuildContext context, int productId,
-      String code, MobileScannerController controller) async {
+      String code, MobileScannerController controller, isDamaged) async {
     if (scanTagsList.contains(code)) {
       return ScanResult(success: false, message: "Tag already scanned");
     }
@@ -470,19 +465,20 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } else {
       scanTagsList.add(code);
+      notifyListeners();
       final scanMessage =
           "Scan ${(item?.quantity ?? 0) - (item?.itemScanCount ?? 0)} more ${item?.productName}";
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, scanMessage);
     }
 
-    // if it is damage then no need to navigate to assign
-    //rack and no need to call post scan tags api
     final isScanned = scanCountOrder(context, productId);
 
-    // if (isDamaged) {
-    //   return true;
-    // }
+    // if it is damage then no need to navigate to assign
+    //rack and no need to call post scan tags api
+    if (isDamaged) {
+      return ScanResult(success: true, message: "Scanned Successfully");
+    }
 
     if (isScanned) {
       if (role == "main") {
@@ -661,10 +657,8 @@ class PackerTransferProvider extends ChangeNotifier {
           await Provider.of<PackerTransferProvider>(context, listen: false)
               .postDamageProductTags(context, item.product!, rackCode);
 
-      // Provider.of<PackerTransferProvider>(context, listen: false).
-
       if (result && context.mounted) {
-        showToast("Rack Scanned Successfully");
+        showToast("Product has been scan successfully");
       }
 
       return;
@@ -763,7 +757,7 @@ class PackerTransferProvider extends ChangeNotifier {
         );
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
-          scanTagsList.clear();
+          // scanTagsList.clear();
           notifyListeners();
           removeLoading(context);
           return true;
@@ -831,6 +825,7 @@ class PackerTransferProvider extends ChangeNotifier {
       showLoading(context);
       final id = selectedTransferModel?.id;
       if (id == null) {
+        removeLoading(context);
         ErrorHandler.alertDialog(context, 'Transfer ID is null');
         return;
       }
@@ -841,9 +836,9 @@ class PackerTransferProvider extends ChangeNotifier {
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: url.replaceAll('id', id.toString()),
-        // body: {
-        //   "basket_identifier": selectedBasketModel?.identifier,
-        // }
+        body: {
+          "basket_identifier": selectedBasketModel?.identifier,
+        }
       );
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
@@ -859,7 +854,6 @@ class PackerTransferProvider extends ChangeNotifier {
     } catch (ex) {
       removeLoading(context);
       ErrorHandler.alertDialog(context, ex.toString());
-      removeLoading(context);
     }
   }
 
@@ -896,9 +890,10 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       selectedTransferModelLoading = true;
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url = homeProvider.isMainStore() == true
-          ? AppUrls.packerTransferDetailsUrl
-          : AppUrls.managerTransferDetailsUrl;
+      final url =  AppUrls.managerTransferDetailsUrl;
+      // homeProvider.isMainStore() == true
+      //     ? AppUrls.managerTransferDetailsUrl
+      //     : AppUrls.packerTransferDetailsUrl;
       final urlValue = url.replaceAll('id', id.toString());
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,

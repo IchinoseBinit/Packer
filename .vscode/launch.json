@@ -9,8 +9,6 @@
             "request": "launch",
             "type": "dart",
             "args": [
-                "--target",
-                "lib/main.dart",
                 "--dart-define=APIType=staging"
             ]
         },

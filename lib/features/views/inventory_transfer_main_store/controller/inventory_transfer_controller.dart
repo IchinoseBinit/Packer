@@ -188,7 +188,8 @@ class InventoryTransferController extends ChangeNotifier {
       final id = selectedInventoryTransfer?.id;
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
-        url: AppUrls.managerTransferDetailsUrl.replaceFirst("id", id.toString()),
+        url:
+            AppUrls.managerTransferDetailsUrl.replaceFirst("id", id.toString()),
       );
       selectedInventoryTransfer = TransferModel.fromMap(response.data);
       notifyListeners();
@@ -198,7 +199,8 @@ class InventoryTransferController extends ChangeNotifier {
   }
 
   Future removeTags(int product) async {
-    scannedTags.removeWhere((element) => element.split("-").first == product.toString());
+    scannedTags.removeWhere(
+        (element) => element.split("-").first == product.toString());
     notifyListeners();
   }
 
@@ -246,18 +248,26 @@ class InventoryTransferController extends ChangeNotifier {
   }
 
   Future<ScanResult> handleBasketScan(BuildContext context, String code) async {
-    scannedTags.clear();
-    if (selectedBasket != null && selectedBasket!.identifier == code) {
-      await fetchBasketDetails(context, code);
-      return ScanResult(success: true, message: "Basket Scanned Successfully");
-    } else if (selectedBasket == null &&
-        (selectedInventoryTransfer?.baskets
-                ?.any((element) => element.identifier == code) ??
-            false)) {
-      await fetchBasketDetails(context, code);
-      return ScanResult(success: true, message: "Basket Scanned Successfully");
+    try {
+      scannedTags.clear();
+      if (selectedBasket != null && selectedBasket!.identifier == code) {
+        await fetchBasketDetails(context, code);
+        return ScanResult(
+            success: true, message: "Basket Scanned Successfully");
+      } else if (selectedBasket == null &&
+          (selectedInventoryTransfer?.baskets
+                  ?.any((element) => element.identifier == code) ??
+              false)) {
+        selectedBasket =
+            selectedInventoryTransfer?.baskets?.firstWhere((element) => element.identifier == code);
+        await fetchBasketDetails(context, code);
+        return ScanResult(
+            success: true, message: "Basket Scanned Successfully");
+      }
+      return ScanResult(success: false, message: "Invalid Basket Code");
+    } catch (e) {
+      return ScanResult(success: false, message: e.toString());
     }
-    return ScanResult(success: false, message: "Invalid Basket Code");
   }
 
   fetchBasketDetails(BuildContext context, String code) async {
@@ -275,9 +285,13 @@ class InventoryTransferController extends ChangeNotifier {
           );
         }
         arrangeItemAccordingToRack();
+      } else {
+        selectedInventoryTransfer?.items = [];
+        throw response.data;
       }
     } catch (ex) {
       selectedInventoryTransfer?.items = [];
+      rethrow;
     }
   }
 

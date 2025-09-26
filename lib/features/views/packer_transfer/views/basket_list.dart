@@ -19,8 +19,8 @@ class BasketList extends StatelessWidget {
           return;
         }
         navigatePop(context);
-        Provider.of<PackerTransferProvider>(context, listen: false)
-            .fetchTransferList(context);
+        // Provider.of<PackerTransferProvider>(context, listen: false)
+        //     .fetchTransferList(context);
       },
       child: Scaffold(
           appBar: AppBar(

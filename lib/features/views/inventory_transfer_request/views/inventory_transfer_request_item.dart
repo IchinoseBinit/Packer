@@ -138,6 +138,9 @@ class InventoryTransferRequestItem extends StatelessWidget {
       ),
       bottomNavigationBar: Consumer<InventoryTransferRequestController>(
           builder: (context, provider, child) {
+        if (provider.inventoryRequestDao.getAll().isEmpty) {
+          return SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -147,7 +150,10 @@ class InventoryTransferRequestItem extends StatelessWidget {
                 title: "Transfer",
                 onPressed: () {
                   provider.initLocal();
-                  navigate(context, route: NavigationConstants.inventoryTransferRequestScannerRoute, extra: {"scanBasket": true});
+                  navigate(context,
+                      route: NavigationConstants
+                          .inventoryTransferRequestScannerRoute,
+                      extra: {"scanBasket": true});
                 },
               ),
             ],

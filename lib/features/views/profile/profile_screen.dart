@@ -36,6 +36,10 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.inventory,
         'title': 'Inventory Items',
         'screen': NavigationConstants.transferListRoute,
+        'onTap': () {
+          navigate(context, route:  NavigationConstants.transferListRoute,
+              extra: {'isDamage': false});
+        },
       });
     }
     if (value.isMainStore() &&
@@ -123,6 +127,11 @@ class ProfileScreen extends StatelessWidget {
       otherInfoData.add({
         'icon': Icons.transfer_within_a_station,
         'title': 'Receive Damaged Products',
+        'screen': NavigationConstants.transferListRoute,
+        'onTap': () {
+          navigate(context, route: NavigationConstants.transferListRoute,
+              extra: {'isDamage': true});
+        },
       });
     }
 
@@ -320,7 +329,6 @@ class ProfileScreen extends StatelessWidget {
                                   });
                             } else if (otherInfoData[index]['title'] ==
                                 'Receive Damaged Products') {
-                              debugger();
                               navigate(
                                 context,
                                 route: NavigationConstants.transferListRoute,

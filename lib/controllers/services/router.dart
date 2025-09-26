@@ -391,9 +391,9 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.transferListRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  final damage = state.extra as bool? ?? false;
-
-                  return TransferList(forDamage: damage);
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  final isDamage = args['isDamage'] ?? false;
+                  return TransferList(isDamage: isDamage);
                 },
               ),
               // GoRoute(

@@ -42,39 +42,41 @@ class TransferRequestTrolleyItem extends StatelessWidget {
                       child: Text('No Items'),
                     )
                   else
-                  IntrinsicGridView.vertical(
-                    columnCount: 2,
-                    verticalSpace: 12.w,
-                    horizontalSpace: 12.w,
-                    children: List.generate(
-                      items.length,
-                      (index) {
-                        final product = items[index];
-                        ItemStatus status = (controller.getScannedCount(
-                                    product.productId ?? 0,
-                                    fromLocal: true) ==
-                                product.quantity)
-                            ? ItemStatus.done
-                            : ItemStatus.remaining;
-                        final width = (1.sw - 12.w - 24.w) / 2;
-                  
-                        return ProductCard(
-                          width: width,
-                          onTap: () {
-                            // log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
-                            if (status == ItemStatus.done) return;
-                            controller.setSelectedLocalInventoryTransferRequestItem(
-                                context, product);
-                          },
-                          productModel: CommonProductModel
-                              .fromInventoryTransferRequestItemModel(product),
-                          status: status,
-                          statusToShow: "Completed",
-                          quantity: (product.quantity ?? 0) -
-                              controller.getScannedCount(product.productId ?? 0,
-                                  fromLocal: true),
-                        );
-                      },
+                  Expanded(
+                    child: IntrinsicGridView.vertical(
+                      columnCount: 2,
+                      verticalSpace: 12.w,
+                      horizontalSpace: 12.w,
+                      children: List.generate(
+                        items.length,
+                        (index) {
+                          final product = items[index];
+                          ItemStatus status = (controller.getScannedCount(
+                                      product.productId ?? 0,
+                                      fromLocal: true) ==
+                                  product.quantity)
+                              ? ItemStatus.done
+                              : ItemStatus.remaining;
+                          final width = (1.sw - 12.w - 24.w) / 2;
+                    
+                          return ProductCard(
+                            width: width,
+                            onTap: () {
+                              // log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
+                              if (status == ItemStatus.done) return;
+                              controller.setSelectedLocalInventoryTransferRequestItem(
+                                  context, product);
+                            },
+                            productModel: CommonProductModel
+                                .fromInventoryTransferRequestItemModel(product),
+                            status: status,
+                            statusToShow: "Completed",
+                            quantity: (product.quantity ?? 0) -
+                                controller.getScannedCount(product.productId ?? 0,
+                                    fromLocal: true),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],

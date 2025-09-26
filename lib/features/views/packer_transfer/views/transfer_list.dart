@@ -9,8 +9,8 @@ import 'package:packer/features/views/packer_transfer/provider/packer_transfer_p
 import 'package:provider/provider.dart';
 
 class TransferList extends StatefulWidget {
-  const TransferList({super.key, this.forDamage = false});
-  final bool forDamage;
+  const TransferList({super.key, required this.isDamage});
+  final bool isDamage;
 
   @override
   State<TransferList> createState() => _TransferListState();
@@ -26,7 +26,7 @@ class _TransferListState extends State<TransferList> {
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
         return FutureBuilder(
             future: Provider.of<PackerTransferProvider>(context, listen: false)
-                .fetchTransferList(context, damage: widget.forDamage),
+                .fetchTransferList(context, isDamage: widget.isDamage),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
@@ -56,7 +56,7 @@ class _TransferListState extends State<TransferList> {
                       Provider.of<PackerTransferProvider>(context,
                               listen: false)
                           .onDetailsTaped(context, data,
-                              damage: widget.forDamage);
+                              damage: widget.isDamage);
                     },
                     transferItem: data,
                     primaryColor: Theme.of(context).primaryColor,
@@ -77,12 +77,14 @@ class TransferNotificationCard extends StatelessWidget {
   final TransferModel transferItem;
   final Color primaryColor;
   final VoidCallback? callback;
+  final String? basketId;
 
   const TransferNotificationCard({
     super.key,
     required this.transferItem,
     required this.primaryColor,
     this.callback,
+    this.basketId,
   });
 
   @override
@@ -131,6 +133,15 @@ class TransferNotificationCard extends StatelessWidget {
                             .bodyMedium
                             ?.copyWith(color: Colors.grey[700]),
                       ),
+                      if (basketId != null) ...[
+                        Text(
+                          'Basket ID: $basketId',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Colors.grey[700]),
+                        ),
+                      ],
                     ],
                   ),
                 ),
