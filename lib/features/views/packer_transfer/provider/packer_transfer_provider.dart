@@ -115,7 +115,8 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTransferList(BuildContext context, {bool isDamage = false}) async {
+  Future<void> fetchTransferList(BuildContext context,
+      {bool isDamage = false}) async {
     try {
       transferListLoading = true;
       transferList.clear();
@@ -557,35 +558,39 @@ class PackerTransferProvider extends ChangeNotifier {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     if (homeProvider.isMainStore() == false) {
       if (item.rack != null && item.rack!.isNotEmpty) {
-        final result = await navigate(context,
+        await navigate(context,
             route: NavigationConstants.scanRackRoute,
-            extra: {"rack": item.rack, "productId": item.product});
-        if (result == true && context.mounted) {
-          Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(context, scanMessage);
-          await Future.delayed(const Duration(milliseconds: 100));
+            extra: {
+              "rack": item.rack,
+              "productId": item.product,
+              "forTransfer": true
+            });
+        // if (result == true && context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(context, scanMessage);
+        //   await Future.delayed(const Duration(milliseconds: 100));
 
-          navigate(context,
-              route: NavigationConstants.productScanScreenRoute,
-              extra: {
-                "rack": item.rack,
-                "productId": item.product,
-                "forTransfer": true
-              });
-          // if (result == true && context.mounted) {
-          //   Provider.of<ScanMessageProvider>(context, listen: false)
-          //       .setMessage(context, scanMessage);
-          //   navigate(
-          //     context,
-          //     route: NavigationConstants.productScanScreenRoute,
-          //     extra: {
-          //       "forTransfer": true,
-          //       "productId": item.product,
-          //     },
-          //   );
-          // }
-          return;
-        }
+        //   navigate(context,
+        //       route: NavigationConstants.productScanScreenRoute,
+        //       extra: {
+        //         "rack": item.rack,
+        //         "productId": item.product,
+        //         "forTransfer": true
+        //       });
+        // if (result == true && context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(context, scanMessage);
+        //   navigate(
+        //     context,
+        //     route: NavigationConstants.productScanScreenRoute,
+        //     extra: {
+        //       "forTransfer": true,
+        //       "productId": item.product,
+        //     },
+        //   );
+        // }
+        return;
+        // }
       }
       showYesNo(context).then((value) async {
         final result = await navigate(
@@ -779,6 +784,7 @@ class PackerTransferProvider extends ChangeNotifier {
   Future<ScanResult> updateRack(
       BuildContext context, String code, int productId) async {
     try {
+      showLoading(context);
       final url = AppUrls.updateRackUrl;
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
@@ -788,6 +794,7 @@ class PackerTransferProvider extends ChangeNotifier {
           "product_id": productId,
         },
       );
+      removeLoading(context);
       if (response.statusCode == 200 && context.mounted) {
         updateRackOnModel(productId, code);
         // move navigation after loading is removed
@@ -802,6 +809,7 @@ class PackerTransferProvider extends ChangeNotifier {
         return ScanResult(success: false, message: "Failed to update rack");
       }
     } catch (ex) {
+      removeLoading(context);
       // ErrorHandler.alertDialog(context, ex.toString());
       return ScanResult(success: false, message: ex.toString());
     }
@@ -822,12 +830,11 @@ class PackerTransferProvider extends ChangeNotifier {
           ? AppUrls.acceptTransferUrl
           : AppUrls.completeTransferUrl;
       final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url.replaceAll('id', id.toString()),
-        body: {
-          "basket_identifier": selectedBasketModel?.identifier,
-        }
-      );
+          requestType: RequestType.postWithToken,
+          url: url.replaceAll('id', id.toString()),
+          body: {
+            "basket_identifier": selectedBasketModel?.identifier,
+          });
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
@@ -877,7 +884,7 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       selectedTransferModelLoading = true;
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url =  AppUrls.managerTransferDetailsUrl;
+      final url = AppUrls.managerTransferDetailsUrl;
       // homeProvider.isMainStore() == true
       //     ? AppUrls.managerTransferDetailsUrl
       //     : AppUrls.packerTransferDetailsUrl;
