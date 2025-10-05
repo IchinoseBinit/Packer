@@ -179,13 +179,13 @@ class RackScanScreen extends BaseScanScreen {
           }
         }
       } else if (context.mounted) {
-        showLoading(context);
+        // showLoading(context);
 
         final result =
             await Provider.of<PackerTransferProvider>(context, listen: false)
                 .updateRack(context, code, productId);
 
-        if (context.mounted) removeLoading(context);
+        // if (context.mounted) removeLoading(context);
 
         // if (isMainStore) {
         //   navigateReplacement(
