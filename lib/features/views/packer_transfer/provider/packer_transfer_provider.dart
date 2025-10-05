@@ -126,7 +126,8 @@ class PackerTransferProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchTransferList(BuildContext context, {bool isDamage = false}) async {
+  Future<void> fetchTransferList(BuildContext context,
+      {bool isDamage = false}) async {
     try {
       transferListLoading = true;
       transferList.clear();
@@ -632,7 +633,6 @@ class PackerTransferProvider extends ChangeNotifier {
       // scan all items
       final scanRemainingItem = (item.quantity ?? 0) - item.itemScanCount;
       for (var i = 0; i < scanRemainingItem; i++) {
-        debugger();
         final success = await navigateReplacement(
           context,
           route: NavigationConstants.productScanScreenRoute,
@@ -834,12 +834,11 @@ class PackerTransferProvider extends ChangeNotifier {
           ? AppUrls.acceptTransferUrl
           : AppUrls.completeTransferUrl;
       final response = await DioClient().request(
-        requestType: RequestType.postWithToken,
-        url: url.replaceAll('id', id.toString()),
-        body: {
-          "basket_identifier": selectedBasketModel?.identifier,
-        }
-      );
+          requestType: RequestType.postWithToken,
+          url: url.replaceAll('id', id.toString()),
+          body: {
+            "basket_identifier": selectedBasketModel?.identifier,
+          });
       if (response.statusCode == 200) {
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
@@ -890,7 +889,7 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       selectedTransferModelLoading = true;
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url =  AppUrls.managerTransferDetailsUrl;
+      final url = AppUrls.managerTransferDetailsUrl;
       // homeProvider.isMainStore() == true
       //     ? AppUrls.managerTransferDetailsUrl
       //     : AppUrls.packerTransferDetailsUrl;
