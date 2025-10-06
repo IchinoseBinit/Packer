@@ -637,7 +637,7 @@ class PackerTransferProvider extends ChangeNotifier {
       // scan all items
       final scanRemainingItem = (item.quantity ?? 0) - item.itemScanCount;
       for (var i = 0; i < scanRemainingItem; i++) {
-        final success = await navigateReplacement(
+        final success = await navigate(
           context,
           route: NavigationConstants.productScanScreenRoute,
           extra: {

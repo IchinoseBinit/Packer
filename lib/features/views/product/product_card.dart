@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -35,9 +37,8 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   @override
-
   Widget build(BuildContext context) {
-    final productunits=widget.productModel.productUnits;
+    final productunits = widget.productModel.productUnits;
     return InkWell(
       onTap: () {
         widget.onTap?.call();
@@ -208,7 +209,7 @@ class _ProductCardState extends State<ProductCard> {
                                   color: Colors.white, size: 16.sp),
                               SizedBox(width: 4.w),
                               Text(
-                               widget.statusToShow ?? "Packed",
+                                widget.statusToShow ?? "Packed",
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
