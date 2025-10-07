@@ -163,6 +163,15 @@ class _ProductCardState extends State<ProductCard> {
                             ),
                           ],
                         ),
+                        Text("Current Stock: ${widget.productModel.mainStoreStock ?? 'N/A'}",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.homeScreenDimTextColor,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w400,
+                                )),
                       ],
                     ),
                   ),

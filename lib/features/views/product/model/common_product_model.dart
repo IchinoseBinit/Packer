@@ -16,6 +16,7 @@ class CommonProductModel {
   late String size;
   late String measurement;
   late int scannedCount;
+  late int? mainStoreStock;
   late final String productCompartment;
   String? status;
   late int plannedQuantity;
@@ -46,6 +47,7 @@ class CommonProductModel {
     quantity = productModel.quantity;
     size = productModel.size;
     measurement = productModel.measurement;
+    mainStoreStock = productModel.mainStoreStock;
     scannedCount = productModel.scannedCount;
     productCompartment = "";
     plannedQuantity = 0;
@@ -102,8 +104,9 @@ class CommonProductModel {
     scannedCount = 0;
     productCompartment = "";
   }
-  
-  CommonProductModel.fromInventoryTransferRequestItemModel(InventoryTransferRequestItemModel model) {
+
+  CommonProductModel.fromInventoryTransferRequestItemModel(
+      InventoryTransferRequestItemModel model) {
     productId = model.productId ?? 0;
     productName = model.productName ?? "";
     rackName = model.rackName ?? "";

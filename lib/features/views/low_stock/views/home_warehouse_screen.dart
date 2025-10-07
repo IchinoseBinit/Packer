@@ -246,6 +246,7 @@ class LowStockCard extends StatelessWidget {
                         'Store: ${model.storeName}',
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
+                     
                       Text(
                         'Product Count: ${count ?? model.products.length}',
                         style: Theme.of(context)
