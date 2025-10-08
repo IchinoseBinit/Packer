@@ -118,6 +118,11 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                           (product) {
                                             final width =
                                                 (1.sw - 12.w - 32.w) / 2;
+
+                                            final quantity = (product.quantity >
+                                                    product.mainStoreStock!)
+                                                ? product.mainStoreStock!
+                                                : product.quantity;
                                             return ProductCard(
                                                 width: width,
                                                 onTap: () {
@@ -136,10 +141,10 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                                                 product
                                                                     .productId)
                                                             .length ==
-                                                        product.quantity
+                                                        quantity
                                                     ? ItemStatus.done
                                                     : ItemStatus.remaining,
-                                                quantity: product.quantity -
+                                                quantity: quantity -
                                                     state
                                                         .getScannedList(
                                                             product.productId)

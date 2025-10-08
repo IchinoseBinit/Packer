@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -163,7 +161,8 @@ class _ProductCardState extends State<ProductCard> {
                             ),
                           ],
                         ),
-                        Text("Current Stock: ${widget.productModel.mainStoreStock ?? 'N/A'}",
+                        Text(
+                            "Current Stock: ${widget.productModel.mainStoreStock ?? 'N/A'}",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -189,7 +188,7 @@ class _ProductCardState extends State<ProductCard> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          "Remaining: ${widget.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
+                          "Remaining: ${widget.productModel.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(

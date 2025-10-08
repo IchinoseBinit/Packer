@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
@@ -7,7 +9,7 @@ class ProductModel {
   late String productName;
   late String imageUrl;
   late int quantity;
-  late int? mainStoreStock;
+  int? mainStoreStock; // nullable, not late
   late String size;
   late String measurement;
   late String rackName;
@@ -28,19 +30,25 @@ class ProductModel {
     scannedCount = 0;
   }
 
+  // toJson method (safe and clean)
   Map<String, dynamic> toJson() {
+    final effectiveQuantity =
+        (mainStoreStock != null && quantity > mainStoreStock!)
+            ? mainStoreStock!
+            : quantity;
+    log('Effective Quantity: $effectiveQuantity');
+
     final data = {
       'id': id,
       'product_id': productId,
       'product_name': productName,
       'product_image': imageUrl,
-      'quantity': quantity,
+      'quantity': effectiveQuantity,
       'size': size,
       'measurement': measurement,
       'rack_name': rackName,
     };
 
-    // Only add main_store_stock if it's not null
     if (mainStoreStock != null) {
       data['main_store_stock'] = mainStoreStock!;
     }

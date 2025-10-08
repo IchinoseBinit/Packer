@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -44,7 +46,9 @@ class CommonProductModel {
     productName = productModel.productName;
     rackName = productModel.rackName;
     image = productModel.imageUrl;
-    quantity = productModel.quantity;
+    quantity = (productModel.quantity > productModel.mainStoreStock!)
+        ? quantity = productModel.mainStoreStock!
+        : productModel.quantity;
     size = productModel.size;
     measurement = productModel.measurement;
     mainStoreStock = productModel.mainStoreStock;
