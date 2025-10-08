@@ -344,7 +344,6 @@ class OrderProvider extends ChangeNotifier {
 
   Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
     try {
-      //
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: "${AppUrls.acknowledgeOrderUrl}/$orderId/acknowledge-packer/",

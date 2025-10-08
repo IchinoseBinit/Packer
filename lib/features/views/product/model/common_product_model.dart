@@ -18,7 +18,7 @@ class CommonProductModel {
   late String size;
   late String measurement;
   late int scannedCount;
-  late int? mainStoreStock;
+  int? mainStoreStock;
   late final String productCompartment;
   String? status;
   late int plannedQuantity;
