@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -64,19 +65,35 @@ class DioClient {
           return handler.next(options);
         },
         onError: (DioException error, handler) async {
+          if (error.requestOptions.path.contains(AppUrls.refreshTokenUrl)) {
+            return handler.next(error);
+          }
           if (error.type == DioExceptionType.connectionError) {
             return handler.next(error);
           }
 
-          if (token.isNotEmpty && error.response?.statusCode == 401) {
-            var isSuccess = await AuthController().refreshToken();
-            if (isSuccess is bool) {
-              Map<String, String> headingWithToken = {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $token',
-              };
-              error.requestOptions.headers = headingWithToken;
-              return handler.resolve(await _retry(error.requestOptions));
+          // if (token.isNotEmpty && error.response?.statusCode == 401) {
+          //   var isSuccess = await AuthController().refreshToken();
+          //   if (isSuccess is bool) {
+          //     Map<String, String> headingWithToken = {
+          //       'Content-Type': 'application/json',
+          //       'Authorization': 'Bearer $token',
+          //     };
+          //     error.requestOptions.headers = headingWithToken;
+          //     return handler.resolve(await _retry(error.requestOptions));
+          //   }
+          // }
+          if (token.isNotEmpty) {
+            if (error.response?.statusCode == 401) {
+              var isSuccess = await AuthController().refreshToken();
+              if (isSuccess is bool) {
+                Map<String, String> headingWithToken = {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                };
+                error.requestOptions.headers = headingWithToken;
+                return handler.resolve(await _retry(error.requestOptions));
+              }
             }
           }
           return handler.next(error);

@@ -2,9 +2,13 @@
 
 import 'dart:developer';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/secure_storage_constants.dart';
+import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
+import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -37,7 +41,8 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Inventory Items',
         'screen': NavigationConstants.transferListRoute,
         'onTap': () {
-          navigate(context, route:  NavigationConstants.transferListRoute,
+          navigate(context,
+              route: NavigationConstants.transferListRoute,
               extra: {'isDamage': false});
         },
       });
@@ -129,7 +134,8 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Receive Damaged Products',
         'screen': NavigationConstants.transferListRoute,
         'onTap': () {
-          navigate(context, route: NavigationConstants.transferListRoute,
+          navigate(context,
+              route: NavigationConstants.transferListRoute,
               extra: {'isDamage': true});
         },
       });
@@ -368,86 +374,132 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 SizedBox(height: .4.sh),
                 Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
                     children: [
-                      SizedBox(
-                        width: 170.w,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 14.w),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                            ),
-                            onPressed: () async {
-                              showLoading(context);
-                              await Provider.of<HomeProvider>(context,
-                                      listen: false)
-                                  .updatepackerStatus(false, context,
-                                      showErrorDialog: false);
-
-                              AuthController().logout().then(
-                                (value) {
-                                  removeLoading(context);
-                                  Provider.of<HomeProvider>(context,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 170.w,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 14.w),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryColor,
+                                ),
+                                onPressed: () async {
+                                  showLoading(context);
+                                  await Provider.of<HomeProvider>(context,
                                           listen: false)
-                                      .resetUser();
-                                  if (value is bool) {
-                                    navigateAndRemoveAll(context,
-                                        route: NavigationConstants.loginRoute);
-                                  } else {
-                                    ErrorHandler.alertDialog(context,
-                                        "Something went wrong. Please try again later",
-                                        () {
-                                      navigatePop(context);
-                                    });
-                                  }
+                                      .updatepackerStatus(false, context,
+                                          showErrorDialog: false);
+
+                                  AuthController().logout().then(
+                                    (value) {
+                                      removeLoading(context);
+                                      Provider.of<HomeProvider>(context,
+                                              listen: false)
+                                          .resetUser();
+                                      if (value is bool) {
+                                        navigateAndRemoveAll(context,
+                                            route:
+                                                NavigationConstants.loginRoute);
+                                      } else {
+                                        ErrorHandler.alertDialog(context,
+                                            "Something went wrong. Please try again later",
+                                            () {
+                                          navigatePop(context);
+                                        });
+                                      }
+                                    },
+                                  );
                                 },
-                              );
-                            },
-                            child: Text(
-                              'Logout',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: AppColors.backgroundColor),
+                                child: Text(
+                                  'Logout',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                          color: AppColors.backgroundColor),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          SizedBox(
+                            width: 170.w,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 14.w),
+                              child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryColor,
+                                  ),
+                                  onPressed: () {
+                                    ShowAlertDialog(
+                                      title: 'Clear Cache',
+                                      body: Text(
+                                          'Are you sure you want to clear cache?'),
+                                      okFunc: () {
+                                        HiveDBService.wipeHiveCompletely();
+                                        navigatePop(context);
+                                      },
+                                      needCancel: true,
+                                      cancelFunc: () {
+                                        navigatePop(context);
+                                      },
+                                    ).showAlertDialog(context);
+                                  },
+                                  child: Text(
+                                    "Clear Cache",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColors.backgroundColor,
+                                        ),
+                                  )),
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(
-                        width: 170.w,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 14.w),
-                          child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryColor,
-                              ),
-                              onPressed: () {
-                                ShowAlertDialog(
-                                  title: 'Clear Cache',
-                                  body: Text(
-                                      'Are you sure you want to clear cache?'),
-                                  okFunc: () {
-                                    HiveDBService.wipeHiveCompletely();
-                                    navigatePop(context);
-                                  },
-                                  needCancel: true,
-                                  cancelFunc: () {
-                                    navigatePop(context);
-                                  },
-                                ).showAlertDialog(context);
-                              },
-                              child: Text(
-                                "Clear Cache",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: AppColors.backgroundColor,
-                                    ),
-                              )),
-                        ),
+                      Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () async {
+                              await SecureStorageHelper().write(
+                                key: SecureStorageConstants.accessTokenKey,
+                                value: "Sujeet_token",
+                              );
+                              DioClient.token = "Sujeet_token";
+                              log("${DioClient.token}   ${DioClient.refreshToken}");
+                            },
+                            child: const Text("Change Access token"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              debugger();
+                              await SecureStorageHelper().write(
+                                key: SecureStorageConstants.accessTokenKey,
+                                value: "Sujeet_token",
+                              );
+                              await SecureStorageHelper().write(
+                                key: SecureStorageConstants.refreshTokenKey,
+                                value: "Sujeet_both_token",
+                              );
+                              DioClient.token = "Sujeet_token";
+                              DioClient.refreshToken = "Sujeet_both_token";
+                              log("${DioClient.token}  ${DioClient.refreshToken}");
+                              // final success =
+                              //     await authController.refreshToken();
+                              // if (!success) {
+                              //   navigateAndRemoveAll(
+                              //     context,
+                              //     route: NavigationConstants.loginRoute,
+                              //   );
+                              // }
+                            },
+                            child: const Text("Change Both token"),
+                          ),
+                        ],
                       ),
                     ],
                   ),

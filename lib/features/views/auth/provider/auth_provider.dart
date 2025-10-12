@@ -1,3 +1,4 @@
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/api/dio_client.dart';
@@ -46,7 +47,6 @@ class AuthController {
         body: body,
       );
 
-
       if (otpResponse.statusCode == 200) {
         await removeTokens();
         return true;
@@ -82,10 +82,11 @@ class AuthController {
   }
 
   Future refreshToken() async {
+    log("${DioClient.token}   ${DioClient.refreshToken}");
     final body = {"refresh": DioClient.refreshToken};
     try {
       final otpResponse = await DioClient().request(
-        requestType: RequestType.postWithToken,
+        requestType: RequestType.post,
         url: AppUrls.refreshTokenUrl,
         body: body,
       );
