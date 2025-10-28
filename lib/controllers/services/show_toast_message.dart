@@ -8,5 +8,6 @@ showToast(String message, {Color? color}) {
     msg: message,
     backgroundColor: color,
     fontSize: 14.sp,
+    toastLength: Toast.LENGTH_LONG,
   );
 }
