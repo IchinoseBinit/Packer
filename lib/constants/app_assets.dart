@@ -33,6 +33,7 @@ class AppAssets {
 
   static const acknowledgedOrderImage = "$_imagePath/order_ready.png";
   static const splashScreenLogo = "$_imagePath/logo.png";
+  static const appLogo = "$_imagePath/app_icon.png";
 
   static const phoneRingIcon = "$_iconPath/phone_ring.svg";
 

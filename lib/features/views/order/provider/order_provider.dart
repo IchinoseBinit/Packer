@@ -688,7 +688,7 @@ class OrderProvider extends ChangeNotifier {
         showToast(response.data['error'] ?? "Failed to transfer products");
       }
     } catch (e) {
-      showToast("Error: $e");
+      showLongToast(context: context, message: "Error: $e");
     }
   }
 
