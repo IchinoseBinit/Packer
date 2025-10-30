@@ -113,6 +113,10 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   ),
                   child: GeneralElevatedButton(
                     onPressed: () async {
+                      await orderProvider.removeBasketIdentifier(
+                        widget.order.data.id,
+                      );
+                      await orderProvider.refreshBaskets(widget.order.data.id);
                       final parsedOrderId =
                           int.tryParse(widget.order.data.id.toString()) ?? 0;
 

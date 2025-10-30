@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 class Basket {
   final String identifier;
