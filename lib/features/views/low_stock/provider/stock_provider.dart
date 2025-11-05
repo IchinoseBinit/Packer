@@ -308,6 +308,7 @@ class StockProvider extends ChangeNotifier {
           return ScanResult(success: false, message: 'Failed to scan tag');
         }
       }
+
       Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
           context,
           "Scan ${cartonModel!.productUnits.length - scannedCartonProductTagsList.length} ${cartonModel!.productName} more");
@@ -581,11 +582,16 @@ class StockProvider extends ChangeNotifier {
     trolleyItems = dao.getAll();
     scannedList = getScannedList(model.productId);
     selectedProduct = model;
+    final quantity = (model.quantity > model.mainStoreStock!)
+        ? model.mainStoreStock
+        : model.quantity;
     if (scannedList.isNotEmpty) {
+
       scanMessage =
-          "Scan ${model.quantity - scannedList.length} ${model.productName} More";
+          "Scan ${quantity! - scannedList.length} ${model.productName} More";
     } else {
-      scanMessage = "Scan ${model.quantity} ${model.productName} ";
+
+      scanMessage = "Scan $quantity ${model.productName} ";
     }
     navigateReplacement(
       context,
@@ -641,10 +647,14 @@ class StockProvider extends ChangeNotifier {
 
       // selectedProduct!.scannedCount++;
       final scannedCount = scannedList.length;
+      final quantity =
+          selectedProduct!.quantity > selectedProduct!.mainStoreStock!
+              ? selectedProduct!.mainStoreStock!
+              : selectedProduct!.quantity;
       scanMessage =
-          "Scan ${(selectedProduct?.quantity ?? 0) - (scannedCount)} ${selectedProduct?.productName} More";
+          "Scan ${(quantity ?? 0) - (scannedCount)} ${selectedProduct?.productName} More";
 
-      if (scannedList.length == selectedProduct?.quantity) {
+      if (scannedList.length == quantity) {
         scannedList = [];
         notifyListeners();
         showToast("Scanned Successfully");

@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
@@ -116,6 +118,11 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                           (product) {
                                             final width =
                                                 (1.sw - 12.w - 32.w) / 2;
+
+                                            final quantity = (product.quantity >
+                                                    product.mainStoreStock!)
+                                                ? product.mainStoreStock!
+                                                : product.quantity;
                                             return ProductCard(
                                                 width: width,
                                                 onTap: () {
@@ -134,10 +141,10 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                                                                 product
                                                                     .productId)
                                                             .length ==
-                                                        product.quantity
+                                                        quantity
                                                     ? ItemStatus.done
                                                     : ItemStatus.remaining,
-                                                quantity: product.quantity -
+                                                quantity: quantity -
                                                     state
                                                         .getScannedList(
                                                             product.productId)

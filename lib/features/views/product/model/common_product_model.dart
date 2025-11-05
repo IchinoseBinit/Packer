@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -16,6 +18,7 @@ class CommonProductModel {
   late String size;
   late String measurement;
   late int scannedCount;
+  int? mainStoreStock;
   late final String productCompartment;
   String? status;
   late int plannedQuantity;
@@ -43,9 +46,12 @@ class CommonProductModel {
     productName = productModel.productName;
     rackName = productModel.rackName;
     image = productModel.imageUrl;
-    quantity = productModel.quantity;
+    quantity = (productModel.quantity > productModel.mainStoreStock!)
+        ? quantity = productModel.mainStoreStock!
+        : productModel.quantity;
     size = productModel.size;
     measurement = productModel.measurement;
+    mainStoreStock = productModel.mainStoreStock;
     scannedCount = productModel.scannedCount;
     productCompartment = "";
     plannedQuantity = 0;
@@ -102,8 +108,9 @@ class CommonProductModel {
     scannedCount = 0;
     productCompartment = "";
   }
-  
-  CommonProductModel.fromInventoryTransferRequestItemModel(InventoryTransferRequestItemModel model) {
+
+  CommonProductModel.fromInventoryTransferRequestItemModel(
+      InventoryTransferRequestItemModel model) {
     productId = model.productId ?? 0;
     productName = model.productName ?? "";
     rackName = model.rackName ?? "";

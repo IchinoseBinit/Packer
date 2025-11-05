@@ -1,5 +1,7 @@
 // ignore_for_file: sized_box_for_whitespace
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -325,6 +327,13 @@ class ProfileScreen extends StatelessWidget {
                                   extra: {
                                     'forTransfer': true,
                                   });
+                            } else if (otherInfoData[index]['title'] ==
+                                'Receive Damaged Products') {
+                              navigate(
+                                context,
+                                route: NavigationConstants.transferListRoute,
+                                extra: true,
+                              );
                             } else if (otherInfoData[index]['title'] ==
                                 'Product Damage Request') {
                               navigate(context,

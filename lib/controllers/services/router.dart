@@ -212,7 +212,8 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.basketListRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return BasketList();
+                  final forDamage = state.extra as bool? ?? false;
+                  return BasketList(forDamage: forDamage);
                 },
               ),
               GoRoute(

@@ -35,9 +35,8 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   @override
-
   Widget build(BuildContext context) {
-    final productunits=widget.productModel.productUnits;
+    final productunits = widget.productModel.productUnits;
     return InkWell(
       onTap: () {
         widget.onTap?.call();
@@ -162,6 +161,17 @@ class _ProductCardState extends State<ProductCard> {
                             ),
                           ],
                         ),
+                        if (widget.productModel.mainStoreStock != null)
+                          Text(
+                              "Current Stock: ${widget.productModel.mainStoreStock ?? 'N/A'}",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.homeScreenDimTextColor,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w400,
+                                  )),
                       ],
                     ),
                   ),
@@ -179,7 +189,7 @@ class _ProductCardState extends State<ProductCard> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          "Remaining: ${widget.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
+                          "Remaining: ${widget.productModel.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -208,7 +218,7 @@ class _ProductCardState extends State<ProductCard> {
                                   color: Colors.white, size: 16.sp),
                               SizedBox(width: 4.w),
                               Text(
-                               widget.statusToShow ?? "Packed",
+                                widget.statusToShow ?? "Packed",
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall

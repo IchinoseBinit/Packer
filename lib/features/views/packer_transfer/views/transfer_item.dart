@@ -133,45 +133,48 @@ class TransferItemsList extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar:
-          Consumer<PackerTransferProvider>(builder: (context, provider, child) {
-        final packerRole =
-            Provider.of<PackerTransferProvider>(context, listen: false).role;
-        if (provider.selectedTransferModel == null) {
-          return const SizedBox.shrink();
-        }
-        if (provider.selectedTransferModel!.items == null ||
-            provider.selectedTransferModel!.items!.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: provider.showCompleteButton()
-              ? GeneralElevatedButton(
-                  onPressed: () {
-                    // if(packerRole=='main'){Provider.of<>}
-                    Provider.of<PackerTransferProvider>(context, listen: false)
-                        .completeTransfer(context);
-                  },
-                  title: packerRole == 'packer' ? 'Complete' : 'Accept',
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Center(
-                      child: Text(
-                        "Please scan all items to complete the transfer",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).primaryColor,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
+      bottomNavigationBar: SafeArea(
+        child: Consumer<PackerTransferProvider>(
+            builder: (context, provider, child) {
+          final packerRole =
+              Provider.of<PackerTransferProvider>(context, listen: false).role;
+          if (provider.selectedTransferModel == null) {
+            return const SizedBox.shrink();
+          }
+          if (provider.selectedTransferModel!.items == null ||
+              provider.selectedTransferModel!.items!.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: provider.showCompleteButton()
+                ? GeneralElevatedButton(
+                    onPressed: () {
+                      Provider.of<PackerTransferProvider>(context,
+                              listen: false)
+                          .completeTransfer(context);
+                    },
+                    title: packerRole == 'packer' ? 'Complete' : 'Accept',
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: Text(
+                          "Please scan all items to complete the transfer",
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-        );
-      }),
+                    ],
+                  ),
+          );
+        }),
+      ),
     );
   }
 }

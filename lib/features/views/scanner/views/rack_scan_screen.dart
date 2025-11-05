@@ -57,6 +57,7 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
+    log("Scanned Code: $code");
     if (code.isEmpty) return;
     if (_isProcessing) return;
     _isProcessing = true;

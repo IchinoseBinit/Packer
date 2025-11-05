@@ -25,6 +25,8 @@ import 'package:provider/provider.dart';
 
 class PackerTransferProvider extends ChangeNotifier {
   var transferList = <TransferModel>[];
+  var transferDamageList = <TransferModel>[];
+
   var transferRequestList = <InventoryTransferRequestModel>[];
 
   var transferListLoading = false;
@@ -92,7 +94,8 @@ class PackerTransferProvider extends ChangeNotifier {
     return true;
   }
 
-  void onDetailsTaped(BuildContext context, TransferModel data) async {
+  void onDetailsTaped(BuildContext context, TransferModel data,
+      {bool damage = false}) async {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     if (homeProvider.isMainStore() == false) {
       selectedTransferModel = data;
@@ -107,11 +110,19 @@ class PackerTransferProvider extends ChangeNotifier {
         scanTagsList.clear();
         notifyListeners();
         fetchTransferDetails(context, selectedTransferModel?.id ?? 0);
-        navigate(context, route: NavigationConstants.basketListRoute);
+        navigate(
+          context,
+          route: NavigationConstants.basketListRoute,
+          extra: damage,
+        );
       }
     } else {
       fetchTransferDetails(context, data.id ?? 0);
-      navigate(context, route: NavigationConstants.basketListRoute);
+      navigate(
+        context,
+        route: NavigationConstants.basketListRoute,
+        extra: damage,
+      );
     }
   }
 
@@ -880,7 +891,8 @@ class PackerTransferProvider extends ChangeNotifier {
   }
 
   // details
-  Future<void> fetchTransferDetails(BuildContext context, int id) async {
+  Future<void> fetchTransferDetails(BuildContext context, int id,
+      {bool? damage = false}) async {
     try {
       selectedTransferModelLoading = true;
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
