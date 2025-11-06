@@ -118,4 +118,6 @@ class NavigationConstants {
   static const String inventoryTransferItemsRoute = 'inventory_transfer_items';
   static const String inventoryTransferScannerRoute =
       'inventory_transfer_scanner';
+
+  static const String searchVendor = 'search_vendor';
 }

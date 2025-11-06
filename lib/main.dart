@@ -28,6 +28,7 @@ import 'package:packer/features/views/profile/provider/rack_update_provider.dart
 import 'package:packer/features/views/receive_baskets/controller/receive_basket_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
+import 'package:packer/features/views/vendor/providers/vendor_provider.dart';
 import 'package:packer/features/views/widgets/custom_url.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
@@ -46,6 +47,12 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   NotificationUtils.initializeLocalNotifications();
+
+  // Lock device orientation
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // Request permission for notifications
   try {
@@ -163,6 +170,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             create: (_) => InventoryTransferRequestController()),
         // main store
         ChangeNotifierProvider(create: (_) => InventoryTransferController()),
+        // vendor
+        ChangeNotifierProvider(create: (_) => VendorProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
