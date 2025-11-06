@@ -1,0 +1,18 @@
+name: flutter_callkeep_platform_interface
+description: "A common platform interface for handling calls using flutter_callkeep for Flutter"
+version: 1.0.1
+homepage: https://github.com/doneservices/flutter_callkeep
+
+environment:
+  sdk: '>=3.4.3 <4.0.0'
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0

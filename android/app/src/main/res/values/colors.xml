@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!-- A hex color value to be displayed on the top part of the custom incoming call UI --> 
+    <color name="incoming_call_bg_color">#E3436F</color>
+    <color name="primary">#E3436F</color>
+    <color name="black">#000000</color>
+    <color name="white">#ffffff</color>
+</resources>

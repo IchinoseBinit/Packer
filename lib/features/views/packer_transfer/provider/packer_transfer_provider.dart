@@ -1,0 +1,948 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_urls.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/services/api/enum/request_type.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/packer_transfer/model/basket_model.dart';
+import 'package:packer/features/views/packer_transfer/model/transfer_item_model.dart';
+import 'package:packer/features/views/packer_transfer/model/transfer_model.dart';
+import 'package:packer/features/views/packer_transfer/model/transfer_request_model.dart';
+import 'package:packer/features/views/scanner/model/scan_result.dart';
+import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
+import 'package:packer/utils/qr_message.dart';
+import 'package:provider/provider.dart';
+
+class PackerTransferProvider extends ChangeNotifier {
+  var transferList = <TransferModel>[];
+  var transferDamageList = <TransferModel>[];
+
+  var transferRequestList = <InventoryTransferRequestModel>[];
+
+  var transferListLoading = false;
+  String? scanMessage;
+  TransferModel? selectedTransferModel;
+  InventoryTransferRequestModel? selectedTransferRequestModel;
+  List<Items>? transferRequestsItem;
+
+  BasketModel? selectedBasketModel;
+  var selectedTransferModelLoading = false;
+  String? role;
+
+  List<String> scanTagsList = [];
+
+  bool hasScanned = false;
+
+  void setRole(String value) {
+    role = value;
+  }
+
+  resetHasScanned() {
+    hasScanned = false;
+  }
+
+  List<String> rackList = [];
+  Map<String, List<TransferItemModel>> rackMap = {};
+
+  arrangeRackTransferItem() {
+    rackMap.clear();
+    rackList.clear();
+
+    selectedTransferModel?.items?.forEach((element) {
+      if (!rackList.contains(element.rack)) {
+        rackList.add(element.rack ?? '');
+      }
+
+      rackMap.putIfAbsent(element.rack ?? '', () => []);
+      rackMap[element.rack ?? '']!.add(element);
+    });
+
+    rackList.sort((a, b) => a.compareTo(b));
+    rackList = rackList.reversed.toList();
+
+    notifyListeners();
+  }
+
+  String getScanMessage(int id) {
+    log("Message Product Id: $id");
+    for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
+      if (element.product == id) {
+        return "Scan ${(element.quantity ?? 0) - getScannedCount(id)} ${element.productName}";
+      }
+    }
+    return "";
+  }
+
+  bool showCompleteButton() {
+    if (selectedTransferModel?.items != null) {
+      for (var element in selectedTransferModel!.items!) {
+        if (element.itemScanCount != element.quantity) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  void onDetailsTaped(BuildContext context, TransferModel data,
+      {bool damage = false}) async {
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    if (homeProvider.isMainStore() == false) {
+      selectedTransferModel = data;
+      // final navigateResult = await navigate(
+      //   context,
+      //   route: NavigationConstants.inventoryScanScreenRoute,
+      //   extra: {
+      //     "identifier": data.identifier,
+      //   },
+      // );
+      if (context.mounted) {
+        scanTagsList.clear();
+        notifyListeners();
+        fetchTransferDetails(context, selectedTransferModel?.id ?? 0);
+        navigate(
+          context,
+          route: NavigationConstants.basketListRoute,
+          extra: damage,
+        );
+      }
+    } else {
+      fetchTransferDetails(context, data.id ?? 0);
+      navigate(
+        context,
+        route: NavigationConstants.basketListRoute,
+        extra: damage,
+      );
+    }
+  }
+
+  Future<void> fetchTransferList(BuildContext context,
+      {bool isDamage = false}) async {
+    try {
+      transferListLoading = true;
+      transferList.clear();
+      final url = isDamage == true
+          ? "${AppUrls.managerTransferUrl}?type=damage"
+          : AppUrls.managerTransferUrl;
+      final response = await DioClient()
+          .request(requestType: RequestType.getWithToken, url: url);
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        for (var item in data) {
+          transferList.add(TransferModel.fromMap(item));
+        }
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      transferListLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void onRequestDetailsTaped(
+      BuildContext context, InventoryTransferRequestModel data) async {
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    if (homeProvider.isMainStore() == false) {
+      selectedTransferRequestModel = data;
+
+      if (context.mounted) {
+        scanTagsList.clear();
+        notifyListeners();
+        fetchTransferDetails(context, selectedTransferModel?.id ?? 0);
+        navigateReplacement(context,
+            route: NavigationConstants.basketListRoute);
+      }
+    } else {
+      fetchTransferDetails(context, data.id ?? 0);
+      navigate(context, route: NavigationConstants.basketListRoute);
+    }
+  }
+
+  Future<void> fetchInventoryTransferRequestList(BuildContext context) async {
+    try {
+      transferRequestList.clear();
+      final url = AppUrls.transferRequestUrl;
+
+      final response = await DioClient()
+          .request(requestType: RequestType.getWithToken, url: url);
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.data);
+        transferRequestList = jsonList
+            .map((json) => InventoryTransferRequestModel.fromJson(json))
+            .toList();
+
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      transferListLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchDamageProductList(BuildContext context) async {
+    try {
+      transferListLoading = true;
+      transferList.clear();
+      final url = AppUrls.managerTransferUrl;
+      final response = await DioClient()
+          .request(requestType: RequestType.getWithToken, url: url);
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        for (var item in data) {
+          transferList.add(TransferModel.fromMap(item));
+        }
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      transferListLoading = false;
+      notifyListeners();
+    }
+  }
+
+  bool scanCountOrder(BuildContext context, int cartItemId) {
+    for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
+      if (element.product == cartItemId) {
+        if (element.itemScanCount == element.quantity) {
+          ErrorHandler.alertDialog(context, "Item already scanned");
+          return false;
+        }
+
+        element.itemScanCount++;
+        if (element.itemScanCount == element.quantity) {
+          showToast("Item scanned successfully");
+          notifyListeners();
+          return true;
+        } else {
+          final scanMessage =
+              "Scan ${(element.quantity ?? 0) - element.itemScanCount} more ${element.productName}";
+          Provider.of<ScanMessageProvider>(context, listen: false)
+              .setMessage(context, scanMessage);
+        }
+        notifyListeners();
+        return false;
+      }
+    }
+    ErrorHandler.alertDialog(context, "Item not found");
+    notifyListeners();
+    return false;
+  }
+
+  // get tags completed or not (bool remaining)
+  List<String> getTagsRemaining(
+      BuildContext context, int productId, bool remaining) {
+    final item = selectedTransferModel?.items?.firstWhere(
+      (element) => element.product == productId,
+      orElse: () => TransferItemModel(),
+    );
+
+    if (item == null || item.tags == null) {
+      // ErrorHandler.alertDialog(context, "Item not found");
+      return [];
+    }
+
+    if (remaining) {
+      // Return tags that have NOT been scanned
+      return item.tags!.where((tag) => !scanTagsList.contains(tag)).toList();
+    } else {
+      // Return tags that HAVE been scanned
+      return item.tags!.where((tag) => scanTagsList.contains(tag)).toList();
+    }
+  }
+
+  void showProductTags(BuildContext context, int productId) {
+    // get item
+    final item = selectedTransferModel?.items?.firstWhere(
+      (element) => element.product == productId,
+      orElse: () => TransferItemModel(),
+    );
+    if (item == null) {
+      ErrorHandler.alertDialog(context, "Item not found");
+      return;
+    }
+    final remainingTags = getTagsRemaining(context, productId, true);
+    final completedTags = getTagsRemaining(context, productId, false);
+    // show modal bottom sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text("Product Tags"),
+              ),
+              // 12.h
+              SizedBox(height: 12.h),
+              if (remainingTags.isNotEmpty) ...[
+                Text("Remaining Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: remainingTags.length,
+                  itemBuilder: (context, index) {
+                    return Text(remainingTags[index],
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontSize: 13.sp,
+                                ));
+                  },
+                  separatorBuilder: (context, index) {
+                    return SizedBox(height: 12.h);
+                  },
+                ),
+              ],
+              // 12.h
+              SizedBox(height: 12.h),
+              if (completedTags.isNotEmpty) ...[
+                Text("Completed Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                ListView.separated(
+                  shrinkWrap: true,
+                  separatorBuilder: (context, index) {
+                    return SizedBox(height: 12.h);
+                  },
+                  itemCount: completedTags.length,
+                  itemBuilder: (context, index) {
+                    return Row(
+                      children: [
+                        Expanded(
+                            child: Text(completedTags[index],
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(
+                                      color: Colors.green,
+                                      fontSize: 13.sp,
+                                    ))),
+                        const Icon(Icons.check_circle, color: Colors.green),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  int getScannedCount(int productId) {
+    return scanTagsList
+        .where((element) => element.split("-").first == productId.toString())
+        .length;
+  }
+
+  Future<ScanResult> scanProductForInventoryTransfer(
+      BuildContext context, int productId, String code) async {
+    if (scanTagsList.contains(code)) {
+      return ScanResult(success: false, message: "Tag already scanned");
+    }
+    final item = selectedTransferModel?.items?.firstWhere(
+      (element) => element.product == productId,
+      orElse: () => TransferItemModel(),
+    );
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
+    if (homeProvider.isMainStore() == false) {
+      if (item != null && (item.tags?.contains(code) ?? false)) {
+        scanTagsList.add(code);
+
+        final scanMessage =
+            "Scan ${(item.quantity ?? 0) - getScannedCount(productId)} more ${item.productName}";
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(context, scanMessage);
+      } else {
+        // removeLoading(context);
+        return ScanResult(
+            success: false, message: "Invalid QR ${detectQrMessage(code)}");
+      }
+    } else {
+      scanTagsList.add(code);
+      final scanMessage =
+          "Scan ${(item?.quantity ?? 0) - getScannedCount(productId)} more ${item?.productName}";
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+    }
+    if (getScannedCount(productId) == item?.quantity) {
+      if (homeProvider.isMainStore()) {
+        final result = await navigateReplacement(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "productId": productId,
+            "forDamage": true,
+          },
+        );
+
+        if (result != true) {
+          return ScanResult(success: false);
+        }
+        removeScanTags(productId);
+        selectedTransferModel?.items
+            ?.removeWhere((element) => element.product == productId);
+        arrangeRackTransferItem();
+        notifyListeners();
+        return ScanResult(success: true, message: "Scanned Successfully");
+      } else {
+        final success = await postScannedTags(context, productId);
+        if (success) {
+          selectedTransferModel?.items
+              ?.removeWhere((element) => element.product == productId);
+          arrangeRackTransferItem();
+          notifyListeners();
+          return ScanResult(success: true, message: "Scanned Successfully");
+        } else {
+          removeScanTags(productId);
+          notifyListeners();
+          return ScanResult(
+              success: false, message: "Failed to submit scan tag");
+        }
+      }
+    }
+    notifyListeners();
+    return ScanResult(success: false);
+  }
+
+  Future<ScanResult> scanProduct(BuildContext context, int productId,
+      String code, MobileScannerController controller, isDamaged) async {
+    if (scanTagsList.contains(code)) {
+      return ScanResult(success: false, message: "Tag already scanned");
+    }
+
+    final item = selectedTransferModel?.items?.firstWhere(
+      (element) => element.product == productId,
+      orElse: () => TransferItemModel(),
+    );
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    if (homeProvider.isMainStore() == false) {
+      if (item != null && (item.tags?.contains(code) ?? false)) {
+        scanTagsList.add(code);
+        final scanMessage =
+            "Scan ${(item.quantity ?? 0) - item.itemScanCount} more ${item.productName}";
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(context, scanMessage);
+      } else {
+        // removeLoading(context);
+        return ScanResult(
+            success: false, message: "Invalid QR ${detectQrMessage(code)}");
+      }
+    } else {
+      scanTagsList.add(code);
+      notifyListeners();
+      final scanMessage =
+          "Scan ${(item?.quantity ?? 0) - (item?.itemScanCount ?? 0)} more ${item?.productName}";
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+    }
+
+    final isScanned = scanCountOrder(context, productId);
+
+    // if it is damage then no need to navigate to assign
+    //rack and no need to call post scan tags api
+    if (isDamaged) {
+      return ScanResult(success: true, message: "Scanned Successfully");
+    }
+
+    if (isScanned) {
+      if (role == "main") {
+        await controller.stop();
+        final result = await navigateReplacement(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "productId": productId,
+            "forDamage": true,
+          },
+        );
+
+        if (result != true) {
+          await controller.start();
+        }
+
+        return ScanResult(success: true, message: "Scanned Successfully");
+      }
+      final success = await postScannedTags(context, productId);
+
+      if (success) {
+        return ScanResult(success: true, message: "Scanned Successfully");
+      } else {
+        removeScanTags(productId);
+        item?.itemScanCount = 0;
+        // ErrorHandler.alertDialog(context, "Failed to submit scan tag");
+        notifyListeners();
+        return ScanResult(success: false, message: "Failed to submit scan tag");
+      }
+    }
+    // removeLoading(context);
+    return ScanResult(success: false);
+  }
+
+  // remove particular productid scan tags
+  void removeScanTags(int productId) {
+    scanTagsList
+        .removeWhere((element) => element.contains(productId.toString()));
+    notifyListeners();
+  }
+
+  onBasketScanTapped(BuildContext context, BasketModel? basket) {
+    selectedBasketModel = basket;
+    notifyListeners();
+    navigate(context, route: NavigationConstants.basketScanScreenRoute, extra: {
+      "forOrder": false,
+      "basketCode": basket?.identifier,
+    });
+  }
+
+  // basket scan
+  bool scanBasketCode(BuildContext context, String code) {
+    if (selectedBasketModel == null) {
+      if (selectedTransferModel?.baskets?.any((basket) =>
+              basket.identifier.toLowerCase().contains(code.toLowerCase())) ??
+          false) {
+        selectedBasketModel = selectedTransferModel?.baskets?.firstWhere(
+          (basket) =>
+              basket.identifier.toLowerCase().contains(code.toLowerCase()),
+        );
+        // removeLoading(context);
+        fetchBasketDetails(context, selectedBasketModel?.identifier ?? "");
+        return true;
+      }
+    }
+    if (selectedBasketModel?.identifier
+            .toLowerCase()
+            .contains(code.toLowerCase()) ??
+        false) {
+      scanTagsList.clear();
+      notifyListeners();
+      removeLoading(context);
+      fetchBasketDetails(context, code);
+      return true;
+    }
+    return false;
+  }
+
+  // itemTaped
+  Future<void> itemTaped(BuildContext context, TransferItemModel? item) async {
+    if (item == null) {
+      ErrorHandler.alertDialog(context, "Item not found");
+      return;
+    }
+    final scanMessage = getScanMessage(item.product ?? 0);
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    if (homeProvider.isMainStore() == false) {
+      if (item.rack != null && item.rack!.isNotEmpty) {
+        await navigate(context,
+            route: NavigationConstants.scanRackRoute,
+            extra: {
+              "rack": item.rack,
+              "productId": item.product,
+              "forTransfer": true
+            });
+        // if (result == true && context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(context, scanMessage);
+        //   await Future.delayed(const Duration(milliseconds: 100));
+
+        //   navigate(context,
+        //       route: NavigationConstants.productScanScreenRoute,
+        //       extra: {
+        //         "rack": item.rack,
+        //         "productId": item.product,
+        //         "forTransfer": true
+        //       });
+        // if (result == true && context.mounted) {
+        //   Provider.of<ScanMessageProvider>(context, listen: false)
+        //       .setMessage(context, scanMessage);
+        //   navigate(
+        //     context,
+        //     route: NavigationConstants.productScanScreenRoute,
+        //     extra: {
+        //       "forTransfer": true,
+        //       "productId": item.product,
+        //     },
+        //   );
+        // }
+        return;
+        // }
+      }
+      showYesNo(context).then((value) async {
+        final result = await navigate(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "productId": item.product,
+          },
+        );
+        return;
+      });
+    } else {
+      //
+
+      // first assign rack
+      final rackCode = await navigate(
+        context,
+        route: NavigationConstants.scanRackRoute,
+        extra: {
+          "productId": item.product,
+          "forDamage": true,
+        },
+      );
+
+      if (rackCode == null || rackCode.toString().isEmpty) {
+        showToast("Rack not assigned, try again");
+        return;
+      }
+
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+
+      // scan all items
+      final scanRemainingItem = (item.quantity ?? 0) - item.itemScanCount;
+      for (var i = 0; i < scanRemainingItem; i++) {
+        final success = await navigate(
+          context,
+          route: NavigationConstants.productScanScreenRoute,
+          extra: {
+            "forTransfer": true,
+            "productId": item.product,
+            "forDamageReceive": true
+          },
+        );
+        if (success != true) {
+          log("Scan cancelled by user");
+          return;
+        }
+      }
+
+      if (item.product == null) {
+        showToast("Unable to find product id, try again");
+        return;
+      }
+
+      final result =
+          await Provider.of<PackerTransferProvider>(context, listen: false)
+              .postDamageProductTags(context, item.product!, rackCode);
+
+      if (result && context.mounted) {
+        showToast("Product has been scan successfully");
+      }
+
+      return;
+    }
+  }
+
+  // show yes no for update product rack
+  Future<bool?> showYesNo(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Confirmation"),
+          content: const Text("Assign a rack?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // post scanned tags
+  Future<bool> postScannedTags(BuildContext context, int productId) async {
+    try {
+      showLoading(context);
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+      final url = homeProvider.isMainStore() == true
+          ? AppUrls.scanUnitUrl
+          : AppUrls.verifyUnitsUrl;
+      final urlValue =
+          url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
+      if (scanTagsList.isEmpty) {
+        removeLoading(context);
+        ErrorHandler.alertDialog(context, 'No tags to post');
+        return false;
+      } else {
+        final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: urlValue,
+          body: {
+            "product_id": productId,
+            "unit_tags": scanTagsList
+                .where((e) => e.split("-").first == productId.toString())
+                .toList(),
+            if (homeProvider.isMainStore() == false)
+              "basket_identifier": selectedBasketModel?.identifier,
+          },
+        );
+        if (response.statusCode == 200) {
+          showToast('Tags posted successfully');
+          removeScanTags(productId);
+          notifyListeners();
+          removeLoading(context);
+          return true;
+        } else {
+          removeLoading(context);
+          ErrorHandler.alertDialog(context, 'Failed to post tags');
+          return false;
+        }
+      }
+    } catch (ex) {
+      removeLoading(context);
+      ErrorHandler.alertDialog(context, ex.toString());
+      return false;
+    }
+  }
+
+  Future<bool> postDamageProductTags(
+      BuildContext context, int productId, String rackName) async {
+    try {
+      showLoading(context);
+      final url = AppUrls.verifyDamageProductUrl;
+      final urlValue =
+          url.replaceAll('id', selectedTransferModel?.id?.toString() ?? '0');
+      if (scanTagsList.isEmpty) {
+        ErrorHandler.alertDialog(context, 'No tags to post');
+        removeLoading(context);
+        return false;
+      } else {
+        final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: urlValue,
+          body: {
+            "product_id": productId,
+            "unit_tags": scanTagsList
+                .where((e) => e.split("-").first == productId.toString())
+                .toList(),
+            "rack_identifier": rackName,
+            "basket_identifier": selectedBasketModel?.identifier,
+          },
+        );
+        if (response.statusCode == 200) {
+          showToast('Tags posted successfully');
+          // scanTagsList.clear();
+          notifyListeners();
+          removeLoading(context);
+          return true;
+        } else {
+          removeLoading(context);
+          if (context.mounted) {
+            await ErrorHandler.alertDialog(context, 'Failed to post tags');
+          }
+          return false;
+        }
+      }
+    } catch (ex) {
+      removeLoading(context);
+
+      await ErrorHandler.alertDialog(context, ex.toString());
+
+      return false;
+    }
+  }
+
+  // update product rack
+  void updateRackOnModel(int productId, String rack) {
+    for (var element in selectedTransferModel?.items ?? <TransferItemModel>[]) {
+      if (element.product == productId) {
+        element.rack = rack;
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<ScanResult> updateRack(
+      BuildContext context, String code, int productId) async {
+    try {
+      showLoading(context);
+      final url = AppUrls.updateRackUrl;
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: url,
+        body: {
+          "rack_identifier": code,
+          "product_id": productId,
+        },
+      );
+      removeLoading(context);
+      if (response.statusCode == 200 && context.mounted) {
+        updateRackOnModel(productId, code);
+        // move navigation after loading is removed
+
+        // set message
+        Provider.of<ScanMessageProvider>(context, listen: false)
+            .setMessage(context, getScanMessage(productId));
+
+        return ScanResult(success: true, message: "Rack updated successfully");
+      } else {
+        // ErrorHandler.alertDialog(context, 'Failed to update rack');
+        return ScanResult(success: false, message: "Failed to update rack");
+      }
+    } catch (ex) {
+      removeLoading(context);
+      // ErrorHandler.alertDialog(context, ex.toString());
+      return ScanResult(success: false, message: ex.toString());
+    }
+  }
+
+  // complete transfer
+  Future<void> completeTransfer(BuildContext context) async {
+    try {
+      showLoading(context);
+      final id = selectedTransferModel?.id;
+      if (id == null) {
+        removeLoading(context);
+        ErrorHandler.alertDialog(context, 'Transfer ID is null');
+        return;
+      }
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+      final url = homeProvider.isMainStore() == true
+          ? AppUrls.acceptTransferUrl
+          : AppUrls.completeTransferUrl;
+      final response = await DioClient().request(
+          requestType: RequestType.postWithToken,
+          url: url.replaceAll('id', id.toString()),
+          body: {
+            "basket_identifier": selectedBasketModel?.identifier,
+          });
+      if (response.statusCode == 200) {
+        showToast('Transfer completed successfully');
+        selectedTransferModel?.baskets?.removeWhere(
+          (element) => element.identifier == selectedBasketModel?.identifier,
+        );
+        removeLoading(context);
+        navigatePop(context, true);
+      } else {
+        removeLoading(context);
+        ErrorHandler.alertDialog(context, 'Failed to complete transfer');
+      }
+    } catch (ex) {
+      removeLoading(context);
+      ErrorHandler.alertDialog(context, ex.toString());
+    }
+  }
+
+  fetchBasketDetails(BuildContext context, String code) async {
+    try {
+      selectedTransferModelLoading = true;
+      final url = AppUrls.basketUrl.replaceAll(':id', code);
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: url,
+      );
+      if (response.statusCode == 200) {
+        selectedTransferModel?.items = [];
+        for (var element in response.data['products'] ?? []) {
+          selectedTransferModel?.items?.add(
+            TransferItemModel.fromMap(element),
+          );
+        }
+        arrangeRackTransferItem();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch basket details');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      selectedTransferModelLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // details
+  Future<void> fetchTransferDetails(BuildContext context, int id,
+      {bool? damage = false}) async {
+    try {
+      selectedTransferModelLoading = true;
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+      final url = AppUrls.managerTransferDetailsUrl;
+      // homeProvider.isMainStore() == true
+      //     ? AppUrls.managerTransferDetailsUrl
+      //     : AppUrls.packerTransferDetailsUrl;
+      final urlValue = url.replaceAll('id', id.toString());
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: urlValue,
+      );
+      if (response.statusCode == 200) {
+        selectedTransferModel = TransferModel.fromMap(response.data);
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      selectedTransferModelLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchTransferRequestDetails(BuildContext context, int id) async {
+    try {
+      selectedTransferModelLoading = true;
+      final url = AppUrls.transferRequestDetailsUrl;
+      final urlValue = url.replaceAll('id', id.toString());
+
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: urlValue,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = response.data;
+        transferRequestsItem =
+            jsonList.map((json) => Items.fromJson(json)).toList();
+        notifyListeners();
+      } else {
+        ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');
+      }
+    } catch (ex) {
+      ErrorHandler.alertDialog(context, ex.toString());
+    } finally {
+      selectedTransferModelLoading = false;
+      notifyListeners();
+    }
+  }
+}

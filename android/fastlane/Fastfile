@@ -1,0 +1,123 @@
+require 'dotenv'
+Dotenv.load
+
+default_platform(:android)
+
+platform :android do
+  SLACK_URL = ENV['SLACK_URL']
+  DRIVE_KEYFILE = ENV['DRIVE_KEYFILE']
+  DRIVE_FOLDER_ID = ENV['DRIVE_FOLDER_ID']
+
+  def notify_slack(success:, message:, fields: [])
+    slack(
+      message: message,
+      success: success,
+      slack_url: SLACK_URL,
+      default_payloads: [],
+      attachment_properties: { fields: fields }
+    )
+  end
+
+  def on_error(exception)
+    notify_slack(
+      success: false,
+      message: "Packer app- ❌ Fastlane Android CI/CD failed",
+      fields: [{
+        title: "Error Details",
+        value: exception.to_s,
+        short: false
+      }]
+    )
+    UI.user_error!(exception.to_s)
+  end
+
+  # ---------------------- BUILD & UPLOAD APK ----------------------
+
+  desc "Build release APK"
+  lane :build_apk do
+    begin
+      sh "../../scripts/build_apk.sh"
+      notify_slack(success: true, message: "Packer app- ✅ APK build completed successfully.")
+    rescue => exception
+      on_error(exception)
+    end
+  end
+
+  desc "Upload built APK to Google Drive"
+  lane :upload_apk do
+    begin
+      links = upload_to_google_drive(
+        drive_keyfile: DRIVE_KEYFILE,
+        service_account: true,
+        folder_id: DRIVE_FOLDER_ID,
+        upload_files: ['../build/app/outputs/flutter-apk/app-release.apk']
+      )
+      notify_slack(
+        success: true,
+        message: "Packer app- 📦 New APK uploaded to Google Drive.",
+        fields: [{
+          title: "Drive Link",
+          value: links[0],
+          short: false
+        }]
+      )
+    rescue => exception
+      on_error(exception)
+    end
+  end
+
+  # ---------------------- BUILD AAB ----------------------
+
+  desc "Build release AAB (App Bundle)"
+  lane :build_aab do
+    begin
+      version = google_play_track_version_codes(track: 'production')[0].to_i + 1
+      puts "Building AAB with version code: #{version}"
+      sh "../../scripts/build_bundle.sh #{version}"
+      notify_slack(success: true, message: "Packer app- ✅ AAB build completed successfully. Version: #{version}")
+    rescue => exception
+      on_error(exception)
+    end
+  end
+
+  # ---------------------- INTERNAL APP SHARING ----------------------
+
+  desc "Upload AAB to Internal App Sharing"
+  lane :upload_internal do
+    begin
+      applink = upload_to_play_store_internal_app_sharing(
+        aab: '../build/app/outputs/bundle/release/app-release.aab'
+      )
+      notify_slack(
+        success: true,
+        message: "Packer app - 🚀 New version uploaded to *Internal App Sharing*.",
+        fields: [{
+          title: "App Link",
+          value: applink,
+          short: false
+        }]
+      )
+    rescue => exception
+      on_error(exception)
+    end
+  end
+
+  # ---------------------- GOOGLE PLAY PRODUCTION ----------------------
+
+  desc "Upload AAB to Google Play Production"
+  lane :upload_production do
+    begin
+      upload_to_play_store(
+        track: 'production',
+        aab: '../build/app/outputs/bundle/release/app-release.aab',
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        timeout: 1000,
+        in_app_update_priority: 5 # can set (0-5) 5 for performImmediateUpdate others completeFlexibleUpdate
+      )
+      notify_slack(success: true, message: "Packer app- 🎉 Successfully published new version to *Google Play Production*.")
+    rescue => exception
+      on_error(exception)
+    end
+  end
+end

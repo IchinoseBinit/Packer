@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "246901202538",
+    "project_id": "dropit-nepal",
+    "storage_bucket": "dropit-nepal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246901202538:android:a91a86ac931bb24cb37413",
+        "android_client_info": {
+          "package_name": "com.np.dropit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD056BrsykO8NiL-sLyyg-nWjicGGHKtOQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246901202538:android:f79188473bc743d8b37413",
+        "android_client_info": {
+          "package_name": "com.np.dropit.packer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD056BrsykO8NiL-sLyyg-nWjicGGHKtOQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246901202538:android:bcb28cf998ae65f5b37413",
+        "android_client_info": {
+          "package_name": "com.np.dropit.rider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD056BrsykO8NiL-sLyyg-nWjicGGHKtOQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
