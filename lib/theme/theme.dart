@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:packer/constants/app_colors.dart';
 
-
 ThemeData lightTheme(BuildContext context) {
   // final widthExceeds = MediaQuery.of(context).size.width > 380;
   return ThemeData(

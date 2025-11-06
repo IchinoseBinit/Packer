@@ -20,6 +20,7 @@ import 'package:packer/controllers/services/hive_db/trolley_item.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/carton/model/carton_list_model.dart';
+import 'package:packer/features/views/low_stock/repo/low_stock_repo.dart';
 import 'package:packer/features/views/low_stock/model/carton_model.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
@@ -113,23 +114,34 @@ class StockProvider extends ChangeNotifier {
       if (context.mounted && !isFromBuild) {
         notifyListeners();
       }
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: AppUrls.lowStockUrl,
-      );
-      if (response.statusCode == 200) {
-        lowStockList = [];
-        for (var item in response.data) {
-          lowStockList.add(LowStockModel.fromJson(item));
-        }
-      } else {
-        isError = true;
-        errorMessage = "No data found";
-      }
+
+      lowStockList = await LowStockRepo.getLowStock();
+      notifyListeners();
       FirebaseAPI().scheduleNotification();
     } catch (e) {
       isError = true;
       errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<List<ProductModel>> fetchProducts(
+      {required int storeId, int? vendorId}) async {
+    try {
+      isLoading = true;
+      isError = false;
+      errorMessage = "";
+
+      final data =
+          await LowStockRepo.getProduct(storeId: storeId, vendorId: vendorId);
+
+      return data;
+    } catch (e) {
+      isError = true;
+      errorMessage = e.toString();
+      return [];
     } finally {
       isLoading = false;
       notifyListeners();
@@ -552,11 +564,15 @@ class StockProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onDetailsTaped(
-    BuildContext context,
-    LowStockModel lowStockModel,
-  ) async {
+  Future onDetailsTaped(BuildContext context, LowStockModel lowStockModel,
+      {int? vendorId}) async {
     selectedModel = lowStockModel;
+
+    final data =
+        await fetchProducts(storeId: lowStockModel.storeId, vendorId: vendorId);
+
+    selectedModel?.products = data;
+
     initRackProductMap();
     basketId = "";
 
@@ -566,7 +582,6 @@ class StockProvider extends ChangeNotifier {
     if (context.mounted) {
       trolleyItems = dao.getAll();
       updateLowStockModel();
-      navigate(context, route: NavigationConstants.lowStockDetailRoute);
       notifyListeners();
     }
   }
@@ -586,11 +601,9 @@ class StockProvider extends ChangeNotifier {
         ? model.mainStoreStock
         : model.quantity;
     if (scannedList.isNotEmpty) {
-
       scanMessage =
           "Scan ${quantity! - scannedList.length} ${model.productName} More";
     } else {
-
       scanMessage = "Scan $quantity ${model.productName} ";
     }
     navigateReplacement(
