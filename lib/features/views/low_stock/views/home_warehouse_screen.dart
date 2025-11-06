@@ -97,11 +97,12 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
         return Scaffold(
           appBar: GeneralAppBar(
             needLeading: false,
-            middleWidget:  CustomSwitch(fromWareHouse: true, onPressed: () {
-              Provider.of<StockProvider>(context, listen: false)
-                  .fetchLowStockProducts(context);
-              
-            }),
+            middleWidget: CustomSwitch(
+                fromWareHouse: true,
+                onPressed: () {
+                  Provider.of<StockProvider>(context, listen: false)
+                      .fetchLowStockProducts(context);
+                }),
             trailingSvgAsset: AppAssets.trolleyIcon,
             trailingOnPressed: () {
               navigate(context,
@@ -113,8 +114,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
               : homeProvider.isOnline
                   ? RefreshIndicator(
                       onRefresh: () async {
-                        await Provider.of<StockProvider>(context,
-                                listen: false)
+                        await Provider.of<StockProvider>(context, listen: false)
                             .fetchLowStockProducts(context);
                       },
                       child: SafeArea(
@@ -129,8 +129,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                                   builder: (context, value, _) {
                                     if (value.isLoading) {
                                       return const Center(
-                                          child:
-                                              CircularProgressIndicator());
+                                          child: CircularProgressIndicator());
                                     } else if (value.isError) {
                                       return Center(
                                         child: Text(
@@ -142,24 +141,22 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                                       );
                                     } else {
                                       return ListView.builder(
-                                        itemCount:
-                                            value.lowStockList.length,
+                                        itemCount: value.lowStockList.length,
                                         itemBuilder: (context, index) {
+                                          final lowStock =
+                                              value.lowStockList[index];
                                           return LowStockCard(
-                                            model:
-                                                value.lowStockList[index],
+                                            model: value.lowStockList[index],
                                             primaryColor:
-                                                Theme.of(context)
-                                                    .primaryColor,
+                                                Theme.of(context).primaryColor,
                                             callback: () {
-                                              Provider.of<StockProvider>(
-                                                      context,
-                                                      listen: false)
-                                                  .onDetailsTaped(
-                                                      context,
-                                                      value.lowStockList[
-                                                          index]);
+                                              navigate(context,
+                                                  route: NavigationConstants
+                                                      .lowStockDetailRoute,
+                                                  extra: value
+                                                      .lowStockList[index]);
                                             },
+                                            count: lowStock.qty,
                                           );
                                         },
                                       );
@@ -203,7 +200,6 @@ class LowStockCard extends StatelessWidget {
   final VoidCallback? callback;
   final String basketId;
   final int? count;
-
 
   const LowStockCard({
     super.key,

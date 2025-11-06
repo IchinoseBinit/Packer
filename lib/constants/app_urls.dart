@@ -94,8 +94,17 @@ class AppUrls {
   // complete
   static String get completeTransferUrl =>
       "$baseUrl/packer/transfers/id/complete/";
+
   // low-stock
   static String get lowStockUrl => "$baseUrl/packer/low-stock-products/";
+
+  static String get lowStockForWareHouseUrl =>
+      "$baseUrl/packer/low-stock/stores/";
+
+  static String get getVendors => "$baseUrl/packer/vendors/";
+
+  static String get productByStoreAndVendor =>
+      "$baseUrl/packer/low-stock/stores/SID/products/";
 
   // manager_transfer
   static String get managerTransferUrl => "$baseUrl/store/transfers/";

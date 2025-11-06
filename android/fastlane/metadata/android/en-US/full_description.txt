@@ -1,0 +1,10 @@
+Fasto Packer App is a productivity tool designed to streamline warehouse operations and improve team efficiency. Built specifically for the Fasto warehouse team, it allows packers and staff to manage orders, track products, and ensure error-free fulfillment.
+
+📦 Key Features:
+Easy order packing and status tracking
+Real-time updates for warehouse activities
+User-friendly interface for daily use
+Designed for internal team collaboration
+
+[Minimum supported app version: 1.0.13] 
+📍 Available in select locations across Nepal

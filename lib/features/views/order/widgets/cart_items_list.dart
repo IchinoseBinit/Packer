@@ -81,7 +81,8 @@ class CartItemsList extends StatelessWidget {
                           },
                           productModel:
                               CommonProductModel.fromProductDetails(product),
-                          quantity: (product.quantity ?? 0) - state.countScannedItem(product.id),
+                          quantity: (product.quantity ?? 0) -
+                              state.countScannedItem(product.id),
                           status:
                               isDone ? ItemStatus.done : ItemStatus.remaining,
                         );

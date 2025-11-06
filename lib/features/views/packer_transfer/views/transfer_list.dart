@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/date_formatter.dart';
@@ -53,7 +54,8 @@ class _TransferListState extends State<TransferList> {
                       // Handle item tap
                       Provider.of<PackerTransferProvider>(context,
                               listen: false)
-                          .onDetailsTaped(context, data);
+                          .onDetailsTaped(context, data,
+                              damage: widget.isDamage);
                     },
                     transferItem: data,
                     primaryColor: Theme.of(context).primaryColor,
@@ -77,12 +79,12 @@ class TransferNotificationCard extends StatelessWidget {
   final String? basketId;
 
   const TransferNotificationCard({
-    Key? key,
+    super.key,
     required this.transferItem,
     required this.primaryColor,
     this.callback,
     this.basketId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

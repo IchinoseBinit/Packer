@@ -18,12 +18,14 @@ class LowStockModel {
   LowStockModel.fromJson(Map<String, dynamic> json) {
     storeId = json['store_id'].toString().toInt();
     storeName = json['store_name'].toString().toStringConversion();
-    qty = 0;
+    qty = json['low_stock_count'].toString().toStringConversion().toInt();
     if (json['products'] != null) {
       products = <ProductModel>[];
       json['products'].forEach((v) {
         products.add(ProductModel.fromJson(v));
       });
+    } else {
+      products = [];
     }
   }
 

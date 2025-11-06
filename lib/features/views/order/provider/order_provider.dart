@@ -10,7 +10,6 @@ import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
-import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -213,6 +212,41 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> removeBasketIdentifier(int orderId) async {
+    // open Hive box
+    basketBox = await Hive.openBox('${HiveConstants.order}$orderId');
+    basketDao = BasketDao(basketBox);
+
+    final baskets = basketDao.getAll();
+
+    // Get all product IDs from the latest order details (use a set for fast lookup)
+    final validProductIds =
+        _orderDetails?.productDetails.map((p) => p.id.toString()).toSet() ??
+            <String>{};
+
+    for (final basket in baskets) {
+      final updatedProductIdentifiers =
+          basket.productIdentifiers.where((identifier) {
+        final productId = identifier.split('-').first;
+        return validProductIds.contains(productId);
+      }).toList();
+
+      // If changes are needed, update basket
+      if (updatedProductIdentifiers.length !=
+          basket.productIdentifiers.length) {
+        // Create a new Basket instance with updated identifiers (avoid calling copyWith)
+        final updatedBasket = Basket(
+          identifier: basket.identifier,
+          productIdentifiers: updatedProductIdentifiers,
+        );
+        basketDao.addOrUpdateBasket(updatedBasket);
+        print('Updated basket: ${basket.identifier}');
+      }
+    }
+
+    notifyListeners();
+  }
+
   // UPDATED
   int countScannedItem(int productId) {
     final scannedLength = scannedDataList
@@ -344,7 +378,6 @@ class OrderProvider extends ChangeNotifier {
 
   Future<void> acknowledgeOrder(BuildContext context, String orderId) async {
     try {
-      //
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: "${AppUrls.acknowledgeOrderUrl}/$orderId/acknowledge-packer/",
@@ -449,6 +482,13 @@ class OrderProvider extends ChangeNotifier {
         "isCancelRequest": false,
       };
     }
+  }
+
+  Future<void> refreshBaskets(int orderId) async {
+    basketBox = await Hive.openBox('${HiveConstants.order}$orderId');
+    basketDao = BasketDao(basketBox);
+    baskets = basketDao.getAll();
+    notifyListeners();
   }
 
   Future fetchUnsettledOrders() async {
@@ -689,7 +729,7 @@ class OrderProvider extends ChangeNotifier {
         showToast(response.data['error'] ?? "Failed to transfer products");
       }
     } catch (e) {
-      showToast("Error: $e");
+      showLongToast(context: context, message: "Error: $e");
     }
   }
 

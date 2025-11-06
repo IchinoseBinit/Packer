@@ -1,5 +1,7 @@
 // ignore_for_file: sized_box_for_whitespace
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -34,10 +36,9 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.inventory,
         'title': 'Inventory Items',
         'screen': NavigationConstants.transferListRoute,
-        'onTap': () {
-          navigate(context, route:  NavigationConstants.transferListRoute,
-              extra: {'isDamage': false});
-        },
+        'onTap': () => navigate(context,
+            route: NavigationConstants.transferListRoute,
+            extra: {'isDamage': false}),
       });
     }
     if (value.isMainStore() &&
@@ -126,10 +127,9 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.transfer_within_a_station,
         'title': 'Receive Damaged Products',
         'screen': NavigationConstants.transferListRoute,
-        'onTap': () {
-          navigate(context, route: NavigationConstants.transferListRoute,
-              extra: {'isDamage': true});
-        },
+        'onTap': () => navigate(context,
+            route: NavigationConstants.transferListRoute,
+            extra: {'isDamage': true}),
       });
     }
 
@@ -203,20 +203,20 @@ class ProfileScreen extends StatelessWidget {
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: otherInfoData.length,
                   itemBuilder: (context, index) {
+                    final otherInfo = otherInfoData[index];
                     final bool isOrderReturn =
-                        otherInfoData[index]['title'] == "Order Return";
+                        otherInfo['title'] == "Order Return";
                     return Column(
                       children: [
                         ListTile(
                           onTap: () {
-                            if (otherInfoData[index]['onTap'] != null) {
-                              otherInfoData[index]['onTap']();
-                            } else if (otherInfoData[index]['screen'] != null) {
-                              navigate(context,
-                                  route: otherInfoData[index]['screen']);
+                            if (otherInfo['onTap'] != null) {
+                              otherInfo['onTap']();
+                            } else if (otherInfo['screen'] != null) {
+                              navigate(context, route: otherInfo['screen']);
                             }
 
-                            //  else if (otherInfoData[index]['title'] ==
+                            //  else if (otherInfo['title'] ==
                             //     "Receive Damaged Products") {
                             //   navigate(
                             //     context,
@@ -224,15 +224,14 @@ class ProfileScreen extends StatelessWidget {
                             //         NavigationConstants.damageProductReturnList,
                             //   );
                             // }
-                            // else if (otherInfoData[index]['title'] ==
+                            // else if (otherInfo['title'] ==
                             //     "Request QR") {
                             //   navigate(context,
                             //       route:
                             //           NavigationConstants.damageScanScreenRoute,
                             //       extra: {'qr': false, 'requestQr': true});
                             // }
-                            else if (otherInfoData[index]['title'] ==
-                                "Request QR") {
+                            else if (otherInfo['title'] == "Request QR") {
                               showModalBottomSheet(
                                   context: context,
                                   builder: (context) => SafeArea(
@@ -317,7 +316,7 @@ class ProfileScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ));
-                            } else if (otherInfoData[index]['title'] ==
+                            } else if (otherInfo['title'] ==
                                 'Transfer Damaged Products') {
                               navigate(context,
                                   route:
@@ -325,7 +324,14 @@ class ProfileScreen extends StatelessWidget {
                                   extra: {
                                     'forTransfer': true,
                                   });
-                            } else if (otherInfoData[index]['title'] ==
+                            } else if (otherInfo['title'] ==
+                                'Receive Damaged Products') {
+                              navigate(
+                                context,
+                                route: NavigationConstants.transferListRoute,
+                                extra: true,
+                              );
+                            } else if (otherInfo['title'] ==
                                 'Product Damage Request') {
                               navigate(context,
                                   route: NavigationConstants
@@ -334,8 +340,7 @@ class ProfileScreen extends StatelessWidget {
                                     'forDamageRequest': true,
                                   });
                             } else {
-                              navigate(context,
-                                  route: otherInfoData[index]['screen']);
+                              navigate(context, route: otherInfo['screen']);
                             }
                           },
                           titleTextStyle: TextStyle(
@@ -344,8 +349,8 @@ class ProfileScreen extends StatelessWidget {
                             fontSize: 16.sp,
                           ),
                           iconColor: AppColors.primaryColor,
-                          leading: Icon(otherInfoData[index]['icon']),
-                          title: Text(otherInfoData[index]['title']),
+                          leading: Icon(otherInfo['icon']),
+                          title: Text(otherInfo['title']),
                           trailing: Icon(Icons.chevron_right),
                         ),
                         if (isOrderReturn)
