@@ -106,6 +106,8 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                         const Icon(Icons.close, size: 18, color: Colors.white),
                     onDeleted: () {
                       selectedVendor = null;
+                      Provider.of<StockProvider>(context, listen: false)
+                          .onDetailsTaped(context, widget.lowStockModel);
                       setState(() {});
                     },
                   ),
