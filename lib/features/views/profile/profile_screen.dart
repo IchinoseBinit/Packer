@@ -1,7 +1,5 @@
 // ignore_for_file: sized_box_for_whitespace
 
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -37,7 +35,8 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Inventory Items',
         'screen': NavigationConstants.transferListRoute,
         'onTap': () {
-          navigate(context, route:  NavigationConstants.transferListRoute,
+          navigate(context,
+              route: NavigationConstants.transferListRoute,
               extra: {'isDamage': false});
         },
       });
@@ -81,6 +80,16 @@ class ProfileScreen extends StatelessWidget {
         'icon': Icons.local_shipping_rounded,
         'title': 'Receive Basket',
         'screen': NavigationConstants.receiveTransferListRoute,
+      });
+    }
+    if (!value.isAuditUser() &&
+        !value.isMainStore() &&
+        !otherInfoData.any((e) =>
+            e['screen'] == NavigationConstants.unitProductScannerRoute)) {
+      otherInfoData.add({
+        'icon': Icons.local_shipping_rounded,
+        'title': 'Re-Rack',
+        'screen': NavigationConstants.unitProductScannerRoute,
       });
     }
     // // productListScreenRoute
@@ -129,7 +138,8 @@ class ProfileScreen extends StatelessWidget {
         'title': 'Receive Damaged Products',
         'screen': NavigationConstants.transferListRoute,
         'onTap': () {
-          navigate(context, route: NavigationConstants.transferListRoute,
+          navigate(context,
+              route: NavigationConstants.transferListRoute,
               extra: {'isDamage': true});
         },
       });
