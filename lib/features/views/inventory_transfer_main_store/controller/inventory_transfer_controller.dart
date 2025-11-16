@@ -258,8 +258,8 @@ class InventoryTransferController extends ChangeNotifier {
           (selectedInventoryTransfer?.baskets
                   ?.any((element) => element.identifier == code) ??
               false)) {
-        selectedBasket =
-            selectedInventoryTransfer?.baskets?.firstWhere((element) => element.identifier == code);
+        selectedBasket = selectedInventoryTransfer?.baskets
+            ?.firstWhere((element) => element.identifier == code);
         await fetchBasketDetails(context, code);
         return ScanResult(
             success: true, message: "Basket Scanned Successfully");
@@ -339,10 +339,10 @@ class InventoryTransferController extends ChangeNotifier {
         return ScanResult(success: false, message: "Product Already Scanned");
       }
       // check if product is in carton
-      String cartonIdFromCode = code.split('-')[2];
-      if (cartonModel?.id.toString() != cartonIdFromCode) {
-        return ScanResult(success: false, message: "Product Not In Carton");
-      }
+      // String cartonIdFromCode = code.split('-')[2];
+      // if (cartonModel?.id.toString() != cartonIdFromCode) {
+      //   return ScanResult(success: false, message: "Product Not In Carton");
+      // }
 
       if (selectedTransferItem?.product.toString() != code.split('-').first) {
         return ScanResult(success: false, message: "Product not matched");

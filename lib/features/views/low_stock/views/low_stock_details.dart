@@ -105,6 +105,10 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                     deleteIcon:
                         const Icon(Icons.close, size: 18, color: Colors.white),
                     onDeleted: () {
+                      if (Provider.of<StockProvider>(context, listen: false)
+                          .isLoading) {
+                        return;
+                      }
                       selectedVendor = null;
                       Provider.of<StockProvider>(context, listen: false)
                           .onDetailsTaped(context, widget.lowStockModel);
