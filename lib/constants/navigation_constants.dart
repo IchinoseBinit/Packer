@@ -65,6 +65,9 @@ class NavigationConstants {
   static const String cartonScanScreenRoute = 'carton_scan_screen';
   static const String damageScanScreenRoute = 'damage_scan_screen';
 
+  //product expiry screen
+  static const String expiryProductScreenRoute = 'expiry_product_screen';
+
 //carton list screen
   static const String orderReturnScreenRoute = 'order_return_screen';
   // rack update screen
@@ -118,4 +121,6 @@ class NavigationConstants {
   static const String inventoryTransferItemsRoute = 'inventory_transfer_items';
   static const String inventoryTransferScannerRoute =
       'inventory_transfer_scanner';
+
+  static const String searchVendor = 'search_vendor';
 }

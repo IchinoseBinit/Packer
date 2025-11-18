@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
-import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
 import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/product/model/product_avaliability.dart';
 import 'package:packer/features/views/product/product_card.dart';
@@ -61,78 +60,83 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 child: Text('No Product left to scan'),
               );
             }
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.rackList.length,
-              itemBuilder: (context, index) {
-                final rackName = provider.rackList[index];
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Text(rackName),
-                    RichText(
-                        text: TextSpan(children: [
-                      TextSpan(
-                          text: "Rack Name: ",
-                          style: Theme.of(context).textTheme.labelLarge),
-                      TextSpan(
-                          text: rackName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontSize: 16.sp,
-                              )),
-                    ])),
-                    // 8.h
-                    SizedBox(height: 8.h),
-                    IntrinsicGridView.vertical(
-                      columnCount: 2,
-                      verticalSpace: 12.w,
-                      horizontalSpace: 12.w,
-                      children: List.generate(
-                        provider.rackMap[rackName]?.length ?? 0,
-                        (index) {
-                          final product = provider.rackMap[rackName]![index];
-                          // ItemStatus status =provider.checkScanCount(product.productId)
-                          //           ? ItemStatus.done
-                          //           : ItemStatus.remaining;
-                          final width = (1.sw - 12.w - 32.w) / 2;
+            return RefreshIndicator(
+              onRefresh: () =>
+                  Provider.of<ProductProvider>(context, listen: false)
+                      .fetchProductAvailability(context),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: provider.rackList.length,
+                itemBuilder: (context, index) {
+                  final rackName = provider.rackList[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text(rackName),
+                      RichText(
+                          text: TextSpan(children: [
+                        TextSpan(
+                            text: "Rack Name: ",
+                            style: Theme.of(context).textTheme.labelLarge),
+                        TextSpan(
+                            text: rackName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontSize: 16.sp,
+                                )),
+                      ])),
+                      // 8.h
+                      SizedBox(height: 8.h),
+                      IntrinsicGridView.vertical(
+                        columnCount: 2,
+                        verticalSpace: 12.w,
+                        horizontalSpace: 12.w,
+                        children: List.generate(
+                          provider.rackMap[rackName]?.length ?? 0,
+                          (index) {
+                            final product = provider.rackMap[rackName]![index];
+                            // ItemStatus status =provider.checkScanCount(product.productId)
+                            //           ? ItemStatus.done
+                            //           : ItemStatus.remaining;
+                            final width = (1.sw - 12.w - 32.w) / 2;
 
-                          return ProductCard(
-                            width: width,
-                            onTap: () {
-                              provider.navigateToProductScanner(
-                                  context, product.productId);
-                            },
-                            productModel:
-                                CommonProductModel.fromProductAvailability(
-                                    product),
-                            status: ItemStatus.remaining,
-                          );
-                        },
-                      ),
-                    )
-                    // if (provider.rackProductMap[rackName] != null)
-                    //   ...provider.rackProductMap[rackName]!.map(
-                    //     (product) => ProductCard(
-                    //     onTap: () {
-                    //       if (provider.checkScanCount(product.productId)) {
-                    //         return;
-                    //       }
-                    //       provider.onItemTap(context, product.productId);
+                            return ProductCard(
+                              width: width,
+                              onTap: () {
+                                provider.navigateToProductScanner(
+                                    context, product.productId);
+                              },
+                              productModel:
+                                  CommonProductModel.fromProductAvailability(
+                                      product),
+                              status: ItemStatus.remaining,
+                            );
+                          },
+                        ),
+                      )
+                      // if (provider.rackProductMap[rackName] != null)
+                      //   ...provider.rackProductMap[rackName]!.map(
+                      //     (product) => ProductCard(
+                      //     onTap: () {
+                      //       if (provider.checkScanCount(product.productId)) {
+                      //         return;
+                      //       }
+                      //       provider.onItemTap(context, product.productId);
 
-                    //     },
-                    //       productModel: CommonProductModel.fromProductAvailability(product),
-                    //       status: provider.checkScanCount(product.productId)
-                    //           ? ItemStatus.done
-                    //           : ItemStatus.remaining,
-                    //       quantity: provider.getTagsList(product.productId, true).length,
-                    //     ),
-                    //   ),
-                  ],
-                );
-              },
+                      //     },
+                      //       productModel: CommonProductModel.fromProductAvailability(product),
+                      //       status: provider.checkScanCount(product.productId)
+                      //           ? ItemStatus.done
+                      //           : ItemStatus.remaining,
+                      //       quantity: provider.getTagsList(product.productId, true).length,
+                      //     ),
+                      //   ),
+                    ],
+                  );
+                },
+              ),
             );
           },
         ));

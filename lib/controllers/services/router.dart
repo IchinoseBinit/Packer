@@ -12,6 +12,7 @@ import 'package:packer/features/views/driver/views/basket_list_screen.dart';
 import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/driver/views/in_transit_screen.dart';
+import 'package:packer/features/views/expiry_product/expired_product.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_basket_list.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_items.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_list.dart';
@@ -20,6 +21,7 @@ import 'package:packer/features/views/inventory_transfer_request/views/inventory
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_item.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_scanner.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/transfer_request_trolley_item.dart';
+import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_scanner.dart';
@@ -66,6 +68,7 @@ import 'package:packer/features/views/stock_verification/views/stock_verificatio
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
+import 'package:packer/features/views/vendor/screens/vendor_screen.dart';
 
 class AppRouter {
   static late GoRouter router;
@@ -276,7 +279,10 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.lowStockDetailRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return LowStockDetails();
+                  final args = state.extra as LowStockModel?;
+                  return LowStockDetails(
+                    lowStockModel: args!,
+                  );
                 },
               ),
               GoRoute(
@@ -551,6 +557,12 @@ class AppRouter {
                   return RackProductList();
                 },
               ),
+              GoRoute(
+                path: NavigationConstants.expiryProductScreenRoute,
+                builder: (BuildContext context, GoRouterState state) {
+                  return ExpiryProducts();
+                },
+              ),
 
               GoRoute(
                 path: NavigationConstants.damageScanScreenRoute,
@@ -620,6 +632,12 @@ class AppRouter {
                 path: NavigationConstants.inventoryTransferItemsRoute,
                 builder: (BuildContext context, GoRouterState state) {
                   return InventoryTransferItems();
+                },
+              ),
+              GoRoute(
+                path: NavigationConstants.searchVendor,
+                builder: (BuildContext context, GoRouterState state) {
+                  return VendorScreen();
                 },
               ),
             ]),
