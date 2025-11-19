@@ -33,6 +33,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool forDamageTransfer;
   bool forDamageReceive = false;
   bool forDamageRequest;
+  bool forExpiredProducts = false;
 
   ProductScanScreen({
     super.key,
@@ -44,6 +45,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.forDamageTransfer = false,
     this.forDamageReceive = false,
     this.forDamageRequest = false,
+    this.forExpiredProducts = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -320,7 +322,7 @@ class ProductScanScreen extends BaseScanScreen {
         }
       } else if (forDamageTransfer) {
         final success = await Provider.of<OrderProvider>(context, listen: false)
-            .scannedDamageProduct(code);
+            .scannedDamageProduct(code, context, expired: forExpiredProducts);
         if (success) showToast("Product Scanned Successfully");
         hasScanned = false;
         controller.start();

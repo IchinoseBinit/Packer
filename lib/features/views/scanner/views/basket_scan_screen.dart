@@ -20,6 +20,7 @@ class BasketScanScreen extends BaseScanScreen {
   final bool fromCall;
   final int orderId;
   final bool forTransfer;
+  final bool forExpiredProducts;
 
   BasketScanScreen({
     super.key,
@@ -27,6 +28,7 @@ class BasketScanScreen extends BaseScanScreen {
     this.forOrder = false,
     this.fromCall = false,
     this.forTransfer = false,
+    this.forExpiredProducts = false,
     this.orderId = 0,
   }) : super(
           scanTitle: "Basket Scanner",
@@ -102,6 +104,7 @@ class BasketScanScreen extends BaseScanScreen {
             route: NavigationConstants.productScanScreenRoute,
             extra: {
               'forDamageTransfer': true,
+              'forExpiredProducts': forExpiredProducts,
             });
       } else {
         var result = Provider.of<PackerTransferProvider>(context, listen: false)

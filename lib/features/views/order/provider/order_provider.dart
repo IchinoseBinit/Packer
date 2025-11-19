@@ -20,6 +20,7 @@ import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/expiry_product/controller/expired_product_controller.dart';
 import 'package:packer/features/views/order/models/order_completed_details.dart';
 import 'package:packer/features/views/order/models/order_picked_details.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -692,13 +693,28 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  scannedDamageProduct(String code) {
+  scannedDamageProduct(String code, BuildContext context,
+      {bool? expired = false}) async {
+    debugger();
     if (code.isEmpty) {
       return;
     } else {
       if (scannedDamageProductList.contains(code)) {
         showToast("Product already scanned");
         return false;
+      }
+      if (expired!) {
+        final orderTags =
+            Provider.of<ExpiredProductController>(context, listen: false)
+                .expiryProductModel
+                .expand((element) => element.unitTags)
+                .toSet();
+        if (!orderTags.contains(code)) {
+          showToast("Product not in expired product list");
+          return false;
+        } else {
+          showToast("Product Scanned Successfully");
+        }
       }
       scannedDamageProductList.add(code);
       notifyListeners();

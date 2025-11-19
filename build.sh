@@ -6,3 +6,4 @@ mkdir -p ./gen/
 
 mv ./build/app/outputs/apk/release/app-release.apk ./gen/fasto-packer.apk
 
+

@@ -72,9 +72,10 @@ class _ExpiryProductsState extends State<ExpiryProducts> {
 
               return InkWell(
                 onTap: () => navigate(context,
-                    route: NavigationConstants.productScanScreenRoute,
+                    route: NavigationConstants.basketScanScreenRoute,
                     extra: {
-                      'forDamageRequest': true,
+                      'forTransfer': true,
+                      'forExpiredProducts': true,
                     }),
                 child: Padding(
                   padding:

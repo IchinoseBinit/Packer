@@ -444,6 +444,7 @@ class AppRouter {
                     fromCall: args['fromCall'] ?? false,
                     forTransfer: args['forTransfer'] ?? false,
                     orderId: args['orderId'].toString().toInt(),
+                    forExpiredProducts: args['forExpiredProducts'] ?? false,
                   );
                 },
               ),
@@ -487,6 +488,7 @@ class AppRouter {
                     forDamageTransfer: args['forDamageTransfer'] ?? false,
                     forDamageReceive: args['forDamageReceive'] ?? false,
                     forDamageRequest: args['forDamageRequest'] ?? false,
+                    forExpiredProducts: args['forExpiredProducts'] ?? false,
                   );
                 },
               ),
