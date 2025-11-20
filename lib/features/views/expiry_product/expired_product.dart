@@ -67,12 +67,16 @@ class _ExpiryProductsState extends State<ExpiryProducts> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      if (index == provider.expiryProductModel.length &&
-                          provider.isPaginationLoading) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
+                      if (index >= provider.expiryProductModel.length) {
+                        if (provider.isPaginationLoading) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        } else {
+                          return const SizedBox
+                              .shrink(); // Empty space if not loading
+                        }
                       }
 
                       final item = provider.expiryProductModel[index];

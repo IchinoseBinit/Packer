@@ -6,6 +6,7 @@ import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/features/views/expiry_product/model/expired_product_details_model.dart';
 import 'package:packer/features/views/expiry_product/model/expiry_product_model.dart';
+import 'package:packer/features/views/expiry_product/repo/expire_product_repo.dart';
 
 class ExpiredProductController extends ChangeNotifier {
   var pageNumberAllProductList = 1;
@@ -31,29 +32,29 @@ class ExpiredProductController extends ChangeNotifier {
         expiryProductModel.clear();
       }
 
-      var paginatedUrl =
-          "${AppUrls.expiryProductUrl}?page=$pageNumberAllProductList";
-      // if (storeId != 0) paginatedUrl += "&store_id=$storeId";
+      // var paginatedUrl =
+      //     "${AppUrls.expiryProductUrl}?page=$pageNumberAllProductList";
+      // // if (storeId != 0) paginatedUrl += "&store_id=$storeId";
 
-      final response = await DioClient().request(
-        requestType: RequestType.getWithToken,
-        url: paginatedUrl,
-      );
+      // final response = await DioClient().request(
+      //   requestType: RequestType.getWithToken,
+      //   url: paginatedUrl,
+      // );
 
-      final data = response.data;
+      // final data = response.data;
 
-      final List<dynamic> resultsData = data['results'] as List? ?? [];
-      log("$resultsData");
+      // final List<dynamic> resultsData = data['results'] as List? ?? [];
+      // log("$resultsData");
 
-      final newProducts = resultsData
-          .map((item) => Results.fromJson(item))
-          .whereType<Results>()
-          .toList();
-      // final newProducts = await ExpiredProductRepository()
-      //     ._fetchProductsPage(
-      //       page
+      // final newProducts = resultsData
+      //     .map((item) => Results.fromJson(item))
+      //     .whereType<Results>()
+      //     .toList();
+      final pageResponse = await ExpiredProductRepository()
+          .fetchExpiredProductsPage(page: pageNumberAllProductList);
 
-      //     );
+      final data = pageResponse.data;
+      final newProducts = pageResponse.products;
 
       //Pagination
       if (hasNextPage = data["has_next_page"] == true) {
