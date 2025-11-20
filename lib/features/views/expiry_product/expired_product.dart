@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/constants/app_colors.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/expiry_product/controller/expired_product_controller.dart';
+import 'package:packer/features/views/expiry_product/widget/expired_product_card_widget.dart';
 import 'package:provider/provider.dart';
 
 class ExpiryProducts extends StatefulWidget {
@@ -39,6 +37,12 @@ class _ExpiryProductsState extends State<ExpiryProducts> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Near Expiry Products")),
@@ -55,85 +59,32 @@ class _ExpiryProductsState extends State<ExpiryProducts> {
             ));
           }
 
-          return ListView.builder(
+          return CustomScrollView(
             controller: _controller,
-            itemCount: provider.expiryProductModel.length +
-                (provider.hasNextPage ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == provider.expiryProductModel.length) {
-                // Pagination loader
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index == provider.expiryProductModel.length &&
+                          provider.isPaginationLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
 
-              final item = provider.expiryProductModel[index];
+                      final item = provider.expiryProductModel[index];
 
-              return InkWell(
-                onTap: () => navigate(context,
-                    route: NavigationConstants.basketScanScreenRoute,
-                    extra: {
-                      'forTransfer': true,
-                      'forExpiredProducts': true,
-                    }),
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4.r),
-                      border: Border.all(color: AppColors.cartTextColor),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.productName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Product ID: #${item.productId}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      fontSize: 10,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w800),
-                            ),
-                            Text(
-                              "Total Units: ${item.totalUnits}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      return ExpiredProductCardWidget(item: item);
+                    },
+                    childCount: provider.expiryProductModel.length +
+                        (provider.hasNextPage ? 1 : 0),
                   ),
                 ),
-                // child: ListTile(
-                //   title: Text(item.productName),
-                //   subtitle: Text("Total Units: ${item.totalUnits}"),
-                //   trailing: Text("#${item.productId}"),
-                // ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),

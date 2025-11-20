@@ -695,7 +695,6 @@ class OrderProvider extends ChangeNotifier {
 
   scannedDamageProduct(String code, BuildContext context,
       {bool? expired = false}) async {
-    debugger();
     if (code.isEmpty) {
       return;
     } else {
@@ -704,15 +703,17 @@ class OrderProvider extends ChangeNotifier {
         return false;
       }
       if (expired!) {
-        final orderTags =
-            Provider.of<ExpiredProductController>(context, listen: false)
-                .expiryProductModel
-                .expand((element) => element.unitTags)
-                .toSet();
+        final expiredController =
+            Provider.of<ExpiredProductController>(context, listen: false);
+        final orderTags = expiredController.expiryProductModel
+            .expand((element) => element.unitTags)
+            .toSet();
         if (!orderTags.contains(code)) {
           showToast("Product not in expired product list");
           return false;
         } else {
+          expiredController.removeScannedTag(code);
+
           showToast("Product Scanned Successfully");
         }
       }

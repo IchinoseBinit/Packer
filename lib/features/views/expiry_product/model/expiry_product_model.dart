@@ -1,3 +1,5 @@
+import 'package:packer/controllers/extensions/string_extension.dart';
+
 class ExpiredProductModel {
   late final String? next;
   late final String? previous;
@@ -13,10 +15,10 @@ class ExpiredProductModel {
       required this.results});
 
   ExpiredProductModel.fromJson(Map<String, dynamic> json) {
-    next = json['next'];
-    previous = json['previous'];
+    next = json['next'].toString().toStringConversion();
+    previous = json['previous'].toString().toStringConversion();
     hasNextPage = json['has_next_page'];
-    page = json['page'];
+    page = json['page'].toString().toInt();
     if (json['results'] != null) {
       results = <Results>[];
       json['results'].forEach((v) {
@@ -27,10 +29,10 @@ class ExpiredProductModel {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['next'] = next;
-    data['previous'] = previous;
+    data['next'] = next.toString().toStringConversion();
+    data['previous'] = previous.toString().toStringConversion();
     data['has_next_page'] = hasNextPage;
-    data['page'] = page;
+    data['page'] = page.toString().toInt();
     data['results'] = results.map((v) => v.toJson()).toList();
     return data;
   }
@@ -49,17 +51,17 @@ class Results {
       required this.unitTags});
 
   Results.fromJson(Map<String, dynamic> json) {
-    productId = json['product_id'];
-    productName = json['product_name'];
-    totalUnits = json['total_units'];
+    productId = json['product_id'].toString().toInt();
+    productName = json['product_name'].toString().toStringConversion();
+    totalUnits = json['total_units'].toString().toInt();
     unitTags = json['unit_tags'].cast<String>();
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['product_id'] = productId;
-    data['product_name'] = productName;
-    data['total_units'] = totalUnits;
+    data['product_id'] = productId.toString().toInt();
+    data['product_name'] = productName.toString().toStringConversion();
+    data['total_units'] = totalUnits.toString().toInt();
     data['unit_tags'] = unitTags;
     return data;
   }

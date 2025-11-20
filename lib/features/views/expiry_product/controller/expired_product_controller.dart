@@ -14,13 +14,12 @@ class ExpiredProductController extends ChangeNotifier {
   var storeId = 0;
   ExpiredProductDetailsModel? productDetails;
   bool isLoading = false;
+  bool isPaginationLoading = false;
 
   Future<void> fetchExpiredProduct({
     bool fromBuild = false,
     bool isFirstTime = false,
   }) async {
-    debugger();
-
     try {
       if (isLoading) return;
       isLoading = true;
@@ -34,7 +33,7 @@ class ExpiredProductController extends ChangeNotifier {
 
       var paginatedUrl =
           "${AppUrls.expiryProductUrl}?page=$pageNumberAllProductList";
-      if (storeId != 0) paginatedUrl += "&store_id=$storeId";
+      // if (storeId != 0) paginatedUrl += "&store_id=$storeId";
 
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
@@ -50,18 +49,43 @@ class ExpiredProductController extends ChangeNotifier {
           .map((item) => Results.fromJson(item))
           .whereType<Results>()
           .toList();
+      // final newProducts = await ExpiredProductRepository()
+      //     ._fetchProductsPage(
+      //       page
+
+      //     );
 
       //Pagination
-      hasNextPage = data["has_next_page"] == true;
+      if (hasNextPage = data["has_next_page"] == true) {
+        pageNumberAllProductList = (data["page"] as int) + 1;
+        isPaginationLoading = true;
+      } else {
+        isPaginationLoading = false;
+      }
 
-      pageNumberAllProductList = (data["page"] as int) + 1;
-
-      // Add data to list
       expiryProductModel.addAll(newProducts);
+      isLoading = false;
     } catch (e) {
       log("Error fetching products: $e");
+      isLoading = false;
     } finally {
       notifyListeners();
+    }
+  }
+
+  void removeScannedTag(String scannedTag) {
+    for (var product in expiryProductModel) {
+      if (product.unitTags.contains(scannedTag)) {
+        product.unitTags.remove(scannedTag);
+
+        // If no more unit tags left, remove the product from list
+        if (product.unitTags.isEmpty) {
+          expiryProductModel.remove(product);
+        }
+
+        notifyListeners();
+        return;
+      }
     }
   }
 
