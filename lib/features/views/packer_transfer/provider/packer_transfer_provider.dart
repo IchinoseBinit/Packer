@@ -837,11 +837,9 @@ class PackerTransferProvider extends ChangeNotifier {
         return;
       }
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      final url =
-          //  homeProvider.isMainStore() == true
-          //     ? AppUrls.acceptTransferUrl
-          //     :
-          AppUrls.completeTransferUrl;
+      final url = homeProvider.isMainStore() == true
+          ? AppUrls.acceptTransferUrl
+          : AppUrls.completeTransferUrl;
       final response = await DioClient().request(
           requestType: RequestType.postWithToken,
           url: url.replaceAll('id', id.toString()),
