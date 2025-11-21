@@ -126,8 +126,9 @@ class InventoryTransferItems extends StatelessWidget {
                                           width: width,
                                           onTap: () {
                                             log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.product}");
-                                            if (status == ItemStatus.done)
+                                            if (status == ItemStatus.done) {
                                               return;
+                                            }
 
                                             provider.onItemScanTapped(
                                                 context, product);

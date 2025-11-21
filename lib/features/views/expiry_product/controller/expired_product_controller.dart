@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
-import 'package:packer/features/views/expiry_product/model/expired_product_details_model.dart';
-import 'package:packer/features/views/expiry_product/model/expiry_product_model.dart';
+import 'package:packer/features/views/expiry_product/models/expired_product_details_model.dart';
+import 'package:packer/features/views/expiry_product/models/expiry_product_model.dart';
+
 import 'package:packer/features/views/expiry_product/repo/expire_product_repo.dart';
 
 class ExpiredProductController extends ChangeNotifier {

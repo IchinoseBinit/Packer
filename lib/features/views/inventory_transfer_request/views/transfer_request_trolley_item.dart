@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,7 +10,6 @@ import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
-import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:provider/provider.dart';
 
 class TransferRequestTrolleyItem extends StatelessWidget {

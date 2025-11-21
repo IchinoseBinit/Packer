@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/features/views/expiry_product/controller/expired_product_controller.dart';
-import 'package:packer/features/views/expiry_product/widget/expired_product_card_widget.dart';
+import 'package:packer/features/views/expiry_product/widgets/expired_product_card_widget.dart';
 import 'package:provider/provider.dart';
 
 class ExpiryProducts extends StatefulWidget {

@@ -11,7 +11,7 @@ import 'package:packer/constants/app_constants.dart';
 import 'package:svg_flutter/svg_flutter.dart';
 
 class PhotoSelection extends StatefulWidget {
-  const PhotoSelection({Key? key}) : super(key: key);
+  const PhotoSelection({super.key});
 
   @override
   State<PhotoSelection> createState() => _PhotoSelectionState();
@@ -75,7 +75,7 @@ class _PhotoSelectionState extends State<PhotoSelection> {
                       height: 5.h,
                     ),
                     if (citizenshipPhotoPaths.isNotEmpty)
-                      Container(
+                      SizedBox(
                         height: 100.h,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,

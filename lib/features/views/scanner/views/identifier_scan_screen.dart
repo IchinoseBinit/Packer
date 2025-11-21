@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';

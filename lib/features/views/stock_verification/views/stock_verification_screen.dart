@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_constants.dart';
-import 'package:packer/features/views/order/widgets/cart_items_list.dart';
-import 'package:packer/features/views/product/model/common_product_model.dart';
-import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/stock_verification/model/stock_item_model.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';

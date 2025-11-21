@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/expiry_product/model/expiry_product_model.dart';
+import 'package:packer/features/views/expiry_product/models/expiry_product_model.dart';
 
 class ExpiredProductCardWidget extends StatelessWidget {
   const ExpiredProductCardWidget({

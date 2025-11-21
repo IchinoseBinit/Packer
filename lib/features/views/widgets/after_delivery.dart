@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:packer/features/views/widgets/product_item_list.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';

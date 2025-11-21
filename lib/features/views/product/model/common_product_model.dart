@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';

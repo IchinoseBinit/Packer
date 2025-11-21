@@ -203,7 +203,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   _chipBody({
     required String label,
-    VoidCallback? function,
     VoidCallback? cancelClicked,
     required bool isSelected,
     IconData? cancelIcon,

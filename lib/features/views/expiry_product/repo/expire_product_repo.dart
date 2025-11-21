@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
-import 'package:packer/features/views/expiry_product/model/expiry_product_model.dart';
+import 'package:packer/features/views/expiry_product/models/expiry_product_model.dart';
 
 class ExpiredProductRepository {
   /// Fetch a single page of expired products

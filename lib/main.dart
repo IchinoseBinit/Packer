@@ -7,17 +7,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
-import 'package:packer/features/views/expiry_product/controller/expired_product_controller.dart';
+import 'package:packer/features/views/expiry_product/providers/expired_product_provider.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/controller/inventory_transfer_controller.dart';
 import 'package:packer/features/views/inventory_transfer_request/provider/inventory_transfer_request_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
@@ -163,7 +161,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => RackUpdateProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => OrderReturnProvider()),
-        ChangeNotifierProvider(create: (_) => ExpiredProductController()),
+        ChangeNotifierProvider(create: (_) => ExpiredProductProvider()),
 
         // driver
         ChangeNotifierProvider(create: (_) => DriverController()),

@@ -1,3 +1,5 @@
+import 'package:packer/controllers/extensions/string_extension.dart';
+
 class ExpiredProductDetailsModel {
   late final int productId;
   late final String productName;
@@ -9,8 +11,8 @@ class ExpiredProductDetailsModel {
       required this.cartons});
 
   ExpiredProductDetailsModel.fromJson(Map<String, dynamic> json) {
-    productId = json['product_id'];
-    productName = json['product_name'];
+    productId = json['product_id'].toString().toInt();
+    productName = json['product_name'].toString().toStringConversion();
     if (json['cartons'] != null) {
       cartons = <Cartons>[];
       json['cartons'].forEach((v) {
@@ -45,11 +47,12 @@ class Cartons {
       required this.unitTags});
 
   Cartons.fromJson(Map<String, dynamic> json) {
-    cartonId = json['carton_id'];
-    expiryDate = json['expiry_date'];
-    manufacturingDate = json['manufacturing_date'];
-    daysLeft = json['days_left'];
-    unitTags = json['unit_tags'].cast<String>();
+    cartonId = json['carton_id']..toString().toInt();
+    expiryDate = json['expiry_date'].toString().toStringConversion();
+    manufacturingDate =
+        json['manufacturing_date'].toString().toStringConversion();
+    daysLeft = json['days_left'].toString().toInt();
+    unitTags = json['unit_tags'].cast<String?>();
   }
 
   Map<String, dynamic> toJson() {

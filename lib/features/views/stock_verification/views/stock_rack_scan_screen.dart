@@ -14,7 +14,7 @@ import 'package:provider/provider.dart';
 class StockRackScanScreen extends BaseScanScreen {
   final bool changeRack;
   StockRackScanScreen(
-      {super.scanTitle = 'Rack Scanner', this.changeRack = false});
+      {super.key, super.scanTitle = 'Rack Scanner', this.changeRack = false});
 
   bool hasScanned = false;
 

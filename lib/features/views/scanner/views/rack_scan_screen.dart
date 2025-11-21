@@ -11,7 +11,6 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';

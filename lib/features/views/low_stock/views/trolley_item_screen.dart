@@ -7,7 +7,6 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
-import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 

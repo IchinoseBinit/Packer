@@ -13,7 +13,6 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
-import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';

@@ -15,7 +15,7 @@ class IconTextButton extends StatelessWidget {
   final TextStyle? textStyle;
 
   const IconTextButton({
-    Key? key,
+    super.key,
     required this.title,
     required this.assetURl,
     this.bgColor,
@@ -26,7 +26,7 @@ class IconTextButton extends StatelessWidget {
     this.marginH,
     required this.onPressed,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

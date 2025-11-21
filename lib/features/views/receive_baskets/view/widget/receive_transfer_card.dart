@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/receive_baskets/model/receive_basket_model.dart';
-import 'package:packer/utils/google_map_utils.dart';
 
 class ReceiveTransferCard extends StatelessWidget {
   final ReceiveBasketModel transferItem;

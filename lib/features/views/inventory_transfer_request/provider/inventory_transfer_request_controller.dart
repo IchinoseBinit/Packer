@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,7 +9,6 @@ import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/hive_db/inventory_request_dao.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_model.dart';
 import 'package:packer/features/views/scanner/model/scan_result.dart';

@@ -20,7 +20,7 @@ import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
-import 'package:packer/features/views/expiry_product/controller/expired_product_controller.dart';
+import 'package:packer/features/views/expiry_product/providers/expired_product_provider.dart';
 import 'package:packer/features/views/order/models/order_completed_details.dart';
 import 'package:packer/features/views/order/models/order_picked_details.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -704,7 +704,7 @@ class OrderProvider extends ChangeNotifier {
       }
       if (expired!) {
         final expiredController =
-            Provider.of<ExpiredProductController>(context, listen: false);
+            Provider.of<ExpiredProductProvider>(context, listen: false);
         final orderTags = expiredController.expiryProductModel
             .expand((element) => element.unitTags)
             .toSet();

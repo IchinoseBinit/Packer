@@ -9,9 +9,9 @@ class CustomerInfoCard extends StatelessWidget {
   final OrderDetailsFetch customer;
 
   const CustomerInfoCard({
-    Key? key,
+    super.key,
     required this.customer,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

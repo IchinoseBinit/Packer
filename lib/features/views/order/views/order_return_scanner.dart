@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -15,7 +14,7 @@ class OrderReturnScanner extends BaseScanScreen {
   final bool rack;
   final int productId;
   OrderReturnScanner(
-      {this.product = false, this.rack = false, this.productId = 0})
+      {super.key, this.product = false, this.rack = false, this.productId = 0})
       : super(
             scanTitle: product
                 ? "Product Scanner"

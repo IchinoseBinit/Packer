@@ -12,7 +12,7 @@ import 'package:packer/features/views/driver/views/basket_list_screen.dart';
 import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/driver/views/in_transit_screen.dart';
-import 'package:packer/features/views/expiry_product/expired_product.dart';
+import 'package:packer/features/views/expiry_product/screens/expired_products_screen.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_basket_list.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_items.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_list.dart';
@@ -562,7 +562,7 @@ class AppRouter {
               GoRoute(
                 path: NavigationConstants.expiryProductScreenRoute,
                 builder: (BuildContext context, GoRouterState state) {
-                  return ExpiryProducts();
+                  return ExpiredProductsScreen();
                 },
               ),
 

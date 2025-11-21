@@ -44,7 +44,7 @@ class GeneralTextField extends StatefulWidget {
   final String? suffixSVG;
 
   const GeneralTextField({
-    Key? key,
+    super.key,
     this.isMandatory = false,
     this.labelText,
     this.suffixSVG,
@@ -82,7 +82,7 @@ class GeneralTextField extends StatefulWidget {
     this.autoFillHints,
     this.isDisabled = false,
     this.hintColor,
-  }) : super(key: key);
+  });
 
   @override
   GeneralTextFieldState createState() => GeneralTextFieldState();

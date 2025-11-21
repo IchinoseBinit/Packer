@@ -5,7 +5,7 @@ import 'package:svg_flutter/svg.dart';
 
 class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GeneralAppBar(
-      {Key? key,
+      {super.key,
       this.middleWidget,
       this.trailingSvgAsset,
       this.backgroundColor,
@@ -13,8 +13,7 @@ class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
       this.leadingOnPressed,
       this.trailingOnPressed,
       this.needLeading = true,
-      IconButton? leading})
-      : super(key: key);
+      IconButton? leading});
 
   @override
   final Size preferredSize;
