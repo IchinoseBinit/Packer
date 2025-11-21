@@ -82,12 +82,12 @@ class TransferRequestNotificationCard extends StatelessWidget {
   final String? basketId;
 
   const TransferRequestNotificationCard({
-    Key? key,
+    super.key,
     required this.transferItem,
     required this.primaryColor,
     this.basketId,
     this.callback,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

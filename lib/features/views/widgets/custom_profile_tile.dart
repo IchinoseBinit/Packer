@@ -8,12 +8,12 @@ class CustomProfileListTile extends StatelessWidget {
   final String phoneNumber;
 
   const CustomProfileListTile({
-    Key? key,
+    super.key,
     required this.profileImage,
     required this.name,
     required this.id,
     required this.phoneNumber,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

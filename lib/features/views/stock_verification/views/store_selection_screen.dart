@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_constants.dart';
-import 'package:packer/constants/navigation_constants.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:provider/provider.dart';

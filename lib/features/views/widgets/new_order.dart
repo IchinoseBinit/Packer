@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class NewOrderWidget extends StatefulWidget {
-  const NewOrderWidget({Key? key}) : super(key: key);
+  const NewOrderWidget({super.key});
   @override
   _NewOrderWidgetState createState() => _NewOrderWidgetState();
 }

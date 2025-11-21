@@ -9,10 +9,10 @@ class CustomerAddressTile extends StatelessWidget {
   final String customerSecondaryAddress;
 
   const CustomerAddressTile({
-    Key? key,
+    super.key,
     required this.customerPrimaryAddress,
     required this.customerSecondaryAddress,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

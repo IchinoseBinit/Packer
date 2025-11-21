@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:mobile_scanner/src/mobile_scanner_controller.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';

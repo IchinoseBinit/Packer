@@ -1,10 +1,7 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
-import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';

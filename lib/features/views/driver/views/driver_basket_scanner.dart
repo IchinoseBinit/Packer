@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:mobile_scanner/src/mobile_scanner_controller.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -11,7 +10,7 @@ import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
 class DriverBasketScanner extends BaseScanScreen {
-  DriverBasketScanner({super.scanTitle = "Scan Basket"});
+  DriverBasketScanner({super.key, super.scanTitle = "Scan Basket"});
 
   bool hasScanned = false;
   @override

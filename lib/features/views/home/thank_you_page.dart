@@ -6,6 +6,8 @@ import 'package:packer/constants/navigation_constants.dart';
 
 
 class ThankYouPage extends StatelessWidget {
+  const ThankYouPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     int deliveryTime = 30;

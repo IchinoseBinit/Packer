@@ -1,10 +1,8 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
-import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/widgets/order_progress_card.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +14,6 @@ import '/enum/order_status_type.dart';
 import '/features/views/auth/provider/home_provider.dart';
 import '/features/views/order/provider/order_provider.dart';
 import '/features/views/order/widgets/cart_items_list.dart';
-import '/features/views/widgets/custom_loading_indicator.dart';
 import '/features/views/widgets/general_elevated_button.dart';
 import '/features/views/widgets/order_info_card.dart';
 

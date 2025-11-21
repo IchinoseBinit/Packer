@@ -4,7 +4,7 @@ import 'package:packer/features/views/order/models/user_info.dart';
 
 class UserInfoCard extends StatelessWidget {
   final UserInfo userInfo;
-  const UserInfoCard({Key? key, required this.userInfo}) : super(key: key);
+  const UserInfoCard({super.key, required this.userInfo});
   @override
   Widget build(BuildContext context) {
     return Column(

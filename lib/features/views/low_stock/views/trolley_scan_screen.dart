@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:mobile_scanner/src/mobile_scanner_controller.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/navigate.dart';
