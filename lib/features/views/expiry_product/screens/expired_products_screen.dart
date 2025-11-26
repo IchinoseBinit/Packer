@@ -48,11 +48,11 @@ class ExpiredProductsScreenState extends State<ExpiredProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: GeneralAppBar(middleWidget: const Text("Near Expiry Products")),
       body: Consumer<ExpiredProductProvider>(
         builder: (_, provider, __) {
-          /// First-time loading
           if (provider.isLoading && provider.expiryProductModel.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(),

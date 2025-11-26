@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/date_formatter.dart';
@@ -16,6 +15,16 @@ class TransferList extends StatefulWidget {
 }
 
 class _TransferListState extends State<TransferList> {
+  late Future<void> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _future = Provider.of<PackerTransferProvider>(context, listen: false)
+        .fetchTransferList(context, isDamage: widget.isDamage);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,50 +32,52 @@ class _TransferListState extends State<TransferList> {
         title: const Text('Transfer List'),
       ),
       body: Consumer<HomeProvider>(builder: (context, provider, child) {
-        return FutureBuilder(
-            future: Provider.of<PackerTransferProvider>(context, listen: false)
-                .fetchTransferList(context, isDamage: widget.isDamage),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              }
-              final transferList =
-                  Provider.of<PackerTransferProvider>(context).transferList;
-              if (transferList.isEmpty) {
-                return const Center(
-                  child: Text('No transfer items available'),
-                );
-              }
-              return ListView.builder(
-                itemCount: transferList.length,
-                padding: EdgeInsets.all(16.w),
-                primary: false,
-                itemBuilder: (context, index) {
-                  final data = transferList[index];
-                  return TransferNotificationCard(
-                    callback: () {
-                      // Handle item tap
-                      Provider.of<PackerTransferProvider>(context,
-                              listen: false)
-                          .onDetailsTaped(context, data,
-                              damage: widget.isDamage);
-                    },
-                    transferItem: data,
-                    primaryColor: Theme.of(context).primaryColor,
+        return RefreshIndicator(
+          onRefresh: () => _future,
+          child: FutureBuilder(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
                   );
-                },
-              );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                }
+                final transferList =
+                    Provider.of<PackerTransferProvider>(context).transferList;
+                if (transferList.isEmpty) {
+                  return const Center(
+                    child: Text('No transfer items available'),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: transferList.length,
+                  padding: EdgeInsets.all(16.w),
+                  primary: false,
+                  itemBuilder: (context, index) {
+                    final data = transferList[index];
+                    return TransferNotificationCard(
+                      callback: () {
+                        // Handle item tap
+                        Provider.of<PackerTransferProvider>(context,
+                                listen: false)
+                            .onDetailsTaped(context, data,
+                                damage: widget.isDamage);
+                      },
+                      transferItem: data,
+                      primaryColor: Theme.of(context).primaryColor,
+                    );
+                  },
+                );
 
-              // return Center(
-              //   child: Text('Transfer List Page'),
-              // );
-            });
+                // return Center(
+                //   child: Text('Transfer List Page'),
+                // );
+              }),
+        );
       }),
     );
   }

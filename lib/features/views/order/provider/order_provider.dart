@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -421,18 +422,11 @@ class OrderProvider extends ChangeNotifier {
 
   Future<Map<String, bool>> productPost(
       BuildContext context, int orderId) async {
-    // List<Basket> baskets = basketDataList.map((identifier) {
-    //   return Basket(
-    //     identifier: identifier,
-    //     productIdentifiers:
-    //         List<String>.from(scannedDataPerBasket[identifier] ?? []),
-    //   );
-    // }).toList();
-
     PostBasketRequest postBasketRequest = PostBasketRequest(
       orderId: orderId,
       data: baskets,
     );
+    debugger();
 
     try {
       log(postBasketRequest.toJson().toString(), name: "productPost body data");
@@ -451,8 +445,19 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
+        
+        
+        try {
+          await Hive.deleteBoxFromDisk('${HiveConstants.order}$orderId');
+          log("Order deleted");
+        } catch (e) {
+          log("Error deleting order box from Hive: $e",
+              name: "Hive Delete Error");
+        }
         clearBasket(baskets.first.identifier);
+
         resetState();
+
         // remove box
         basketDataList.clear();
         basketDao.clearAll();

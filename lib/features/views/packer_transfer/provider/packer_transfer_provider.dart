@@ -117,6 +117,7 @@ class PackerTransferProvider extends ChangeNotifier {
         );
       }
     } else {
+      scanTagsList.clear();
       fetchTransferDetails(context, data.id ?? 0);
       navigate(
         context,
@@ -761,6 +762,7 @@ class PackerTransferProvider extends ChangeNotifier {
         );
         if (response.statusCode == 200) {
           showToast('Tags posted successfully');
+          log("----------- verified ---------------");
           // scanTagsList.clear();
           notifyListeners();
           removeLoading(context);
@@ -847,6 +849,7 @@ class PackerTransferProvider extends ChangeNotifier {
             "basket_identifier": selectedBasketModel?.identifier,
           });
       if (response.statusCode == 200) {
+        scanTagsList.clear();
         showToast('Transfer completed successfully');
         selectedTransferModel?.baskets?.removeWhere(
           (element) => element.identifier == selectedBasketModel?.identifier,
