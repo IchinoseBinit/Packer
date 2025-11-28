@@ -180,30 +180,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         splitScreenMode: true,
         builder: (context, child) {
           return Builder(builder: (newContext) {
-            return MaterialApp.router(
-              builder: (context, child) => Overlay(
-                initialEntries: [
-                  if (child != null) ...[
-                    OverlayEntry(
-                      builder: (context) => MediaQuery(
-                        data: MediaQuery.of(context)
-                            .copyWith(textScaler: const TextScaler.linear(1.0)),
-                        child: GestureDetector(
-                          onTap: () =>
-                              FocusManager.instance.primaryFocus?.unfocus(),
-                          child: child,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+            return SafeArea(
+              top: false,
+              child: MaterialApp.router(
+                debugShowCheckedModeBanner: false,
+                title: 'packer',
+                themeMode: ThemeMode.light,
+                theme: lightTheme(newContext),
+                darkTheme: darkTheme(),
+                routerConfig: AppRouter().getRoutes(context),
               ),
-              debugShowCheckedModeBanner: false,
-              title: 'packer',
-              themeMode: ThemeMode.light,
-              theme: lightTheme(newContext),
-              darkTheme: darkTheme(),
-              routerConfig: AppRouter().getRoutes(context),
             );
           });
         },

@@ -273,6 +273,10 @@ class GeneralTextFieldState extends State<GeneralTextField> {
                 : widget.fillColor ?? AppColors.fillColor,
             filled: true,
           ),
+          onTapUpOutside: (event) =>
+              FocusManager.instance.primaryFocus?.unfocus(),
+          onTapOutside: (event) =>
+              FocusManager.instance.primaryFocus?.unfocus(),
         ),
       ],
     );
