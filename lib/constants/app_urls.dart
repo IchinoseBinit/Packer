@@ -3,13 +3,13 @@ import 'package:packer/enum/environment_config.dart';
 class AppUrls {
   static String baseUrl = EnvironmentConfig.type == EnvironmentType.staging
       ? "http://103.187.8.105:8000" // or any sensible default
-      : "https://fasto.com.np";
+      : "https://api.fasto.com.np";
 
   static void setBaseUrl(String url) {
     if (EnvironmentConfig.type == EnvironmentType.staging) {
       baseUrl = url;
     } else {
-      baseUrl = "https://fasto.com.np";
+      baseUrl = "https://api.fasto.com.np";
     }
   }
   // static const String _productionDomainUrl = "fasto.com.np";

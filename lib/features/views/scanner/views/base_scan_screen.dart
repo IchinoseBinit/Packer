@@ -48,9 +48,21 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
   @override
   void initState() {
     super.initState();
-    controller = MobileScannerController();
+    controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal, // fastest
+      detectionTimeoutMs: 250, // throttle detection
+      facing: CameraFacing.back,
+      returnImage: false, //  avoid heavy image transfer
+      torchEnabled: false,
+      formats: [
+        BarcodeFormat.qrCode,
+      ], // Limit to only for QR code
+      autoStart: true,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // if already started
+      controller?.stop();
       await Future.delayed(const Duration(milliseconds: 300));
 
       controller?.start();
