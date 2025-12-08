@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -12,25 +13,32 @@ class ErrorHandler {
     BuildContext context,
     Object ex,
   ) {
-    print(ex);
     final isFormatException = ex.runtimeType.toString() == "_TypeError";
 
     if (isFormatException) {
       Navigator.pop(context);
-      showToast(ex.toString(), color: AppColors.primaryColor);
+      showToast(errorMessage, color: AppColors.primaryColor);
     } else {
+      //
+      final errorMessage = ex.runtimeType is AppException
+          ? (ex as AppException).message
+          : ex.toString();
+
       Navigator.pop(context);
-      showToast(ex.toString(), color: AppColors.primaryColor);
+      showToast(errorMessage, color: AppColors.primaryColor);
     }
   }
 
   // alert dialog
-  static Future<void> alertDialog(BuildContext context, String message,
+  static Future<void> alertDialog(BuildContext context, dynamic message,
       [Function()? okFunc]) async {
+    final errorMessage = message.runtimeType is AppException
+        ? (message as AppException).message
+        : message.toString();
     if (!context.mounted) return;
     ShowAlertDialog(
             disableBackground: true,
-            body: Text(message),
+            body: Text(errorMessage),
             okFunc: okFunc ??
                 () {
                   navigatePop(context);

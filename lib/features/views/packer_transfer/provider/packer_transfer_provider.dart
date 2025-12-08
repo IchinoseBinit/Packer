@@ -146,7 +146,7 @@ class PackerTransferProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     } finally {
       transferListLoading = false;
       notifyListeners();
@@ -190,7 +190,7 @@ class PackerTransferProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     } finally {
       transferListLoading = false;
       notifyListeners();
@@ -214,7 +214,7 @@ class PackerTransferProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, 'Failed to fetch transfer list');
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     } finally {
       transferListLoading = false;
       notifyListeners();
@@ -730,7 +730,7 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } catch (ex) {
       removeLoading(context);
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
       return false;
     }
   }
@@ -776,7 +776,7 @@ class PackerTransferProvider extends ChangeNotifier {
     } catch (ex) {
       removeLoading(context);
 
-      await ErrorHandler.alertDialog(context, ex.toString());
+      await ErrorHandler.alertDialog(context, ex);
 
       return false;
     }
@@ -821,7 +821,7 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } catch (ex) {
       removeLoading(context);
-      // ErrorHandler.alertDialog(context, ex.toString());
+      // ErrorHandler.alertDialog(context, ex);
       return ScanResult(success: false, message: ex.toString());
     }
   }
@@ -861,7 +861,7 @@ class PackerTransferProvider extends ChangeNotifier {
       }
     } catch (ex) {
       removeLoading(context);
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     }
   }
 
@@ -885,7 +885,7 @@ class PackerTransferProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, 'Failed to fetch basket details');
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     } finally {
       selectedTransferModelLoading = false;
       notifyListeners();
@@ -914,7 +914,7 @@ class PackerTransferProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     } finally {
       selectedTransferModelLoading = false;
       notifyListeners();
@@ -941,7 +941,7 @@ class PackerTransferProvider extends ChangeNotifier {
         ErrorHandler.alertDialog(context, 'Failed to fetch transfer details');
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
     } finally {
       selectedTransferModelLoading = false;
       notifyListeners();

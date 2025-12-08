@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/model/custom_exception.dart';
 import 'package:packer/controllers/extensions/debug_print_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -195,41 +196,118 @@ class DioClient {
       resp.log();
       return resp;
     } on DioException catch (ex) {
-      if (token.isNotEmpty && ex.response?.statusCode == 401) {
-        return navigateAndRemoveAllWithRouter(AppRouter.router,
-            route: NavigationConstants.loginRoute);
-      }
-      if (ex.response?.statusCode == 403) {
-        await AuthController().removeTokens();
-        return navigateAndRemoveAllWithRouter(AppRouter.router,
-            route: NavigationConstants.loginRoute);
+      final response = ex.response;
+      final data = response?.data;
+
+      // 401 – unauthorized token → go login
+      if (token.isNotEmpty && response?.statusCode == 401) {
+        return navigateAndRemoveAllWithRouter(
+          AppRouter.router,
+          route: NavigationConstants.loginRoute,
+        );
       }
 
+      // 403 → force logout token
+      if (response?.statusCode == 403) {
+        await AuthController().removeTokens();
+        return navigateAndRemoveAllWithRouter(
+          AppRouter.router,
+          route: NavigationConstants.loginRoute,
+        );
+      }
+
+      // No internet
       if (ex.error is SocketException || ex.error is HttpException) {
-        throw const SocketException(ErrorHandler.errorMessage);
-      } else if (kDebugMode && ex.response?.statusCode == 502) {
-        throw "Server in deployment phase";
-      } else if (ex.response?.data == String) {
-        throw ErrorHandler.errorMessage;
-      } else if (ex.response?.data["non_field_errors"] != null &&
-          ex.response?.data["non_field_errors"] is List) {
-        throw ex.response?.data?["non_field_errors"][0] ??
-            ErrorHandler.errorMessage;
-      } else if (ex.response?.statusCode == 401 &&
-          ex.response!.data!["detail"]
-              .toString()
-              .toLowerCase()
-              .contains("token")) {
+        throw AppException(
+          statusCode: null,
+          message: ErrorHandler.errorMessage,
+          json: data,
+        );
+      }
+
+      // Debugging only
+      if (kDebugMode && response?.statusCode == 502) {
+        throw AppException(
+          statusCode: 502,
+          message: "Server in deployment phase",
+          json: data,
+        );
+      }
+
+      // Wrong data type
+      if (data is String) {
+        throw AppException(
+          statusCode: response?.statusCode,
+          message: ErrorHandler.errorMessage,
+          json: data,
+        );
+      }
+
+      // Django/DRF: non_field_errors
+      if (data?["non_field_errors"] is List &&
+          data["non_field_errors"].isNotEmpty) {
+        throw AppException(
+          statusCode: response?.statusCode,
+          message: data["non_field_errors"][0],
+          json: data,
+        );
+      }
+
+      // Another token issue → force logout
+      if (response?.statusCode == 401 &&
+          data?["detail"]?.toString().toLowerCase().contains("token") == true) {
         throw LogoutException();
       }
 
-      throw ex.response?.data?["message"] ??
-          ex.response?.data?["error"] ??
-          ex.response?.data?["detail"] ??
-          ErrorHandler.errorMessage;
+      // Default API error message
+      throw AppException(
+        statusCode: response?.statusCode,
+        message: data?["message"] ??
+            data?["error"] ??
+            data?["detail"] ??
+            ErrorHandler.errorMessage,
+        json: data,
+      );
     } catch (ex) {
       rethrow;
     }
+
+    // } on DioException catch (ex) {
+    //   if (token.isNotEmpty && ex.response?.statusCode == 401) {
+    //     return navigateAndRemoveAllWithRouter(AppRouter.router,
+    //         route: NavigationConstants.loginRoute);
+    //   }
+    //   if (ex.response?.statusCode == 403) {
+    //     await AuthController().removeTokens();
+    //     return navigateAndRemoveAllWithRouter(AppRouter.router,
+    //         route: NavigationConstants.loginRoute);
+    //   }
+
+    //   if (ex.error is SocketException || ex.error is HttpException) {
+    //     throw const SocketException(ErrorHandler.errorMessage);
+    //   } else if (kDebugMode && ex.response?.statusCode == 502) {
+    //     throw "Server in deployment phase";
+    //   } else if (ex.response?.data == String) {
+    //     throw ErrorHandler.errorMessage;
+    //   } else if (ex.response?.data["non_field_errors"] != null &&
+    //       ex.response?.data["non_field_errors"] is List) {
+    //     throw ex.response?.data?["non_field_errors"][0] ??
+    //         ErrorHandler.errorMessage;
+    //   } else if (ex.response?.statusCode == 401 &&
+    //       ex.response!.data!["detail"]
+    //           .toString()
+    //           .toLowerCase()
+    //           .contains("token")) {
+    //     throw LogoutException();
+    //   }
+
+    //   throw ex.response?.data?["message"] ??
+    //       ex.response?.data?["error"] ??
+    //       ex.response?.data?["detail"] ??
+    //       ErrorHandler.errorMessage;
+    // } catch (ex) {
+    //   rethrow;
+    // }
   }
 
   Future<Response<dynamic>> _retry(RequestOptions requestOptions) async {

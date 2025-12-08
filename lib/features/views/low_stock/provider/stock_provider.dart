@@ -379,7 +379,7 @@ class StockProvider extends ChangeNotifier {
       }
     } catch (ex) {
       removeLoading(context);
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
       return false;
     }
   }

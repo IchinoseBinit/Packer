@@ -65,7 +65,7 @@ class StockVerificationProvider extends ChangeNotifier {
     } catch (e) {
       removeLoading(context);
       log("Error while getting audit view $e");
-      ErrorHandler.alertDialog(context, e.toString());
+      ErrorHandler.alertDialog(context, e);
     }
   }
 
@@ -249,7 +249,7 @@ class StockVerificationProvider extends ChangeNotifier {
       }
     } catch (e) {
       if (context.mounted) {
-        ErrorHandler.alertDialog(context, e.toString());
+        ErrorHandler.alertDialog(context, e);
       }
     }
     return "";
