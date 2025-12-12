@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
@@ -37,9 +38,12 @@ class RackScanScreen extends BaseScanScreen {
           scanTitle: 'Rack Scanner',
           showFlash: true,
           showBackButton: true,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
 
   bool _isProcessing = false;
+
+  bool newRackScanned = false;
 
   @override
   void onScreenCreated(BuildContext context) {
@@ -50,7 +54,20 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    return const SizedBox.shrink();
+    return forTransfer
+        ? FloatingActionButton(
+            backgroundColor: AppColors.primaryColor,
+            foregroundColor: Colors.white,
+            child: Icon(
+              Icons.storage,
+            ),
+            onPressed: () {
+              Provider.of<ScanMessageProvider>(context, listen: false)
+                  .setMessage(context, "Assign another rack");
+              newRackScanned = true;
+            },
+          )
+        : SizedBox.shrink();
   }
 
   @override
@@ -71,7 +88,32 @@ class RackScanScreen extends BaseScanScreen {
       }
 
       if (rackCode != null && forTransfer) {
-        if (code.contains(rackCode!)) {
+        //
+        if (newRackScanned) {
+          // if new rack is scanned
+          Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+            context,
+            Provider.of<PackerTransferProvider>(context, listen: false)
+                .getScanMessage(productId),
+          );
+          //
+          final result =
+              await Provider.of<StockProvider>(context, listen: false)
+                  .updateRack(context, code, productId, false);
+
+          if (result) {
+            navigateReplacement(
+              context,
+              route: NavigationConstants.productScanScreenRoute,
+              extra: {
+                "forTransfer": true,
+                "productId": productId,
+                "newRackId": code,
+              },
+            );
+            showToast("Rack scanned successfully");
+          }
+        } else if (code.contains(rackCode!)) {
           if (context.mounted) {
             Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
                 context,

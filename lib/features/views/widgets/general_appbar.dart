@@ -28,19 +28,21 @@ class GeneralAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: backgroundColor,
-      leading: needLeading ? GestureDetector(
-        onTap: () {
-          // Handle leading icon tap
-          navigatePop(context);
-        },
-        child: IconButton(
-          icon: SvgPicture.asset(
-            AppAssets.backArrow,
-            height: 24.0,
-          ),
-          onPressed: leadingOnPressed,
-        ),
-      ) : SizedBox.shrink(),
+      leading: needLeading
+          ? GestureDetector(
+              onTap: () {
+                // Handle leading icon tap
+                navigatePop(context);
+              },
+              child: IconButton(
+                icon: SvgPicture.asset(
+                  AppAssets.backArrow,
+                  height: 24.0,
+                ),
+                onPressed: leadingOnPressed,
+              ),
+            )
+          : SizedBox.shrink(),
       title: middleWidget,
       centerTitle: true,
       actions: [

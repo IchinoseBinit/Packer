@@ -21,8 +21,8 @@ class ProductModel {
     productId = json['product_id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
     mainStoreStock = json['main_store_stock']?.toString().toInt();
-    imageUrl = AppUrls.imageUrl +
-        json['product_image'].toString().toStringConversion();
+    imageUrl =
+        "${AppUrls.imageUrl}${json['product_image'].toString().toStringConversion()}?w=400&h=400&q=80";
     quantity = json['quantity'].toString().toInt();
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();

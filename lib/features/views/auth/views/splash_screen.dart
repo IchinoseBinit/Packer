@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:geolocator/geolocator.dart';
@@ -27,46 +25,51 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _checkPermissions();
 
-    Future.delayed(const Duration(seconds: 1)).then((value) async {
-      SecureStorageHelper()
-          .readKey(key: SecureStorageConstants.accessTokenKey)
-          .then((value) async {
-        if (value != null) {
-          DioClient();
-          DioClient.token = value;
-          DioClient.refreshToken = (await SecureStorageHelper()
-                  .readKey(key: SecureStorageConstants.refreshTokenKey))
-              .toString();
+    Future.delayed(const Duration(seconds: 1)).then(
+      (_) async {
+        SecureStorageHelper()
+            .readKey(key: SecureStorageConstants.accessTokenKey)
+            .then(
+          (value) async {
+            if (value != null) {
+              DioClient();
+              DioClient.token = value;
+              DioClient.refreshToken = (await SecureStorageHelper()
+                      .readKey(key: SecureStorageConstants.refreshTokenKey))
+                  .toString();
 
+              await Provider.of<HomeProvider>(context, listen: false)
+                  .fetchpackerSummary();
 
-          await Provider.of<HomeProvider>(context, listen: false)
-              .fetchpackerSummary();
+              // Navigate to the home screen
+              // if (context.mounted) {
+              // final homeProvider =
+              //     Provider.of<HomeProvider>(context, listen: false);
+              // if (homeProvider.packerSummary?.storeType.contains("main") ==
+              //     true) {
+              //   navigateReplacement(context,
+              //       route: NavigationConstants.lowStockRoute);
+              //     return;
+              // }
+              // final home = Provider.of<HomeProvider>(context, listen: false);
+              // log(home.user.toString());
+              // if (home.isDriver()) {
+              //   navigateReplacement(context,
+              //       route: NavigationConstants.driverHomeRoute);
+              //   return;
+              // }
 
-          // Navigate to the home screen
-          if (context.mounted) {
-            // final homeProvider =
-            //     Provider.of<HomeProvider>(context, listen: false);
-            // if (homeProvider.packerSummary?.storeType.contains("main") ==
-            //     true) {
-            //   navigateReplacement(context,
-            //       route: NavigationConstants.lowStockRoute);
-            //     return;
-            // }
-            // final home = Provider.of<HomeProvider>(context, listen: false);
-            // log(home.user.toString());
-            // if (home.isDriver()) {
-            //   navigateReplacement(context,
-            //       route: NavigationConstants.driverHomeRoute);
-            //   return;
-            // }
-            navigateReplacement(context,
-                route: NavigationConstants.dashboardRoute);
-          }
-        } else {
-          navigateReplacement(context, route: NavigationConstants.loginRoute);
-        }
-      });
-    });
+              navigateReplacement(context,
+                  route: NavigationConstants.dashboardRoute);
+              // }
+            } else {
+              navigateReplacement(context,
+                  route: NavigationConstants.loginRoute);
+            }
+          },
+        );
+      },
+    );
 
     // TODO: SecureStorage check access Token
     // Refresh Token

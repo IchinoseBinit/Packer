@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
@@ -26,20 +25,20 @@ class TransferRequestTrolleyItem extends StatelessWidget {
         child: Consumer<InventoryTransferRequestController>(
           builder: (context, controller, child) {
             final items = controller.inventoryRequestDao.getAll();
-           
-              return Column(
-                children: [
-                  TransferRequestNotificationCard(
-                    transferItem: controller.selectedInventoryTransferRequest!,
-                    primaryColor: AppColors.primaryColor,
-                    basketId: controller.basketCode,
-                  ),
-                  Divider(),
-                  if (items.isEmpty)
-                    const Center(
-                      child: Text('No Items'),
-                    )
-                  else
+
+            return Column(
+              children: [
+                TransferRequestNotificationCard(
+                  transferItem: controller.selectedInventoryTransferRequest!,
+                  primaryColor: AppColors.primaryColor,
+                  basketId: controller.basketCode,
+                ),
+                Divider(),
+                if (items.isEmpty)
+                  const Center(
+                    child: Text('No Items'),
+                  )
+                else
                   Expanded(
                     child: IntrinsicGridView.vertical(
                       columnCount: 2,
@@ -56,31 +55,31 @@ class TransferRequestTrolleyItem extends StatelessWidget {
                               ? ItemStatus.done
                               : ItemStatus.remaining;
                           final width = (1.sw - 12.w - 24.w) / 2;
-                    
+
                           return ProductCard(
                             width: width,
                             onTap: () {
                               // log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
                               if (status == ItemStatus.done) return;
-                              controller.setSelectedLocalInventoryTransferRequestItem(
-                                  context, product);
+                              controller
+                                  .setSelectedLocalInventoryTransferRequestItem(
+                                      context, product);
                             },
                             productModel: CommonProductModel
                                 .fromInventoryTransferRequestItemModel(product),
                             status: status,
                             statusToShow: "Completed",
                             quantity: (product.quantity ?? 0) -
-                                controller.getScannedCount(product.productId ?? 0,
+                                controller.getScannedCount(
+                                    product.productId ?? 0,
                                     fromLocal: true),
                           );
                         },
                       ),
                     ),
                   ),
-                ],
-              );
-            
-            
+              ],
+            );
           },
         ),
       ),

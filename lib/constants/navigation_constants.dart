@@ -40,6 +40,7 @@ class NavigationConstants {
   // LowStockScreen
   static const String lowStockRoute = 'low_stock';
   static const String lowStockDetailRoute = 'low_stock_detail';
+  static const String lowStockProductDetailRoute = 'low_stock_product_detail';
   static const String lowStockScannerRoute = 'low_stock_scanner';
   // trolley_item_screen
   // CollectedProductView

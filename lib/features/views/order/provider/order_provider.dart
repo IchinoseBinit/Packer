@@ -482,19 +482,23 @@ class OrderProvider extends ChangeNotifier {
 
       if (e is AppException && e.json != null) {
         final data = e.json as Map<String, dynamic>;
+
         final tag = data['tag'];
         final productId = data['product_id'];
-        errorMessage = "Product id: $productId tag: $tag, \n ${e.message}";
 
-        scannedDataList
-            .removeWhere((item) => item.startsWith(productId.toString()));
+        if (tag != null && productId != null) {
+          errorMessage = "Product id: $productId tag: $tag, \n ${e.message}";
 
-        for (var b in baskets) {
-          b.productIdentifiers
-              .removeWhere((id) => id.startsWith(productId.toString()));
+          scannedDataList
+              .removeWhere((item) => item.startsWith(productId.toString()));
+
+          for (var b in baskets) {
+            b.productIdentifiers
+                .removeWhere((id) => id.startsWith(productId.toString()));
+          }
+
+          baskets.removeWhere((b) => b.productIdentifiers.isEmpty);
         }
-
-        baskets.removeWhere((b) => b.productIdentifiers.isEmpty);
       }
 
       await ErrorHandler.alertDialog(context, errorMessage);
