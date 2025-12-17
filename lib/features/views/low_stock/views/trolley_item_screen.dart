@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -71,31 +70,61 @@ class TrolleyItemScreen extends StatelessWidget {
                 Expanded(
                   child: state.trolleyItems.isEmpty
                       ? const Center(child: Text("No items in trolley"))
-                      : IntrinsicGridView.vertical(
-                          columnCount: 2,
-                          verticalSpace: 12.w,
-                          horizontalSpace: 12.w,
-                          children: [
-                              ...state.trolleyItems.map((product) {
-                                final width = (1.sw - 12.w - 32.w) / 2;
-                                return TrolleyItemWidget(
-                                  id: product.productId,
-                                  name: product.productName,
-                                  image: product.image,
-                                  width: width,
-                                  qty: product.quantity,
-                                  onTap: () {
-                                    print('Trolley item tapped');
-                                    // trolleyItemScannerRoute
+                      : GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 180.w,
+                            crossAxisSpacing: 8.w,
+                            childAspectRatio: 0.55,
+                          ),
+                          itemCount: state.trolleyItems.length,
+                          shrinkWrap: true,
+                          itemBuilder: (context, index) {
+                            final product = state.trolleyItems[index];
+                            return TrolleyItemWidget(
+                              id: product.productId,
+                              name: product.productName,
+                              image: product.image,
+                              width: double.infinity,
+                              qty: product.quantity,
+                              onTap: () {
+                                print('Trolley item tapped');
+                                // trolleyItemScannerRoute
 
-                                    navigate(context,
-                                        route: NavigationConstants
-                                            .trolleyItemScannerRoute,
-                                        extra: product.productId);
-                                  },
-                                );
-                              })
-                            ]),
+                                navigate(context,
+                                    route: NavigationConstants
+                                        .trolleyItemScannerRoute,
+                                    extra: product.productId);
+                              },
+                            );
+                          },
+                        ),
+                  // IntrinsicGridView.vertical(
+                  //   columnCount: 2,
+                  //   verticalSpace: 12.w,
+                  //   horizontalSpace: 12.w,
+                  //   children: [
+                  //     ...state.trolleyItems.map((product) {
+                  //       final width = (1.sw - 12.w - 32.w) / 2;
+                  //       return TrolleyItemWidget(
+                  //         id: product.productId,
+                  //         name: product.productName,
+                  //         image: product.image,
+                  //         width: width,
+                  //         qty: product.quantity,
+                  //         onTap: () {
+                  //           print('Trolley item tapped');
+                  //           // trolleyItemScannerRoute
+
+                  //           navigate(context,
+                  //               route:
+                  //                   NavigationConstants.trolleyItemScannerRoute,
+                  //               extra: product.productId);
+                  //         },
+                  //       );
+                  //     })
+                  //   ],
+                  // ),
                 ),
               ],
             ),
@@ -236,6 +265,7 @@ class TrolleyItemWidget extends StatelessWidget {
                       ),
                     ],
                   ),
+                  SizedBox(height: 4.h),
                   Container(
                     height: 30.h,
                     decoration: BoxDecoration(

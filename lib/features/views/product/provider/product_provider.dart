@@ -293,7 +293,7 @@ class ProductProvider extends ChangeNotifier {
           ? _handleSecondaryScan(context, code)
           : _handleInitialScan(context, code);
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
       return false;
     } finally {
       notifyListeners();
@@ -569,7 +569,7 @@ class ProductProvider extends ChangeNotifier {
         return false;
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
       return false;
     } finally {
       removeLoading(context);

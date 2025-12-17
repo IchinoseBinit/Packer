@@ -75,7 +75,7 @@ class RackUpdateProvider extends ChangeNotifier {
         return false;
       }
     } catch (ex) {
-      ErrorHandler.alertDialog(context, ex.toString());
+      ErrorHandler.alertDialog(context, ex);
       return false;
     }
   }

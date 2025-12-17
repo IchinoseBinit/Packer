@@ -30,7 +30,7 @@ class AppUrls {
   // static const String baseUrl = "https://$_domainUrl";
   // static const String baseUrl = "https://dropit.com.np";
 
-  static String get imageUrl => baseUrl;
+  static String get imageUrl => "https://cdn.fasto.com.np";
 
   static String get _authUrl => "$baseUrl/auth";
 

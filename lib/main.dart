@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_callkeep/flutter_callkeep.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/firebase_opt/firebase.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
@@ -94,9 +95,12 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  late GoRouter _appRouter;
+
   @override
   void initState() {
     super.initState();
+    _appRouter = AppRouter().getRoutes(context);
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -178,20 +182,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         designSize: const Size(375, 812),
         minTextAdapt: true,
         splitScreenMode: true,
-        builder: (context, child) {
-          return Builder(builder: (newContext) {
-            return SafeArea(
-              top: false,
-              child: MaterialApp.router(
-                debugShowCheckedModeBanner: false,
-                title: 'packer',
-                themeMode: ThemeMode.light,
-                theme: lightTheme(newContext),
-                darkTheme: darkTheme(),
-                routerConfig: AppRouter().getRoutes(context),
-              ),
-            );
-          });
+        builder: (_, __) {
+          return SafeArea(
+            top: false,
+            child: MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              title: 'packer',
+              themeMode: ThemeMode.light,
+              theme: lightTheme(context),
+              darkTheme: darkTheme(),
+              routerConfig: _appRouter,
+            ),
+          );
         },
       ),
     );

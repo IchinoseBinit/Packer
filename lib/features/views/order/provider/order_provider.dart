@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
@@ -481,7 +482,32 @@ class OrderProvider extends ChangeNotifier {
     } catch (e) {
       removeLoading(context);
       log('Error posting basket data: $e', name: "basket data response");
-      ErrorHandler.alertDialog(context, e.toString());
+
+      String errorMessage = e is AppException ? e.message : e.toString();
+
+      if (e is AppException && e.json != null) {
+        final data = e.json as Map<String, dynamic>;
+
+        final tag = data['tag'];
+        final productId = data['product_id'];
+
+        if (tag != null && productId != null) {
+          errorMessage = "Product id: $productId tag: $tag, \n ${e.message}";
+
+          scannedDataList
+              .removeWhere((item) => item.startsWith(productId.toString()));
+
+          for (var b in baskets) {
+            b.productIdentifiers
+                .removeWhere((id) => id.startsWith(productId.toString()));
+          }
+
+          baskets.removeWhere((b) => b.productIdentifiers.isEmpty);
+        }
+      }
+
+      await ErrorHandler.alertDialog(context, errorMessage);
+
       notifyListeners();
       return {
         "success": false,
