@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -111,7 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {},
                           child: const Text(
                             "Forgot password?",
-                            // TODO: Use here theming
                             style: TextStyle(color: AppColors.primaryColor),
                           ),
                         ),
