@@ -42,12 +42,14 @@ class Results {
   late final int productId;
   late final String productName;
   late final int totalUnits;
+  late final String rackName;
   late final List<String> unitTags;
 
   Results(
       {required this.productId,
       required this.productName,
       required this.totalUnits,
+      required this.rackName,
       required this.unitTags});
 
   Results.fromJson(Map<String, dynamic> json) {
@@ -55,6 +57,7 @@ class Results {
     productName = json['product_name'].toString().toStringConversion();
     totalUnits = json['total_units'].toString().toInt();
     unitTags = json['unit_tags'].cast<String>();
+    rackName = json['rack']?.toString().toStringConversion() ?? '';
   }
 
   Map<String, dynamic> toJson() {
@@ -63,6 +66,7 @@ class Results {
     data['product_name'] = productName.toString().toStringConversion();
     data['total_units'] = totalUnits.toString().toInt();
     data['unit_tags'] = unitTags;
+    data['rack'] = rackName.toString().toStringConversion();
     return data;
   }
 }

@@ -139,29 +139,7 @@ class AppRouter {
                 return ThankYouPage();
               },
             ),
-            // GoRoute(
-            //   path: NavigationConstants.bucketqrScreenRoute,
-            //   builder: (BuildContext context, GoRouterState state) {
-            //     final orderId = state.extra as String;
 
-            //     return BucketScanScreen(
-            //       orderId: orderId,
-            //     );
-            //   },
-            // ),
-            // GoRoute(
-            //   path: NavigationConstants.productqrScreenRoute,
-            //   builder: (BuildContext context, GoRouterState state) {
-            //     final extra = state.extra as Map<String, dynamic>?;
-
-            //     final productId =
-            //         extra?['productId']; // Assuming it's int or string
-
-            //     return ProductScannerScreen(
-            //       productId: productId,
-            //     );
-            //   },
-            // ),
             GoRoute(
               path: NavigationConstants.photoSelectionRoute,
               builder: (BuildContext context, GoRouterState state) {
@@ -176,19 +154,6 @@ class AppRouter {
               },
             ),
 
-            // GoRoute(
-            //   path: NavigationConstants.otpScreen,
-            //   builder: (BuildContext context, GoRouterState state) {
-            //     final order = state.extra as OrderDetailModel;
-
-            //     // final map = state.extra as Map<String, dynamic>;
-            //     // final order = map['order'] as OrderDetailModel;
-
-            //     return OtpVerificationScreen(
-            //       order: order,
-            //     );
-            //   },
-            // ),
             GoRoute(
               path: NavigationConstants.citizenshipCardScreenRoute,
               builder: (BuildContext context, GoRouterState state) {
