@@ -95,8 +95,7 @@ class ExpiredProductsScreenState extends State<ExpiredProductsScreen> {
 
                       return ExpiredProductCardWidget(item: item);
                     },
-                    childCount: provider.expiryProductModel.length +
-                        (provider.hasNextPage ? 1 : 0),
+                    childCount: provider.expiryProductModel.length,
                   ),
                 ),
               ),

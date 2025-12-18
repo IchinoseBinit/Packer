@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/error_handler.dart';
@@ -28,131 +27,126 @@ class _OrderReturnDetailState extends State<OrderReturnDetail> {
       appBar: const GeneralAppBar(
         middleWidget: Text("Order Return"),
       ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsetsGeometry.all(8.r),
+        child: orderReturnProvider.isCompleted
+            ? GeneralElevatedButton(
+                onPressed: () async {
+                  final result =
+                      await orderReturnProvider.postOrderReturn(context);
+                  if (result.success) {
+                    showToast("Order returned successfully");
+                    navigateAndRemoveAll(context,
+                        route: NavigationConstants.dashboardRoute);
+                  } else {
+                    if (result.message != null) {
+                      ErrorHandler.alertDialog(context, result.message ?? '');
+                    }
+                  }
+                },
+                title: 'Return this order',
+              )
+            : GeneralElevatedButton(
+                onPressed: () {},
+                title: 'Scan all items',
+              ),
+      ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            OrderReturnInfoCard(),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: OrderReturnInfoCard()),
             // 12.h
-            SizedBox(height: 12.h),
-            Padding(
+            SliverToBoxAdapter(child: SizedBox(height: 12.h)),
+            SliverPadding(
               padding: EdgeInsets.all(8.0),
-              child: Text(
-                "Items Ordered:",
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  "Items Ordered:",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
             // 12.h
-            SizedBox(height: 12.h),
+            SliverToBoxAdapter(child: SizedBox(height: 12.h)),
 
-            Expanded(
-              child: ListView.builder(
-                  itemCount: orderReturnProvider.rackNames.length,
-                  itemBuilder: (context, index) {
-                    final rackName = orderReturnProvider.rackNames[index];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            for (final rackName in orderReturnProvider.rackNames) ...[
+              //
+              SliverPadding(
+                padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                sliver: SliverToBoxAdapter(
+                  child: RichText(
+                    text: TextSpan(
                       children: [
-                        RichText(
-                            text: TextSpan(children: [
-                          TextSpan(
-                              text: "Rack Name: ",
-                              style: Theme.of(context).textTheme.labelLarge),
-                          TextSpan(
-                              text: rackName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                    fontSize: 16.sp,
-                                  )),
-                        ])),
-                        // 8.h
-                        SizedBox(height: 8.h),
-                        if (orderReturnProvider.rackToOrderItems[rackName] !=
-                            null)
-                          IntrinsicGridView.vertical(
-                              columnCount: 2,
-                              verticalSpace: 12.w,
-                              horizontalSpace: 12.w,
-                              children: List.generate(
-                                orderReturnProvider
-                                    .rackToOrderItems[rackName]!.length,
-                                (index) {
-                                  final orderItem = orderReturnProvider
-                                      .rackToOrderItems[rackName]![index];
-
-                                  return TrolleyItemWidget(
-                                    id: orderItem.productId,
-                                    name: orderItem.productName,
-                                    image: orderItem.imageUrl,
-                                    qty: orderItem.unitTags.length,
-                                    measurement:
-                                        "${orderItem.size} ${orderItem.measurement}",
-                                    isCompleted: orderReturnProvider
-                                        .isItemCompleted(orderItem.productId),
-                                    onTap: () {
-                                      if (orderReturnProvider.isItemCompleted(
-                                          orderItem.productId)) {
-                                        return;
-                                      }
-                                      Provider.of<OrderReturnProvider>(context,
-                                              listen: false)
-                                          .initScannedTagsList();
-                                      navigate(context,
-                                          route: NavigationConstants
-                                              .orderReturnScannerRoute,
-                                          extra: {
-                                            "productId": orderItem.productId,
-                                            "rack": true
-                                          });
-                                    },
-                                  );
-                                },
-                              )
-                              // [
-                              //   TrolleyItemWidget(
-                              //     id: orderItem?.productId ?? 0,
-                              //     name: orderItem?.productName ?? "",
-                              //     image: orderItem?.imageUrl ?? "",
-                              //     qty: orderItem?.unitTags.length ?? 0,
-                              //   ),
-                              // ],
-
+                        TextSpan(
+                            text: "Rack Name: ",
+                            style: Theme.of(context).textTheme.labelLarge),
+                        TextSpan(
+                          text: rackName,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontSize: 16.sp,
                               ),
+                        ),
                       ],
-                    );
-                  }),
-            ),
-
-            // 12.h
-            SizedBox(height: 12.h),
-            orderReturnProvider.isCompleted
-                ? GeneralElevatedButton(
-                    onPressed: () async {
-                      final result =
-                          await orderReturnProvider.postOrderReturn(context);
-                      if (result.success) {
-                        showToast("Order returned successfully");
-                        navigateAndRemoveAll(context,
-                            route: NavigationConstants.dashboardRoute);
-                      } else {
-                        if (result.message != null) {
-                          ErrorHandler.alertDialog(
-                              context, result.message ?? '');
-                        }
-                      }
-                    },
-                    title: 'Return this order',
-                  )
-                : GeneralElevatedButton(
-                    onPressed: () {},
-                    title: 'Scan all items',
+                    ),
                   ),
+                ),
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: 8.h)),
+              //
+              SliverPadding(
+                padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 180.w,
+                    crossAxisSpacing: 8.w,
+                    childAspectRatio: 0.5,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final orderItem = orderReturnProvider
+                          .rackToOrderItems[rackName]![index];
+
+                      return TrolleyItemWidget(
+                        id: orderItem.productId,
+                        name: orderItem.productName,
+                        image: orderItem.imageUrl,
+                        qty: orderItem.unitTags.length,
+                        measurement:
+                            "${orderItem.size} ${orderItem.measurement}",
+                        isCompleted: orderReturnProvider
+                            .isItemCompleted(orderItem.productId),
+                        onTap: () {
+                          if (orderReturnProvider
+                              .isItemCompleted(orderItem.productId)) {
+                            return;
+                          }
+                          Provider.of<OrderReturnProvider>(context,
+                                  listen: false)
+                              .initScannedTagsList();
+                          navigate(context,
+                              route:
+                                  NavigationConstants.orderReturnScannerRoute,
+                              extra: {
+                                "productId": orderItem.productId,
+                                "rack": true
+                              });
+                        },
+                      );
+                    },
+                    childCount: orderReturnProvider
+                            .rackToOrderItems[rackName]?.length ??
+                        0,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -240,6 +234,7 @@ class OrderReturnInfoCard extends StatelessWidget {
                       )
                     ],
                   ),
+
                   /// Basket Line (if available)
 
                   SizedBox(height: 4.h),

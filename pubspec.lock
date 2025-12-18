@@ -694,14 +694,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.20.2"
-  intrinsic_grid_view:
-    dependency: "direct main"
-    description:
-      name: intrinsic_grid_view
-      sha256: c86b77d569af3b2420fcfd3dbcd6ec1e83dab57b08e49acb05e2d257510652d2
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.2"
   is_lock_screen2:
     dependency: "direct main"
     description:

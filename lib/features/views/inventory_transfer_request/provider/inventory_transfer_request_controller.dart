@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive/hive.dart';
@@ -110,7 +109,6 @@ class InventoryTransferRequestController extends ChangeNotifier {
       route: NavigationConstants.inventoryTransferRequestScannerRoute,
     );
   }
-
 
   void setSelectedLocalInventoryTransferRequestItem(
       BuildContext context, InventoryTransferRequestItemModel item) {
@@ -330,9 +328,9 @@ class InventoryTransferRequestController extends ChangeNotifier {
       }
       scannedTagsList.add(code);
       // check if required tags are scanned
-      int scannedCount = getScannedCount(selectedInventoryTransferRequestItem!.productId ?? 0);
-      if (scannedCount ==
-          selectedInventoryTransferRequestItem!.quantity) {
+      int scannedCount =
+          getScannedCount(selectedInventoryTransferRequestItem!.productId ?? 0);
+      if (scannedCount == selectedInventoryTransferRequestItem!.quantity) {
         await addItemToLocal();
         return ScanResult(
             success: true, message: "Product scanned successfully");
@@ -360,7 +358,7 @@ class InventoryTransferRequestController extends ChangeNotifier {
       //   }
       //   localSelectedItem = localItem;
       // } else
-       if (!localSelectedItem!.tags!.contains(code)) {
+      if (!localSelectedItem!.tags!.contains(code)) {
         return ScanResult(
             success: false, message: "Invalid QR - Product does not match");
       }
@@ -369,7 +367,7 @@ class InventoryTransferRequestController extends ChangeNotifier {
       if (localScannedTag.length == localSelectedItem!.tags?.length) {
         await submitProductTags(context);
         getLocalProductScanMessage(context);
-        if (inventoryRequestDao.getAll().isEmpty){
+        if (inventoryRequestDao.getAll().isEmpty) {
           navigatePop(context);
         }
         return ScanResult(
@@ -399,9 +397,10 @@ class InventoryTransferRequestController extends ChangeNotifier {
       localScannedTag.clear();
       localSelectedItem = null;
       notifyListeners();
-      navigateReplacement(context,
-          route: NavigationConstants.inventoryTrolleyTransferRequestItemRoute,
-          );
+      navigateReplacement(
+        context,
+        route: NavigationConstants.inventoryTrolleyTransferRequestItemRoute,
+      );
       // Provider.of<InventoryTransferRequestController>(context, listen: false)
       //     .getLocalProductScanMessage(context);
       // navigateReplacement(context,

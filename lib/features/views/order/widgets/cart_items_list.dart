@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
@@ -21,16 +20,11 @@ class CartItemsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<OrderProvider>(
       builder: (context, state, child) {
-        return ListView.separated(
-          shrinkWrap: true,
-          itemCount: state.rackList.length,
-          itemBuilder: (context, index) {
-            final rack = state.rackList[index];
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
+        return CustomScrollView(
+          slivers: [
+            for (final rack in state.rackList) ...[
+              SliverToBoxAdapter(
+                child: RichText(
                   text: TextSpan(
                     children: [
                       TextSpan(
@@ -51,15 +45,20 @@ class CartItemsList extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: 8.h),
-                if (state.rackProductData[rack] != null)
-                  IntrinsicGridView.vertical(
-                    columnCount: 2,
-                    verticalSpace: 12.w,
-                    horizontalSpace: 12.w,
-                    children: List.generate(
-                      state.rackProductData[rack]!.length,
-                      (index) {
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: 8.h)),
+              //
+              if (state.rackProductData[rack] != null)
+                SliverPadding(
+                  padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 180.w,
+                      crossAxisSpacing: 8.w,
+                      childAspectRatio: 0.4,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
                         final product = state.rackProductData[rack]![index];
                         final isDone = state.checkItem(product.id);
                         final width = (1.sw - 12.w - 32.w) / 2;
@@ -87,12 +86,92 @@ class CartItemsList extends StatelessWidget {
                               isDone ? ItemStatus.done : ItemStatus.remaining,
                         );
                       },
+                      childCount: state.rackProductData[rack]?.length ?? 0,
                     ),
-                  )
-              ],
-            );
-          },
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  ),
+                ),
+            ],
+            // ListView.separated(
+            //   shrinkWrap: true,
+            //   itemCount: state.rackList.length,
+            //   itemBuilder: (context, index) {
+            //     final rack = state.rackList[index];
+
+            //     return Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         RichText(
+            //           text: TextSpan(
+            //             children: [
+            //               TextSpan(
+            //                 text: "Rack Name: ",
+            //                 style: Theme.of(context)
+            //                     .textTheme
+            //                     .labelLarge
+            //                     ?.copyWith(
+            //                       fontSize: 12.sp,
+            //                       fontWeight: FontWeight.w500,
+            //                     ),
+            //               ),
+            //               TextSpan(
+            //                 text: rack,
+            //                 style: Theme.of(context)
+            //                     .textTheme
+            //                     .headlineSmall
+            //                     ?.copyWith(
+            //                         fontSize: 16.sp,
+            //                         fontWeight: FontWeight.w600),
+            //               ),
+            //             ],
+            //           ),
+            //         ),
+            //         SizedBox(height: 8.h),
+            //         if (state.rackProductData[rack] != null)
+            //           IntrinsicGridView.vertical(
+            //             columnCount: 2,
+            //             verticalSpace: 12.w,
+            //             horizontalSpace: 12.w,
+            //             children: List.generate(
+            //               state.rackProductData[rack]!.length,
+            //               (index) {
+            //                 final product = state.rackProductData[rack]![index];
+            //                 final isDone = state.checkItem(product.id);
+            //                 final width = (1.sw - 12.w - 32.w) / 2;
+
+            //                 return ProductCard(
+            //                   width: width,
+            //                   onTap: () {
+            //                     log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
+            //                     if (isDone) return;
+
+            //                     navigate(
+            //                       context,
+            //                       route: NavigationConstants
+            //                           .cartItemScanScreenRoute,
+            //                       extra: {
+            //                         'productId': product.id,
+            //                       },
+            //                     );
+            //                   },
+            //                   productModel:
+            //                       CommonProductModel.fromProductDetails(
+            //                           product),
+            //                   quantity: (product.quantity ?? 0) -
+            //                       state.countScannedItem(product.id),
+            //                   status: isDone
+            //                       ? ItemStatus.done
+            //                       : ItemStatus.remaining,
+            //                 );
+            //               },
+            //             ),
+            //           )
+            //       ],
+            //     );
+            //   },
+            //   separatorBuilder: (context, index) => const SizedBox(height: 12),
+            // ),
+            //
+          ],
         );
       },
     );

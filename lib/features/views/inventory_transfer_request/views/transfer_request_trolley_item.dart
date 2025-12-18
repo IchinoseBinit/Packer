@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/features/views/inventory_transfer_request/provider/inventory_transfer_request_controller.dart';
@@ -26,27 +25,33 @@ class TransferRequestTrolleyItem extends StatelessWidget {
           builder: (context, controller, child) {
             final items = controller.inventoryRequestDao.getAll();
 
-            return Column(
-              children: [
-                TransferRequestNotificationCard(
-                  transferItem: controller.selectedInventoryTransferRequest!,
-                  primaryColor: AppColors.primaryColor,
-                  basketId: controller.basketCode,
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: TransferRequestNotificationCard(
+                    transferItem: controller.selectedInventoryTransferRequest!,
+                    primaryColor: AppColors.primaryColor,
+                    basketId: controller.basketCode,
+                  ),
                 ),
-                Divider(),
+                SliverToBoxAdapter(child: Divider()),
                 if (items.isEmpty)
-                  const Center(
-                    child: Text('No Items'),
+                  SliverToBoxAdapter(
+                    child: const Center(
+                      child: Text('No Items'),
+                    ),
                   )
                 else
-                  Expanded(
-                    child: IntrinsicGridView.vertical(
-                      columnCount: 2,
-                      verticalSpace: 12.w,
-                      horizontalSpace: 12.w,
-                      children: List.generate(
-                        items.length,
-                        (index) {
+                  SliverPadding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 180.w,
+                        crossAxisSpacing: 8.w,
+                        childAspectRatio: 0.5,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
                           final product = items[index];
                           ItemStatus status = (controller.getScannedCount(
                                       product.productId ?? 0,
@@ -75,6 +80,7 @@ class TransferRequestTrolleyItem extends StatelessWidget {
                                     fromLocal: true),
                           );
                         },
+                        childCount: items.length,
                       ),
                     ),
                   ),
