@@ -57,7 +57,7 @@ class Results {
     productName = json['product_name'].toString().toStringConversion();
     totalUnits = json['total_units'].toString().toInt();
     unitTags = json['unit_tags'].cast<String>();
-    rackName = json['rack']?.toString().toStringConversion() ?? '';
+    rackName = json['rack']?.toString().toStringConversion() ?? 'N/A';
   }
 
   Map<String, dynamic> toJson() {

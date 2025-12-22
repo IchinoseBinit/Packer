@@ -56,60 +56,73 @@ class ExpiredProductsScreenState extends State<ExpiredProductsScreen> {
       appBar: GeneralAppBar(
         middleWidget: const Text("Near Expiry Products"),
       ),
-      body: Consumer<ExpiredProductProvider>(
-        builder: (_, provider, __) {
-          /// Initial loading
-          if (provider.isLoading && provider.expiryProductModel.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await context
+              .read<ExpiredProductProvider>()
+              .fetchExpiredProduct(isFirstTime: false);
+        },
+        child: Consumer<ExpiredProductProvider>(
+          builder: (_, provider, __) {
+            /// Initial loading
+            if (provider.isLoading && provider.expiryProductModel.isEmpty) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-          /// Empty state
-          if (!provider.isLoading && provider.expiryProductModel.isEmpty) {
-            return Center(
-              child: Text(
-                "No Expired Products Found.",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+            /// Empty state
+            if (!provider.isLoading && provider.expiryProductModel.isEmpty) {
+              return Center(
+                child: Text(
+                  "No Expired Products Found.",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              );
+            }
+
+            /// Product list with pagination
+            return CustomScrollView(
+              controller: _controller,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        if (index == provider.expiryProductModel.length) {
+                          return provider.isPaginationLoading
+                              ? Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : const SizedBox.shrink();
+                        }
+
+                        final item = provider.expiryProductModel[index];
+                        return Column(
+                          children: [
+                            ExpiredProductCardWidget(item: item),
+                            SizedBox(height: 12.h),
+                          ],
+                        );
+                      },
+                      childCount: provider.expiryProductModel.length +
+                          (provider.hasNextPage ? 1 : 0),
                     ),
-              ),
-            );
-          }
-
-          /// Product list with pagination
-          return CustomScrollView(
-            controller: _controller,
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      /// Pagination loader item
-                      if (index == provider.expiryProductModel.length) {
-                        return provider.isPaginationLoading
-                            ? Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16.h),
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
-                            : const SizedBox.shrink();
-                      }
-
-                      final item = provider.expiryProductModel[index];
-                      return ExpiredProductCardWidget(item: item);
-                    },
-                    childCount: provider.expiryProductModel.length +
-                        (provider.hasNextPage ? 1 : 0),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

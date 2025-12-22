@@ -730,16 +730,6 @@ class StockProvider extends ChangeNotifier {
 
   void transferBasket(BuildContext context) async {
     try {
-      // final response = await DioClient().request(
-      //   requestType: RequestType.postWithToken,
-      //   url: AppUrls.transferBasketInventoryUrl,
-      // );
-      // if (response.statusCode == 200) {
-
-      // } else {
-      //   showToast("Failed to scan basket");
-      // }
-
       showToast("Transferred Successfully");
       lowStockList.remove(selectedModel);
       notifyListeners();
@@ -1028,86 +1018,4 @@ class StockProvider extends ChangeNotifier {
     }
     return list;
   }
-
-  // Future<bool> updateRack(
-  //     BuildContext context, String code, int productId) async {
-  //   try {
-  //     final url = AppUrls.updateRackUrl;
-  //     final response = await DioClient().request(
-  //       requestType: RequestType.postWithToken,
-  //       url: url,
-  //       body: {
-  //         "rack_identifier": code,
-  //         "product_id": productId,
-  //       },
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       //
-  //       showToast("Rack updated successfully");
-  //       // WidgetsBinding.instance.addPostFrameCallback((_) {
-  //       //   navigateAndRemoveAll(context,
-  //       //       route: NavigationConstants.dashboardRoute);
-  //       // });
-  //       return true;
-  //     } else {
-  //       showToast('Failed to update rack');
-  //       return false;
-  //       // navigateAndRemoveAll(context,
-  //       //     route: NavigationConstants.dashboardRoute);
-  //     }
-  //   } catch (ex) {
-  //     showToast(ex.toString());
-  //     return false;
-  //     // showDialog(
-  //     //   context: context,
-  //     //   builder: (context) => AlertDialog(
-  //     //     title: Row(
-  //     //       children: [
-  //     //         Icon(Icons.error, color: Colors.red),
-  //     //         SizedBox(width: 8),
-  //     //         Text(
-  //     //           "Product Availability Failed",
-  //     //           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-  //     //                 fontSize: 12.sp,
-  //     //                 fontWeight: FontWeight.w400,
-  //     //               ),
-  //     //         ),
-  //     //       ],
-  //     //     ),
-  //     //     content: Column(
-  //     //       mainAxisSize: MainAxisSize.min,
-  //     //       children: [
-  //     //         Text("Do you want to scan again?"),
-  //     //         SizedBox(height: 20),
-  //     //         Row(
-  //     //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //     //           children: [
-  //     //             TextButton(
-  //     //               onPressed: () {
-  //     //                 Navigator.of(context).pop(); // Close dialog
-  //     //                 navigate(context,
-  //     //                     route: NavigationConstants.qrScanScreenRoute,
-  //     //                     extra: {
-  //     //                       'scanCarton': true,
-  //     //                     });
-  //     //               },
-  //     //               child: Text("Yes"),
-  //     //             ),
-  //     //             TextButton(
-  //     //               onPressed: () {
-  //     //                 Navigator.of(context).pop(); // Close dialog
-  //     //                 navigate(context,
-  //     //                     route: NavigationConstants.dashboardRoute);
-  //     //               },
-  //     //               child: Text("No"),
-  //     //             ),
-  //     //           ],
-  //     //         )
-  //     //       ],
-  //     //     ),
-  //     //   ),
-  //     // );
-  //   }
-  // }
 }

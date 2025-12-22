@@ -17,29 +17,65 @@ class ExpiredProductProvider extends ChangeNotifier {
   ExpiredProductDetailsModel? productDetails;
 
   /// Fetch products
+  // Future<void> fetchExpiredProduct({bool isFirstTime = false}) async {
+  //   if (isLoading || isPaginationLoading) return;
+
+  //   try {
+  //     if (isFirstTime) {
+  //       isLoading = true;
+  //       _page = 1;
+  //       expiryProductModel.clear();
+  //     } else {
+  //       isPaginationLoading = true;
+  //     }
+
+  //     notifyListeners();
+
+  //     // Fetch paginated products
+  //     final paginated = await _repo.fetchProductsPage(_page);
+
+  //     expiryProductModel.addAll(paginated.results);
+
+  //     hasNextPage = paginated.hasNextPage;
+
+  //     if (hasNextPage) {
+  //       _page = paginated.page + 1;
+  //     }
+  //   } catch (e, s) {
+  //     log("Error fetching products: $e\n$s");
+  //   } finally {
+  //     isLoading = false;
+  //     isPaginationLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
   Future<void> fetchExpiredProduct({bool isFirstTime = false}) async {
     if (isLoading || isPaginationLoading) return;
 
+    if (!isFirstTime && !hasNextPage) return;
+
     try {
       if (isFirstTime) {
-        isLoading = true;
         _page = 1;
+        hasNextPage = true;
         expiryProductModel.clear();
+        isLoading = true;
       } else {
         isPaginationLoading = true;
       }
 
       notifyListeners();
 
-      // Fetch paginated products
       final paginated = await _repo.fetchProductsPage(_page);
 
+      // Add new data
       expiryProductModel.addAll(paginated.results);
 
       hasNextPage = paginated.hasNextPage;
 
+      // Move to next page ONLY if available
       if (hasNextPage) {
-        _page = paginated.page + 1;
+        _page++;
       }
     } catch (e, s) {
       log("Error fetching products: $e\n$s");

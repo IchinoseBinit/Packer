@@ -5,7 +5,7 @@ import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 
-class LowStockRepo {
+class   LowStockRepo {
   static Future<List<LowStockModel>> getLowStock() async {
     try {
       final response = await DioClient().request(
