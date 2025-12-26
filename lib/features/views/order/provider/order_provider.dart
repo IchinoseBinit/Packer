@@ -427,7 +427,6 @@ class OrderProvider extends ChangeNotifier {
       orderId: orderId,
       data: baskets,
     );
-    debugger();
 
     try {
       log(postBasketRequest.toJson().toString(), name: "productPost body data");
@@ -446,8 +445,7 @@ class OrderProvider extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         log("Successfully posted basket data", name: "basket data response");
-        
-        
+
         try {
           await Hive.deleteBoxFromDisk('${HiveConstants.order}$orderId');
           log("Order deleted");
@@ -774,7 +772,9 @@ class OrderProvider extends ChangeNotifier {
         notifyListeners();
       } else {
         // Handle server error gracefully
-        showToast(response.data['error'] ?? "Failed to transfer products");
+        showToast(response.data['detail'] ??
+            response.data['error'] ??
+            "Failed to transfer products");
       }
     } catch (e) {
       showLongToast(context: context, message: "Error: $e");

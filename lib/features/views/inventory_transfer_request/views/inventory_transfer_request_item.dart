@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intrinsic_grid_view/intrinsic_grid_view.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
@@ -41,125 +40,122 @@ class InventoryTransferRequestItem extends StatelessWidget {
               child: Text("No transfer items available"),
             );
           }
-          return Column(
-            children: [
-              Padding(
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
                 padding: AppConstants.padding.copyWith(bottom: 8.h),
-                child: TransferRequestNotificationCard(
-                  primaryColor: Theme.of(context).primaryColor,
-                  transferItem: provider.selectedInventoryTransferRequest!,
+                sliver: SliverToBoxAdapter(
+                  child: TransferRequestNotificationCard(
+                    primaryColor: Theme.of(context).primaryColor,
+                    transferItem: provider.selectedInventoryTransferRequest!,
+                  ),
                 ),
               ),
-              const Divider(
-                height: 1,
-                color: Color(0xffEAEAEA),
+              SliverToBoxAdapter(
+                child: const Divider(
+                  height: 1,
+                  color: Color(0xffEAEAEA),
+                ),
               ),
-              Expanded(
-                  child: ListView.builder(
-                      padding: AppConstants.padding,
-                      itemCount: provider.rackList.length,
-                      itemBuilder: (context, index) {
-                        final rackName = provider.rackList[index];
-                        return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                        text: "Rack Name: ",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelLarge),
-                                    TextSpan(
-                                        text: rackName,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineSmall
-                                            ?.copyWith(
-                                              fontSize: 16.sp,
-                                            )),
-                                  ],
+              for (final rackName in provider.rackList) ...[
+                SliverPadding(
+                  padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                  sliver: SliverToBoxAdapter(
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                              text: "Rack Name: ",
+                              style: Theme.of(context).textTheme.labelLarge),
+                          TextSpan(
+                            text: rackName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontSize: 16.sp,
                                 ),
-                              ),
-                              // 8.h
-                              SizedBox(height: 8.h),
-                              if (provider.rackWiseInventoryTransferRequestItemList[
-                                      rackName] !=
-                                  null)
-                                IntrinsicGridView.vertical(
-                                  columnCount: 2,
-                                  verticalSpace: 12.w,
-                                  horizontalSpace: 12.w,
-                                  children: List.generate(
-                                    provider
-                                            .rackWiseInventoryTransferRequestItemList[
-                                                rackName]
-                                            ?.length ??
-                                        0,
-                                    (index) {
-                                      final product = provider
-                                              .rackWiseInventoryTransferRequestItemList[
-                                          rackName]![index];
-                                      ItemStatus status =
-                                          (provider.getScannedCount(
-                                                      product.productId ?? 0) ==
-                                                  product.quantity)
-                                              ? ItemStatus.done
-                                              : ItemStatus.remaining;
-                                      final width = (1.sw - 12.w - 24.w) / 2;
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 8.h)),
+                SliverPadding(
+                  padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 180.w,
+                      crossAxisSpacing: 8.w,
+                      childAspectRatio: 0.5,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final product =
+                            provider.rackWiseInventoryTransferRequestItemList[
+                                rackName]![index];
+                        ItemStatus status =
+                            (provider.getScannedCount(product.productId ?? 0) ==
+                                    product.quantity)
+                                ? ItemStatus.done
+                                : ItemStatus.remaining;
+                        final width = (1.sw - 12.w - 24.w) / 2;
 
-                                      return ProductCard(
-                                        width: width,
-                                        onTap: () {
-                                          log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
-                                          if (status == ItemStatus.done) return;
-                                          provider
-                                              .setSelectedInventoryTransferRequestItem(
-                                                  context, product);
-                                        },
-                                        productModel: CommonProductModel
-                                            .fromInventoryTransferRequestItemModel(
-                                                product),
-                                        status: status,
-                                        statusToShow: "Completed",
-                                        quantity: (product.quantity ?? 0) -
-                                            provider.getScannedCount(
-                                                product.productId ?? 0),
-                                      );
-                                    },
-                                  ),
-                                ),
-                            ]);
-                      }))
+                        return ProductCard(
+                          width: width,
+                          onTap: () {
+                            log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
+                            if (status == ItemStatus.done) return;
+                            provider.setSelectedInventoryTransferRequestItem(
+                                context, product);
+                          },
+                          productModel: CommonProductModel
+                              .fromInventoryTransferRequestItemModel(product),
+                          status: status,
+                          statusToShow: "Completed",
+                          quantity: (product.quantity ?? 0) -
+                              provider.getScannedCount(product.productId ?? 0),
+                        );
+                      },
+                      childCount: provider
+                              .rackWiseInventoryTransferRequestItemList[
+                                  rackName]
+                              ?.length ??
+                          0,
+                    ),
+                  ),
+                ),
+              ],
             ],
           );
         },
       ),
       bottomNavigationBar: Consumer<InventoryTransferRequestController>(
-          builder: (context, provider, child) {
-        if (provider.inventoryRequestDao.getAll().isEmpty) {
-          return SizedBox.shrink();
-        }
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GeneralElevatedButton(
-                title: "Transfer",
-                onPressed: () {
-                  provider.initLocal();
-                  navigate(context,
-                      route: NavigationConstants
-                          .inventoryTransferRequestScannerRoute,
-                      extra: {"scanBasket": true});
-                },
-              ),
-            ],
-          ),
-        );
-      }),
+        builder: (context, provider, child) {
+          if (provider.inventoryRequestDao.getAll().isEmpty) {
+            return SizedBox.shrink();
+          }
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GeneralElevatedButton(
+                  title: "Transfer",
+                  onPressed: () {
+                    provider.initLocal();
+                    navigate(context,
+                        route: NavigationConstants
+                            .inventoryTransferRequestScannerRoute,
+                        extra: {"scanBasket": true});
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

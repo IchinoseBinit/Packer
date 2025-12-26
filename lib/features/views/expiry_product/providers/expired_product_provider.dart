@@ -16,39 +16,22 @@ class ExpiredProductProvider extends ChangeNotifier {
   List<Results> expiryProductModel = [];
   ExpiredProductDetailsModel? productDetails;
 
-  /// Fetch products
-  // Future<void> fetchExpiredProduct({bool isFirstTime = false}) async {
-  //   if (isLoading || isPaginationLoading) return;
+  // rackList, rackProductMap
+  List<String> rackList = [];
+  Map<String, List<Results>> rackProductMap = {};
 
-  //   try {
-  //     if (isFirstTime) {
-  //       isLoading = true;
-  //       _page = 1;
-  //       expiryProductModel.clear();
-  //     } else {
-  //       isPaginationLoading = true;
-  //     }
+  void arrangeItemAccordingToRack() {
+    rackList = expiryProductModel.map((e) => e.rackName).toSet().toList();
+    rackProductMap = {};
+    for (var rack in rackList) {
+      rackProductMap[rack] =
+          expiryProductModel.where((e) => e.rackName == rack).toList() ?? [];
+    }
+    // sort rack list
+    rackList.sort((a, b) => a.compareTo(b));
+    notifyListeners();
+  }
 
-  //     notifyListeners();
-
-  //     // Fetch paginated products
-  //     final paginated = await _repo.fetchProductsPage(_page);
-
-  //     expiryProductModel.addAll(paginated.results);
-
-  //     hasNextPage = paginated.hasNextPage;
-
-  //     if (hasNextPage) {
-  //       _page = paginated.page + 1;
-  //     }
-  //   } catch (e, s) {
-  //     log("Error fetching products: $e\n$s");
-  //   } finally {
-  //     isLoading = false;
-  //     isPaginationLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
   Future<void> fetchExpiredProduct({bool isFirstTime = false}) async {
     if (isLoading || isPaginationLoading) return;
 
@@ -70,6 +53,7 @@ class ExpiredProductProvider extends ChangeNotifier {
 
       // Add new data
       expiryProductModel.addAll(paginated.results);
+      arrangeItemAccordingToRack();
 
       hasNextPage = paginated.hasNextPage;
 

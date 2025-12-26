@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/home/home_screen.dart';
@@ -110,8 +113,13 @@ class _NavigationScreenState extends State<NavigationScreen> {
         title: "Exit",
         body: const Text("Do you want to exit the app?"),
         okFunc: () async {
-          Navigator.pop(context);
-          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+            SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+          } else {
+            context.go(NavigationConstants.initialRoute +
+                NavigationConstants.dashboardRoute);
+          }
         },
         needCancel: true,
         cancelFunc: () => Navigator.pop(context),

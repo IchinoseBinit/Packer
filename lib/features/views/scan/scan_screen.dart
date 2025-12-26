@@ -245,8 +245,8 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     final scanWindow = Rect.fromCenter(
       center: MediaQuery.sizeOf(context).center(Offset.zero),
-      width: 200,
-      height: 200,
+      width: MediaQuery.sizeOf(context).width * 0.7,
+      height: MediaQuery.sizeOf(context).width * 0.7,
     );
     return Scaffold(
       body: Stack(

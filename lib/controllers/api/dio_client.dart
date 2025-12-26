@@ -264,7 +264,7 @@ class DioClient {
         statusCode: response?.statusCode,
         message: data?["message"] ??
             data?["error"] ??
-            data?["detail"] ??
+            data?["detail"]?.toString() ??
             ErrorHandler.errorMessage,
         json: data,
       );

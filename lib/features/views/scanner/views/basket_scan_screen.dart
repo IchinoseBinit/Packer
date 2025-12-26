@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -23,6 +21,7 @@ class BasketScanScreen extends BaseScanScreen {
   final int orderId;
   final bool forTransfer;
   final bool forExpiredProducts;
+  final List<String>? tags;
 
   BasketScanScreen({
     super.key,
@@ -32,6 +31,7 @@ class BasketScanScreen extends BaseScanScreen {
     this.forTransfer = false,
     this.forExpiredProducts = false,
     this.orderId = 0,
+    this.tags,
   }) : super(
           scanTitle: "Basket Scanner",
           showFlash: true,
@@ -107,6 +107,7 @@ class BasketScanScreen extends BaseScanScreen {
             extra: {
               'forDamageTransfer': true,
               'forExpiredProducts': forExpiredProducts,
+              'tags': tags,
             });
       } else {
         var result = Provider.of<PackerTransferProvider>(context, listen: false)

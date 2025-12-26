@@ -1,3 +1,4 @@
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
 class ExpiredProductModel {
@@ -43,14 +44,17 @@ class Results {
   late final String productName;
   late final int totalUnits;
   late final String rackName;
+  late final String imageUrl;
   late final List<String> unitTags;
 
-  Results(
-      {required this.productId,
-      required this.productName,
-      required this.totalUnits,
-      required this.rackName,
-      required this.unitTags});
+  Results({
+    required this.productId,
+    required this.productName,
+    required this.totalUnits,
+    required this.rackName,
+    required this.imageUrl,
+    required this.unitTags,
+  });
 
   Results.fromJson(Map<String, dynamic> json) {
     productId = json['product_id'].toString().toInt();
@@ -58,6 +62,8 @@ class Results {
     totalUnits = json['total_units'].toString().toInt();
     unitTags = json['unit_tags'].cast<String>();
     rackName = json['rack']?.toString().toStringConversion() ?? 'N/A';
+    imageUrl = AppUrls.imageUrl +
+        (json['product_image']?.toString().toStringConversion() ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -66,6 +72,7 @@ class Results {
     data['product_name'] = productName.toString().toStringConversion();
     data['total_units'] = totalUnits.toString().toInt();
     data['unit_tags'] = unitTags;
+    data['product_image'] = imageUrl;
     data['rack'] = rackName.toString().toStringConversion();
     return data;
   }

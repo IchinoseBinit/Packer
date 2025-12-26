@@ -34,6 +34,7 @@ class ProductScanScreen extends BaseScanScreen {
   bool forDamageReceive = false;
   bool forDamageRequest;
   bool forExpiredProducts = false;
+  List<String>? tags;
 
   ProductScanScreen({
     super.key,
@@ -46,6 +47,7 @@ class ProductScanScreen extends BaseScanScreen {
     this.forDamageReceive = false,
     this.forDamageRequest = false,
     this.forExpiredProducts = false,
+    this.tags,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
@@ -277,6 +279,25 @@ class ProductScanScreen extends BaseScanScreen {
       controller.stop();
       HapticFeedback.heavyImpact();
 
+      if (tags != null) {
+        //
+        log("tags: ${tags.toString()} , $code");
+
+        if (tags!.isEmpty) {
+          handleInvalidCode(context, controller, code,
+              "All tags are already scanned, please press 'Confirm transfer' ");
+
+          return;
+        }
+
+        if (!tags!.contains(code)) {
+          //
+          handleInvalidCode(context, controller, code,
+              "You have scanned: \n$code. \n To scan:\n ${tags?.join('\n')} ");
+          return;
+        }
+      }
+
       if (code.contains("carton") ||
           code.contains("rack") ||
           code.contains("basket")) {
@@ -290,11 +311,24 @@ class ProductScanScreen extends BaseScanScreen {
         final list = code.split('-');
         final prodId = int.tryParse(list.first) ?? 0;
         if (prodId != productId) {
-          handleInvalidCode(context, controller, code);
+          handleInvalidCode(context, controller, code,
+              "You have scanned $prodId but actual product should be $productId");
           return;
         }
       }
+
       if (forCarton) {
+        //
+        List<String> needToScanProductList =
+            Provider.of<StockProvider>(context, listen: false)
+                .getTagsRemaining(true);
+
+        if (!needToScanProductList.contains(code)) {
+          handleInvalidCode(context, controller, code,
+              "You have scanned: \n$code. \n To scan:\n ${needToScanProductList.join('\n')} ");
+          return;
+        }
+
         final result = await Provider.of<StockProvider>(context, listen: false)
             .onScanCartonProduct(context, code);
         if (!context.mounted) return;
@@ -386,6 +420,16 @@ class ProductScanScreen extends BaseScanScreen {
           }
         }
       } else if (fromTransfer) {
+        List<String> needToScanProductList =
+            Provider.of<PackerTransferProvider>(context, listen: false)
+                .getTagsRemaining(context, productId, true);
+
+        if (!needToScanProductList.contains(code)) {
+          handleInvalidCode(context, controller, code,
+              "You have scanned: \n$code. \n To scan:\n ${needToScanProductList.join('\n')} ");
+          return;
+        }
+
         try {
           log("Scanning for transfer-$productId-$code");
 

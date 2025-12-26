@@ -427,6 +427,7 @@ class AppRouter {
                   forTransfer: args['forTransfer'] ?? false,
                   orderId: args['orderId'].toString().toInt(),
                   forExpiredProducts: args['forExpiredProducts'] ?? false,
+                  tags: args['tags'],
                 );
               },
             ),
@@ -470,6 +471,7 @@ class AppRouter {
                   forDamageReceive: args['forDamageReceive'] ?? false,
                   forDamageRequest: args['forDamageRequest'] ?? false,
                   forExpiredProducts: args['forExpiredProducts'] ?? false,
+                  tags: args['tags'],
                 );
               },
             ),

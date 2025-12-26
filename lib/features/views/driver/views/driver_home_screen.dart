@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/driver/widgets/driver_transfer_card.dart';
@@ -125,8 +127,13 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       title: "Exit",
       body: const Text("Do you want to exit the app?"),
       okFunc: () async {
-        Navigator.pop(context);
-        SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        } else {
+          context.go(NavigationConstants.initialRoute +
+              NavigationConstants.dashboardRoute);
+        }
       },
       needCancel: true,
       cancelFunc: () => Navigator.pop(context),

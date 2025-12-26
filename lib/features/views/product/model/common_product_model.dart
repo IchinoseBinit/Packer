@@ -1,4 +1,4 @@
-
+import 'package:packer/features/views/expiry_product/models/expiry_product_model.dart';
 import 'package:packer/features/views/inventory_transfer_request/model/inventory_transfer_request_item_model.dart';
 import 'package:packer/features/views/low_stock/model/product_model.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -115,6 +115,20 @@ class CommonProductModel {
     rackName = model.rackName ?? "";
     image = model.productImage.toString();
     quantity = model.quantity ?? 0;
+    size = "";
+    measurement = "";
+    plannedQuantity = 0;
+    productUnits = [];
+    scannedCount = 0;
+    productCompartment = "";
+  }
+
+  CommonProductModel.fromNearExpiry(Results model) {
+    productId = model.productId;
+    productName = model.productName;
+    rackName = model.rackName;
+    image = model.imageUrl;
+    quantity = model.unitTags.length;
     size = "";
     measurement = "";
     plannedQuantity = 0;

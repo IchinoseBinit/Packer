@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/damage_products/model/rack_product_model.dart';
 import 'package:packer/features/views/expiry_product/providers/expired_product_provider.dart';
 import 'package:packer/features/views/expiry_product/widgets/expired_product_card_widget.dart';
+import 'package:packer/features/views/order/widgets/cart_items_list.dart';
+import 'package:packer/features/views/product/model/common_product_model.dart';
+import 'package:packer/features/views/product/product_card.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:provider/provider.dart';
 
@@ -89,36 +95,77 @@ class ExpiredProductsScreenState extends State<ExpiredProductsScreen> {
               controller: _controller,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                SliverPadding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == provider.expiryProductModel.length) {
-                          return provider.isPaginationLoading
-                              ? Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                )
-                              : const SizedBox.shrink();
-                        }
-
-                        final item = provider.expiryProductModel[index];
-                        return Column(
+                for (final rackName in provider.rackList) ...[
+                  SliverPadding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
+                    sliver: SliverToBoxAdapter(
+                      child: RichText(
+                        text: TextSpan(
                           children: [
-                            ExpiredProductCardWidget(item: item),
-                            SizedBox(height: 12.h),
+                            TextSpan(
+                                text: "Rack Name: ",
+                                style: Theme.of(context).textTheme.labelLarge),
+                            TextSpan(
+                              text: rackName,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontSize: 16.sp,
+                                  ),
+                            ),
                           ],
-                        );
-                      },
-                      childCount: provider.expiryProductModel.length +
-                          (provider.hasNextPage ? 1 : 0),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  SliverToBoxAdapter(child: SizedBox(height: 8.h)),
+                  SliverPadding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 180.w,
+                        crossAxisSpacing: 8.w,
+                        childAspectRatio: 0.5,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item =
+                              provider.rackProductMap[rackName]![index];
+
+                          return ProductCard(
+                            width: double.infinity,
+                            onTap: () async {
+                              await navigate(
+                                context,
+                                route:
+                                    NavigationConstants.basketScanScreenRoute,
+                                extra: {
+                                  'forTransfer': true,
+                                  'forExpiredProducts': true,
+                                  'tags': item.unitTags,
+                                },
+                              );
+
+                              await context
+                                  .read<ExpiredProductProvider>()
+                                  .fetchExpiredProduct(isFirstTime: false);
+                            },
+                            productModel:
+                                CommonProductModel.fromNearExpiry(item),
+                            status: item.unitTags.isNotEmpty
+                                ? ItemStatus.remaining
+                                : ItemStatus.done,
+                            quantity: item.unitTags.length,
+                          );
+                        },
+                        childCount:
+                            provider.rackProductMap[rackName]?.length ?? 0,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             );
           },
@@ -127,3 +174,15 @@ class ExpiredProductsScreenState extends State<ExpiredProductsScreen> {
     );
   }
 }
+
+
+  // if (index == provider.expiryProductModel.length) {
+  //                         return provider.isPaginationLoading
+  //                             ? Padding(
+  //                                 padding: EdgeInsets.symmetric(vertical: 16.h),
+  //                                 child: const Center(
+  //                                   child: CircularProgressIndicator(),
+  //                                 ),
+  //                               )
+  //                             : const SizedBox.shrink();
+  //                       }
