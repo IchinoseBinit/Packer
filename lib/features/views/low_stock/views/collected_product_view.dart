@@ -27,7 +27,8 @@ class _CollectedProductViewState extends State<CollectedProductView> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-             Provider.of<StockProvider>(context, listen: false).fetchLowStockProducts(context);
+            Provider.of<StockProvider>(context, listen: false)
+                .fetchLowStockProducts(context);
             Navigator.pop(context);
           },
         ),

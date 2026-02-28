@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -20,6 +21,7 @@ class CartItemScanScreen extends BaseScanScreen {
           scanTitle: 'Product Scanner',
           showFlash: true,
           showBackButton: true,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
 
   @override
@@ -33,7 +35,19 @@ class CartItemScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    return SizedBox.shrink();
+    final show = context.read<OrderProvider>().hasNearExpiryTag(productId);
+    return show
+        ? FloatingActionButton(
+            backgroundColor: AppColors.primaryColor,
+            onPressed: () async {
+              context.read<OrderProvider>().showProductTags(context, productId);
+            },
+            child: const Icon(
+              Icons.info,
+              color: Colors.white,
+            ),
+          )
+        : SizedBox.shrink();
   }
 
   @override

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 
@@ -12,6 +13,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -258,42 +260,161 @@ class OrderProvider extends ChangeNotifier {
     return scannedLength;
   }
 
+  bool hasNearExpiryTag(int productId) {
+    ProductDetails? productDetail = _orderDetails?.productDetails
+        .firstWhereOrNull((e) => e.id == productId);
+
+    if (productDetail == null) return false;
+
+    return productDetail.unitsToScan == null ||
+            productDetail.unitsToScan?.isEmpty == true
+        ? false
+        : true;
+  }
+
+  void showProductTags(BuildContext context, int productId) {
+    //
+
+    ProductDetails? productDetail = _orderDetails?.productDetails
+        .firstWhereOrNull((e) => e.id == productId);
+
+    final taglist =
+        productDetail?.unitsToScan?.map((e) => e.tag).toList() ?? [];
+
+    // show modal bottom sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(child: Text("Near Expire Tags")),
+              // 12.h
+              SizedBox(height: 12.h),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: taglist.length,
+                  itemBuilder: (context, index) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          taglist[index],
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontSize: 13.sp,
+                                  ),
+                        ),
+                        if (scannedDataList.contains(taglist[index]))
+                          Icon(
+                            Icons.done,
+                            color: Colors.green,
+                          )
+                      ],
+                    );
+                  },
+                  separatorBuilder: (context, index) {
+                    return SizedBox(height: 12.h);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // UPDATED
   String scanProductMessage(int productId) {
-    log("Message Product Id: $productId");
-    for (var element in _orderDetails?.productDetails ?? []) {
-      if (element.id == productId) {
-        return "Scan ${element.quantity - countScannedItem(productId)} ${element.productName}";
-      }
+    //
+    ProductDetails? productDetail = _orderDetails?.productDetails
+        .firstWhereOrNull((e) => e.id == productId);
+
+    if (productDetail == null) {
+      return "Scan Product";
     }
-    return "";
+
+    final List<UnitsToScan> unitsToScanTag = productDetail.unitsToScan == null
+        ? []
+        : productDetail.unitsToScan!
+            .where((e) => !scannedDataList.contains(e.tag))
+            .toList();
+
+    if (unitsToScanTag.isNotEmpty) {
+      return "Scan ${unitsToScanTag.length} Near Expiry tags. \n ${productDetail.productName}";
+    }
+
+    return "Scan ${(productDetail.quantity ?? 0) - countScannedItem(productId)} ${productDetail.productName}";
+
+    // log("Message Product Id: $productId");
+    // for (var element in _orderDetails?.productDetails ?? []) {
+    //   if (element.id == productId) {
+    //     return "Scan ${element.quantity - countScannedItem(productId)} ${element.productName}";
+    //   }
+    // }
+
+    // return "";
   }
 
   // UPDATED
   ScanResult scanProduct(BuildContext context, int cartItemId, String code) {
-    for (var element in _orderDetails?.productDetails ?? []) {
-      if (element.id == cartItemId) {
-        if (scannedDataList.contains(code)) {
-          return ScanResult(
-              success: false, message: "QR: $code already scanned");
-        }
-        updateProductList(code);
-        if (countScannedItem(cartItemId) == element.quantity) {
-          //aaaaa
-          incrementPackedOnce(element.id);
+    ProductDetails? productDetail = _orderDetails?.productDetails
+        .firstWhereOrNull((e) => e.id == cartItemId);
 
-          notifyListeners();
-          return ScanResult(success: true, message: "Scanned Successfully");
-        } else {
-          final scanMessage =
-              "Scan ${(element.quantity ?? 0) - countScannedItem(cartItemId)} more ${element.productName}";
-          Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(context, scanMessage);
-          return ScanResult(success: false);
-        }
+    if (productDetail == null) {
+      return ScanResult(success: false, message: "Product not found");
+    }
+
+    if (scannedDataList.contains(code)) {
+      return ScanResult(success: false, message: "QR: $code already scanned");
+    }
+
+    final List<UnitsToScan> unitsToScanTag = productDetail.unitsToScan == null
+        ? []
+        : productDetail.unitsToScan!
+            .where((e) => !scannedDataList.contains(e.tag))
+            .toList();
+
+    if (unitsToScanTag.isNotEmpty) {
+      if (!unitsToScanTag.map((e) => e.tag).toList().contains(code)) {
+        return ScanResult(
+            success: false,
+            message:
+                "Must Scan tag: ${unitsToScanTag.map((e) => e.tag).join(", ")}");
       }
     }
-    return ScanResult(success: false, message: "Product not found");
+
+    if (scannedDataList.contains(code)) {
+      return ScanResult(success: false, message: "QR: $code already scanned");
+    }
+    updateProductList(code);
+    if (countScannedItem(cartItemId) == productDetail.quantity) {
+      //aaaaa
+      incrementPackedOnce(productDetail.id);
+
+      notifyListeners();
+      return ScanResult(success: true, message: "Scanned Successfully");
+    } else {
+      final scanMessage =
+          "Scan ${(productDetail.quantity ?? 0) - countScannedItem(cartItemId)} more ${productDetail.productName}";
+      Provider.of<ScanMessageProvider>(context, listen: false)
+          .setMessage(context, scanMessage);
+      return ScanResult(success: false);
+    }
+    //
   }
 
   /// Use order type to pass multiple values

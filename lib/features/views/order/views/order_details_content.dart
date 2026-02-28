@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
@@ -95,9 +94,7 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
           ),
           Expanded(
               child: CartItemsList(cartItems: widget.order.productDetails)),
-          SizedBox(
-            height: 8.h,
-          ),
+          SizedBox(height: 8.h),
           (status != OrderStatusType.completed &&
                   status != OrderStatusType.cancelled &&
                   orderProvider.allCartItemScanned())

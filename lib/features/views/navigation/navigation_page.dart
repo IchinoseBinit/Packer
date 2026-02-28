@@ -113,13 +113,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
         title: "Exit",
         body: const Text("Do you want to exit the app?"),
         okFunc: () async {
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-            SystemChannels.platform.invokeMethod('SystemNavigator.pop');
-          } else {
-            context.go(NavigationConstants.initialRoute +
-                NavigationConstants.dashboardRoute);
-          }
+          Navigator.pop(context);
+          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
         },
         needCancel: true,
         cancelFunc: () => Navigator.pop(context),

@@ -60,9 +60,11 @@ class ProductProvider extends ChangeNotifier {
       return "Scan new product";
     }
     if (isVerificationScan) {
-      return unitVerifyModel?.productAvailability == null
-          ? "Scan Product code"
-          : "Scan ${unitVerifyModel?.productCount} ${unitVerifyModel?.productAvailability?.productName} \n Rack Name: ${unitVerifyModel?.newRackName}";
+      if (unitVerifyModel?.productAvailability == null) {
+        return "Scan Product code";
+      } else {
+        return "Scan ${unitVerifyModel?.productCount} ${unitVerifyModel?.productAvailability?.productName} \n Rack Name: ${unitVerifyModel?.newRackName}";
+      }
     }
     return unitVerifyModel?.productAvailability == null
         ? "Scan Product code"

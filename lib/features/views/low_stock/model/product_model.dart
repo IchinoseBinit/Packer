@@ -14,6 +14,7 @@ class ProductModel {
   late String measurement;
   late String rackName;
   late int scannedCount;
+  late int? bogoBuyProductId;
 
   // fromJson constructor
   ProductModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +28,7 @@ class ProductModel {
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();
     rackName = json['rack_name'].toString().toStringConversion();
+    bogoBuyProductId = json['bogo_buy_product_id']?.toString().toInt();
     scannedCount = 0;
   }
 

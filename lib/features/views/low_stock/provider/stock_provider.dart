@@ -1018,4 +1018,10 @@ class StockProvider extends ChangeNotifier {
     }
     return list;
   }
+
+  bool isBogoProduct(int productId) {
+    return selectedModel?.products
+            .firstWhereOrNull((e) => e.bogoBuyProductId == productId) !=
+        null;
+  }
 }

@@ -1,41 +1,3 @@
-// class SeeOrderDetailsPacker {
-//   final int id;
-//   final late final String  productId;
-//   final late final String  productName;
-//   final late final String  productImage;
-//   final late final String  measurement;
-//   final double markedPrice;
-//   final double discountPercent;
-//   final double price;
-//   final int quantity;
-
-//   SeeOrderDetailsPacker({
-//     required this.id,
-//     required this.productId,
-//     required this.productName,
-//     required this.productImage,
-//     required this.measurement,
-//     required this.markedPrice,
-//     required this.discountPercent,
-//     required this.price,
-//     required this.quantity,
-//   });
-
-//   factory SeeOrderDetailsPacker.fromJson(Map<late final String , dynamic> json) {
-//     return SeeOrderDetailsPacker(
-//       id: json['id'],
-//       productId: json['product_id'],
-//       productName: json['product_name'],
-//       productImage: json['product_image'],
-//       measurement: json['measurement'],
-//       markedPrice: json['marked_price'],
-//       discountPercent: json['discount_percent'],
-//       price: json['price'],
-//       quantity: json['quantity'],
-//     );
-//   }
-// }
-
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/enum/order_status_type.dart';
@@ -45,10 +7,11 @@ class OrderDetailModel {
   late final List<ProductDetails> productDetails;
   late final OrderData data;
 
-  OrderDetailModel(
-      {required this.success,
-      required this.productDetails,
-      required this.data});
+  OrderDetailModel({
+    required this.success,
+    required this.productDetails,
+    required this.data,
+  });
 
   OrderDetailModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
@@ -80,6 +43,7 @@ class ProductDetails {
   late int itemScanCount;
   late final String rackName;
   late final String productCompartment;
+  List<UnitsToScan>? unitsToScan;
 
   String get size {
     // Utility function to format size
@@ -90,25 +54,34 @@ class ProductDetails {
     }
   }
 
-  ProductDetails(
-      {required this.productName,
-      this.quantity,
-      required this.imageUrl,
-      required this.measurement,
-      required this.rackName,
-      required this.productCompartment});
+  ProductDetails({
+    required this.productName,
+    this.quantity,
+    required this.imageUrl,
+    required this.measurement,
+    required this.rackName,
+    required this.productCompartment,
+    this.unitsToScan,
+  });
 
   ProductDetails.fromJson(Map<String, dynamic> json) {
     id = json['id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
     quantity = json['quantity'].toString().toInt();
-    imageUrl = AppUrls.imageUrl + json['product_image'].toString().toStringConversion();
+    imageUrl = AppUrls.imageUrl +
+        json['product_image'].toString().toStringConversion();
     _size = json['size'].toString().toDouble();
     rackName = json['rack'].toString().toStringConversion();
     productCompartment = json['product_compartment'].toString().toString();
 
     measurement = json['measurement'].toString().toStringConversion();
     itemScanCount = 0;
+    if (json['units_to_scan'] != null) {
+      unitsToScan = <UnitsToScan>[];
+      json['units_to_scan'].forEach((v) {
+        unitsToScan!.add(UnitsToScan.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -200,5 +173,14 @@ class UserInfo {
     data['phone'] = phone.toString().toStringConversion();
     data['address'] = address.toString().toStringConversion();
     return data;
+  }
+}
+
+class UnitsToScan {
+  late String tag;
+  UnitsToScan({required this.tag});
+
+  UnitsToScan.fromJson(Map<String, dynamic> json) {
+    tag = json['tag'].toString().toStringConversion();
   }
 }
