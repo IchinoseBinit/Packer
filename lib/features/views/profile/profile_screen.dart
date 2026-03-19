@@ -61,7 +61,8 @@ class ProfileScreen extends StatelessWidget {
     }
 
     // Add Stock Verification screen only if user is a store manager and not already added
-    if (value.isStoreManager() &&
+    if (
+        // value.isStoreManager() &&
         !otherInfoData.any(
             (e) => e['screen'] == NavigationConstants.storeSelectionRoute)) {
       otherInfoData.add({

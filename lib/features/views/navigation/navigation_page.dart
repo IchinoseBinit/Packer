@@ -33,10 +33,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
     });
   }
 
-  final widgets = [
+  List<Widget> widgets = [
     const HomeScreen(),
     // const OrderScreen(),
-    ProfileScreen(),
+    // ProfileScreen(),
   ];
 
   @override
@@ -45,12 +45,19 @@ class _NavigationScreenState extends State<NavigationScreen> {
     super.initState();
     final home = Provider.of<HomeProvider>(context, listen: false);
     if (home.isAuditUser()) {
-      widgets[0] = StoreSelectionScreen();
+      // widgets[0] = StoreSelectionScreen();
+      widgets.add(StoreSelectionScreen());
     } else if (home.isDriver()) {
-      widgets[0] = DriverHomeScreen();
-      widgets[1] = DriverProfileScreen();
+      widgets.clear();
+      // widgets[0] = DriverHomeScreen();
+      // widgets[1] = DriverProfileScreen();
+      widgets.add(DriverHomeScreen());
+      widgets.add(DriverProfileScreen());
     } else if (home.isMainStore() == true) {
-      widgets[0] = HomeWarehouseScreen();
+      widgets.clear();
+      widgets.add(HomeWarehouseScreen());
+    } else {
+      widgets.add(ProfileScreen());
     }
   }
 
