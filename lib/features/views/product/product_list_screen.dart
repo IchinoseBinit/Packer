@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -119,6 +121,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ],
             ),
           );
+
+          return SizedBox.shrink();
         },
       ),
     );

@@ -84,6 +84,8 @@ class _ProductCardState extends State<ProductCard> {
                                         child: CachedNetworkImage(
                                           imageUrl: widget.productModel.image,
                                           width: widget.width ?? 140.w,
+                                          memCacheWidth: 100,
+                                          memCacheHeight: 100,
                                           fit: BoxFit.contain,
                                           errorWidget:
                                               (context, error, stackTrace) =>

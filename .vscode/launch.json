@@ -31,7 +31,14 @@
       "args": ["--dart-define=APIType=staging"]
     },
     {
-      "name": "packer (release mode)",
+      "name": "packer  prod (profile mode)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile",
+      "args": ["--target", "lib/main.dart", "--dart-define=APIType=production"]
+    },
+    {
+      "name": "packer  prod (release mode)",
       "request": "launch",
       "type": "dart",
       "flutterMode": "release",

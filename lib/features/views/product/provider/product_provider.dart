@@ -10,6 +10,7 @@ import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/product/api/re_rack_api.dart';
 import 'package:packer/features/views/product/model/product_avaliability.dart';
 import 'package:packer/features/views/product/model/unit_verify_model.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
@@ -310,7 +311,7 @@ class ProductProvider extends ChangeNotifier {
     return _processExistingProductScan(context, code);
   }
 
-  bool _processNewProductScan(BuildContext context, String code) {
+  Future<bool> _processNewProductScan(BuildContext context, String code) async {
     // check if product is already scanned
     if (scannedUnits.contains(code)) {
       ErrorHandler.alertDialog(context, "Product tag already scanned");
@@ -318,9 +319,13 @@ class ProductProvider extends ChangeNotifier {
     }
 
     final id = code.split("-").first;
-    final product = productAvailabilityList.firstWhereOrNull(
+    ProductAvailability? product = productAvailabilityList.firstWhereOrNull(
       (e) => e.productId == int.tryParse(id),
     );
+
+    if (product == null) {
+      product = await ReRackApi.postRerackProduct(int.parse(id));
+    }
 
     // also check does this product is in unitVerifyModels
     if (unitVerifyModels.any((e) => e.product == int.parse(id))) {
