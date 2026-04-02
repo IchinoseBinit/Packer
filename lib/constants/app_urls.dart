@@ -220,4 +220,7 @@ class AppUrls {
   static String get expiryProductUrl => "$baseUrl/near-expiry-products";
   static String get expiryProductDetailsUrl =>
       "$baseUrl/near-expiry-products/id";
+
+  // check package
+  static String get checkPackageUrl => "$baseUrl/orders/check-package/";
 }

@@ -544,10 +544,21 @@ class OrderProvider extends ChangeNotifier {
 
   Future<Map<String, bool>> productPost(
       BuildContext context, int orderId) async {
-    PostBasketRequest postBasketRequest = PostBasketRequest(
-      orderId: orderId,
-      data: baskets,
-    );
+    PostBasketRequest postBasketRequest =
+        PostBasketRequest(orderId: orderId, data: baskets
+            // .map(
+            //   (b) => Basket(
+            //     identifier: b.identifier,
+            //     productIdentifiers: b.productIdentifiers
+            //         .where((id) => !id.contains("icepack"))
+            //         .toList(),
+            //     productTags: b.productIdentifiers
+            //         .where((id) => id.contains("icepack"))
+            //         .toList(),
+            //   ),
+            // )
+            // .toList(),
+            );
 
     try {
       log(postBasketRequest.toJson().toString(), name: "productPost body data");
@@ -912,5 +923,58 @@ class OrderProvider extends ChangeNotifier {
 
   void resetPackedTracking() {
     _alreadyIncremented.clear();
+  }
+
+  // has ice packed product
+  bool hasRequiredIcePacks() {
+    return orderDetails?.productDetails.any((e) => e.requiresIcePack) != null ||
+        false;
+  }
+
+  // scan ice pack
+  void scanIcePack(BuildContext context, String tag) {
+    try {
+      //
+      if (baskets.isEmpty) {
+        showToast("Please scan basket first");
+        return;
+      }
+
+      final basket = basketDao.getBasket(bucketData);
+
+      if (basket != null) {
+        basket.packageTags ??= [];
+
+        if (basket.packageTags!.contains(tag)) {
+          showToast("Ice pack already scanned for this basket");
+          navigatePop(context);
+          return;
+        }
+
+        basket.packageTags?.add(tag);
+        basketDao.addOrUpdateBasket(basket);
+        baskets = basketDao.getAll();
+      } else {
+        showToast("Error: Basket not found. Please scan basket first.");
+        navigatePop(context);
+        return;
+      }
+
+      notifyListeners();
+
+      navigatePop(context);
+    } catch (e) {
+      showToast("Error scanning ice pack: $e");
+    }
+  }
+
+  //  count ice pack scanned
+  int countScannedIcePacks() {
+    // go to all baskets and count number of product tags that contains ice pack tag
+    int count = 0;
+    for (var basket in baskets) {
+      count += basket.packageTags?.length ?? 0;
+    }
+    return count;
   }
 }

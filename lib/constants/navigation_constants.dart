@@ -124,4 +124,6 @@ class NavigationConstants {
       'inventory_transfer_scanner';
 
   static const String searchVendor = 'search_vendor';
+
+  static const String icePackScanScreenRoute = 'ice-packScan-screen';
 }

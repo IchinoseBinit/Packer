@@ -28,7 +28,7 @@ class _OrderInfoCardState extends State<OrderInfoCard> {
       elevation: 3,
       margin: EdgeInsets.symmetric(vertical: 8.h),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
           children: [
             Column(

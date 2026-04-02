@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/order/widgets/ask_confirmation.dart';
 import 'package:provider/provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/order/views/order_details_content.dart';
@@ -98,56 +99,33 @@ class _OrderDetailsState extends State<OrderDetails> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: InkWell(
-                    onTap: () {
-                      showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text(
-                                'Do you want to add another basket?',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('No'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    navigate(context,
-                                        route: NavigationConstants
-                                            .basketScanScreenRoute,
-                                        extra: {
-                                          'forOrder': true,
-                                        });
-                                  },
-                                  child: const Text('Yes'),
-                                ),
-                              ],
-                            );
-                          });
+                    onTap: () async {
+                      final confirmation = await AskConfirmation.show(
+                        context,
+                        title: 'Do you want to add another basket?',
+                      );
+
+                      if (confirmation == true) {
+                        navigate(context,
+                            route: NavigationConstants.basketScanScreenRoute,
+                            extra: {
+                              'forOrder': true,
+                            });
+                      }
                     },
                     child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 2),
-                        child: Icon(
-                          Icons.shopping_cart,
-                          size: 24.sp,
-                          color: AppColors.primaryColor,
-                        )),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        size: 24.sp,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
                   ),
                 );
               },
-            )
+            ),
           ],
         ),
         body: RefreshIndicator(

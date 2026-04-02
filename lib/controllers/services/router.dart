@@ -63,6 +63,7 @@ import 'package:packer/features/views/scanner/views/basket_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/cart_item_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/carton_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/damaged_scan_screen.dart';
+import 'package:packer/features/views/scanner/views/ice_pack_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/identifier_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
@@ -623,6 +624,12 @@ class AppRouter {
               path: NavigationConstants.searchVendor,
               builder: (BuildContext context, GoRouterState state) {
                 return VendorScreen();
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.icePackScanScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return IcePackScanScreen();
               },
             ),
           ],

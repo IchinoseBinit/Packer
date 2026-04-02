@@ -44,6 +44,7 @@ class ProductDetails {
   late final String rackName;
   late final String productCompartment;
   List<UnitsToScan>? unitsToScan;
+  late final bool requiresIcePack;
 
   String get size {
     // Utility function to format size
@@ -62,6 +63,7 @@ class ProductDetails {
     required this.rackName,
     required this.productCompartment,
     this.unitsToScan,
+    required this.requiresIcePack,
   });
 
   ProductDetails.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,7 @@ class ProductDetails {
         unitsToScan!.add(UnitsToScan.fromJson(v));
       });
     }
+    requiresIcePack = json['requires_icepack'] ?? false;
   }
 
   Map<String, dynamic> toJson() {
@@ -96,6 +99,7 @@ class ProductDetails {
         productCompartment.toString().toStringConversion();
 
     data['rack'] = rackName.toString().toStringConversion();
+    data['requires_icepack'] = requiresIcePack;
 
     return data;
   }

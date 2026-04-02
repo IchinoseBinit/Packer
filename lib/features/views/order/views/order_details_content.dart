@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/widgets/order_progress_card.dart';
@@ -76,11 +77,118 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           OrderInfoCard(data: widget.order),
-          SizedBox(
-            height: 8.h,
-          ),
-          PackingProgressWidget(
-            totalItems: widget.order.data.count,
+          SizedBox(height: 8.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                  child: PackingProgressWidget(
+                      totalItems: widget.order.data.count)),
+              //  show icon or something if ice pack is required
+              if (orderProvider.hasRequiredIcePacks())
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16.r),
+                    onTap: () {
+                      navigate(
+                        context,
+                        route: NavigationConstants.icePackScanScreenRoute,
+                      );
+                    },
+                    child: Badge(
+                      label: Text(
+                        context
+                            .watch<OrderProvider>()
+                            .countScannedIcePacks()
+                            .toString(),
+                      ),
+                      child: Container(
+                        height: 120.h,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.r),
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF6DD5FA), // light icy blue
+                              Color(0xFF2980B9), // deeper blue
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: Offset(0, 6),
+                            )
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              right: -10,
+                              bottom: -10,
+                              child: Icon(
+                                Icons.ac_unit,
+                                size: 90.sp,
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            Positioned(
+                              right: 12.w,
+                              top: 20.h,
+                              child: Container(
+                                padding: EdgeInsets.all(8.r),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.inventory_2_outlined,
+                                  color: Colors.white,
+                                  size: 20.sp,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w, vertical: 10.h),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.qr_code_scanner,
+                                    size: 26.sp,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    "Scan Ice-Pack",
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    "Quickly scan",
+                                    style: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           Padding(
             padding: EdgeInsets.all(8.0),

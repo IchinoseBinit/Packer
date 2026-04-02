@@ -72,6 +72,7 @@ dependencies:
   cached_network_image: ^3.4.1
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  flutter_flavorizr: ^2.4.2
   # galli_vector_package: ^0.0.5
   # galli_vector_plugin: ^0.2.1
 
@@ -143,4 +144,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
-version: 1.0.25+25
+version: 1.0.26+26

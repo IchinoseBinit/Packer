@@ -1,0 +1,50 @@
+{
+  "success": true,
+  "product_details": [
+    {
+      "id": "3599",
+      "product_name": "Red Bull  Energy Drink 250mL MRP 120",
+      "product_image": "/media/src/images/product_images/redbull.png",
+      "price": "60.00",
+      "quantity": 1,
+      "size": "250.00",
+      "measurement": "mL",
+      "marked_price": "120.00",
+      "discount_percent": "50.00",
+      "product_compartment": null,
+      "rack": "Stand-Fridge-4-R"
+    },
+    {
+      "id": 0,
+      "product": null,
+      "product_name": "Ice Pack",
+      "quantity": 1,
+      "price": "0.00",
+      "marked_price": "0.00",
+      "discount_percent": "0.00"
+    }
+  ],
+  "data": {
+    "id": 7276,
+    "status": "packer_assigned",
+    "count": 1,
+    "small_cart_fee": "0.00",
+    "delivery_fee": "100.00",
+    "total": "60.00",
+    "final_total": "160.00",
+    "user_info": {
+      "name": "App User",
+      "address_name": "Current Address",
+      "phone": "9801201234",
+      "address": "Milijuli Tol, जन मार्ग, Kathmandu-4",
+      "latitude": 27.7374009,
+      "longitude": 85.3431826
+    },
+    "customer_info": { "name": "App User", "phone_number": "9801201234" },
+    "additional_info": "",
+    "distance": 2.1939,
+    "is_ordering_for_someone": false,
+    "store_role": "primary",
+    "created_timestamp": "2026-04-01T17:01:18.786516+05:45"
+  }
+}
