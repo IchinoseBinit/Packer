@@ -48,7 +48,7 @@ void setupCallKeep() async {
 }
 
 @pragma('vm:entry-point')
-void handleIncomingCall( RemoteMessage message, bool isBackground) async {
+void handleIncomingCall(RemoteMessage message, bool isBackground) async {
   // bool ringtone = true;
   AwesomeNotifications awesomeNotification =
       await NotificationUtils.changeNotification();
@@ -61,20 +61,16 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
       int.tryParse(message.data['order_id'] ?? "") ?? Random().nextInt(100000);
   await awesomeNotification.cancel(randomed);
 
-
   var fullScreen = true;
   var fullScreenDelivery = true;
   if (isBackground) {
     await prefs.setBool("background_handler", true);
   }
 
-
   NotificationContent content = NotificationContent(
       id: randomed,
       fullScreenIntent: fullScreen,
-      channelKey:'call_channel',
-      
-         
+      channelKey: 'call_channel',
       title: message.notification?.title,
       body: message.notification?.body,
       autoDismissible: fullScreen,
@@ -83,7 +79,6 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
       // 'asset://assets/images/balloons-in-sky.jpg',
       notificationLayout: NotificationLayout.Default,
       locked: fullScreen,
-      
       color: AppColors.primaryColor,
       backgroundColor: AppColors.primaryColor,
       category: NotificationCategory.Call,
@@ -98,21 +93,18 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
         'notificationId': message.data["order"] ?? '1234567890',
         ...message.data,
         'screen': 'call',
-        'orderId' :  message.data["order_id"] ?? '',
+        'orderId': message.data["order_id"] ?? '',
       });
 
   List<NotificationActionButton>? buttons = [
-          NotificationActionButton(
-            key: 'Accept',
-            label: 'Accept',
-            actionType: ActionType.Default,
-            color: AppColors.primaryColor,
-            
-          ),
-         
-        ];
+    NotificationActionButton(
+      key: 'Accept',
+      label: 'Accept',
+      actionType: ActionType.Default,
+      color: AppColors.primaryColor,
+    ),
+  ];
   try {
-    
     final notificationStatus = await awesomeNotification.createNotification(
         content: content, actionButtons: buttons);
 
@@ -132,10 +124,7 @@ void handleIncomingCall( RemoteMessage message, bool isBackground) async {
   } catch (ex) {
     print(ex);
   }
-
-  
 }
-
 
 void onCallAccepted(BuildContext context, String callUUID) {
   // Navigate to call screen when answered

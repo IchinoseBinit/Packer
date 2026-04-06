@@ -135,6 +135,9 @@ class RackScanScreen extends BaseScanScreen {
       } else if (rackCode != null && !needAPICallCarton) {
         if (code.contains(rackCode!)) {
           if (context.mounted) {
+            await controller.stop();
+            await controller.dispose();
+            await Future.delayed(Duration(milliseconds: 500));
             navigatePop(context, true);
             showToast("Rack scanned successfully");
           }
@@ -148,6 +151,9 @@ class RackScanScreen extends BaseScanScreen {
                   .updateRack(context, code, productId, true);
 
           if (result && context.mounted) {
+            await controller.stop();
+            await controller.dispose();
+            await Future.delayed(Duration(milliseconds: 500));
             navigatePop(context, true);
             showToast("Rack Assigned successfully");
           } else {
@@ -161,6 +167,9 @@ class RackScanScreen extends BaseScanScreen {
             .updateRack(context, code, productId, true);
 
         if (result && context.mounted) {
+          await controller.stop();
+          await controller.dispose();
+          await Future.delayed(Duration(milliseconds: 500));
           navigatePop(context, true);
           showToast("Rack Assigned successfully");
         } else {
@@ -199,6 +208,7 @@ class RackScanScreen extends BaseScanScreen {
           showToast("Rack scanned successfully");
           await controller.stop();
           await controller.dispose();
+          await Future.delayed(Duration(milliseconds: 500));
           await navigatePop(context, code);
         }
       } else if (forDamageRequest) {
@@ -214,6 +224,7 @@ class RackScanScreen extends BaseScanScreen {
             showToast("Rack scanned successfully");
             controller.stop();
             controller.dispose();
+            await Future.delayed(Duration(milliseconds: 500));
             navigatePop(context, code);
           } else {
             await controller.start();

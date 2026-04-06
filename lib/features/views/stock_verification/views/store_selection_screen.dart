@@ -5,9 +5,14 @@ import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:provider/provider.dart';
 
-class StoreSelectionScreen extends StatelessWidget {
+class StoreSelectionScreen extends StatefulWidget {
   const StoreSelectionScreen({super.key});
 
+  @override
+  State<StoreSelectionScreen> createState() => _StoreSelectionScreenState();
+}
+
+class _StoreSelectionScreenState extends State<StoreSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

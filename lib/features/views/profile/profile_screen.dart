@@ -18,12 +18,17 @@ import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   final List<Map<String, dynamic>> personalInfoData = [];
 
   final List<Map<String, dynamic>> otherInfoData = [];
-
-  ProfileScreen({super.key});
 
   void _prepareOtherInfoData(BuildContext context, HomeProvider value) {
     // Add transfer_list screen only for non-main stores, if not already added
@@ -112,6 +117,13 @@ class ProfileScreen extends StatelessWidget {
       });
     }
 
+    //
+    otherInfoData.add({
+      'icon': Icons.ac_unit,
+      'title': 'Package Return',
+      'screen': NavigationConstants.packageReturnScreenRoute,
+    });
+
     if (!value.isAuditUser() &&
         !value.isMainStore() &&
         !otherInfoData.any((e) => e['title'] == 'Request QR')) {
@@ -160,26 +172,24 @@ class ProfileScreen extends StatelessWidget {
         'screen': NavigationConstants.expiryProductScreenRoute,
       });
     }
-    // if (!value.isMainStore() &&
-    //     !otherInfoData
-    //         .any((e) => e['title'] == 'Inventory Transfer Requests')) {
-    //   otherInfoData.add({
-    //     'icon': Icons.transfer_within_a_station,
-    //     'title': 'Inventory Transfer Requests',
-    //     'screen': NavigationConstants.transferRequestListRoute,
-    //   });
-    // }
+  }
+
+  @override
+  initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+      Provider.of<PackerTransferProvider>(context, listen: false)
+          .setRole(homeProvider.packerSummary?.storeType ?? "");
+      _prepareOtherInfoData(context, homeProvider);
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     double myToolBarHeight = 150.h;
     return Consumer<HomeProvider>(builder: (context, value, child) {
-      Provider.of<PackerTransferProvider>(context, listen: false)
-          .setRole(value.packerSummary?.storeType ?? "");
-
-      _prepareOtherInfoData(context, value);
-
       return Scaffold(
         appBar: AppBar(
           title: Container(

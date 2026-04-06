@@ -21,6 +21,7 @@ import 'package:packer/features/views/inventory_transfer_main_store/controller/i
 import 'package:packer/features/views/inventory_transfer_request/provider/inventory_transfer_request_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/package_return/provider/package_return_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/product/provider/product_provider.dart';
 import 'package:packer/features/views/profile/provider/order_return_provider.dart';
@@ -177,6 +178,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ChangeNotifierProvider(create: (_) => InventoryTransferController()),
         // vendor
         ChangeNotifierProvider(create: (_) => VendorProvider()),
+
+        ChangeNotifierProvider(create: (_) => PackageReturnProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

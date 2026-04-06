@@ -6,11 +6,13 @@ class OrderDetailModel {
   late final bool success;
   late final List<ProductDetails> productDetails;
   late final OrderData data;
+  late final bool requiresIcePack;
 
   OrderDetailModel({
     required this.success,
     required this.productDetails,
     required this.data,
+    required this.requiresIcePack,
   });
 
   OrderDetailModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class OrderDetailModel {
       });
     }
     data = (json['data'] != null ? OrderData.fromJson(json['data']) : null)!;
+    requiresIcePack = json['requires_icepack'] ?? false;
   }
 
   Map<String, dynamic> toJson() {
@@ -44,7 +47,6 @@ class ProductDetails {
   late final String rackName;
   late final String productCompartment;
   List<UnitsToScan>? unitsToScan;
-  late final bool requiresIcePack;
 
   String get size {
     // Utility function to format size
@@ -63,7 +65,6 @@ class ProductDetails {
     required this.rackName,
     required this.productCompartment,
     this.unitsToScan,
-    required this.requiresIcePack,
   });
 
   ProductDetails.fromJson(Map<String, dynamic> json) {
@@ -84,7 +85,6 @@ class ProductDetails {
         unitsToScan!.add(UnitsToScan.fromJson(v));
       });
     }
-    requiresIcePack = json['requires_icepack'] ?? false;
   }
 
   Map<String, dynamic> toJson() {
@@ -99,7 +99,6 @@ class ProductDetails {
         productCompartment.toString().toStringConversion();
 
     data['rack'] = rackName.toString().toStringConversion();
-    data['requires_icepack'] = requiresIcePack;
 
     return data;
   }

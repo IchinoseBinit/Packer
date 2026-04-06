@@ -126,4 +126,8 @@ class NavigationConstants {
   static const String searchVendor = 'search_vendor';
 
   static const String icePackScanScreenRoute = 'ice-packScan-screen';
+
+  static const String packageReturnScreenRoute = 'package-return-screen';
+
+  static const String scanPackageReturnRoute = 'scan-package-return-screen';
 }

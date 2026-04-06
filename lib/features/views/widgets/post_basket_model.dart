@@ -13,7 +13,7 @@ class Basket {
     return {
       'identifier': identifier,
       'product_unit_tags': productIdentifiers,
-      'package_tags': packageTags,
+      'package_tags': packageTags ?? [],
     };
   }
 
@@ -22,7 +22,7 @@ class Basket {
     return {
       'basket_id': identifier,
       'scanned_tags': productIdentifiers,
-      'package_tags': packageTags,
+      'package_tags': packageTags ?? [],
     };
   }
 

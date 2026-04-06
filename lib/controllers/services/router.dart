@@ -34,6 +34,8 @@ import 'package:packer/features/views/low_stock/views/trolley_scan_screen.dart';
 import 'package:packer/features/views/order/views/order_return_detail.dart';
 import 'package:packer/features/views/order/views/order_return_list.dart';
 import 'package:packer/features/views/order/views/order_return_scanner.dart';
+import 'package:packer/features/views/package_return/screen/package_return_screen.dart';
+import 'package:packer/features/views/package_return/screen/scan_package_return.dart';
 import 'package:packer/features/views/packer_transfer/views/basket_list.dart';
 import 'package:packer/features/views/product/product_list_screen.dart';
 import 'package:packer/features/views/product/product_scanner.dart';
@@ -630,6 +632,24 @@ class AppRouter {
               path: NavigationConstants.icePackScanScreenRoute,
               builder: (BuildContext context, GoRouterState state) {
                 return IcePackScanScreen();
+              },
+            ),
+            //
+            GoRoute(
+              path: NavigationConstants.packageReturnScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return PackageReturnScreen();
+              },
+            ),
+            //
+            GoRoute(
+              path: NavigationConstants.scanPackageReturnRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                final args = state.extra as Map<String, dynamic>? ?? {};
+                return ScanPackageReturn(
+                  orderId: args['orderId'].toString().toInt(),
+                  packageId: args['packageId'].toString(),
+                );
               },
             ),
           ],

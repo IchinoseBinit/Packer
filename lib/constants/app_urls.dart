@@ -223,4 +223,7 @@ class AppUrls {
 
   // check package
   static String get checkPackageUrl => "$baseUrl/orders/check-package/";
+  static String get packageReturnUrl => "$baseUrl/staff/store/order-packages/";
+  static String packageReturnDetailsUrl(int id) =>
+      "$baseUrl/staff/orders/$id/return-package/";
 }

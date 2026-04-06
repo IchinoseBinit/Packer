@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/widgets/order_progress_card.dart';
@@ -71,6 +70,11 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
     final status = widget.order.data.status;
 
+    print("Order status: ${widget.order.data.status}");
+
+    print(
+        "Order details: ${widget.order.productDetails.map((e) => e.toJson())}");
+
     return Padding(
       padding: AppConstants.padding,
       child: Column(
@@ -85,7 +89,7 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                   child: PackingProgressWidget(
                       totalItems: widget.order.data.count)),
               //  show icon or something if ice pack is required
-              if (orderProvider.hasRequiredIcePacks())
+              if (widget.order.requiresIcePack)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: InkWell(

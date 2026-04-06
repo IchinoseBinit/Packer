@@ -545,20 +545,7 @@ class OrderProvider extends ChangeNotifier {
   Future<Map<String, bool>> productPost(
       BuildContext context, int orderId) async {
     PostBasketRequest postBasketRequest =
-        PostBasketRequest(orderId: orderId, data: baskets
-            // .map(
-            //   (b) => Basket(
-            //     identifier: b.identifier,
-            //     productIdentifiers: b.productIdentifiers
-            //         .where((id) => !id.contains("icepack"))
-            //         .toList(),
-            //     productTags: b.productIdentifiers
-            //         .where((id) => id.contains("icepack"))
-            //         .toList(),
-            //   ),
-            // )
-            // .toList(),
-            );
+        PostBasketRequest(orderId: orderId, data: baskets);
 
     try {
       log(postBasketRequest.toJson().toString(), name: "productPost body data");
@@ -923,12 +910,6 @@ class OrderProvider extends ChangeNotifier {
 
   void resetPackedTracking() {
     _alreadyIncremented.clear();
-  }
-
-  // has ice packed product
-  bool hasRequiredIcePacks() {
-    return orderDetails?.productDetails.any((e) => e.requiresIcePack) != null ||
-        false;
   }
 
   // scan ice pack
