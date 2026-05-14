@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
+import 'package:packer/features/views/lost_item/screen/reason_bottom_sheet.dart';
 import 'package:packer/features/views/widgets/file_upload.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:provider/provider.dart';
 
 class RackProductList extends StatefulWidget {
-  const RackProductList({super.key});
+  const RackProductList({
+    super.key,
+    this.forLostItem = false,
+  });
+
+  final bool forLostItem;
 
   @override
   State<RackProductList> createState() => _RackProductListState();
@@ -32,13 +38,18 @@ class _RackProductListState extends State<RackProductList> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: ListView.separated(
-          separatorBuilder: (context, index) =>
-              const SizedBox(height: 8.0),
+          separatorBuilder: (context, index) => const SizedBox(height: 8.0),
           itemBuilder: (context, index) {
             final item = productList[index];
             return InkWell(
-              onTap: () {
-                fileUpload(context, item.id, item.quantity);
+              onTap: () async {
+                if (widget.forLostItem) {
+                  // Handle lost item logic
+                  await ReasonBottomSheet.show(context, prodId: item.id);
+                  return;
+                }
+
+                await fileUpload(context, item.id, item.quantity);
               },
               child: Container(
                 padding: const EdgeInsets.all(8.0),

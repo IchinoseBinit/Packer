@@ -24,25 +24,29 @@ class CartItemsList extends StatelessWidget {
           slivers: [
             for (final rack in state.rackList) ...[
               SliverToBoxAdapter(
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: "Rack Name: ",
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                      TextSpan(
-                        text: rack,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(
-                                fontSize: 16.sp, fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "Rack Name: ",
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                        ),
+                        TextSpan(
+                          text: rack,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                  fontSize: 16.sp, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -55,7 +59,7 @@ class CartItemsList extends StatelessWidget {
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 180.w,
                       crossAxisSpacing: 8.w,
-                      childAspectRatio: 0.4,
+                      childAspectRatio: 0.5,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -63,10 +67,12 @@ class CartItemsList extends StatelessWidget {
                         final isDone = state.checkItem(product.id);
                         final width = (1.sw - 12.w - 32.w) / 2;
 
+                        final remainingQty = (product.quantity ?? 0) -
+                            state.countScannedItem(product.id);
+
                         return ProductCard(
                           width: width,
                           onTap: () {
-                            log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.id}");
                             if (isDone) return;
 
                             navigate(
@@ -80,8 +86,7 @@ class CartItemsList extends StatelessWidget {
                           },
                           productModel:
                               CommonProductModel.fromProductDetails(product),
-                          quantity: (product.quantity ?? 0) -
-                              state.countScannedItem(product.id),
+                          quantity: remainingQty,
                           status:
                               isDone ? ItemStatus.done : ItemStatus.remaining,
                         );

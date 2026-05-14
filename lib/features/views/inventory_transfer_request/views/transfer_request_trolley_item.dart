@@ -42,46 +42,42 @@ class TransferRequestTrolleyItem extends StatelessWidget {
                     ),
                   )
                 else
-                  SliverPadding(
-                    padding: EdgeInsetsGeometry.symmetric(horizontal: 8.h),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 180.w,
-                        crossAxisSpacing: 8.w,
-                        childAspectRatio: 0.5,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final product = items[index];
-                          ItemStatus status = (controller.getScannedCount(
-                                      product.productId ?? 0,
-                                      fromLocal: true) ==
-                                  product.quantity)
-                              ? ItemStatus.done
-                              : ItemStatus.remaining;
-                          final width = (1.sw - 12.w - 24.w) / 2;
-
-                          return ProductCard(
-                            width: width,
-                            onTap: () {
-                              // log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
-                              if (status == ItemStatus.done) return;
-                              controller
-                                  .setSelectedLocalInventoryTransferRequestItem(
-                                      context, product);
-                            },
-                            productModel: CommonProductModel
-                                .fromInventoryTransferRequestItemModel(product),
-                            status: status,
-                            statusToShow: "Completed",
-                            quantity: (product.quantity ?? 0) -
-                                controller.getScannedCount(
+                  SliverGrid(
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 180.w,
+                      crossAxisSpacing: 8.w,
+                      childAspectRatio: 0.5,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final product = items[index];
+                        ItemStatus status = (controller.getScannedCount(
                                     product.productId ?? 0,
-                                    fromLocal: true),
-                          );
-                        },
-                        childCount: items.length,
-                      ),
+                                    fromLocal: true) ==
+                                product.quantity)
+                            ? ItemStatus.done
+                            : ItemStatus.remaining;
+                        final width = (1.sw - 12.w - 24.w) / 2;
+
+                        return ProductCard(
+                          width: width,
+                          onTap: () {
+                            // log("Navigating to QR Scan Screen for ${product.productName} and item id: ${product.productId}");
+                            if (status == ItemStatus.done) return;
+                            controller
+                                .setSelectedLocalInventoryTransferRequestItem(
+                                    context, product);
+                          },
+                          productModel: CommonProductModel
+                              .fromInventoryTransferRequestItemModel(product),
+                          status: status,
+                          statusToShow: "Completed",
+                          quantity: (product.quantity ?? 0) -
+                              controller.getScannedCount(product.productId ?? 0,
+                                  fromLocal: true),
+                        );
+                      },
+                      childCount: items.length,
                     ),
                   ),
               ],

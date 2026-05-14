@@ -194,7 +194,7 @@ class _ProductCardState extends State<ProductCard> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          "Remaining: ${widget.productModel.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
+                          "Remaining: ${widget.quantity ?? widget.productModel.quantity ?? (widget.productModel.quantity - widget.productModel.scannedCount)}",
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(

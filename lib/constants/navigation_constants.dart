@@ -130,4 +130,7 @@ class NavigationConstants {
   static const String packageReturnScreenRoute = 'package-return-screen';
 
   static const String scanPackageReturnRoute = 'scan-package-return-screen';
+
+  //
+  static const String lostItemScreenRoute = 'lost-item-screen';
 }

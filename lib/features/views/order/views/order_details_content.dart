@@ -6,7 +6,6 @@ import 'package:packer/features/views/widgets/order_progress_card.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
-import '/constants/app_constants.dart';
 import '/constants/navigation_constants.dart';
 import '/controllers/services/navigate.dart';
 import '/enum/order_status_type.dart';
@@ -69,25 +68,23 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
     final status = widget.order.data.status;
-
-    print("Order status: ${widget.order.data.status}");
-
-    print(
-        "Order details: ${widget.order.productDetails.map((e) => e.toJson())}");
-
-    return Padding(
-      padding: AppConstants.padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          OrderInfoCard(data: widget.order),
-          SizedBox(height: 8.h),
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: OrderInfoCard(data: widget.order),
+        ),
+        SizedBox(height: 8.h),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                  child: PackingProgressWidget(
-                      totalItems: widget.order.data.count)),
+                child: PackingProgressWidget(
+                    totalItems: widget.order.productDetails.length),
+              ),
               //  show icon or something if ice pack is required
               if (widget.order.requiresIcePack)
                 Padding(
@@ -194,77 +191,75 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                 ),
             ],
           ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              "Items Ordered:",
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-              ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+          child: Text(
+            "Items Ordered:",
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          Expanded(
-              child: CartItemsList(cartItems: widget.order.productDetails)),
-          SizedBox(height: 8.h),
-          (status != OrderStatusType.completed &&
-                  status != OrderStatusType.cancelled &&
-                  orderProvider.allCartItemScanned())
-              ? Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 8.h,
-                  ).copyWith(
-                    bottom: MediaQuery.of(context).padding.bottom + 20.h,
-                  ),
-                  child: GeneralElevatedButton(
-                    onPressed: () async {
-                      await orderProvider.removeBasketIdentifier(
-                        widget.order.data.id,
-                      );
-                      await orderProvider.refreshBaskets(widget.order.data.id);
-                      final parsedOrderId =
-                          int.tryParse(widget.order.data.id.toString()) ?? 0;
-
-                      final response = await Provider.of<OrderProvider>(
-                        context,
-                        listen: false,
-                      ).productPost(context, parsedOrderId);
-
-                      if (response['success'].toString().toBool(false) &&
-                          mounted) {
-                        Provider.of<HomeProvider>(context, listen: false)
-                            .fetchLatestOrders();
-
-                        if (response['isCancelRequest']
-                            .toString()
-                            .toBool(false)) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            showOrderCancelledDialog(context);
-                          });
-                        } else {
-                          navigateAndRemoveAll(
-                            context,
-                            route: NavigationConstants.dashboardRoute,
-                          );
-                        }
-                      }
-                    },
-
-                    // },
-                    title: 'Bill this order',
-                  ),
-                )
-              : Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                  child: GeneralElevatedButton(
-                    onPressed: () {},
-                    title: 'Scan all items',
-                  ),
+        ),
+        Expanded(child: CartItemsList(cartItems: widget.order.productDetails)),
+        SizedBox(height: 8.h),
+        (status != OrderStatusType.completed &&
+                status != OrderStatusType.cancelled &&
+                orderProvider.allCartItemScanned())
+            ? Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 8.h,
+                ).copyWith(
+                  bottom: MediaQuery.of(context).padding.bottom + 20.h,
                 ),
-        ],
-      ),
+                child: GeneralElevatedButton(
+                  onPressed: () async {
+                    await orderProvider.removeBasketIdentifier(
+                      widget.order.data.id,
+                    );
+                    await orderProvider.refreshBaskets(widget.order.data.id);
+                    final parsedOrderId =
+                        int.tryParse(widget.order.data.id.toString()) ?? 0;
+
+                    final response = await Provider.of<OrderProvider>(
+                      context,
+                      listen: false,
+                    ).productPost(context, parsedOrderId);
+
+                    if (response['success'].toString().toBool(false) &&
+                        mounted) {
+                      Provider.of<HomeProvider>(context, listen: false)
+                          .fetchLatestOrders();
+
+                      if (response['isCancelRequest']
+                          .toString()
+                          .toBool(false)) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          showOrderCancelledDialog(context);
+                        });
+                      } else {
+                        navigateAndRemoveAll(
+                          context,
+                          route: NavigationConstants.dashboardRoute,
+                        );
+                      }
+                    }
+                  },
+
+                  // },
+                  title: 'Bill this order',
+                ),
+              )
+            : Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                child: GeneralElevatedButton(
+                  onPressed: () {},
+                  title: 'Scan all items',
+                ),
+              ),
+      ],
     );
   }
 }

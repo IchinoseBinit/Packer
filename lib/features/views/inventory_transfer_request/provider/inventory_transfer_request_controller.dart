@@ -100,6 +100,7 @@ class InventoryTransferRequestController extends ChangeNotifier {
         .length;
   }
 
+  // set selected inventory transfer request item
   void setSelectedInventoryTransferRequestItem(
       BuildContext context, InventoryTransferRequestItemModel item) {
     selectedInventoryTransferRequestItem = item;
@@ -525,5 +526,110 @@ class InventoryTransferRequestController extends ChangeNotifier {
     }
   }
 
-  /// ================= API CALL END HERE =================
+  List<String> getTagsTransferRequestItems(bool remaining) {
+    if (remaining) {
+      // Return tags that have NOT been scanned
+      return selectedInventoryTransferRequestItem?.tags!
+              .where((tag) => !localScannedTag.contains(tag))
+              .toList() ??
+          [];
+    } else {
+      // Return tags that HAVE been scanned
+      return selectedInventoryTransferRequestItem?.tags!
+              .where((tag) => localScannedTag.contains(tag))
+              .toList() ??
+          [];
+    }
+  }
+
+  //
+  void showInventoryTransferRequestItems(BuildContext context) {
+    final remainingTags = getTagsTransferRequestItems(true);
+    final completedTags = getTagsTransferRequestItems(false);
+    // show modal bottom sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: Text("Product Tags"),
+              ),
+              // 12.h
+              SizedBox(height: 12.h),
+              if (remainingTags.isNotEmpty) ...[
+                Text("Remaining Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: remainingTags.length,
+                    itemBuilder: (context, index) {
+                      return Text(remainingTags[index],
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                fontSize: 13.sp,
+                              ));
+                    },
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 12.h);
+                    },
+                  ),
+                ),
+              ],
+              // 12.h
+              SizedBox(height: 12.h),
+              if (completedTags.isNotEmpty) ...[
+                Text("Completed Tags",
+                    style: Theme.of(context).textTheme.labelLarge),
+                // 12.h
+                SizedBox(height: 12.h),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    separatorBuilder: (context, index) {
+                      return SizedBox(height: 12.h);
+                    },
+                    itemCount: completedTags.length,
+                    itemBuilder: (context, index) {
+                      return Row(
+                        children: [
+                          Expanded(
+                              child: Text(completedTags[index],
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Colors.green,
+                                        fontSize: 13.sp,
+                                      ))),
+                          const Icon(Icons.check_circle, color: Colors.green),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -45,6 +44,23 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
               ),
       );
     }
+
+    final selectedInvReq = context
+        .read<InventoryTransferRequestController>()
+        .selectedInventoryTransferRequestItem;
+    // Show floating button if the selected inventory transfer request item has tags
+    if (selectedInvReq?.tags != null && selectedInvReq!.tags!.isNotEmpty) {
+      return FloatingActionButton(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: () async {
+          Provider.of<InventoryTransferRequestController>(context,
+                  listen: false)
+              .showInventoryTransferRequestItems(context);
+        },
+        child: const Icon(Icons.info, color: Colors.white),
+      );
+    }
+
     return null;
   }
 
@@ -96,11 +112,29 @@ class InventoryTransferRequestScanner extends BaseScanScreen {
           }
         }
       } else {
+        //
+        final invReqCtrl = context.read<InventoryTransferRequestController>();
+        final selectedInvReq = invReqCtrl.selectedInventoryTransferRequestItem;
+
+        if (selectedInvReq != null &&
+            selectedInvReq.tags != null &&
+            selectedInvReq.tags!.isNotEmpty) {
+          // If the selected inventory transfer request item has tags, validate the scanned code against the tags
+          final isValidTag = selectedInvReq.tags!.any((tag) => tag == code);
+          if (!isValidTag) {
+            handleInvalidCode(context, controller, code,
+                "Invalid tags scanned\n scan these tags: ${invReqCtrl.getTagsTransferRequestItems(true).join(", ")}");
+            return;
+          }
+        }
+
         final scanResult =
             await Provider.of<InventoryTransferRequestController>(context,
                     listen: false)
                 .handleProductScan(context, code);
+
         await Future.delayed(const Duration(milliseconds: 300));
+
         if (scanResult.success && context.mounted) {
           Navigator.pop(context);
           if (scanResult.message != null) {

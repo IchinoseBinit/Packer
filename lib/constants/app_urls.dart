@@ -30,7 +30,10 @@ class AppUrls {
   // static const String baseUrl = "https://$_domainUrl";
   // static const String baseUrl = "https://dropit.com.np";
 
-  static String get imageUrl => "https://cdn.fasto.com.np";
+  static String get imageUrl =>
+      EnvironmentConfig.type == EnvironmentType.staging
+          ? baseUrl
+          : "https://cdn.fasto.com.np";
 
   static String get _authUrl => "$baseUrl/auth";
 
@@ -226,4 +229,8 @@ class AppUrls {
   static String get packageReturnUrl => "$baseUrl/staff/store/order-packages/";
   static String packageReturnDetailsUrl(int id) =>
       "$baseUrl/staff/orders/$id/return-package/";
+
+  //  lost items
+  static String lostItems(int? id) =>
+      id != null ? "$orderUrl/$id/lost-items/" : "$orderUrl/lost-items/";
 }

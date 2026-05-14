@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/damage_products/model/rack_product_model.dart';
 import 'package:packer/features/views/expiry_product/providers/expired_product_provider.dart';
-import 'package:packer/features/views/expiry_product/widgets/expired_product_card_widget.dart';
 import 'package:packer/features/views/order/widgets/cart_items_list.dart';
 import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/product/product_card.dart';
@@ -174,15 +172,3 @@ class ExpiredProductsScreenState extends State<ExpiredProductsScreen> {
     );
   }
 }
-
-
-  // if (index == provider.expiryProductModel.length) {
-  //                         return provider.isPaginationLoading
-  //                             ? Padding(
-  //                                 padding: EdgeInsets.symmetric(vertical: 16.h),
-  //                                 child: const Center(
-  //                                   child: CircularProgressIndicator(),
-  //                                 ),
-  //                               )
-  //                             : const SizedBox.shrink();
-  //                       }

@@ -12,7 +12,8 @@ import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
 class InventoryTransferScanner extends BaseScanScreen {
-  InventoryTransferScanner({super.key, 
+  InventoryTransferScanner({
+    super.key,
     this.scanBasket = false,
     this.scanCarton = false,
   }) : super(

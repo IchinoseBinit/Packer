@@ -24,6 +24,7 @@ class RackScanScreen extends BaseScanScreen {
   final bool forTransfer;
   final bool needAPICallCarton;
   final bool forDamageRequest;
+  final bool needGapTime;
 
   RackScanScreen({
     super.key,
@@ -34,6 +35,7 @@ class RackScanScreen extends BaseScanScreen {
     this.forTransfer = false,
     this.needAPICallCarton = false,
     this.forDamageRequest = false,
+    this.needGapTime = false,
   }) : super(
           scanTitle: 'Rack Scanner',
           showFlash: true,
@@ -109,6 +111,7 @@ class RackScanScreen extends BaseScanScreen {
                 "forTransfer": true,
                 "productId": productId,
                 "newRackId": code,
+                "needGapTime": needGapTime,
               },
             );
             showToast("Rack scanned successfully");
@@ -125,6 +128,7 @@ class RackScanScreen extends BaseScanScreen {
               extra: {
                 "forTransfer": true,
                 "productId": productId,
+                "needGapTime": needGapTime,
               },
             );
             showToast("Rack scanned successfully");
@@ -254,6 +258,7 @@ class RackScanScreen extends BaseScanScreen {
             extra: {
               "forTransfer": true,
               "productId": productId,
+              "needGapTime": needGapTime,
             },
           );
         } else {

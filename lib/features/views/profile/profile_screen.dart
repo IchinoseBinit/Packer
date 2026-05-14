@@ -117,6 +117,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
 
+    otherInfoData.add({
+      'icon': Icons.not_interested,
+      'title': 'Lost Item',
+      'onTap': () => navigate(context,
+              route: NavigationConstants.damageScanScreenRoute,
+              extra: {
+                'scanRack': true,
+                'forLostItem': true,
+              }),
+    });
+
     //
     otherInfoData.add({
       'icon': Icons.ac_unit,

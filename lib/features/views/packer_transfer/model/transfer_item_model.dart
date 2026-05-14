@@ -18,6 +18,8 @@ class TransferItemModel {
 
   List<String>? tags;
 
+  List<String>? units;
+
   TransferItemModel({
     this.id,
     this.product,
@@ -30,6 +32,7 @@ class TransferItemModel {
     this.measurement,
     this.itemScanCount = 0,
     this.tags,
+    this.units,
   });
 
   Map<String, dynamic> toMap() {
@@ -45,6 +48,7 @@ class TransferItemModel {
       'rack': rack,
       'size': size,
       'measurement': measurement,
+      'units': units,
     };
   }
 
@@ -53,7 +57,8 @@ class TransferItemModel {
       id: map['id'].toString().toInt(),
       product: map['product_id'].toString().toInt(),
       productName: map['product_name'].toString().toString(),
-      productImage: AppUrls.imageUrl + map['product_image'].toString().toString(),
+      productImage:
+          AppUrls.imageUrl + map['product_image'].toString().toString(),
       quantity: map['quantity'].toString().toInt(),
       status: map['status'].toString().toStringConversion(),
       rack: map['rack'].toString().toStringConversion(),
@@ -63,6 +68,10 @@ class TransferItemModel {
       tags: map['unit_tags'] != null
           ? List<String>.from((map['unit_tags'] as List<dynamic>)
               .map<String>((x) => x as String))
+          : null,
+      units: map['units'] != null
+          ? List<String>.from(
+              (map['units'] as List<dynamic>).map<String>((x) => x as String))
           : null,
     );
   }

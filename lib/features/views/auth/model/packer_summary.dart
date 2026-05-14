@@ -9,6 +9,8 @@ class PackerSummary {
   late String storeType;
   // late bool isAvailable;
 
+  late int scanGapTime;
+
   PackerSummary.fromJson(Map obj) {
     onlineTime = obj['total_online_time'].toString().toStringConversion();
     orderCount = obj['total_order_count'].toString().toInt();
@@ -17,5 +19,7 @@ class PackerSummary {
     storeType = obj['store_type'].toString().toStringConversion();
     // isAvailable = obj['is_available'].toString().toBool(false);
     // topicName = obj['topic_name'] ?? "packers";
+
+    scanGapTime = obj['scan_gap_time'] ?? 10;
   }
 }

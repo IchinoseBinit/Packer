@@ -376,10 +376,12 @@ class PackerTransferProvider extends ChangeNotifier {
     if (scanTagsList.contains(code)) {
       return ScanResult(success: false, message: "Tag already scanned");
     }
+
     final item = selectedTransferModel?.items?.firstWhere(
       (element) => element.product == productId,
       orElse: () => TransferItemModel(),
     );
+
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
     if (homeProvider.isMainStore() == false) {
@@ -402,6 +404,8 @@ class PackerTransferProvider extends ChangeNotifier {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, scanMessage);
     }
+
+    //
     if (getScannedCount(productId) == item?.quantity) {
       if (homeProvider.isMainStore()) {
         final result = await navigateReplacement(
@@ -570,13 +574,16 @@ class PackerTransferProvider extends ChangeNotifier {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     if (homeProvider.isMainStore() == false) {
       if (item.rack != null && item.rack!.isNotEmpty) {
-        await navigate(context,
-            route: NavigationConstants.scanRackRoute,
-            extra: {
-              "rack": item.rack,
-              "productId": item.product,
-              "forTransfer": true
-            });
+        await navigate(
+          context,
+          route: NavigationConstants.scanRackRoute,
+          extra: {
+            "rack": item.rack,
+            "productId": item.product,
+            "forTransfer": true,
+            "needGapTime": true,
+          },
+        );
         // if (result == true && context.mounted) {
         //   Provider.of<ScanMessageProvider>(context, listen: false)
         //       .setMessage(context, scanMessage);

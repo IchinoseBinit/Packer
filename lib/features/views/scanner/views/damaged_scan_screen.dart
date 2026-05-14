@@ -19,11 +19,13 @@ import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
 // ignore: must_be_immutable
 class DamagedScanScreen extends BaseScanScreen {
-  DamagedScanScreen(
-      {super.key, required this.showInfo, required this.qr, this.scanRack
-      // required this.index,
-      })
-      : super(
+  DamagedScanScreen({
+    super.key,
+    required this.showInfo,
+    required this.qr,
+    this.scanRack,
+    this.forLostItem = false,
+  }) : super(
           scanTitle: scanRack! ? "Scan the Rack" : "Scan the Product",
           floatingActionButtonLocation: showInfo
               ? FloatingActionButtonLocation.endFloat
@@ -33,6 +35,7 @@ class DamagedScanScreen extends BaseScanScreen {
   bool hasScanned = false;
   bool qr = false;
   bool? scanRack;
+  final bool? forLostItem;
 
   final bool showInfo;
 
@@ -109,8 +112,11 @@ class DamagedScanScreen extends BaseScanScreen {
         final success = await provider.getProductList(code);
 
         if (success) {
-          navigateReplacement(context,
-              route: NavigationConstants.rackProductListScreenRoute);
+          navigateReplacement(
+            context,
+            route: NavigationConstants.rackProductListScreenRoute,
+            extra: {'forLostItem': forLostItem},
+          );
         }
       } else {
         await provider.postProductTag(code);

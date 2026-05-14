@@ -23,6 +23,7 @@ import 'package:packer/features/views/inventory_transfer_request/views/inventory
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_item.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_scanner.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/transfer_request_trolley_item.dart';
+import 'package:packer/features/views/lost_item/screen/lost_item_screen.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
@@ -209,6 +210,7 @@ class AppRouter {
                   forTransfer: data['forTransfer'] ?? false,
                   needAPICallCarton: data['needAPICallCarton'] ?? false,
                   forDamageRequest: data['forDamageRequest'] ?? false,
+                  needGapTime: data['needGapTime'] ?? false,
                   // updateRack: data['updateRack'] ?? false,
                   // cartonProduct: data['cartonProduct'] ?? false,
                   // message: data['message'] ?? '',
@@ -475,6 +477,7 @@ class AppRouter {
                   forDamageRequest: args['forDamageRequest'] ?? false,
                   forExpiredProducts: args['forExpiredProducts'] ?? false,
                   tags: args['tags'],
+                  needGapTime: args['needGapTime'] ?? false,
                 );
               },
             ),
@@ -542,7 +545,10 @@ class AppRouter {
             GoRoute(
               path: NavigationConstants.rackProductListScreenRoute,
               builder: (BuildContext context, GoRouterState state) {
-                return RackProductList();
+                final args = state.extra as Map<String, dynamic>? ?? {};
+                return RackProductList(
+                  forLostItem: args['forLostItem'] ?? false,
+                );
               },
             ),
             GoRoute(
@@ -558,8 +564,9 @@ class AppRouter {
                 final args = state.extra as Map<String, dynamic>? ?? {};
                 return DamagedScanScreen(
                   showInfo: args['showInfo'] ?? false,
-                  qr: args['qr'],
+                  qr: args['qr'] ?? false,
                   scanRack: args['scanRack'] ?? false,
+                  forLostItem: args['forLostItem'] ?? false,
                 );
               },
             ),
@@ -652,6 +659,13 @@ class AppRouter {
                 );
               },
             ),
+
+            //
+            GoRoute(
+              path: NavigationConstants.lostItemScreenRoute,
+              builder: (BuildContext context, GoRouterState state) =>
+                  LostItemScreen(),
+            )
           ],
         ),
       ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
@@ -36,6 +38,11 @@ class ProductScanScreen extends BaseScanScreen {
   bool forExpiredProducts = false;
   List<String>? tags;
 
+  // if time out gap is needed after scanning a code to avoid multiple scans of product
+  // if gap is between 2 scans is hold for more than 5 seconds then ask user to extend the gap time to 10 second and
+  // then gap become 10 second then go back and scan rack once again restart same process again if user want to continue with 10 second gap or not
+  bool needGapTime = false;
+
   ProductScanScreen({
     super.key,
     required this.productId,
@@ -48,18 +55,20 @@ class ProductScanScreen extends BaseScanScreen {
     this.forDamageRequest = false,
     this.forExpiredProducts = false,
     this.tags,
+    this.needGapTime = false,
   }) : super(
           scanTitle: 'Product Scanner',
           showFlash: true,
           showBackButton: true,
-          floatingActionButtonLocation: fromTransfer || forCarton
-              ? FloatingActionButtonLocation.endFloat
-              : FloatingActionButtonLocation.centerFloat,
+          floatingActionButtonLocation:
+              fromTransfer || forCarton || forExpiredProducts
+                  ? FloatingActionButtonLocation.endFloat
+                  : FloatingActionButtonLocation.centerFloat,
         );
 
   @override
   void onScreenCreated(BuildContext context) {
-    log("aaaaaaaaaaa");
+    log("aaaaaaaaaaa : needGapTime - $needGapTime");
     if (forCarton) {
       Provider.of<StockProvider>(context, listen: false)
           .getMessageForCartonProduct(context);
@@ -73,16 +82,37 @@ class ProductScanScreen extends BaseScanScreen {
       Provider.of<ScanMessageProvider>(context, listen: false)
           .setMessage(context, "Scan Damage Product Request");
     }
+
+    //
+    if (needGapTime) {
+      _startScanGapCountdown(context);
+    }
   }
 
   bool isProcessing = false;
   List<String> scannedCodes = [];
+
+  Timer? _scanGapTimer;
+
+  late final ValueNotifier<int> _scanGapTimerData = ValueNotifier(10);
 
   // list of scanned units
 
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
+    // if for expired product and has tags show floating button to show tags
+    if (forExpiredProducts && tags != null && tags!.isNotEmpty) {
+      return FloatingActionButton(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: () async {
+          Provider.of<ScanMessageProvider>(context, listen: false)
+              .setMessage(context, "Scanned Tags:\n${tags!.join('\n')}");
+        },
+        child: const Icon(Icons.info, color: Colors.white),
+      );
+    }
+
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
 
     if (forCarton) {
@@ -104,31 +134,6 @@ class ProductScanScreen extends BaseScanScreen {
       );
     }
 
-    // if (forDamageReceive) {
-    //   return Padding(
-    //     padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 16.w),
-    //     child: GeneralElevatedButton(
-    //       onPressed: () async {
-    //         final productId = Provider.of<OrderProvider>(context, listen: false)
-    //             .damageProductId;
-    //         controller.stop();
-    //         final result = await navigateReplacement(
-    //           context,
-    //           route: NavigationConstants.scanRackRoute,
-    //           extra: {
-    //             'productId': productId.toInt(),
-    //             'forDamage': true,
-    //           },
-    //         );
-
-    //         if (result == true) {
-    //           showToast("Damage product scanned & rack updated!");
-    //         }
-    //       },
-    //       title: "Done",
-    //     ),
-    //   );
-    // }
     if (forDamageRequest) {
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: 10.0.h),
@@ -150,7 +155,9 @@ class ProductScanScreen extends BaseScanScreen {
               ),
               okFunc: () async {
                 await navigatePop(context);
+                if (!context.mounted) return;
                 await controller.stop();
+                if (!context.mounted) return;
                 navigateReplacement(
                   context,
                   route: NavigationConstants.scanRackRoute,
@@ -270,6 +277,63 @@ class ProductScanScreen extends BaseScanScreen {
   }
 
   @override
+  Widget buildTimer(BuildContext context, MobileScannerController controller) {
+    log("needGapTime: $needGapTime");
+    if (!needGapTime) return const SizedBox.shrink();
+
+    return ValueListenableBuilder<int?>(
+      valueListenable: _scanGapTimerData,
+      builder: (context, timerData, _) {
+        if (timerData == null) return const SizedBox.shrink();
+
+        return Row(
+          spacing: 8,
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color:
+                    ((timerData < 5) ? AppColors.primaryColor : Colors.green),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 8,
+                children: [
+                  Icon(Icons.alarm, color: Colors.white),
+                  Text(
+                    "$timerData",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            // Show extend button if canExtend is true and not already extended
+            if (timerData < 5)
+              InkWell(
+                onTap: () => _extendScanGapTimer(context),
+                child: Container(
+                  height: 36.h,
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      "Need more time?",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
     try {
@@ -284,15 +348,21 @@ class ProductScanScreen extends BaseScanScreen {
         log("tags: ${tags.toString()} , $code");
 
         if (tags!.isEmpty) {
-          handleInvalidCode(context, controller, code,
+          if (needGapTime) {
+            _startScanGapCountdown(context);
+          }
+          await handleInvalidCode(context, controller, code,
               "All tags are already scanned, please press 'Confirm transfer' ");
 
           return;
         }
 
         if (!tags!.contains(code)) {
+          if (needGapTime) {
+            _startScanGapCountdown(context);
+          }
           //
-          handleInvalidCode(context, controller, code,
+          await handleInvalidCode(context, controller, code,
               "You have scanned: \n$code. \n To scan:\n ${tags?.join('\n')} ");
           return;
         }
@@ -301,7 +371,10 @@ class ProductScanScreen extends BaseScanScreen {
       if (code.contains("carton") ||
           code.contains("rack") ||
           code.contains("basket")) {
-        handleInvalidCode(
+        if (needGapTime) {
+          _startScanGapCountdown(context);
+        }
+        await handleInvalidCode(
             context, controller, code, "Please scan a product code");
         return;
       }
@@ -311,7 +384,10 @@ class ProductScanScreen extends BaseScanScreen {
         final list = code.split('-');
         final prodId = int.tryParse(list.first) ?? 0;
         if (prodId != productId) {
-          handleInvalidCode(context, controller, code,
+          if (needGapTime) {
+            _startScanGapCountdown(context);
+          }
+          await handleInvalidCode(context, controller, code,
               "You have scanned $prodId but actual product should be $productId");
           return;
         }
@@ -324,7 +400,7 @@ class ProductScanScreen extends BaseScanScreen {
                 .getTagsRemaining(true);
 
         if (!needToScanProductList.contains(code)) {
-          handleInvalidCode(context, controller, code,
+          await handleInvalidCode(context, controller, code,
               "You have scanned: \n$code. \n To scan:\n ${needToScanProductList.join('\n')} ");
           return;
         }
@@ -333,10 +409,11 @@ class ProductScanScreen extends BaseScanScreen {
             .onScanCartonProduct(context, code);
         if (!context.mounted) return;
         if (result.success == false) {
-          Future.delayed(Duration(seconds: 1), () {
+          Future.delayed(Duration(seconds: 1), () async {
             if (!context.mounted) return;
             if (result.message != null) {
-              handleInvalidCode(context, controller, code, result.message);
+              await handleInvalidCode(
+                  context, controller, code, result.message);
             } else {
               hasScanned = false;
               controller.start();
@@ -346,7 +423,7 @@ class ProductScanScreen extends BaseScanScreen {
           if (result.message != null) {
             showToast(result.message ?? '');
           }
-          Future.delayed(Duration(seconds: 1), () {
+          Future.delayed(Duration(seconds: 1), () async {
             if (!context.mounted) return;
             navigatePop(context);
 
@@ -375,7 +452,7 @@ class ProductScanScreen extends BaseScanScreen {
         // }
 
         if (provider.scannedUnits.contains(code)) {
-          handleInvalidCode(
+          await handleInvalidCode(
               context, controller, code, "Already Scanned Product");
           return;
         }
@@ -387,11 +464,11 @@ class ProductScanScreen extends BaseScanScreen {
           fromStockVerification: fromStockVerification,
         );
         if (!success && context.mounted) {
-          handleInvalidCode(context, controller, code);
+          await handleInvalidCode(context, controller, code);
         } else {
-          Future.delayed(Duration(seconds: 1), () {
+          Future.delayed(Duration(seconds: 1), () async {
             if (!context.mounted) return;
-            controller.start();
+            await controller.start();
             hasScanned = false;
           });
         }
@@ -406,7 +483,17 @@ class ProductScanScreen extends BaseScanScreen {
 
           if (result.success && context.mounted) {
             await controller.stop();
+
+            if (!context.mounted) return;
+            if (needGapTime) {
+              _startScanGapCountdown(context);
+              if (!context.mounted) return;
+            }
+
             await controller.dispose();
+
+            if (!context.mounted) return;
+
             Navigator.pop(context, true);
           } else if (context.mounted) {
             await controller.start();
@@ -425,7 +512,12 @@ class ProductScanScreen extends BaseScanScreen {
                 .getTagsRemaining(context, productId, true);
 
         if (!needToScanProductList.contains(code)) {
-          handleInvalidCode(context, controller, code,
+          //
+          if (needGapTime) {
+            _startScanGapCountdown(context);
+          }
+          //
+          await handleInvalidCode(context, controller, code,
               "You have scanned: \n$code. \n To scan:\n ${needToScanProductList.join('\n')} ");
           return;
         }
@@ -438,19 +530,33 @@ class ProductScanScreen extends BaseScanScreen {
                   .scanProductForInventoryTransfer(context, productId, code);
 
           if (result.success && context.mounted) {
+            if (!context.mounted) return;
+            if (needGapTime) {
+              _startScanGapCountdown(context);
+              if (!context.mounted) return;
+            }
+
             Navigator.pop(context, true);
             if (result.message != null) {
               showToast(result.message ?? '');
             }
           } else if (context.mounted) {
+            if (needGapTime) {
+              _startScanGapCountdown(context);
+            }
+
             if (result.message != null) {
-              handleInvalidCode(context, controller, code, result.message);
+              await handleInvalidCode(
+                  context, controller, code, result.message);
             } else {
               await controller.start();
               hasScanned = false;
             }
           }
         } catch (e) {
+          if (needGapTime) {
+            _startScanGapCountdown(context);
+          }
           if (context.mounted) {
             showToast("Error: $e");
             await controller.start();
@@ -473,7 +579,13 @@ class ProductScanScreen extends BaseScanScreen {
     } catch (e) {
       //
 
-      handleInvalidCode(context, controller, code);
+      if (!context.mounted) return;
+      //
+      if (needGapTime) {
+        _startScanGapCountdown(context);
+      }
+      //
+      await handleInvalidCode(context, controller, code);
 
       // await controller.start();
       // rethrow;
@@ -496,10 +608,10 @@ class ProductScanScreen extends BaseScanScreen {
     hasScanned = false;
   }
 
-  void handleInvalidCode(
+  Future handleInvalidCode(
       BuildContext context, MobileScannerController controller, String code,
-      [String? message]) {
-    ShowAlertDialog(
+      [String? message]) async {
+    await ShowAlertDialog(
       disableBackground: true,
       body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
       okFunc: () {
@@ -508,10 +620,42 @@ class ProductScanScreen extends BaseScanScreen {
       },
     ).showAlertDialog(context);
     hasScanned = false;
+    return;
   }
 
   @override
   void onDispose(MobileScannerController controller) {
+    _scanGapTimer?.cancel();
+    _scanGapTimerData.dispose();
     // Any cleanup specific to cart item scanning
+  }
+
+  void _startScanGapCountdown(BuildContext context) {
+    _scanGapTimer?.cancel();
+
+    final scanGapTime = Provider.of<HomeProvider>(context, listen: false)
+            .packerSummary
+            ?.scanGapTime ??
+        10;
+
+    _scanGapTimerData.value = scanGapTime;
+
+    _scanGapTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final currentData = _scanGapTimerData.value;
+
+      if (currentData <= 1) {
+        timer.cancel();
+
+        _scanGapTimerData.value = 0;
+
+        Navigator.pop(context);
+        return;
+      }
+      _scanGapTimerData.value = currentData - 1;
+    });
+  }
+
+  void _extendScanGapTimer(BuildContext context) {
+    _startScanGapCountdown(context);
   }
 }

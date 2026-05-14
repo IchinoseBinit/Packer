@@ -25,6 +25,8 @@ import 'package:packer/enum/order_status_type.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/expiry_product/providers/expired_product_provider.dart';
+import 'package:packer/features/views/lost_item/api/lost_item_api.dart';
+import 'package:packer/features/views/lost_item/enum/lost_reason_enum.dart';
 import 'package:packer/features/views/order/models/order_completed_details.dart';
 import 'package:packer/features/views/order/models/order_picked_details.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
@@ -357,7 +359,7 @@ class OrderProvider extends ChangeNotifier {
       return "Scan ${unitsToScanTag.length} Near Expiry tags. \n ${productDetail.productName}";
     }
 
-    return "Scan ${(productDetail.quantity ?? 0) - countScannedItem(productId)} ${productDetail.productName}";
+    return "Scan ${(productDetail.quantity ?? 0) - countScannedItem(productId)} - ${productDetail.productName}";
 
     // log("Message Product Id: $productId");
     // for (var element in _orderDetails?.productDetails ?? []) {
@@ -957,5 +959,29 @@ class OrderProvider extends ChangeNotifier {
       count += basket.packageTags?.length ?? 0;
     }
     return count;
+  }
+
+  //
+  reportMissingItem({
+    int? orderId,
+    required int productId,
+    required LostReasonEnum reason,
+  }) async {
+    final scannedTags =
+        scannedDataList.where((item) => item.startsWith(productId.toString()));
+
+    try {
+      final response =
+          await LostItemApi.postLostItems(orderId: orderId, items: {
+        'product_id': productId,
+        'reason': scannedTags.isEmpty
+            ? LostReasonEnum.notAvailable.value
+            : LostReasonEnum.partialMissing.value,
+        if (scannedTags.isNotEmpty) 'tags': scannedTags.toList(),
+      });
+      showToast("Missing item reported successfully");
+    } catch (e) {
+      showToast("Error reporting missing item: $e", color: Colors.red);
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/lost_item/screen/reason_bottom_sheet.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -36,18 +37,45 @@ class CartItemScanScreen extends BaseScanScreen {
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
     final show = context.read<OrderProvider>().hasNearExpiryTag(productId);
-    return show
-        ? FloatingActionButton(
-            backgroundColor: AppColors.primaryColor,
-            onPressed: () async {
-              context.read<OrderProvider>().showProductTags(context, productId);
-            },
-            child: const Icon(
-              Icons.info,
-              color: Colors.white,
-            ),
-          )
-        : SizedBox.shrink();
+    if (show) {
+      return FloatingActionButton(
+        backgroundColor: AppColors.primaryColor,
+        onPressed: () async {
+          context.read<OrderProvider>().showProductTags(context, productId);
+        },
+        child: const Icon(
+          Icons.info,
+          color: Colors.white,
+        ),
+      );
+    }
+
+    //  show floating button to report for missing items
+    return FloatingActionButton(
+      backgroundColor: AppColors.primaryColor,
+      onPressed: () async {
+        final scannedCount =
+            context.read<OrderProvider>().countScannedItem(productId);
+
+        final reason = await ReasonBottomSheet.show(
+          context,
+          scannedCount: scannedCount,
+        );
+
+        if (reason != null && context.mounted) {
+          context.read<OrderProvider>().reportMissingItem(
+                orderId: context.read<OrderProvider>().orderDetails!.data.id,
+                productId: productId,
+                reason: reason,
+              );
+          Navigator.pop(context, true);
+        }
+      },
+      child: const Icon(
+        Icons.report_problem,
+        color: Colors.white,
+      ),
+    );
   }
 
   @override
@@ -70,6 +98,7 @@ class CartItemScanScreen extends BaseScanScreen {
 
       final result = Provider.of<OrderProvider>(context, listen: false)
           .scanProduct(context, productId, code);
+
       if (result.success && context.mounted) {
         hasScanned = false;
         if (result.message != null) {

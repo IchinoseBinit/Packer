@@ -60,7 +60,9 @@ class Results {
     productId = json['product_id'].toString().toInt();
     productName = json['product_name'].toString().toStringConversion();
     totalUnits = json['total_units'].toString().toInt();
-    unitTags = json['unit_tags'].cast<String>();
+    unitTags = json['unit_tags'] != null
+        ? List<String>.from(json['unit_tags'])
+        : <String>[];
     rackName = json['rack']?.toString().toStringConversion() ?? 'N/A';
     imageUrl = AppUrls.imageUrl +
         (json['product_image']?.toString().toStringConversion() ?? '');

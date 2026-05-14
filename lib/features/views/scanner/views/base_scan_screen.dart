@@ -15,6 +15,7 @@ abstract class BaseScanScreen extends StatefulWidget {
   final bool showBackButton;
   final bool fromCall;
   final FloatingActionButtonLocation floatingActionButtonLocation;
+  // final bool showTimerBetweenScans;
 
   const BaseScanScreen({
     super.key,
@@ -24,6 +25,7 @@ abstract class BaseScanScreen extends StatefulWidget {
     this.fromCall = false,
     this.floatingActionButtonLocation =
         FloatingActionButtonLocation.centerFloat,
+    // this.showTimerBetweenScans = false,
   });
 
   // also add onscreen created
@@ -38,6 +40,10 @@ abstract class BaseScanScreen extends StatefulWidget {
 
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller);
+
+  Widget? buildTimer(
+          BuildContext context, MobileScannerController controller) =>
+      null;
 }
 
 class _BaseScanScreenState extends State<BaseScanScreen> {
@@ -170,6 +176,13 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
                 top: 8.h * 6,
                 right: 4.w * 3,
                 child: _buildFlashButton(),
+              ),
+            if (widget.buildTimer(context, controller!) != null)
+              Positioned(
+                top: 8.h * 12,
+                right: 12.w,
+                child:
+                    widget.buildTimer(context, controller!) ?? const SizedBox(),
               ),
             Positioned(
               top: 8.h * 8,
