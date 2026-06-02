@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/lost_item/screen/reason_bottom_sheet.dart';
+import 'package:packer/features/views/lost_item/enum/lost_reason_enum.dart';
+import 'package:packer/features/views/lost_item/screen/image_upload_bottom_sheet.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -50,30 +51,73 @@ class CartItemScanScreen extends BaseScanScreen {
       );
     }
 
-    //  show floating button to report for missing items
-    return FloatingActionButton(
-      backgroundColor: AppColors.primaryColor,
-      onPressed: () async {
-        final scannedCount =
-            context.read<OrderProvider>().countScannedItem(productId);
+    //  show button to report for missing items
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Consumer<OrderProvider>(
+        builder: (context, orderProvider, child) {
+          //
+          final scannedCount = orderProvider.countScannedItem(productId);
+          //
 
-        final reason = await ReasonBottomSheet.show(
-          context,
-          scannedCount: scannedCount,
-        );
+          LostReasonEnum lost = scannedCount > 0
+              ? LostReasonEnum.partialMissing
+              : LostReasonEnum.notAvailable;
 
-        if (reason != null && context.mounted) {
-          context.read<OrderProvider>().reportMissingItem(
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onPressed: () async {
+              controller.stop();
+
+              // ask for confirmation to report lost item with reason
+              bool? confirmation = await ShowAlertDialog(
+                title: 'Report Lost Item',
+                body: Text(
+                    '${scannedCount > 0 ? 'Scanned - $scannedCount' : 'Product not available'} \nAre you sure you want to report as lost?'),
+                okFunc: () => Navigator.pop(context, true),
+                cancelFunc: () => Navigator.pop(context, false),
+                okTitle: "Yes",
+                cancelTitle: "No",
+                needCancel: true,
+                canDismiss: false,
+              ).showAlertDialog(context);
+
+              if (confirmation == null || !confirmation) {
+                controller.start();
+                return;
+              }
+
+              await ImageUploadBottomSheet.show(
+                context: context,
+                lost: lost,
+                prodId: productId,
                 orderId: context.read<OrderProvider>().orderDetails!.data.id,
-                productId: productId,
-                reason: reason,
+                scannedCount: scannedCount,
               );
-          Navigator.pop(context, true);
-        }
-      },
-      child: const Icon(
-        Icons.report_problem,
-        color: Colors.white,
+              controller.start();
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.report_problem,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  lost.name,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

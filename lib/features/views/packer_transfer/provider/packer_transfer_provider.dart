@@ -446,6 +446,12 @@ class PackerTransferProvider extends ChangeNotifier {
     return ScanResult(success: false);
   }
 
+  // clear scanned tags
+  clearScannedAllTags() {
+    scanTagsList.clear();
+    notifyListeners();
+  }
+
   Future<ScanResult> scanProduct(BuildContext context, int productId,
       String code, MobileScannerController controller, isDamaged) async {
     if (scanTagsList.contains(code)) {

@@ -648,6 +648,10 @@ class ProductScanScreen extends BaseScanScreen {
 
         _scanGapTimerData.value = 0;
 
+        // clear all scanned tags
+        Provider.of<PackerTransferProvider>(context, listen: false)
+            .clearScannedAllTags();
+
         Navigator.pop(context);
         return;
       }

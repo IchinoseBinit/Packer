@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -196,6 +197,8 @@ class DioClient {
       resp.log();
       return resp;
     } on DioException catch (ex) {
+      ;
+
       final response = ex.response;
       final data = response?.data;
 
@@ -207,6 +210,8 @@ class DioClient {
         );
       }
 
+      ;
+
       // 403 → force logout token
       if (response?.statusCode == 403) {
         await AuthController().removeTokens();
@@ -215,6 +220,8 @@ class DioClient {
           route: NavigationConstants.loginRoute,
         );
       }
+
+      ;
 
       // No internet
       if (ex.error is SocketException || ex.error is HttpException) {

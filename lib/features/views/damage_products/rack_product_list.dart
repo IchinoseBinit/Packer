@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
+import 'package:packer/features/views/lost_item/enum/lost_reason_enum.dart';
+import 'package:packer/features/views/lost_item/screen/image_upload_bottom_sheet.dart';
+import 'package:packer/features/views/lost_item/screen/lost_item_tag_scan_screen.dart';
 import 'package:packer/features/views/lost_item/screen/reason_bottom_sheet.dart';
 import 'package:packer/features/views/widgets/file_upload.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
@@ -45,8 +49,47 @@ class _RackProductListState extends State<RackProductList> {
               onTap: () async {
                 if (widget.forLostItem) {
                   // Handle lost item logic
-                  await ReasonBottomSheet.show(context, prodId: item.id);
-                  return;
+                  final LostReasonEnum? reason =
+                      await ReasonBottomSheet.show(context);
+                  //
+                  if (reason == null) return;
+                  //
+                  if (reason == LostReasonEnum.notAvailable) {
+                    await ImageUploadBottomSheet.show(
+                      context: context,
+                      lost: reason,
+                      prodId: item.id,
+                      scannedCount: 0,
+                      scannedTags: null,
+                    );
+                    return;
+                  } else if (reason == LostReasonEnum.partialMissing) {
+                    //
+                    final tags = await Navigator.push<List<String>>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            LostItemTagScanScreen(productId: item.id),
+                      ),
+                    );
+
+                    if (!context.mounted) return;
+
+                    if (tags == null || tags.isEmpty) {
+                      showToast('No tags scanned. Cancelled.');
+                      return;
+                    }
+
+                    //
+                    await ImageUploadBottomSheet.show(
+                      context: context,
+                      lost: reason,
+                      prodId: item.id,
+                      scannedCount: tags.length,
+                      scannedTags: tags,
+                    );
+                    return;
+                  }
                 }
 
                 await fileUpload(context, item.id, item.quantity);

@@ -23,7 +23,6 @@ import 'package:packer/features/views/inventory_transfer_request/views/inventory
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_item.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_scanner.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/transfer_request_trolley_item.dart';
-import 'package:packer/features/views/lost_item/screen/lost_item_screen.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
@@ -659,13 +658,6 @@ class AppRouter {
                 );
               },
             ),
-
-            //
-            GoRoute(
-              path: NavigationConstants.lostItemScreenRoute,
-              builder: (BuildContext context, GoRouterState state) =>
-                  LostItemScreen(),
-            )
           ],
         ),
       ],
