@@ -6,7 +6,7 @@ class LeaveRequest {
   String? reason;
   String? status;
   Employee? approvedBy;
-  DateTime? approvedAt;
+  String? approvedAt;
   String? createdAt;
   String? updatedAt;
 
@@ -31,7 +31,9 @@ class LeaveRequest {
     endDate = json['end_date'];
     reason = json['reason'];
     status = json['status'];
-    approvedBy = json['approved_by'];
+    approvedBy = json['approved_by'] != null
+        ? Employee.fromJson(json['approved_by'])
+        : null;
     approvedAt = json['approved_at'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];

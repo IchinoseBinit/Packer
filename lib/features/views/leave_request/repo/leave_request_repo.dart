@@ -37,6 +37,10 @@ class LeaveRequestRepo {
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.leaveRequestUrl,
+        queryParameters: {
+          "page": 1,
+          "page_size": 100,
+        },
       );
 
       return PaginatedResponse.fromJson(
