@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:packer/constants/app_urls.dart';
@@ -24,6 +26,10 @@ class LostItemApi {
           'tags': scannedTags.toList(),
         },
       );
+
+      //
+
+      log(' ============ FormData: ${formData.fields} and  with values: ${formData.fields.map((e) => '${e.key}: ${e.value}').join(', ')} ============');
 
       final response = await DioClient().request(
         requestType: RequestType.postWithTokenFormData,

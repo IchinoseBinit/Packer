@@ -96,6 +96,11 @@ class CartItemScanScreen extends BaseScanScreen {
                 prodId: productId,
                 orderId: context.read<OrderProvider>().orderDetails!.data.id,
                 scannedCount: scannedCount,
+                scannedTags: orderProvider.scannedDataList
+                    .where(
+                      (item) => item.startsWith(productId.toString()),
+                    )
+                    .toList(),
               );
               controller.start();
             },

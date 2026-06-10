@@ -984,39 +984,44 @@ class OrderProvider extends ChangeNotifier {
   // }
 
   clearScannedDataOrder(int orderId) async {
-    basketBox = await Hive.openBox('${HiveConstants.order}$orderId');
-    basketDao = BasketDao(basketBox);
+    try {
+      basketBox = await Hive.openBox('${HiveConstants.order}$orderId');
+      basketDao = BasketDao(basketBox);
 
-    // Clear all product identifiers from each basket, keep basket identifiers
-    for (final basket in basketDao.getAll()) {
-      basketDao.addOrUpdateBasket(Basket(
-        identifier: basket.identifier,
-        productIdentifiers: [],
-      ));
+      // Clear all product identifiers from each basket, keep basket identifiers
+      for (final basket in basketDao.getAll()) {
+        basketDao.addOrUpdateBasket(Basket(
+          identifier: basket.identifier,
+          productIdentifiers: [],
+        ));
+      }
+
+      basketDao.clearAll();
+      baskets.clear();
+      bucketData = "";
+      scannedDataList.clear();
+      rackProductData.clear();
+      rackList.clear();
+      resetPackedTracking();
+      packedCount = 0;
+
+      baskets.forEach((basket) => clearBasket(basket.identifier));
+
+      resetState();
+
+      // remove box
+      basketDataList.clear();
+      basketDao.clearAll();
+      scannedDataList.clear();
+
+      // remove Hive box after clearing data    try {
+      await Hive.deleteBoxFromDisk('${HiveConstants.order}$orderId');
+      log("Order box deleted from Hive: ${HiveConstants.order}$orderId");
+
+      notifyListeners();
+    } catch (e) {
+      log("Error clearing scanned data for order $orderId: $e",
+          name: "clearScannedDataOrder");
     }
-
-    basketDao.clearAll();
-    baskets.clear();
-    bucketData = "";
-    scannedDataList.clear();
-    rackProductData.clear();
-    rackList.clear();
-    resetPackedTracking();
-    packedCount = 0;
-
-    // remove Hive box after clearing data    try {
-    await Hive.deleteBoxFromDisk('${HiveConstants.order}$orderId');
-    log("Order box deleted from Hive: ${HiveConstants.order}$orderId");
-
-    baskets.forEach((basket) => clearBasket(basket.identifier));
-
-    resetState();
-
-    // remove box
-    basketDataList.clear();
-    basketDao.clearAll();
-    scannedDataList.clear();
-
-    notifyListeners();
   }
 }

@@ -182,8 +182,11 @@ class _ImageUploadBottomSheetWidgetState
                           .toList();
                     }
 
-                    if (widget.scannedTags != null && tags.isEmpty) {
-                      showToast('No tags scanned. Cancelled.');
+                    if (widget.lostReason == LostReasonEnum.partialMissing &&
+                        widget.scannedTags != null &&
+                        tags.isEmpty) {
+                      showToast(
+                          'Please scan the remaining tags to report as partially missing');
                       return;
                     }
 
@@ -192,6 +195,7 @@ class _ImageUploadBottomSheetWidgetState
                       prodId: widget.prodId,
                       scannedTags: tags,
                       file: _pickedImagePath!,
+                      orderId: widget.orderId,
                     );
                     Navigator.pop(context);
                     return;
@@ -225,7 +229,7 @@ class _ImageUploadBottomSheetWidgetState
 
       // if it get success then clear all the scanned data in order provider for that product id
       if (orderId != null) {
-        context.read<OrderProvider>().clearScannedDataOrder(orderId);
+        await context.read<OrderProvider>().clearScannedDataOrder(orderId);
       }
 
       if (context.mounted) {
