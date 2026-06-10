@@ -23,6 +23,7 @@ import 'package:packer/features/views/inventory_transfer_request/views/inventory
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_item.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/inventory_transfer_request_scanner.dart';
 import 'package:packer/features/views/inventory_transfer_request/views/transfer_request_trolley_item.dart';
+import 'package:packer/features/views/leave_request/screens/leave_request_screen.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/views/collected_product_view.dart';
 import 'package:packer/features/views/low_stock/views/low_stock_details.dart';
@@ -656,6 +657,12 @@ class AppRouter {
                   orderId: args['orderId'].toString().toInt(),
                   packageId: args['packageId'].toString(),
                 );
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.leaveRequestScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return LeaveRequestScreen();
               },
             ),
           ],

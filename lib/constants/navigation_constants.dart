@@ -133,4 +133,7 @@ class NavigationConstants {
 
   //
   static const String lostItemScreenRoute = 'lost-item-screen';
+
+  //
+  static const String leaveRequestScreenRoute = 'leave-request-screen';
 }

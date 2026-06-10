@@ -183,6 +183,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'screen': NavigationConstants.expiryProductScreenRoute,
       });
     }
+
+    //
+    otherInfoData.add({
+      'icon': Icons.leave_bags_at_home,
+      'title': 'Request Leave',
+      'screen': NavigationConstants.leaveRequestScreenRoute,
+    });
   }
 
   @override

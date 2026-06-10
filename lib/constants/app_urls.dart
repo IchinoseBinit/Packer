@@ -233,4 +233,7 @@ class AppUrls {
   //  lost items
   static String lostItems(int? id) =>
       id != null ? "$orderUrl/$id/lost-items/" : "$orderUrl/lost-items/";
+
+  // leave request
+  static String get leaveRequestUrl => "$baseUrl/staff/api/packer-leaves/";
 }
