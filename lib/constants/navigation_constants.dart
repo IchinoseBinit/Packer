@@ -136,4 +136,7 @@ class NavigationConstants {
 
   //
   static const String leaveRequestScreenRoute = 'leave-request-screen';
+
+  // fruits and vegetables
+  static const String fruitsVegsScreenRoute = 'fruits-vegs-screen';
 }

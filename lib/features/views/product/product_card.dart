@@ -39,7 +39,6 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    final productunits = widget.productModel.productUnits;
     return InkWell(
       onTap: () {
         widget.onTap?.call();

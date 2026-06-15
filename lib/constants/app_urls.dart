@@ -236,4 +236,18 @@ class AppUrls {
 
   // leave request
   static String get leaveRequestUrl => "$baseUrl/staff/api/packer-leaves/";
+
+  // fruits and vegetables
+  static String get fruitsVegsUrl => "$baseUrl/packer/produce/units/today/";
+
+  static String get fruitsVegsAssessUrl =>
+      "$baseUrl/packer/produce/units/assess/";
+
+  // product checker
+  static String get productCheckerUrl =>
+      "$baseUrl/packer/produce/checker/units/today/";
+
+  // product checker assess
+  static String get productCheckerAssessUrl =>
+      "$baseUrl/packer/produce/units/verify/";
 }

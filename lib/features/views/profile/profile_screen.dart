@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
+import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -181,6 +182,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.repeat_rounded,
         'title': 'Product Near Expiry',
         'screen': NavigationConstants.expiryProductScreenRoute,
+      });
+    }
+
+    //
+    final UserRole role = context.read<HomeProvider>().user.role;
+    if (role == UserRole.packer || role == UserRole.productChecker) {
+      otherInfoData.add({
+        'icon': Icons.local_florist,
+        'title': 'Fruits and Vegetables',
+        'screen': NavigationConstants.fruitsVegsScreenRoute,
       });
     }
 

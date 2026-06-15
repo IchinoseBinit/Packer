@@ -55,6 +55,7 @@ class DioClient {
           requestHeader: true,
           responseHeader: false,
           requestBody: true,
+          logPrint: (object) => object.logDio(),
         ),
       );
     }

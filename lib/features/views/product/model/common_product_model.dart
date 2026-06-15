@@ -45,9 +45,11 @@ class CommonProductModel {
     productName = productModel.productName;
     rackName = productModel.rackName;
     image = productModel.imageUrl;
-    quantity = (productModel.quantity > productModel.mainStoreStock!)
-        ? quantity = productModel.mainStoreStock!
-        : productModel.quantity;
+    quantity = productModel.mainStoreStock == null
+        ? productModel.quantity
+        : (productModel.quantity > productModel.mainStoreStock!)
+            ? productModel.mainStoreStock!
+            : productModel.quantity;
     size = productModel.size;
     measurement = productModel.measurement;
     mainStoreStock = productModel.mainStoreStock;

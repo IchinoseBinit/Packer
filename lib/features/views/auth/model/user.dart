@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../../../../controllers/extensions/string_extension.dart';
 
 class User {
@@ -21,11 +23,15 @@ class User {
   String toString() {
     return 'User(id: $id, name: $name, username: $username, phoneNumber: $phoneNumber, role: $role)';
   }
-
 }
 
 enum UserRole {
-  packer, rider, manager, audit, driver;
+  packer,
+  rider,
+  manager,
+  audit,
+  driver,
+  productChecker;
 
   // from string
   static UserRole fromString(String role) {
@@ -40,8 +46,10 @@ enum UserRole {
         return UserRole.audit;
       case 'driver':
         return UserRole.driver;
+      case 'product_checker':
+        return UserRole.productChecker;
       default:
-        throw Exception('Invalid user role');
+        return UserRole.packer; // default role
     }
   }
 }
