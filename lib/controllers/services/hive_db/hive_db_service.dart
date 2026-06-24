@@ -21,33 +21,26 @@ class HiveDBService {
     return await Hive.openBox<TrolleyItem>('${HiveConstants.storeId}$storeId');
   }
 
-  static Future<Box<InventoryTransferRequestItemModel>> openInventoryTransferRequestBox(String id) async {
-    return await Hive.openBox<InventoryTransferRequestItemModel>('${HiveConstants.inventoryTransferRequest}$id');
+  static Future<Box<InventoryTransferRequestItemModel>>
+      openInventoryTransferRequestBox(String id) async {
+    return await Hive.openBox<InventoryTransferRequestItemModel>(
+        '${HiveConstants.inventoryTransferRequest}$id');
   }
 
   static Future<void> closeAll() async {
     await Hive.close();
   }
 
- static Future<void> wipeHiveCompletely() async {
+  /// Closes all open boxes and deletes every Hive box from disk.
+  static Future<void> wipeHiveCompletely() async {
+    await Hive.deleteFromDisk();
+
+    // Remove the Hive directory in case any stray box files remain.
     final appDocDir = await getApplicationDocumentsDirectory();
     final hivePath = '${appDocDir.path}/${HiveConstants.hivePath}';
-
     final hiveDir = Directory(hivePath);
     if (await hiveDir.exists()) {
       await hiveDir.delete(recursive: true);
     }
   }
-
-  // static Future<void> clearAllBoxes() async {
-  //   for (var box in Hive.boxes.values) {
-  //     await box.clear();
-  //   }
-  // }
-
-  // static Future<void> deleteAllBoxesFromDisk() async {
-  //   for (var box in Hive.boxes.values) {
-  //     await box.deleteFromDisk();
-  //   }
-  // }
 }

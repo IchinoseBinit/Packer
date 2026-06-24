@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/order/widgets/ask_confirmation.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -32,6 +33,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final List<Map<String, dynamic>> otherInfoData = [];
 
   void _prepareOtherInfoData(BuildContext context, HomeProvider value) {
+    final UserRole currentRole = context.read<HomeProvider>().user.role;
+    if (currentRole == UserRole.productChecker) {
+      otherInfoData.add({
+        'icon': Icons.local_florist,
+        'title': 'Fruits and Vegetables',
+        'screen': NavigationConstants.fruitsVegsScreenRoute,
+      });
+      otherInfoData.add({
+        'icon': Icons.leave_bags_at_home,
+        'title': 'Request Leave',
+        'screen': NavigationConstants.leaveRequestScreenRoute,
+      });
+      return;
+    }
+
     // Add transfer_list screen only for non-main stores, if not already added
     if (value.isMainStore() == false &&
         !otherInfoData
@@ -192,6 +208,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'icon': Icons.local_florist,
         'title': 'Fruits and Vegetables',
         'screen': NavigationConstants.fruitsVegsScreenRoute,
+      });
+    }
+
+    if (!otherInfoData.any(
+        (e) => e['screen'] == NavigationConstants.auditProductScreenRoute)) {
+      otherInfoData.add({
+        'icon': Icons.fact_check,
+        'title': 'Stock Audit',
+        'screen': NavigationConstants.auditProductScreenRoute,
       });
     }
 
@@ -434,6 +459,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               backgroundColor: AppColors.primaryColor,
                             ),
                             onPressed: () async {
+                              final isConfirmed = await AskConfirmation.show(
+                                context,
+                                title: 'Do you want to logout?',
+                              );
+
+                              if (!isConfirmed) {
+                                return;
+                              }
+
                               showLoading(context);
                               await Provider.of<HomeProvider>(context,
                                       listen: false)
@@ -469,40 +503,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        width: 170.w,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 14.w),
-                          child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryColor,
-                              ),
-                              onPressed: () {
-                                ShowAlertDialog(
-                                  title: 'Clear Cache',
-                                  body: Text(
-                                      'Are you sure you want to clear cache?'),
-                                  okFunc: () {
-                                    HiveDBService.wipeHiveCompletely();
-                                    navigatePop(context);
-                                  },
-                                  needCancel: true,
-                                  cancelFunc: () {
-                                    navigatePop(context);
-                                  },
-                                ).showAlertDialog(context);
-                              },
-                              child: Text(
-                                "Clear Cache",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: AppColors.backgroundColor,
-                                    ),
-                              )),
+                      if (value.user.role != UserRole.productChecker)
+                        SizedBox(
+                          width: 170.w,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 14.w),
+                            child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryColor,
+                                ),
+                                onPressed: () {
+                                  ShowAlertDialog(
+                                    title: 'Clear Cache',
+                                    body: Text(
+                                        'Are you sure you want to clear cache?'),
+                                    okFunc: () {
+                                      HiveDBService.wipeHiveCompletely();
+                                      navigatePop(context);
+                                    },
+                                    needCancel: true,
+                                    cancelFunc: () {
+                                      navigatePop(context);
+                                    },
+                                  ).showAlertDialog(context);
+                                },
+                                child: Text(
+                                  "Clear Cache",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.backgroundColor,
+                                      ),
+                                )),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),

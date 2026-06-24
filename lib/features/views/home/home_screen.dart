@@ -89,31 +89,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Column(
               children: [
                 const OrderListWidget(),
-                // ShiftColumnBox(
-                //   startingHour: 6,
-                //   startingMin: 30,
-                //   endingHour: 2,
-                //   endingMin: 30,
-                //   remainingTime: 16,
-                //   isOnline: provider.isOnline,
-                // ),
-                // SizedBox(height: 20.h),
-
                 const TodaysProgressWidget(),
                 SizedBox(height: 20.h),
-
                 SizedBox(height: 48.h),
-                SizedBox(
-                  height: 24.h,
-                ),
-
-                // if (stockProvider.lowStockList.isNotEmpty)
-                //   GeneralElevatedButton(
-                //       title: "Scan the carton",
-                //       onPressed: () {
-                //         navigate(context,
-                //             route: NavigationConstants.qrScanScreenRoute);
-                //       }),
+                SizedBox(height: 24.h),
               ],
             ),
           ),

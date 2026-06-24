@@ -126,11 +126,66 @@ class ProductScanScreen extends BaseScanScreen {
       );
     }
     if (forDamageTransfer) {
-      return GeneralElevatedButton(
-        onPressed: () async {
-          orderProvider.damageProductTransfer(context);
-        },
-        title: "Confirm Transfer",
+      //
+      log("forDamageTransfer: ${tags?.map((e) => e.toString()).toList()}");
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10.h,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // if damage transfer have tags then show those tags in floating info icon
+          if (tags != null && tags!.isNotEmpty)
+            FloatingActionButton(
+              backgroundColor: AppColors.primaryColor,
+              onPressed: () async {
+                await ShowAlertDialog(
+                  title: "Scanned Tags",
+                  body: Consumer<OrderProvider>(
+                      builder: (context, orderProvider, _) {
+                    final scannedDamageProducts =
+                        orderProvider.scannedDamageProductList;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: tags!.map((tag) {
+                        final isScanned = scannedDamageProducts.any(
+                          (product) => product.toString() == tag.toString(),
+                        );
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 6.h),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("• $tag"),
+                              if (isScanned) ...[
+                                SizedBox(width: 6.w),
+                                const Icon(
+                                  Icons.done,
+                                  size: 18,
+                                  color: Colors.green,
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  }),
+                  okFunc: () => Navigator.pop(context),
+                ).showAlertDialog(context);
+              },
+              child: const Icon(Icons.info, color: Colors.white),
+            ),
+
+          GeneralElevatedButton(
+            onPressed: () async {
+              orderProvider.damageProductTransfer(context);
+            },
+            title: "Confirm Transfer",
+          ),
+        ],
       );
     }
 

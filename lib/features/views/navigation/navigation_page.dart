@@ -6,9 +6,11 @@ import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/home/home_screen.dart';
+import 'package:packer/features/views/home/product_checker_home_screen.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/driver/views/driver_profile_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
@@ -44,7 +46,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
     // TODO: implement initState
     super.initState();
     final home = Provider.of<HomeProvider>(context, listen: false);
-    if (home.isAuditUser()) {
+    //
+    if (home.user.role == UserRole.productChecker) {
+      widgets[0] = const ProductCheckerHomeScreen();
+    } else if (home.isAuditUser()) {
       widgets[0] = StoreSelectionScreen();
     } else if (home.isDriver()) {
       widgets[0] = DriverHomeScreen();

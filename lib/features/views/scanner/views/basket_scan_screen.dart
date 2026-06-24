@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -43,6 +45,9 @@ class BasketScanScreen extends BaseScanScreen {
 
   @override
   void onScreenCreated(BuildContext context) {
+    // tags
+    log("tags: ${tags?.map((e) => e.toString()).toList()}");
+
     final message = (forOrder || basketCode == null)
         ? "Scan Basket Code"
         : "Scan Basket: $basketCode";

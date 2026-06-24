@@ -1,5 +1,4 @@
-import 'dart:developer';
-
+import 'package:intl/intl.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
@@ -13,17 +12,30 @@ import 'package:packer/utils/paginated_response.dart';
 class FruitsVegsRepo {
   /// Get fruits and vegetables data
   static Future<PaginatedResponse<ProductModel>> getFruitsVegsData(
-      UserRole role) async {
+    UserRole role, {
+    bool checkedProducts = false,
+    int? storeId,
+    DateTime? date,
+    int page = 1,
+  }) async {
     try {
+      final url = checkedProducts
+          ? AppUrls.checkedProductsUrl
+          : (role == UserRole.productChecker
+              ? AppUrls.productCheckerUrl
+              : AppUrls.fruitsVegsUrl);
+
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
-        url: role == UserRole.productChecker
-            ? AppUrls.productCheckerUrl
-            : AppUrls.fruitsVegsUrl,
+        url: url,
+        queryParameters: {
+          if (storeId != null) "store_id": storeId,
+          if (date != null) "date": DateFormat('yyyy-MM-dd').format(date),
+          "page": page,
+        },
       );
       return PaginatedResponse.fromJson(response.data, ProductModel.fromJson);
     } catch (e) {
-      debugger();
       rethrow;
     }
   }

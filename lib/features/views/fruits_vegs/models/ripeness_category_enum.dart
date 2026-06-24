@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 enum RipenessCategoryEnum {
-  raw("raw", "Raw", Icons.ac_unit),
-  ripe("ripe", "Ripe", Icons.check_circle);
+  raw("raw", "Raw (काँचो)", Icons.ac_unit),
+  ripe("ripe", "Ripe (पाकेको)", Icons.check_circle);
 
   final String name;
   final String value;

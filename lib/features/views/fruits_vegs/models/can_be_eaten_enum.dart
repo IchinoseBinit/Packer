@@ -1,7 +1,7 @@
 enum CanBeEatenEnum {
-  yes("yes", "Yes"),
-  no("no", "No"),
-  cantSay("cant_say", "Can't Say");
+  yes("yes", "Yes (मिल्छ)"),
+  no("no", "No (मिल्दैन)"),
+  cantSay("cant_say", "Can't Say (भन्न सकिदैन)");
 
   final String value;
   final String name;

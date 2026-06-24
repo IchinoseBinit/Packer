@@ -15,6 +15,7 @@ import 'package:packer/features/views/driver/views/driver_basket_scanner.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/driver/views/in_transit_screen.dart';
 import 'package:packer/features/views/expiry_product/screens/expired_products_screen.dart';
+import 'package:packer/features/views/audit_product/screens/audit_product_screen.dart';
 import 'package:packer/features/views/fruits_vegs/screens/fruits_vegs_screen.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_basket_list.dart';
 import 'package:packer/features/views/inventory_transfer_main_store/views/inventory_transfer_items.dart';
@@ -73,6 +74,7 @@ import 'package:packer/features/views/scanner/views/product_scan_screen.dart';
 import 'package:packer/features/views/scanner/views/rack_scan_screen.dart';
 import 'package:packer/features/views/stock_verification/views/stock_rack_scan_screen.dart';
 import 'package:packer/features/views/stock_verification/views/stock_verification_screen.dart';
+import 'package:packer/features/views/stock_verification/model/store_model.dart';
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
@@ -669,7 +671,17 @@ class AppRouter {
             GoRoute(
               path: NavigationConstants.fruitsVegsScreenRoute,
               builder: (BuildContext context, GoRouterState state) {
-                return FruitsVegsScreen();
+                return FruitsVegsScreen(
+                  preselectedStore: state.extra as Store?,
+                );
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.auditProductScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return AuditProductScreen(
+                  preselectedStore: state.extra as Store?,
+                );
               },
             ),
           ],

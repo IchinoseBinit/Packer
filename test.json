@@ -1,50 +1,91 @@
 {
-  "success": true,
-  "product_details": [
+  "next": null,
+  "previous": null,
+  "has_next_page": false,
+  "page": 1,
+  "audit_id": 2,
+  "products": [
     {
-      "id": "3599",
-      "product_name": "Red Bull  Energy Drink 250mL MRP 120",
-      "product_image": "/media/src/images/product_images/redbull.png",
-      "price": "60.00",
-      "quantity": 1,
-      "size": "250.00",
-      "measurement": "mL",
-      "marked_price": "120.00",
-      "discount_percent": "50.00",
-      "product_compartment": null,
-      "rack": "Stand-Fridge-4-R"
+      "product_id": 6268,
+      "product_name": "Surya Sleek Bolt Cigarette 20pcs MRP 340",
+      "audit_type": "most_lost",
+      "is_completed": true,
+      "rack_name": "MAR-4-R-D-4-R",
+      "expected_quantity": 15,
+      "units": [
+        { "tag": "6268-762-14120-200-144" },
+        { "tag": "6268-762-14120-200-168" },
+        { "tag": "6268-762-14120-200-150" },
+        { "tag": "6268-762-14120-200-148" },
+        { "tag": "6268-762-14120-200-161" },
+        { "tag": "6268-762-14120-200-172" },
+        { "tag": "6268-762-14120-200-175" },
+        { "tag": "6268-762-14120-200-176" },
+        { "tag": "6268-762-14120-200-179" },
+        { "tag": "6268-762-14120-200-183" },
+        { "tag": "6268-762-14120-200-188" },
+        { "tag": "6268-762-14120-200-191" },
+        { "tag": "6268-762-14120-200-193" },
+        { "tag": "6268-762-14120-200-196" },
+        { "tag": "6268-762-14120-200-200" }
+      ]
     },
     {
-      "id": 0,
-      "product": null,
-      "product_name": "Ice Pack",
-      "quantity": 1,
-      "price": "0.00",
-      "marked_price": "0.00",
-      "discount_percent": "0.00"
+      "product_id": 5181,
+      "product_name": "Slice Mango Cold Drink 500ml MRP 90",
+      "audit_type": "most_lost",
+      "is_completed": true,
+      "rack_name": "Cooler-Fridge-1-R",
+      "expected_quantity": 2,
+      "units": [
+        { "tag": "5181-708-12911-12-1" },
+        { "tag": "5181-708-12911-12-2" }
+      ]
+    },
+    {
+      "product_id": 849,
+      "product_name": "Liril Lime Rush Soap Bar (75g x Pack of 4) MRP 160",
+      "audit_type": "random",
+      "is_completed": false,
+      "rack_name": "MAR-3-R-D-2-R",
+      "expected_quantity": 1,
+      "units": [{ "tag": "849-3-575-36-15" }]
+    },
+    {
+      "product_id": 873,
+      "product_name": "Closeup Toothpaste 80g MRP 85",
+      "audit_type": "random",
+      "is_completed": false,
+      "rack_name": "WAR-S-C-2-L",
+      "expected_quantity": 1,
+      "units": [{ "tag": "873-3-574-144-126" }]
+    },
+    {
+      "product_id": 1762,
+      "product_name": "Parle Butter Cookies 200g MRP 60",
+      "audit_type": "random",
+      "is_completed": false,
+      "rack_name": "MAR-1-R-B-4-R",
+      "expected_quantity": 4,
+      "units": [
+        { "tag": "1762-511-9231-50-16" },
+        { "tag": "1762-511-9231-50-29" },
+        { "tag": "1762-511-9231-50-31" },
+        { "tag": "1762-511-9231-50-48" }
+      ]
+    },
+    {
+      "product_id": 1765,
+      "product_name": "Parle Mango Bite Polybag Candies 200g MRP 100",
+      "audit_type": "random",
+      "is_completed": false,
+      "rack_name": "WAR-S-C-5-R",
+      "expected_quantity": 3,
+      "units": [
+        { "tag": "1765-662-12221-24-6" },
+        { "tag": "1765-662-12221-24-1" },
+        { "tag": "1765-662-12221-24-11" }
+      ]
     }
-  ],
-  "data": {
-    "id": 7276,
-    "status": "packer_assigned",
-    "count": 1,
-    "small_cart_fee": "0.00",
-    "delivery_fee": "100.00",
-    "total": "60.00",
-    "final_total": "160.00",
-    "user_info": {
-      "name": "App User",
-      "address_name": "Current Address",
-      "phone": "9801201234",
-      "address": "Milijuli Tol, जन मार्ग, Kathmandu-4",
-      "latitude": 27.7374009,
-      "longitude": 85.3431826
-    },
-    "customer_info": { "name": "App User", "phone_number": "9801201234" },
-    "additional_info": "",
-    "distance": 2.1939,
-    "is_ordering_for_someone": false,
-    "store_role": "primary",
-    "created_timestamp": "2026-04-01T17:01:18.786516+05:45"
-  }
+  ]
 }

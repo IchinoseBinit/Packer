@@ -250,4 +250,14 @@ class AppUrls {
   // product checker assess
   static String get productCheckerAssessUrl =>
       "$baseUrl/packer/produce/units/verify/";
+
+  // checked products
+  static String get checkedProductsUrl =>
+      "$baseUrl/packer/produce/units/quarantined/";
+
+  // stock audit
+  static String get stockAuditUrl => "$_packerUrl/stock-audit/";
+  static String get stockAuditItemUrl => "$_packerUrl/stock-audit/item/";
+  static String get stockAuditCompleteUrl =>
+      "$_packerUrl/stock-audit/complete/";
 }

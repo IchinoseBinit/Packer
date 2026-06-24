@@ -3,113 +3,39 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
-import 'package:packer/controllers/services/show_toast_message.dart';
-import 'package:packer/features/views/fruits_vegs/providers/fruits_vegs_provider.dart';
-import 'package:packer/features/views/fruits_vegs/widgets/rate_ripeness_widget.dart';
-import 'package:packer/features/views/low_stock/model/product_model.dart';
+import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/audit_product/models/stock_audit_model.dart';
+import 'package:packer/features/views/audit_product/providers/stock_audit_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
-import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
-class ScanTagScreen extends BaseScanScreen {
-  final ProductModel productModel;
+/// Scan every expected tag of an audited product one by one, then submit.
+class AuditScanScreen extends BaseScanScreen {
+  final AuditProductModel product;
 
-  const ScanTagScreen({
-    super.key,
-    required this.productModel,
-  }) : super(
-          scanTitle: 'Scan Tag',
+  const AuditScanScreen({super.key, required this.product})
+      : super(
+          scanTitle: 'Scan Audit Tags',
           showFlash: true,
           showBackButton: true,
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
         );
 
   @override
   void onScreenCreated(BuildContext context) {
-    Provider.of<FruitsVegsProvider>(context, listen: false).clearScannedTags();
-
-    Provider.of<ScanMessageProvider>(context, listen: false)
-        .setMessage(context, "Scan Tag- ${productModel.productName}");
+    context.read<StockAuditProvider>().startScanSession(product);
+    _updateMessage(context);
   }
 
-  @override
-  Widget? buildFloatingButton(
-      BuildContext context, MobileScannerController controller) {
-    return Consumer<FruitsVegsProvider>(
-      builder: (context, provider, _) {
-        final scanned = provider.scannedTags.length;
-        final total = productModel.units?.length ?? 0;
-        final isAllScanned = scanned > 0 && scanned == total;
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    isAllScanned
-                        ? "All $total tags scanned"
-                        : "Scanned $scanned of $total",
-                    style: TextStyle(color: Colors.white, fontSize: 13.sp),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Material(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: const CircleBorder(),
-                  child: IconButton(
-                    tooltip: 'View tags',
-                    onPressed: () => _showTagsSheet(context, controller),
-                    icon: Icon(Icons.info_outline,
-                        color: Colors.white, size: 20.r),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10.h),
-            Container(
-              margin: EdgeInsets.only(left: 16.w),
-              padding: EdgeInsets.only(left: 16.w),
-              child: GeneralElevatedButton(
-                marginH: 6,
-                bgColor:
-                    isAllScanned ? AppColors.primaryColor : Colors.transparent,
-                borderColor:
-                    isAllScanned ? AppColors.primaryColor : Colors.transparent,
-                onPressed: () {
-                  if (isAllScanned) {
-                    Navigator.pop(context);
-                  } else {
-                    showToast(
-                      "Please scan all tags before marking as completed.",
-                      color: Colors.red,
-                    );
-                  }
-                },
-                title: isAllScanned ? "Mark as Completed" : "Scan All Tags",
-                textStyle: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: isAllScanned ? Colors.white : Colors.transparent,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+  void _updateMessage(BuildContext context) {
+    final p = context.read<StockAuditProvider>();
+    Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+      context,
+      "Scanned ${p.scannedTags.length}/${p.expectedTags.length}",
     );
   }
 
@@ -117,32 +43,27 @@ class ScanTagScreen extends BaseScanScreen {
   Future<void> onCodeDetected(BuildContext context, String code,
       MobileScannerController controller) async {
     try {
-      controller.stop();
-      HapticFeedback.heavyImpact();
+      await controller.stop();
+      final provider = context.read<StockAuditProvider>();
+      final result = provider.addScan(code);
 
-      final unit = productModel.units?.firstWhere((unit) => unit.tag == code);
-
-      if (unit == null) {
-        throw Exception("Scanned tag does not match any unit.");
+      switch (result) {
+        case AuditScanResult.invalid:
+          HapticFeedback.heavyImpact();
+          throw Exception("Tag not part of this audit.");
+        case AuditScanResult.duplicate:
+          HapticFeedback.mediumImpact();
+          _updateMessage(context);
+          await controller.start();
+          return;
+        case AuditScanResult.ok:
+          HapticFeedback.lightImpact();
+          _updateMessage(context);
+          await controller.start();
+          return;
       }
-
-      if (context.read<FruitsVegsProvider>().scannedTags.contains(code)) {
-        throw Exception("Tag already scanned.");
-      }
-
-      await showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => RateRipenessWidget(
-          productModel: productModel,
-          unit: unit,
-        ),
-      );
-
-      controller.start();
     } catch (e) {
       handleInvalidCode(context, controller, code, e.toString());
-      return;
     }
   }
 
@@ -160,8 +81,96 @@ class ScanTagScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // Any cleanup specific to cart item scanning
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
+    return Consumer<StockAuditProvider>(
+      builder: (context, provider, _) {
+        final scanned = provider.scannedTags.length;
+        final total = provider.expectedTags.length;
+        final canSubmit = provider.allScanned;
+
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      provider.allScanned
+                          ? "All $total tags scanned"
+                          : "Scanned $scanned of $total",
+                      style: TextStyle(color: Colors.white, fontSize: 13.sp),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Material(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'View tags',
+                      onPressed: () => _showTagsSheet(context, controller),
+                      icon: Icon(Icons.info_outline,
+                          color: Colors.white, size: 20.r),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                  onPressed: canSubmit
+                      ? () => _confirmAndSubmit(context, controller, provider)
+                      : null,
+                  icon: const Icon(Icons.check),
+                  label: Text("Submit ($scanned/$total)"),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmAndSubmit(
+    BuildContext context,
+    MobileScannerController controller,
+    StockAuditProvider provider,
+  ) async {
+    await controller.stop();
+
+    ShowAlertDialog(
+      title: 'Submit Audit',
+      needCancel: true,
+      body: Text('Submit ${provider.scannedTags.length} scanned tags?'),
+      okFunc: () async {
+        Navigator.pop(context); // close dialog
+        final ok = await provider.submitAudit(context);
+        if (ok) {
+          navigatePop(context); // leave scan screen
+        } else {
+          controller.start();
+        }
+      },
+      cancelFunc: () {
+        Navigator.pop(context);
+        controller.start();
+      },
+    ).showAlertDialog(context);
   }
 
   /// Bottom sheet showing every expected tag with a tick when scanned.
@@ -172,10 +181,9 @@ class ScanTagScreen extends BaseScanScreen {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => Consumer<FruitsVegsProvider>(
+      builder: (_) => Consumer<StockAuditProvider>(
         builder: (context, provider, __) {
-          final tags =
-              productModel.units?.map((unit) => unit.tag ?? "").toList() ?? [];
+          final tags = provider.expectedTags;
           return SafeArea(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxHeight: 0.8.sh),
@@ -206,8 +214,7 @@ class ScanTagScreen extends BaseScanScreen {
                                   SizedBox(height: 6.h),
                               itemBuilder: (context, index) {
                                 final tag = tags[index];
-                                final scanned =
-                                    provider.scannedTags.contains(tag);
+                                final scanned = provider.isScanned(tag);
                                 return Container(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 12.w, vertical: 10.h),
@@ -259,4 +266,7 @@ class ScanTagScreen extends BaseScanScreen {
     );
     await controller.start();
   }
+
+  @override
+  void onDispose(MobileScannerController controller) {}
 }

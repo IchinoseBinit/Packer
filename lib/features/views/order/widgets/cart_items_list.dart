@@ -7,6 +7,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/order/widgets/cart_units_sheet.dart';
 import 'package:packer/features/views/product/model/common_product_model.dart';
 import 'package:packer/features/views/product/product_card.dart';
 import 'package:provider/provider.dart';
@@ -74,6 +75,13 @@ class CartItemsList extends StatelessWidget {
                           width: width,
                           onTap: () {
                             if (isDone) return;
+
+                            final hasTags =
+                                product.unitsToScan?.isNotEmpty ?? false;
+                            if (hasTags) {
+                              CartUnitsSheet.open(context, product: product);
+                              return;
+                            }
 
                             navigate(
                               context,

@@ -139,4 +139,7 @@ class NavigationConstants {
 
   // fruits and vegetables
   static const String fruitsVegsScreenRoute = 'fruits-vegs-screen';
+
+  // stock audit
+  static const String auditProductScreenRoute = 'audit-product-screen';
 }
