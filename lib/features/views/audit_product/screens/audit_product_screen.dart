@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/features/views/audit_product/models/audi_type_enum.dart';
+import 'package:packer/features/views/audit_product/models/audit_type_enum.dart';
 import 'package:packer/features/views/audit_product/providers/stock_audit_provider.dart';
 import 'package:packer/features/views/audit_product/widgets/audit_product_list.dart';
 import 'package:packer/features/views/stock_verification/model/store_model.dart';

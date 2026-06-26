@@ -15,6 +15,7 @@ import 'package:packer/features/views/scan/scan_screen.dart'
     show ScannerOverlay, BarcodeOverlay, ScannerErrorWidget;
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
+import 'package:packer/utils/encode_decode_utils.dart';
 import 'package:provider/provider.dart';
 
 /// Scan the warehouse QR to checkout. Pops `true` on a successful checkout so
@@ -59,8 +60,9 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
     hasScanned = true;
     controller?.stop();
 
-    log(code, name: "checkout qr code data");
     HapticFeedback.heavyImpact();
+
+    final decodeCode = customDecode(code);
 
     if (code.isEmpty) {
       _showInvalid("Invalid QR");
@@ -68,7 +70,7 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
     }
 
     // Must be a Fasto waitlist QR.
-    if (!code.contains('fasto-waitlist')) {
+    if (!decodeCode.contains('fasto-waitlist')) {
       _showInvalid("Invalid QR");
       return;
     }
@@ -77,7 +79,7 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
 
     // The QR must belong to the store this packer is assigned to.
     final storeId = ValidationMixin().extractStoreIdFromQr(
-      code,
+      decodeCode,
       homeProvider.packerSummary?.storeId ?? -1,
     );
     if (storeId == null) {
@@ -86,7 +88,7 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
     }
 
     // The waitlist token must be valid (correct format and not expired).
-    final result = ValidationMixin().validateWaitlistToken(code);
+    final result = ValidationMixin().validateWaitlistToken(decodeCode);
     if (!result.success) {
       _showInvalid(result.message);
       return;
@@ -95,7 +97,8 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
     // Validated locally; confirm checkout with the backend.
     showLoading(context);
     try {
-      final success = await homeProvider.packerCheckoutLogout(code, context);
+      final success =
+          await homeProvider.packerCheckoutLogout(decodeCode, context);
       removeLoading(context);
       if (success) {
         navigatePop(context, true);
