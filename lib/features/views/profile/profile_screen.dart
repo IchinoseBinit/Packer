@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/features/views/auth/model/user.dart';
+import 'package:packer/features/views/audit_product/utils/start_stock_audit.dart';
 import 'package:packer/features/views/order/widgets/ask_confirmation.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
@@ -211,12 +212,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
 
-    if (!otherInfoData.any(
-        (e) => e['screen'] == NavigationConstants.auditProductScreenRoute)) {
+    if (!otherInfoData.any((e) => e['title'] == 'Stock Audit')) {
       otherInfoData.add({
         'icon': Icons.fact_check,
         'title': 'Stock Audit',
-        'screen': NavigationConstants.auditProductScreenRoute,
+        'onTap': () => startStockAudit(context),
       });
     }
 
@@ -466,6 +466,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                               if (!isConfirmed) {
                                 return;
+                              }
+
+                              // Packers must checkout (scan warehouse QR)
+                              // before logout.
+                              if (value.user.role == UserRole.packer ||
+                                  !value.isMainStore()) {
+                                await showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Checkout Required'),
+                                    content: const Text(
+                                        'You need to checkout before logout. '
+                                        'Scan the warehouse QR to continue.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (!context.mounted) return;
+                                final checkedOut = await navigate(
+                                  context,
+                                  route: NavigationConstants
+                                      .packerCheckoutScanRoute,
+                                );
+
+                                // Abort logout if checkout was not completed.
+                                if (checkedOut != true) {
+                                  return;
+                                }
+                                if (!context.mounted) return;
                               }
 
                               showLoading(context);

@@ -4,6 +4,7 @@ import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/home/widgets/audit_prompt_card.dart';
 import 'package:packer/features/views/home/widgets/order_list_widget.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
@@ -82,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             if (provider.isAvailable) {
               // provider.fetchCreatedOrders();
             }
+            provider.fetchpackerSummary();
             return provider.fetchLatestOrders();
           },
           child: SingleChildScrollView(
@@ -90,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               children: [
                 const OrderListWidget(),
                 const TodaysProgressWidget(),
+                const AuditPromptCard(),
                 SizedBox(height: 20.h),
                 SizedBox(height: 48.h),
                 SizedBox(height: 24.h),

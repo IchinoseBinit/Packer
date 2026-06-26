@@ -142,4 +142,7 @@ class NavigationConstants {
 
   // stock audit
   static const String auditProductScreenRoute = 'audit-product-screen';
+
+  // packer checkout (scan QR before logout)
+  static const String packerCheckoutScanRoute = 'packer-checkout-scan-screen';
 }

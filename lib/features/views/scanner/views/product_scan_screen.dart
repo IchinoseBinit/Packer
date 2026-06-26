@@ -15,6 +15,7 @@ import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/scanner/widgets/tags_status_sheet.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
@@ -103,13 +104,42 @@ class ProductScanScreen extends BaseScanScreen {
       BuildContext context, MobileScannerController controller) {
     // if for expired product and has tags show floating button to show tags
     if (forExpiredProducts && tags != null && tags!.isNotEmpty) {
-      return FloatingActionButton(
-        backgroundColor: AppColors.primaryColor,
-        onPressed: () async {
-          Provider.of<ScanMessageProvider>(context, listen: false)
-              .setMessage(context, "Scanned Tags:\n${tags!.join('\n')}");
+      return Consumer<OrderProvider>(
+        builder: (context, provider, _) {
+          final allScanned =
+              tags!.every((t) => provider.scannedDamageProductList.contains(t));
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 10.h,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                backgroundColor: AppColors.primaryColor,
+                onPressed: () => showTagsStatusSheet(
+                  context: context,
+                  controller: controller,
+                  content: (_) => Consumer<OrderProvider>(
+                    builder: (context, provider, __) => TagsStatusSheet(
+                      expectedTags: tags ?? [],
+                      isScanned: (t) =>
+                          provider.scannedDamageProductList.contains(t),
+                    ),
+                  ),
+                ),
+                child: const Icon(Icons.info, color: Colors.white),
+              ),
+
+              // all tags scanned -> allow confirming the damage transfer
+              if (allScanned)
+                GeneralElevatedButton(
+                  onPressed: () async {
+                    provider.damageProductTransfer(context);
+                  },
+                  title: "Confirm Transfer",
+                ),
+            ],
+          );
         },
-        child: const Icon(Icons.info, color: Colors.white),
       );
     }
 

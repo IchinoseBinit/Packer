@@ -8,6 +8,7 @@ import 'package:packer/features/views/audit_product/models/stock_audit_model.dar
 import 'package:packer/features/views/audit_product/providers/stock_audit_provider.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
 import 'package:packer/features/views/scanner/views/base_scan_screen.dart';
+import 'package:packer/features/views/scanner/widgets/tags_status_sheet.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
@@ -175,96 +176,17 @@ class AuditScanScreen extends BaseScanScreen {
 
   /// Bottom sheet showing every expected tag with a tick when scanned.
   Future<void> _showTagsSheet(
-      BuildContext context, MobileScannerController controller) async {
-    await controller.stop();
-    await showModalBottomSheet<void>(
+      BuildContext context, MobileScannerController controller) {
+    return showTagsStatusSheet(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => Consumer<StockAuditProvider>(
-        builder: (context, provider, __) {
-          final tags = provider.expectedTags;
-          return SafeArea(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 0.8.sh),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tags  (${provider.scannedTags.length}/${tags.length})',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    SizedBox(height: 12.h),
-                    Flexible(
-                      child: tags.isEmpty
-                          ? Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24.h),
-                              child: const Center(child: Text('No tags')),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              itemCount: tags.length,
-                              separatorBuilder: (_, __) =>
-                                  SizedBox(height: 6.h),
-                              itemBuilder: (context, index) {
-                                final tag = tags[index];
-                                final scanned = provider.isScanned(tag);
-                                return Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w, vertical: 10.h),
-                                  decoration: BoxDecoration(
-                                    color: scanned
-                                        ? Colors.green.withValues(alpha: 0.10)
-                                        : Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest
-                                            .withValues(alpha: 0.35),
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        scanned
-                                            ? Icons.check_circle
-                                            : Icons.radio_button_unchecked,
-                                        size: 18.r,
-                                        color: scanned
-                                            ? Colors.green
-                                            : Colors.grey,
-                                      ),
-                                      SizedBox(width: 10.w),
-                                      Expanded(
-                                        child: Text(
-                                          tag,
-                                          style: TextStyle(
-                                            fontSize: 13.sp,
-                                            decoration: scanned
-                                                ? TextDecoration.lineThrough
-                                                : null,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+      controller: controller,
+      content: (_) => Consumer<StockAuditProvider>(
+        builder: (context, provider, __) => TagsStatusSheet(
+          expectedTags: provider.expectedTags,
+          isScanned: provider.isScanned,
+        ),
       ),
     );
-    await controller.start();
   }
 
   @override

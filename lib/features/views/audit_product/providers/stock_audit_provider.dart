@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/audit_product/models/stock_audit_model.dart';
 import 'package:packer/features/views/audit_product/repos/stock_audit_repo.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/utils/async_state.dart';
+import 'package:provider/provider.dart';
 
 /// Outcome of feeding a scanned code into the active audit session.
 enum AuditScanResult { ok, duplicate, invalid }
@@ -142,6 +144,8 @@ class StockAuditProvider with ChangeNotifier {
       await StockAuditRepo.completeAudit(auditId: auditId);
       _auditCompleted = true;
       removeLoading(context);
+      await Provider.of<HomeProvider>(context, listen: false)
+          .fetchpackerSummary();
       showToast("Audit marked complete");
       notifyListeners();
       return true;

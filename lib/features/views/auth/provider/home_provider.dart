@@ -302,6 +302,27 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  // packerCheckoutLogout : scan warehouse QR before logout.
+  // Sends scanned qr string to backend; returns true on success.
+  Future<bool> packerCheckoutLogout(String qr, BuildContext context) async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.packerCheckoutLogoutUrl,
+        body: {"qr": qr},
+      );
+
+      if (response.statusCode == 200) {
+        showToast("Checkout successful");
+        return true;
+      }
+      return false;
+    } catch (ex) {
+      debugPrint('Error: $ex');
+      rethrow;
+    }
+  }
+
   // not in use
   Future<void> updatepackerAvailability(bool status) async {
     try {

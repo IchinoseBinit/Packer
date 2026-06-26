@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class ValidationMixin {
   validateMobileNumber(String value, {String? title}) {
     final validation = validate(value, title: title);
@@ -66,4 +68,56 @@ class ValidationMixin {
       return false;
     }
   }
+
+  int? extractStoreIdFromQr(String qrData, int expectedStoreId) {
+    final parts = qrData.split('-');
+
+    if (parts.length < 4) return null;
+
+    final storeId = int.tryParse(parts[2]);
+
+    if (storeId == null || storeId != expectedStoreId) {
+      return null;
+    }
+
+    return storeId;
+  }
+
+  QrResult validateWaitlistToken(String token) {
+    try {
+      // Example token: fasto-waitlist-3-2025-04-12 11:22:34
+      final dateTimeStr = token.split('-').sublist(3).join('-');
+      final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+      final tokenTime = dateFormat.parse(dateTimeStr);
+
+      final now = DateTime.now();
+      final difference = now.difference(tokenTime).inSeconds;
+
+      if (difference.abs() > 6) {
+        print("${now.hour} ${now.minute} ${now.second}");
+        return QrResult(
+          message: 'Waitlist QR Expired. Please scan again',
+          success: false,
+        );
+      }
+
+      return QrResult(
+        message: 'Qr is valid',
+        success: true,
+      );
+    } catch (e) {
+      print(e);
+      return QrResult(
+        message: 'Invalid Waitlist Qr. Please scan again',
+        success: false,
+      );
+    }
+  }
+}
+
+class QrResult {
+  final String message;
+  final bool success;
+
+  QrResult({required this.message, required this.success});
 }

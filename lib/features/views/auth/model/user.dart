@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import '../../../../controllers/extensions/string_extension.dart';
 
 class User {
@@ -8,6 +6,7 @@ class User {
   late String? username;
   late String? phoneNumber;
   late UserRole role;
+  late int storeId;
 
   User.fromMap(Map obj) {
     id = obj['user_id'].toString().toStringConversion();
@@ -15,13 +14,15 @@ class User {
     username = obj['username'];
     phoneNumber = obj['phone_number'];
     role = UserRole.fromString(obj['role'].toString().toStringConversion());
+    // store the packer is assigned to; used to validate scanned warehouse QRs
+    storeId = obj['store_id'].toString().toInt();
     // role = UserRole.fromString("driver");
   }
 
   // toString
   @override
   String toString() {
-    return 'User(id: $id, name: $name, username: $username, phoneNumber: $phoneNumber, role: $role)';
+    return 'User(id: $id, name: $name, username: $username, phoneNumber: $phoneNumber, role: $role, storeId: $storeId)';
   }
 }
 

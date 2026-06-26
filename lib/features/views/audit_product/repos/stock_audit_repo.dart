@@ -29,6 +29,18 @@ class StockAuditRepo {
     }
   }
 
+  /// Start a new stock audit session.
+  static Future<void> startAudit() async {
+    try {
+      await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.stockAuditStartUrl,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Submit the scanned tags for one audited product.
   static Future<void> submitAuditItem({
     required int auditId,

@@ -1,4 +1,5 @@
 import 'package:packer/controllers/extensions/string_extension.dart';
+import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 
 class PackerSummary {
   late String onlineTime;
@@ -11,6 +12,10 @@ class PackerSummary {
 
   late int scanGapTime;
 
+  int? storeId;
+
+  AuditStatusEnum? auditStatus;
+
   PackerSummary.fromJson(Map obj) {
     onlineTime = obj['total_online_time'].toString().toStringConversion();
     orderCount = obj['total_order_count'].toString().toInt();
@@ -21,5 +26,14 @@ class PackerSummary {
     // topicName = obj['topic_name'] ?? "packers";
 
     scanGapTime = obj['scan_gap_time'] ?? 10;
+
+    storeId = obj['store_id']?.toString().toInt();
+
+    auditStatus = obj['audit_status'] == null
+        ? null
+        : AuditStatusEnum.values.firstWhere(
+            (element) => element.value == obj['audit_status'],
+            orElse: () => AuditStatusEnum.completed,
+          );
   }
 }

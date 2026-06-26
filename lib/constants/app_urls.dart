@@ -77,6 +77,10 @@ class AppUrls {
   static String get packerSummaryUrl => "$_packerUrl/summary/";
   static String get packerStoreLocationUrl => "$_packerUrl/store-location";
 
+  // checkout before logout (scan warehouse QR)
+  static String get packerCheckoutLogoutUrl =>
+      "$baseUrl/staff/warehouse-packer/logout/";
+
   static String get packerAvailability => "$baseUrl/staff/packer/availability/";
 
   static String get getOrdersByStatusUrl => "$orderUrl/get-order?status=";
@@ -257,6 +261,7 @@ class AppUrls {
 
   // stock audit
   static String get stockAuditUrl => "$_packerUrl/stock-audit/";
+  static String get stockAuditStartUrl => "$_packerUrl/stock-audit/start/";
   static String get stockAuditItemUrl => "$_packerUrl/stock-audit/item/";
   static String get stockAuditCompleteUrl =>
       "$_packerUrl/stock-audit/complete/";
