@@ -370,7 +370,10 @@ class AppRouter {
             GoRoute(
               path: NavigationConstants.packerCheckoutScanRoute,
               builder: (BuildContext context, GoRouterState state) {
-                return const PackerCheckoutScanScreen();
+                final args = state.extra as Map<String, dynamic>? ?? {};
+                final forOnlineStatus = args['forOnlineStatus'] ?? false;
+                return PackerCheckoutScanScreen(
+                    forOnlineStatus: forOnlineStatus);
               },
             ),
             GoRoute(

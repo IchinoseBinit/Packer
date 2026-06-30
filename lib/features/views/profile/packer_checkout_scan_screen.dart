@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -21,7 +20,12 @@ import 'package:provider/provider.dart';
 /// Scan the warehouse QR to checkout. Pops `true` on a successful checkout so
 /// the caller (profile logout) can continue with the actual logout.
 class PackerCheckoutScanScreen extends StatefulWidget {
-  const PackerCheckoutScanScreen({super.key});
+  const PackerCheckoutScanScreen({
+    super.key,
+    this.forOnlineStatus = false,
+  });
+
+  final bool forOnlineStatus;
 
   @override
   State<PackerCheckoutScanScreen> createState() =>
@@ -91,6 +95,11 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
     final result = ValidationMixin().validateWaitlistToken(decodeCode);
     if (!result.success) {
       _showInvalid(result.message);
+      return;
+    }
+
+    if (widget.forOnlineStatus) {
+      navigatePop(context, true);
       return;
     }
 
@@ -232,7 +241,9 @@ class _PackerCheckoutScanScreenState extends State<PackerCheckoutScanScreen> {
               ),
               alignment: Alignment.center,
               child: Text(
-                'Scan to Checkout',
+                widget.forOnlineStatus
+                    ? 'Scan to go Online'
+                    : 'Scan to Checkout',
                 style: TextStyle(
                   color: AppColors.backgroundColor,
                   fontSize: 16.sp,

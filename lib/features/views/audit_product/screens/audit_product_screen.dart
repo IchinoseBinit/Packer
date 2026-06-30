@@ -41,6 +41,7 @@ class _AuditProductScreenState extends State<AuditProductScreen> {
 
   Future<void> _load() {
     return context.read<StockAuditProvider>().loadStockAudit(
+          context: context,
           auditType: _auditType,
           isCompleted: _isCompleted,
           search: _searchController.text,

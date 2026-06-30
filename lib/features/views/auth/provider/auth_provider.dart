@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/firebase_opt/fcm_api.dart';
@@ -46,7 +45,6 @@ class AuthController {
         body: body,
       );
 
-
       if (otpResponse.statusCode == 200) {
         await removeTokens();
         return true;
@@ -77,6 +75,9 @@ class AuthController {
         .remove(key: SecureStorageConstants.accessTokenKey);
     await SecureStorageHelper()
         .remove(key: SecureStorageConstants.refreshTokenKey);
+    await SecureStorageHelper().remove(
+      key: SecureStorageConstants.isOnlineKey,
+    );
     DioClient.token = "";
     DioClient.refreshToken = "";
   }

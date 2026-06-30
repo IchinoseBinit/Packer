@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/controllers/extensions/list_extension.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/fruits_vegs/providers/fruits_vegs_provider.dart';
 import 'package:packer/features/views/fruits_vegs/widgets/rate_ripeness_widget.dart';
@@ -120,7 +121,8 @@ class ScanTagScreen extends BaseScanScreen {
       controller.stop();
       HapticFeedback.heavyImpact();
 
-      final unit = productModel.units?.firstWhere((unit) => unit.tag == code);
+      final unit =
+          productModel.units?.firstWhereOrNull((unit) => unit.tag == code);
 
       if (unit == null) {
         throw Exception("Scanned tag does not match any unit.");
@@ -133,9 +135,13 @@ class ScanTagScreen extends BaseScanScreen {
       await showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        builder: (context) => RateRipenessWidget(
-          productModel: productModel,
-          unit: unit,
+        // isDismissible: false,
+        builder: (context) => Padding(
+          padding: EdgeInsets.only(top: 32.h),
+          child: RateRipenessWidget(
+            productModel: productModel,
+            unit: unit,
+          ),
         ),
       );
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 import 'package:packer/features/views/audit_product/models/stock_audit_model.dart';
 import 'package:packer/features/views/audit_product/repos/stock_audit_repo.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -20,9 +21,7 @@ class StockAuditProvider with ChangeNotifier {
   bool _isLoadingMore = false;
   bool _isLoading = false;
 
-  // progress across the whole audit session
-  int? _completedProducts;
-  int? _expectedProducts;
+  // session-complete flag (set by completeAudit, not part of the page payload)
   bool _auditCompleted = false;
 
   // active filters (reused by loadMore / refresh)
@@ -43,23 +42,27 @@ class StockAuditProvider with ChangeNotifier {
   bool? get isCompleted => _isCompleted;
   List<String> get auditTypes => _seenAuditTypes.toList()..sort();
 
-  int? get completedProducts => _completedProducts;
-  int? get expectedProducts => _expectedProducts;
+  // progress comes straight from the latest page → refresh updates it
+  int? get completedProducts => state.data?.completedProducts;
+  int? get expectedProducts => state.data?.expectedProducts;
   bool get isAuditCompleted => _auditCompleted;
 
   /// True once every product in the session has been audited
   /// (completed count exactly matches the expected count).
   bool get allProductsDone =>
-      _expectedProducts != null &&
-      _expectedProducts! > 0 &&
-      _completedProducts == _expectedProducts;
+      expectedProducts != null &&
+      expectedProducts! > 0 &&
+      completedProducts == expectedProducts;
 
   /// Load page 1 with the given filters (replaces the list).
   Future<void> loadStockAudit({
+    required BuildContext context,
     String? auditType,
     bool? isCompleted,
     String? search,
   }) async {
+    context.read<HomeProvider>().fetchpackerSummary();
+
     if (_isLoading) return; // ignore concurrent reloads (e.g. double refresh)
     _isLoading = true;
 
@@ -86,6 +89,9 @@ class StockAuditProvider with ChangeNotifier {
       state = AsyncState.error(e.toString());
     } finally {
       _isLoading = false;
+      _auditCompleted =
+          context.read<HomeProvider>().packerSummary?.auditStatus ==
+              AuditStatusEnum.completed;
       notifyListeners();
     }
   }
@@ -117,15 +123,14 @@ class StockAuditProvider with ChangeNotifier {
     _auditId = response.auditId;
     _hasNext = response.hasNextPage;
     _nextPage = response.page + 1;
-    _completedProducts = response.completedProducts;
-    _expectedProducts = response.expectedProducts;
     for (final p in response.products) {
       if (p.auditType.isNotEmpty) _seenAuditTypes.add(p.auditType);
     }
   }
 
   /// Re-fetch page 1 with the current filters (used after a submit).
-  Future<void> refresh() => loadStockAudit(
+  Future<void> refresh(BuildContext context) => loadStockAudit(
+        context: context,
         auditType: _auditType,
         isCompleted: _isCompleted,
       );
@@ -215,7 +220,7 @@ class StockAuditProvider with ChangeNotifier {
       showToast("Audit submitted successfully");
       _scanProduct = null;
       _scannedTags.clear();
-      await refresh();
+      await refresh(context);
       return true;
     } catch (e) {
       removeLoading(context);

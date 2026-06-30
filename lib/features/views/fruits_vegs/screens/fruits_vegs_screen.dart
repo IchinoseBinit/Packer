@@ -175,9 +175,12 @@ class _FruitsVegsScreenState extends State<FruitsVegsScreen>
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                 ),
-                tabs: const [
+                tabs: [
                   Tab(text: 'All'),
-                  Tab(text: 'Damaged'),
+                  Tab(
+                      text: userRole == UserRole.productChecker
+                          ? 'Checked'
+                          : 'Damaged'),
                 ],
               ),
             ),

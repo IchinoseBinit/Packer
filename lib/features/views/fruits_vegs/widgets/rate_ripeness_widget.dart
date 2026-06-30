@@ -223,8 +223,8 @@ class _RateRipenessWidgetState extends State<RateRipenessWidget> {
 
   String _scoreLabel(int index) {
     const raw = [
-      'Extremely Raw\n(धेरै काँचो)'
-          'Raw\n(काँचो)',
+      'Extremely Raw\n(धेरै काँचो)',
+      'Raw\n(काँचो)',
       'Slightly Raw\n(थोरै काँचो)',
     ];
     const ripe = [

@@ -468,10 +468,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 return;
                               }
 
+                              final isOnline = context
+                                  .read<HomeProvider>()
+                                  .packerSummary
+                                  ?.isOnline = false;
+
                               // Packers must checkout (scan warehouse QR)
                               // before logout.
-                              if (value.user.role == UserRole.packer ||
-                                  !value.isMainStore()) {
+                              if ((value.user.role == UserRole.packer) &&
+                                  isOnline == true) {
                                 await showDialog(
                                   context: context,
                                   builder: (ctx) => AlertDialog(
