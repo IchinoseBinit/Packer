@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 import 'package:packer/features/views/audit_product/models/stock_audit_model.dart';
@@ -52,7 +54,7 @@ class StockAuditProvider with ChangeNotifier {
   bool get allProductsDone =>
       expectedProducts != null &&
       expectedProducts! > 0 &&
-      completedProducts == expectedProducts;
+      (completedProducts ?? 0) >= (expectedProducts ?? 0);
 
   /// Load page 1 with the given filters (replaces the list).
   Future<void> loadStockAudit({
@@ -183,18 +185,27 @@ class StockAuditProvider with ChangeNotifier {
   bool get allScanned =>
       expectedTags.isNotEmpty && _scannedTags.length >= expectedTags.length;
 
-  /// Begin a fresh scan session for [product].
+  Box? get _auditBox => Hive.isBoxOpen(HiveConstants.auditScanBox)
+      ? Hive.box(HiveConstants.auditScanBox)
+      : null;
+
+  /// Begin a scan session for [product], restoring any previously saved progress.
   void startScanSession(AuditProductModel product) {
     _scanProduct = product;
     _scannedTags.clear();
+    final saved = _auditBox?.get(product.productId.toString());
+    if (saved != null) {
+      _scannedTags.addAll((saved as List).cast<String>());
+    }
     notifyListeners();
   }
 
-  /// Feed a scanned code into the session.
+  /// Feed a scanned code into the session and persist progress.
   AuditScanResult addScan(String tag) {
     final code = tag.trim();
     if (!isExpected(code)) return AuditScanResult.invalid;
     if (!_scannedTags.add(code)) return AuditScanResult.duplicate;
+    _auditBox?.put(_scanProduct!.productId.toString(), _scannedTags.toList());
     notifyListeners();
     return AuditScanResult.ok;
   }
@@ -218,6 +229,7 @@ class StockAuditProvider with ChangeNotifier {
       );
       removeLoading(context);
       showToast("Audit submitted successfully");
+      _auditBox?.delete(product.productId.toString());
       _scanProduct = null;
       _scannedTags.clear();
       await refresh(context);

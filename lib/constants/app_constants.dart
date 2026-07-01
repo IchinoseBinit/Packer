@@ -21,4 +21,5 @@ class HiveConstants {
   static const String order = "order_#";
   static const String orderReturn = "order_return_#";
   static const String inventoryTransferRequest = "inventory_transfer_request_#";
+  static const String auditScanBox = "audit_scan_progress";
 }

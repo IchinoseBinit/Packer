@@ -15,6 +15,7 @@ class HiveDBService {
     Hive.registerAdapter(TrolleyItemAdapter());
     Hive.registerAdapter(BasketAdapter());
     Hive.registerAdapter(InventoryTransferRequestItemAdapter());
+    await Hive.openBox(HiveConstants.auditScanBox);
   }
 
   static Future<Box<TrolleyItem>> openProductBox(String storeId) async {

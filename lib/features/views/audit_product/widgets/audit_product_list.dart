@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive/hive.dart';
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/features/views/audit_product/models/stock_audit_model.dart';
 import 'package:packer/features/views/audit_product/providers/stock_audit_provider.dart';
 import 'package:packer/features/views/audit_product/widgets/audit_units_sheet.dart';
@@ -22,18 +26,39 @@ class AuditProductList extends StatefulWidget {
 
 class _AuditProductListState extends State<AuditProductList> {
   final _scrollController = ScrollController();
+  StreamSubscription? _hiveSub;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _initHiveWatcher();
+  }
+
+  Future<void> _initHiveWatcher() async {
+    final box = Hive.isBoxOpen(HiveConstants.auditScanBox)
+        ? Hive.box(HiveConstants.auditScanBox)
+        : await Hive.openBox(HiveConstants.auditScanBox);
+    if (!mounted) return;
+    _hiveSub = box.watch().listen((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _hiveSub?.cancel();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  int _scannedCount(int productId) {
+    if (!Hive.isBoxOpen(HiveConstants.auditScanBox)) return 0;
+    final saved =
+        Hive.box(HiveConstants.auditScanBox).get(productId.toString());
+    if (saved == null) return 0;
+    return (saved as List).length;
   }
 
   void _onScroll() {
@@ -106,14 +131,15 @@ class _AuditProductListState extends State<AuditProductList> {
                             final item = grouped[rackName]![index];
                             final width = (1.sw - 12.w - 24.w) / 2;
 
+                            final scanned = _scannedCount(item.productId);
+                            final remaining = item.expectedQuantity - scanned;
                             return ProductCard(
                               width: width,
                               onTap: () =>
                                   AuditUnitsSheet.open(context, product: item),
                               productModel:
                                   CommonProductModel.fromProductModel(item),
-                              // expected vs done drives the badge
-                              quantity: item.expectedQuantity,
+                              quantity: remaining > 0 ? remaining : 0,
                               status: item.isCompleted
                                   ? ItemStatus.done
                                   : ItemStatus.remaining,
