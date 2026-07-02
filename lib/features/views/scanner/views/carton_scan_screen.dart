@@ -144,7 +144,8 @@ class CartonScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // Cleanup if needed
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 }

@@ -14,12 +14,14 @@ class DriverBasketScanner extends BaseScanScreen {
 
   bool hasScanned = false;
   @override
-  Widget? buildFloatingButton(BuildContext context, MobileScannerController controller) {
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
     return SizedBox.shrink();
   }
 
   @override
-  Future<void> onCodeDetected(BuildContext context, String code, MobileScannerController controller) async {
+  Future<void> onCodeDetected(BuildContext context, String code,
+      MobileScannerController controller) async {
     try {
       if (hasScanned) return;
       hasScanned = true;
@@ -32,7 +34,8 @@ class DriverBasketScanner extends BaseScanScreen {
         return;
       }
 
-      final value = Provider.of<DriverController>(context, listen: false).onScanBasket(context, code);
+      final value = Provider.of<DriverController>(context, listen: false)
+          .onScanBasket(context, code);
       if (value.success && context.mounted) {
         Navigator.pop(context);
         if (value.message != null) {
@@ -53,7 +56,9 @@ class DriverBasketScanner extends BaseScanScreen {
     }
   }
 
-  void handleInvalidQrCode(BuildContext context, MobileScannerController controller, String code, [String? message]) {
+  void handleInvalidQrCode(
+      BuildContext context, MobileScannerController controller, String code,
+      [String? message]) {
     ShowAlertDialog(
       disableBackground: true,
       body: Text(message ?? "Invalid QR ${detectQrMessage(code)}"),
@@ -65,13 +70,14 @@ class DriverBasketScanner extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // TODO: implement onDispose
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 
   @override
   void onScreenCreated(BuildContext context) {
-    Provider.of<DriverController>(context, listen: false).initializeScan(context);
+    Provider.of<DriverController>(context, listen: false)
+        .initializeScan(context);
   }
-
 }

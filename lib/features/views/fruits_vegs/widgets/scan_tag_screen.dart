@@ -166,8 +166,9 @@ class ScanTagScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // Any cleanup specific to cart item scanning
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 
   /// Bottom sheet showing every expected tag with a tick when scanned.

@@ -190,5 +190,8 @@ class AuditScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {}
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
+  }
 }

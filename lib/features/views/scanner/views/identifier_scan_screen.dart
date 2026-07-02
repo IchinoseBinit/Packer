@@ -26,10 +26,9 @@ class IdentifierScanScreen extends BaseScanScreen {
         .setMessage(context, "Scan Inventory Code");
   }
 
-
   @override
-  Widget? buildFloatingButton(BuildContext context,
-      MobileScannerController controller) {
+  Widget? buildFloatingButton(
+      BuildContext context, MobileScannerController controller) {
     return SizedBox.shrink();
   }
 
@@ -68,7 +67,8 @@ class IdentifierScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // Any cleanup specific to cart item scanning
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 }

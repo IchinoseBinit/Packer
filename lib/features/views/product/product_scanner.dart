@@ -196,8 +196,9 @@ class UnitProductScannerScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // controller.dispose();
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 
   @override

@@ -95,8 +95,9 @@ class ReceiveBasketScanner extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // TODO: implement onDispose
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 
   @override

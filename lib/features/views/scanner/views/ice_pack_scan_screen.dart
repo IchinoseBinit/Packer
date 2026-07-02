@@ -63,7 +63,8 @@ class IcePackScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // Any cleanup specific to cart item scanning
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 }

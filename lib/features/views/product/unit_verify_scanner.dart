@@ -27,9 +27,13 @@ class UnitVerifyScanner extends BaseScanScreen {
   @override
   void onScreenCreated(BuildContext context) {
     if (!reScan) {
-      final message = Provider.of<ProductProvider>(context, listen: false).unitVerifyModel?.productAvailability?.rackName;
-      Provider.of<ScanMessageProvider>(context, listen: false)
-          .setMessage(context, 'Scan rack code${message?.isNotEmpty ?? false ? ' :: $message' : ''}');
+      final message = Provider.of<ProductProvider>(context, listen: false)
+          .unitVerifyModel
+          ?.productAvailability
+          ?.rackName;
+      Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
+          context,
+          'Scan rack code${message?.isNotEmpty ?? false ? ' :: $message' : ''}');
     }
   }
 
@@ -95,8 +99,9 @@ class UnitVerifyScanner extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // TODO: implement onDispose
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 
   @override

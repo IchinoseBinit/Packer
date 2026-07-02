@@ -709,10 +709,12 @@ class ProductScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
+  void onDispose(MobileScannerController controller) async {
     _scanGapTimer?.cancel();
     _scanGapTimerData.dispose();
     // Any cleanup specific to cart item scanning
+    await controller.stop();
+    await controller.dispose();
   }
 
   void _startScanGapCountdown(BuildContext context) {

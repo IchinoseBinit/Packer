@@ -38,19 +38,20 @@ class UpdateRackScreen extends BaseScanScreen {
       controller.stop();
       HapticFeedback.heavyImpact();
 
-      final updateRackProvider = Provider.of<RackUpdateProvider>(context, listen: false);
+      final updateRackProvider =
+          Provider.of<RackUpdateProvider>(context, listen: false);
 
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
       if (productId != null) {
-       await updateRackProvider.updateRack(context, code, productId!);
+        await updateRackProvider.updateRack(context, code, productId!);
         controller.start();
         return;
       } else if (homeProvider.isMainStore()) {
-       await updateRackProvider.callCartonInfoApi(context, code);
+        await updateRackProvider.callCartonInfoApi(context, code);
         controller.start();
       } else {
-       await updateRackProvider.getProductId(context, code);
+        await updateRackProvider.getProductId(context, code);
         controller.start();
       }
     } catch (e) {
@@ -74,14 +75,14 @@ class UpdateRackScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    // TODO: implement onDispose
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 
   @override
   void onScreenCreated(BuildContext context) {
     if (productId != null) {
-      
       return;
     }
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);

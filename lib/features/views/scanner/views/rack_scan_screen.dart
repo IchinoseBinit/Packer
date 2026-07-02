@@ -56,20 +56,21 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    return forTransfer
-        ? FloatingActionButton(
-            backgroundColor: AppColors.primaryColor,
-            foregroundColor: Colors.white,
-            child: Icon(
-              Icons.storage,
-            ),
-            onPressed: () {
-              Provider.of<ScanMessageProvider>(context, listen: false)
-                  .setMessage(context, "Assign another rack");
-              newRackScanned = true;
-            },
-          )
-        : SizedBox.shrink();
+    // forTransfer
+    //     ? FloatingActionButton(
+    //         backgroundColor: AppColors.primaryColor,
+    //         foregroundColor: Colors.white,
+    //         child: Icon(
+    //           Icons.storage,
+    //         ),
+    //         onPressed: () {
+    //           Provider.of<ScanMessageProvider>(context, listen: false)
+    //               .setMessage(context, "Assign another rack");
+    //           newRackScanned = true;
+    //         },
+    //       )
+    //     :
+    return SizedBox.shrink();
   }
 
   @override
@@ -293,7 +294,8 @@ class RackScanScreen extends BaseScanScreen {
   }
 
   @override
-  void onDispose(MobileScannerController controller) {
-    controller.dispose();
+  void onDispose(MobileScannerController controller) async {
+    await controller.stop();
+    await controller.dispose();
   }
 }
