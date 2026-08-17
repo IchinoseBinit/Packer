@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:packer/constants/app_constants.dart';
 import 'package:packer/controllers/extensions/debug_print_extension.dart';
 import 'package:packer/controllers/extensions/string_extension.dart';
-import 'package:packer/controllers/services/route_observer.dart';
 import 'package:packer/features/views/carton/carton_list_screen.dart';
 import 'package:packer/features/views/damage_products/damage_product_list.dart';
 import 'package:packer/features/views/damage_products/rack_product_list.dart';
@@ -80,6 +79,7 @@ import 'package:packer/features/views/stock_verification/views/store_selection_s
 import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
 import 'package:packer/features/views/vendor/screens/vendor_screen.dart';
+import 'package:packer/controllers/services/route_observer.dart';
 
 class AppRouter {
   static late GoRouter router;
@@ -90,7 +90,7 @@ class AppRouter {
       onException: (context, state, exception) {
         'An exception occurred: ${state.fullPath}'.logError();
       },
-      observers: [GoRouterObserver()],
+      observers: [GoRouterObserver(), appRouteObserver],
       routes: <RouteBase>[
         GoRoute(
           path: NavigationConstants.initialRoute,

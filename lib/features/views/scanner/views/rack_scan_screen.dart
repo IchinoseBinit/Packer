@@ -7,6 +7,7 @@ import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
@@ -43,12 +44,17 @@ class RackScanScreen extends BaseScanScreen {
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
 
-  bool _isProcessing = false;
+  // ponytail: static because GoRouter rebuilds this widget on every route
+  // rebuild, wiping instance fields mid-scan. Only one scanner is alive at a
+  // time; reset on screen create. Move into State if that stops being true.
+  static bool _isProcessing = false;
 
-  bool newRackScanned = false;
+  static bool newRackScanned = false;
 
   @override
   void onScreenCreated(BuildContext context) {
+    _isProcessing = false;
+    newRackScanned = false;
     Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
         context, rackCode == null ? "Assign a rack" : "Scan Rack $rackCode");
   }
@@ -56,21 +62,26 @@ class RackScanScreen extends BaseScanScreen {
   @override
   Widget? buildFloatingButton(
       BuildContext context, MobileScannerController controller) {
-    // forTransfer
-    //     ? FloatingActionButton(
-    //         backgroundColor: AppColors.primaryColor,
-    //         foregroundColor: Colors.white,
-    //         child: Icon(
-    //           Icons.storage,
-    //         ),
-    //         onPressed: () {
-    //           Provider.of<ScanMessageProvider>(context, listen: false)
-    //               .setMessage(context, "Assign another rack");
-    //           newRackScanned = true;
-    //         },
-    //       )
-    //     :
-    return SizedBox.shrink();
+    final isMainStore = context.read<HomeProvider>().isMainStore();
+
+    log("isMainStore: $isMainStore, forTransfer: $forTransfer");
+
+    //check if it is main store and for transfer then
+    //show floating button to assign another rack
+    return isMainStore
+        ? FloatingActionButton(
+            backgroundColor: AppColors.primaryColor,
+            foregroundColor: Colors.white,
+            child: Icon(
+              Icons.storage,
+            ),
+            onPressed: () {
+              Provider.of<ScanMessageProvider>(context, listen: false)
+                  .setMessage(context, "Assign another rack");
+              newRackScanned = true;
+            },
+          )
+        : SizedBox.shrink();
   }
 
   @override
@@ -91,7 +102,6 @@ class RackScanScreen extends BaseScanScreen {
       }
 
       if (rackCode != null && forTransfer) {
-        //
         if (newRackScanned) {
           // if new rack is scanned
           Provider.of<ScanMessageProvider>(context, listen: false).setMessage(
@@ -115,7 +125,10 @@ class RackScanScreen extends BaseScanScreen {
                 "needGapTime": needGapTime,
               },
             );
+
             showToast("Rack scanned successfully");
+          } else if (context.mounted) {
+            await controller.start();
           }
         } else if (code.contains(rackCode!)) {
           if (context.mounted) {
@@ -149,27 +162,13 @@ class RackScanScreen extends BaseScanScreen {
         } else {
           if (context.mounted) handleInvalidCode(context, controller, code);
         }
-      } else if (rackCode != null && needAPICallCarton) {
-        if (code.contains(rackCode!)) {
-          final result =
-              await Provider.of<StockProvider>(context, listen: false)
-                  .updateRack(context, code, productId, true);
+      } else if (needAPICallCarton || forCarton) {
+        // assigning a rack to the carton: any scanned rack is valid, no match
+        // against the carton's current rackCode
 
-          if (result && context.mounted) {
-            await controller.stop();
-            await controller.dispose();
-            await Future.delayed(Duration(milliseconds: 500));
-            navigatePop(context, true);
-            showToast("Rack Assigned successfully");
-          } else {
-            if (context.mounted) await controller.start();
-          }
-        } else {
-          if (context.mounted) handleInvalidCode(context, controller, code);
-        }
-      } else if (forCarton) {
         final result = await Provider.of<StockProvider>(context, listen: false)
             .updateRack(context, code, productId, true);
+
 
         if (result && context.mounted) {
           await controller.stop();

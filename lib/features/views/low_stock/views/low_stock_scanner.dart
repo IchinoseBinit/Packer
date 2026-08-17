@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -79,6 +80,7 @@ class _LowStockScannerState extends State<LowStockScanner> {
       } else {
         final value = await Provider.of<StockProvider>(context, listen: false)
             .checkBasketQr(context, code);
+
         if (value.success && mounted) {
           hasScanned = false;
 

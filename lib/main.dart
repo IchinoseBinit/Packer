@@ -37,6 +37,7 @@ import 'package:packer/features/views/widgets/custom_url.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/utils/call_keep_utils.dart';
 import 'package:packer/utils/notification_utils.dart';
+import 'package:packer/controllers/services/route_observer.dart';
 import 'package:provider/provider.dart';
 
 import '/theme/theme.dart';
@@ -98,7 +99,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver, RouteAware {
   late GoRouter _appRouter;
 
   @override
@@ -119,7 +120,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    appRouteObserver.unsubscribe(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to route changes so we can pause the banner video/animations
+    // when another screen is pushed above home, and resume when popped back.
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      appRouteObserver.subscribe(this, route);
+    }
   }
 
   Future<CallEvent?> getCurrentCall() async {

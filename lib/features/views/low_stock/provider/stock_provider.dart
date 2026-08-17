@@ -620,6 +620,7 @@ class StockProvider extends ChangeNotifier {
 
     try {
       final value = await postBasketCode(context, code);
+
       if (value) {
         basketId = code;
         return ScanResult(success: true);
@@ -756,6 +757,7 @@ class StockProvider extends ChangeNotifier {
     scannedList = [];
     try {
       showLoading(context);
+
       final response = await DioClient().request(
         requestType: RequestType.postWithToken,
         url: AppUrls.scanBasketUrl,
@@ -767,8 +769,11 @@ class StockProvider extends ChangeNotifier {
       removeLoading(context);
       if (response.statusCode == 200) {
         int storeId = response.data['store_id'].toString().toInt();
-        trolleyLowStockModel =
-            lowStockList.firstWhere((element) => element.storeId == storeId);
+        trolleyLowStockModel = lowStockList.firstWhere(
+          (element) => element.storeId == storeId,
+          orElse: () => throw Exception(
+              "No low stock data found for this store. Please try another."),
+        );
         box = await HiveDBService.openProductBox('store_$storeId');
         dao = ProductDao(box);
         trolleyItems = dao.getAll();

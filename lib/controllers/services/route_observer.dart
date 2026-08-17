@@ -1,7 +1,11 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:packer/controllers/extensions/debug_print_extension.dart';
+
+/// Lets screens react (via RouteAware) when another route is pushed above them
+/// or popped back to — used to pause the home banner video/animations while a
+/// pushed screen covers them.
+final RouteObserver<PageRoute<dynamic>> appRouteObserver =
+    RouteObserver<PageRoute<dynamic>>();
 
 class GoRouterObserver extends NavigatorObserver {
   @override
