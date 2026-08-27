@@ -149,8 +149,8 @@ class FruitsVegsProvider with ChangeNotifier {
   assessFruitsVegsUnit({
     required BuildContext context,
     required String tagId,
-    required RipenessCategoryEnum assessment,
-    required RipenessScore score,
+    RipenessCategoryEnum? assessment,
+    RipenessScore? score,
     required List<CanBeEatenEnum> canBeEaten,
   }) async {
     showLoading(context);

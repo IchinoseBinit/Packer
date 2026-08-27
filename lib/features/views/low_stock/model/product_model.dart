@@ -19,6 +19,9 @@ class ProductModel {
   late int scannedCount;
   late int? bogoBuyProductId;
 
+  //
+  late bool? isPerishableProduce;
+
   // units
   List<Units>? units;
 
@@ -40,6 +43,10 @@ class ProductModel {
     quantity = json['quantity'] != null
         ? json['quantity'].toString().toInt()
         : units?.length ?? 0;
+
+    //
+    isPerishableProduce =
+        json['is_perishable_produce'].toString().toBool(false);
     //
     size = json['size'].toString().toStringConversion();
     measurement = json['measurement'].toString().toStringConversion();
@@ -65,6 +72,7 @@ class ProductModel {
       'size': size,
       'measurement': measurement,
       'rack_name': rackName,
+      'is_perishable_produce': isPerishableProduce,
     };
 
     if (mainStoreStock != null) {

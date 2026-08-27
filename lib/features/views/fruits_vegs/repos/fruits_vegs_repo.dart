@@ -43,8 +43,8 @@ class FruitsVegsRepo {
   //
   static Future<void> assessFruitsVegsUnit({
     required String tagId,
-    required RipenessCategoryEnum assessment,
-    required RipenessScore score,
+    RipenessCategoryEnum? assessment,
+    RipenessScore? score,
     required List<CanBeEatenEnum>
         canBeEaten, // List of CanBeEatenEnum values for day 1 to day 5
     required UserRole role,
@@ -57,8 +57,8 @@ class FruitsVegsRepo {
             : AppUrls.fruitsVegsAssessUrl,
         body: {
           "tag": tagId,
-          "ripeness_category": assessment.value,
-          "ripeness_score": score.score,
+          if (assessment != null) "ripeness_category": assessment.value,
+          if (score != null) "ripeness_score": score.score,
           "can_be_eaten": canBeEaten.map((e) => e.value).toList(),
         },
       );

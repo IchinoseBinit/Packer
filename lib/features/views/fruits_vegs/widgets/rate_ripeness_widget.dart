@@ -75,10 +75,12 @@ class _RateRipenessWidgetState extends State<RateRipenessWidget> {
               ),
             ),
             _productHeader(),
-            SizedBox(height: 20.h),
-            _assessmentSection(),
-            SizedBox(height: 20.h),
-            _scoreSection(),
+            if (widget.productModel.isPerishableProduce == true) ...[
+              SizedBox(height: 20.h),
+              _assessmentSection(),
+              SizedBox(height: 20.h),
+              _scoreSection(),
+            ],
             SizedBox(height: 20.h),
             _canBeEatenSection(),
           ],
@@ -475,11 +477,12 @@ class _RateRipenessWidgetState extends State<RateRipenessWidget> {
   }
 
   void _onSubmit(BuildContext context) async {
-    if (_assessment == null) {
+    if (_assessment == null &&
+        widget.productModel.isPerishableProduce == true) {
       showToast("Please select an assessment");
       return;
     }
-    if (_score == null) {
+    if (_score == null && widget.productModel.isPerishableProduce == true) {
       showToast("Please select a ripeness score");
       return;
     }
@@ -499,8 +502,8 @@ class _RateRipenessWidgetState extends State<RateRipenessWidget> {
     context.read<FruitsVegsProvider>().assessFruitsVegsUnit(
           context: context,
           tagId: widget.unit.tag!,
-          assessment: _assessment!,
-          score: _score!,
+          assessment: _assessment,
+          score: _score,
           canBeEaten: _canBeEaten.cast<CanBeEatenEnum>(),
         );
   }
