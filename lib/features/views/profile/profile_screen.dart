@@ -222,6 +222,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
 
+    if (!otherInfoData.any((e) => e['title'] == 'Cleanliness')) {
+      otherInfoData.add({
+        'icon': Icons.cleaning_services,
+        'title': 'Cleanliness',
+        'screen': NavigationConstants.cleanlinessScreenRoute,
+      });
+    }
+
     //
     otherInfoData.add({
       'icon': Icons.leave_bags_at_home,

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
@@ -28,5 +29,26 @@ class FileHelper {
     } else {
       return imageFile;
     }
+  }
+
+  /// Compresses [imageFile] to at most [maxKb], stepping quality down until
+  /// it fits (or quality bottoms out — returns the smallest it could reach).
+  static Future<Uint8List> compressToMaxSize(
+    File imageFile, {
+    int maxKb = 300,
+  }) async {
+    final maxBytes = maxKb * 1024;
+    var bytes = await imageFile.readAsBytes();
+    if (bytes.lengthInBytes <= maxBytes) return bytes;
+
+    for (var quality = 80; quality >= 10; quality -= 10) {
+      final compressed = await FlutterImageCompress.compressWithList(
+        bytes,
+        quality: quality,
+      );
+      bytes = compressed;
+      if (bytes.lengthInBytes <= maxBytes) break;
+    }
+    return bytes;
   }
 }

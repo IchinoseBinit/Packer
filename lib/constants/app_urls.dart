@@ -265,4 +265,11 @@ class AppUrls {
   static String get stockAuditItemUrl => "$_packerUrl/stock-audit/item/";
   static String get stockAuditCompleteUrl =>
       "$_packerUrl/stock-audit/complete/";
+
+  // store cleanliness
+  static String get storeCleanlinessUrl => "$baseUrl/staff/store-cleanliness/";
+  static String get storeCleanlinessUnavailableUrl =>
+      "$baseUrl/staff/store-cleanliness/unavailable/";
+  static String get storeCleanlinessUploadUrl =>
+      "$baseUrl/staff/store-cleanliness/upload/";
 }

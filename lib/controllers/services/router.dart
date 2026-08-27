@@ -80,6 +80,7 @@ import 'package:packer/features/views/summary/views/daily_summary_screen.dart';
 import 'package:packer/features/views/summary/views/summary_screen.dart';
 import 'package:packer/features/views/vendor/screens/vendor_screen.dart';
 import 'package:packer/controllers/services/route_observer.dart';
+import 'package:packer/features/views/cleanliness/screens/cleanliness_screen.dart';
 
 class AppRouter {
   static late GoRouter router;
@@ -670,6 +671,12 @@ class AppRouter {
                   orderId: args['orderId'].toString().toInt(),
                   packageId: args['packageId'].toString(),
                 );
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.cleanlinessScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return const CleanlinessScreen();
               },
             ),
             GoRoute(

@@ -145,4 +145,7 @@ class NavigationConstants {
 
   // packer checkout (scan QR before logout)
   static const String packerCheckoutScanRoute = 'packer-checkout-scan-screen';
+
+  // store cleanliness
+  static const String cleanlinessScreenRoute = 'cleanliness_screen';
 }
