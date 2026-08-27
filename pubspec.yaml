@@ -119,6 +119,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/sounds/
+    - shorebird.yaml
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
@@ -145,4 +146,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
-version: 1.0.38+38
+version: 1.0.40+40

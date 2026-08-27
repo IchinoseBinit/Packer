@@ -19,7 +19,9 @@ echo "Building AAB... version $1"
 
 mkdir -p gen
 
-flutter build appbundle --obfuscate --split-debug-info=./ --release --dart-define=APIType=production
+# flutter build appbundle --obfuscate --split-debug-info=./ --release --dart-define=APIType=production
+
+shorebird release android --obfuscate --split-debug-info=./ --dart-define=APIType=production
 
 cp ./build/app/outputs/bundle/release/app-release.aab ./gen/fasto-packer.aab
 
