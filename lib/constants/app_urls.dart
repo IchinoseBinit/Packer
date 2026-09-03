@@ -272,4 +272,9 @@ class AppUrls {
       "$baseUrl/staff/store-cleanliness/unavailable/";
   static String get storeCleanlinessUploadUrl =>
       "$baseUrl/staff/store-cleanliness/upload/";
+
+  // carton intake (grn qr)
+  static String get cartonIntakeClaimUrl => "$baseUrl/api/carton-intake/claim/";
+  static String cartonIntakePhotosUrl(String grnItemId) =>
+      "$baseUrl/api/carton-intake/$grnItemId/photos/";
 }

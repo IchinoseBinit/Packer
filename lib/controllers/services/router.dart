@@ -58,6 +58,8 @@ import 'package:packer/features/views/packer_transfer/views/transfer_item.dart';
 import 'package:packer/features/views/packer_transfer/views/transfer_list.dart';
 import 'package:packer/features/views/product/unit_verify_scanner.dart';
 import 'package:packer/features/views/profile/packer_checkout_scan_screen.dart';
+import 'package:packer/features/views/grn_expiry/screens/grn_expiry_scan_screen.dart';
+import 'package:packer/features/views/grn_expiry/screens/grn_expiry_photos_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
 import 'package:packer/features/views/profile/update_rack_screen.dart';
 import 'package:packer/features/views/receive_baskets/view/basket_in_transit.dart';
@@ -671,6 +673,18 @@ class AppRouter {
                   orderId: args['orderId'].toString().toInt(),
                   packageId: args['packageId'].toString(),
                 );
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.grnExpiryScanRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return const GrnExpiryScanScreen();
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.grnExpiryPhotosRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return const GrnExpiryPhotosScreen();
               },
             ),
             GoRoute(

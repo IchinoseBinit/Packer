@@ -165,14 +165,19 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                                 ),
                               ),
                               SizedBox(height: 20.h),
-                              GeneralElevatedButton(
-                                title: 'Scan Carton',
-                                onPressed: () {
-                                  navigate(context,
-                                      route: NavigationConstants
-                                          .cartonScanScreenRoute);
-                                },
-                              ),
+                              context.read<HomeProvider>().isStoreManager()
+                                  ? GeneralElevatedButton(
+                                      title: 'Scan GRN Code',
+                                      onPressed: () => navigate(context,
+                                          route: NavigationConstants
+                                              .grnExpiryScanRoute),
+                                    )
+                                  : GeneralElevatedButton(
+                                      title: 'Scan Carton',
+                                      onPressed: () => navigate(context,
+                                          route: NavigationConstants
+                                              .cartonScanScreenRoute),
+                                    ),
                               SizedBox(height: 20.h),
                             ],
                           ),

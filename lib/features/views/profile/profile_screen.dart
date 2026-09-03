@@ -222,6 +222,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
 
+    // Managers get "Scan GRN Code" on the warehouse home instead of
+    // "Scan Carton", so Scan Carton lives here for them.
+    if (value.isStoreManager() &&
+        !otherInfoData.any((e) => e['title'] == 'Scan Carton')) {
+      otherInfoData.add({
+        'icon': Icons.qr_code_scanner,
+        'title': 'Scan Carton',
+        'screen': NavigationConstants.cartonScanScreenRoute,
+      });
+    }
+
+    if (value.isStoreManager() &&
+        !otherInfoData.any((e) => e['title'] == 'Scan GRN Code')) {
+      otherInfoData.add({
+        'icon': Icons.event_busy,
+        'title': 'Scan GRN Code',
+        'screen': NavigationConstants.grnExpiryScanRoute,
+      });
+    }
+
     if (!otherInfoData.any((e) => e['title'] == 'Cleanliness')) {
       otherInfoData.add({
         'icon': Icons.cleaning_services,

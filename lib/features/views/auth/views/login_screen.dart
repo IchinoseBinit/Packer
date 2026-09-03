@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/widgets/update_url_widget.dart';
 import 'package:provider/provider.dart';
@@ -47,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
               .fetchpackerSummary()
               .then((v) {
             removeLoading(context);
+            if (DioClient.token.isEmpty) return;
 
             navigate(context, route: NavigationConstants.dashboardRoute);
           });

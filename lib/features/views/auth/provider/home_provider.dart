@@ -17,6 +17,17 @@ import 'package:provider/provider.dart';
 class HomeProvider with ChangeNotifier {
   User? _user;
 
+  /// True when [token] is a parseable JWT. Dashboard must not mount otherwise —
+  /// [user] would throw FormatException('Invalid token').
+  static bool isValidToken(String token) {
+    try {
+      Jwt.parseJwt(token);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // getter : if _user is null, get user from token
   User get user {
     if (_user == null) {

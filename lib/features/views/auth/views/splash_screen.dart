@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
+import 'package:packer/features/views/auth/provider/auth_provider.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -31,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
             .readKey(key: SecureStorageConstants.accessTokenKey)
             .then(
           (value) async {
-            if (value != null) {
+            if (value != null && HomeProvider.isValidToken(value)) {
               DioClient();
               DioClient.token = value;
               DioClient.refreshToken = (await SecureStorageHelper()
@@ -40,6 +41,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
               await Provider.of<HomeProvider>(context, listen: false)
                   .fetchpackerSummary();
+              // 403 in DioClient.request already removed tokens + routed to login.
+              if (DioClient.token.isEmpty) return;
 
               // Navigate to the home screen
               // if (context.mounted) {
@@ -63,6 +66,8 @@ class _SplashScreenState extends State<SplashScreen> {
                   route: NavigationConstants.dashboardRoute);
               // }
             } else {
+              // Empty/garbage stored token: clear it so it can't loop back here.
+              if (value != null) await AuthController().removeTokens();
               navigateReplacement(context,
                   route: NavigationConstants.loginRoute);
             }

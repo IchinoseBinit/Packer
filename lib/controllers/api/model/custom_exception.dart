@@ -8,4 +8,7 @@ class LogoutException implements Exception {
   late final String? message;
 
   LogoutException([this.message]);
+
+  @override
+  String toString() => message ?? 'Session expired';
 }

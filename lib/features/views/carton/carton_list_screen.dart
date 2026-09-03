@@ -111,8 +111,8 @@ class CartonListScreen extends StatelessWidget {
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.w600,
                                         )),
-                                      
-                                subtitle: Text('ID: ${carton.id} - Qty: ${carton.productQuantity}'),
+                                subtitle: Text(
+                                    'ID: ${carton.id} - Qty: ${carton.productQuantity}'),
                                 trailing: Text(
                                   carton.isScanned ? 'Scanned' : 'Not Scanned',
                                   style: TextStyle(

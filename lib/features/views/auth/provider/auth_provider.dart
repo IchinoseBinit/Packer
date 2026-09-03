@@ -4,6 +4,7 @@ import 'package:packer/controllers/firebase_opt/fcm_api.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/model/token.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 
@@ -23,6 +24,9 @@ class AuthController {
       );
 
       final token = Token.fromMap(response.data);
+      if (!HomeProvider.isValidToken(token.accessToken)) {
+        return 'Login failed: invalid token received';
+      }
       await saveToken(token);
       FCMApi().postFcmToken();
 

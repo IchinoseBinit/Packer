@@ -204,21 +204,21 @@ class DioClient {
 
       // 401 – unauthorized token → go login
       if (token.isNotEmpty && response?.statusCode == 401) {
-        return navigateAndRemoveAllWithRouter(
+        navigateAndRemoveAllWithRouter(
           AppRouter.router,
           route: NavigationConstants.loginRoute,
         );
+        throw LogoutException('Session expired');
       }
-
-      ;
 
       // 403 → force logout token
       if (response?.statusCode == 403) {
         await AuthController().removeTokens();
-        return navigateAndRemoveAllWithRouter(
+        navigateAndRemoveAllWithRouter(
           AppRouter.router,
           route: NavigationConstants.loginRoute,
         );
+        throw LogoutException(data is Map ? data['message']?.toString() : null);
       }
 
       ;
