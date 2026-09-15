@@ -1,6 +1,24 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:packer/constants/navigation_constants.dart';
+import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/api/app_exception.dart';
+import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/services/secure_storage_helper.dart';
+import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
+import 'package:packer/features/views/auth/model/packer_summary.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
+import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 
 ShiftTime at(String iso) => ShiftTime.tryParse(iso)!;
@@ -459,4 +477,463 @@ void main() {
           })))));
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Review repairs: packer-1 .. packer-4
+  // -------------------------------------------------------------------------
+
+  group('check-out clean-up is separate from the notice (packer-3)', () {
+    final now = DateTime.utc(2026, 9, 16, 2, 25);
+    ShiftSessionState checkedOut(String reason,
+            {String endedAt = '2026-09-15T19:05:00+05:45',
+            String serverTime = '2026-09-16T08:10:00+05:45'}) =>
+        parse({
+          ...noSession({'ended_at': endedAt, 'end_reason': reason}),
+          'server_time': serverTime,
+        });
+
+    test('an auto check-out first seen 13 h later still forgets the check-in',
+        () {
+      final stale = checkedOut('auto');
+      expect(isNewCheckoutNotice(stale, null, now: now), isFalse,
+          reason: 'too old to announce');
+      expect(isUnhandledServerCheckout(stale, null), isTrue);
+      expect(serverCheckoutAction(stale, null, now: now),
+          ServerCheckoutAction.forgetCheckIn);
+      expect(serverCheckoutAction(checkedOut('forced_by_support'), null, now: now),
+          ServerCheckoutAction.forgetCheckIn);
+    });
+
+    test('a recent one is forgotten and announced', () {
+      final recent = checkedOut('auto', serverTime: '2026-09-15T19:30:00+05:45');
+      expect(serverCheckoutAction(recent, null, now: now),
+          ServerCheckoutAction.forgetCheckInAndTell);
+    });
+
+    test('handled, manual and newer check-ins are left alone', () {
+      final stale = checkedOut('auto');
+      expect(serverCheckoutAction(stale, '2026-09-15T19:05:00+05:45', now: now),
+          ServerCheckoutAction.none);
+      expect(
+          serverCheckoutAction(stale, 'push:2026-09-15T13:25:00.000Z', now: now),
+          ServerCheckoutAction.none);
+      expect(serverCheckoutAction(stale, '2026-09-14T19:05:00+05:45', now: now),
+          ServerCheckoutAction.forgetCheckIn);
+      expect(serverCheckoutAction(checkedOut('manual'), null, now: now),
+          ServerCheckoutAction.none);
+      expect(serverCheckoutAction(parse(openSession()), null, now: now),
+          ServerCheckoutAction.none);
+      expect(
+          serverCheckoutAction(stale, null,
+              now: now, wentOnlineMeanwhile: true),
+          ServerCheckoutAction.none,
+          reason: 'the packer checked in while this state was being fetched');
+    });
+  });
+
+  group('polling rule (packer-4)', () {
+    test('online packers are polled', () {
+      expect(
+          shouldPollShiftClock(online: true, screenOpen: false, state: null),
+          isTrue);
+    });
+
+    test('offline packers are polled while the shift complete screen is wanted',
+        () {
+      expect(
+          shouldPollShiftClock(
+              online: false, screenOpen: false, state: parse(openSession())),
+          isTrue);
+      expect(
+          shouldPollShiftClock(online: false, screenOpen: true, state: null),
+          isTrue);
+    });
+
+    test('offline packers with nothing to show are not polled', () {
+      expect(
+          shouldPollShiftClock(
+              online: false,
+              screenOpen: false,
+              state: parse(openSession({
+                'status': 'active',
+                'shift_complete': false,
+                'show_dialog': false,
+              }))),
+          isFalse);
+      expect(
+          shouldPollShiftClock(
+              online: false, screenOpen: false, state: parse(noSession(null))),
+          isFalse);
+      expect(
+          shouldPollShiftClock(online: false, screenOpen: false, state: null),
+          isFalse);
+    });
+  });
+
+  group('stock audit prompt (packer-2)', () {
+    test('offers to start or continue an owed audit', () {
+      final start = shiftAuditPrompt(AuditStatusEnum.notCreated);
+      expect(start?.button, 'Start stock audit');
+      expect(start?.text,
+          "This shift's stock audit hasn't been started. Start it before you check out.");
+      final resume = shiftAuditPrompt(AuditStatusEnum.ongoing);
+      expect(resume?.button, 'Continue stock audit');
+      expect(resume?.text,
+          "This shift's stock audit isn't finished. Finish it before you check out.");
+    });
+
+    test('nothing once done, or for main-store and warehouse packers', () {
+      expect(shiftAuditPrompt(AuditStatusEnum.completed), isNull);
+      expect(shiftAuditPrompt(null), isNull);
+    });
+  });
+
+  group('ShiftClockProvider', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
+      DioClient.token = packerJwt();
+    });
+
+    testWidgets(
+        'packer-1: keeps running when a second dashboard goes away, stops with the last',
+        (tester) async {
+      var loads = 0;
+      final home = _TestHome()..isOnline = true;
+      final clock = ShiftClockProvider(loadSession: () async {
+        loads++;
+        return parse(openSession({
+          'status': 'active',
+          'shift_complete': false,
+          'show_dialog': false,
+          'poll_seconds': 15,
+        }));
+      });
+      _dashboards.clear();
+
+      final router = GoRouter(initialLocation: '/', routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => const Scaffold(body: Text('splash')),
+          routes: [
+            GoRoute(
+                path: 'dashboard', builder: (_, __) => const _FakeDashboard()),
+            GoRoute(
+                path: 'order-details',
+                builder: (_, __) => const Scaffold(body: Text('order'))),
+            GoRoute(
+                path: 'login',
+                builder: (_, __) => const Scaffold(body: Text('login'))),
+          ],
+        ),
+      ]);
+      await tester.pumpWidget(MultiProvider(
+        providers: [
+          ChangeNotifierProvider<HomeProvider>.value(value: home),
+          ChangeNotifierProvider<ShiftClockProvider>.value(value: clock),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ));
+
+      // Dashboard A after an order (go), then an order call pushes dashboard
+      // B and order details, then the order ends with go(dashboard).
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+      router.push('/dashboard');
+      await tester.pumpAndSettle();
+      router.push('/order-details');
+      await tester.pumpAndSettle();
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      expect(_dashboards.length, 2);
+      expect(_dashboards[0].mounted, isTrue, reason: 'dashboard A still shown');
+      expect(_dashboards[1].mounted, isFalse, reason: 'dashboard B disposed');
+      expect(clock.isRunning, isTrue);
+      expect(clock.isPolling, isTrue);
+      expect(clock.visibleSession, isNotNull);
+
+      final before = loads;
+      await tester.pump(const Duration(seconds: 16));
+      expect(loads, before + 1, reason: 'still polling');
+
+      // Logout / session expiry: the last dashboard goes.
+      router.go('/login');
+      await tester.pumpAndSettle();
+      expect(_dashboards[0].mounted, isFalse);
+      expect(clock.isRunning, isFalse);
+      expect(clock.isPolling, isFalse);
+    });
+
+    testWidgets(
+        'packer-3: an auto check-out first seen 13 h later forgets the check-in quietly',
+        (tester) async {
+      FlutterSecureStorage.setMockInitialValues(
+          {SecureStorageConstants.isOnlineKey: 'true'});
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(
+          loadSession: () async => parse({
+                ...noSession({
+                  'ended_at': '2026-09-15T19:05:00+05:45',
+                  'end_reason': 'auto',
+                }),
+                'server_time': '2026-09-16T08:10:00+05:45',
+              }));
+
+      await clock.start(home, owner: owner);
+      await tester.pump();
+
+      expect(
+          await SecureStorageHelper()
+              .readKey(key: SecureStorageConstants.isOnlineKey),
+          isNull,
+          reason: 'next go-online asks for the store QR check-in again');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('shift_clock_checkout_notice_5'),
+          '2026-09-15T19:05:00+05:45');
+      expect(home.summaryFetches, 1, reason: 'shown offline');
+
+      // Seen again: already handled.
+      await clock.refresh();
+      expect(home.summaryFetches, 1);
+
+      clock.stop(owner: owner);
+    });
+
+    testWidgets(
+        'packer-3: a check-out fetched while the packer was checking in is left alone',
+        (tester) async {
+      FlutterSecureStorage.setMockInitialValues(
+          {SecureStorageConstants.isOnlineKey: 'true'});
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async {
+        // QR check-in and going online happened while this was in flight.
+        home.isOnline = true;
+        return parse({
+          ...noSession({
+            'ended_at': '2026-09-15T19:05:00+05:45',
+            'end_reason': 'auto',
+          }),
+          'server_time': '2026-09-16T08:10:00+05:45',
+        });
+      });
+
+      await clock.start(home, owner: owner);
+      await tester.pump();
+
+      expect(
+          await SecureStorageHelper()
+              .readKey(key: SecureStorageConstants.isOnlineKey),
+          'true');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('shift_clock_checkout_notice_5'), isNull);
+      expect(home.summaryFetches, 0);
+
+      clock.stop(owner: owner);
+    });
+
+    testWidgets(
+        'packer-4: after a 409 the clock keeps refreshing while offline and the screen is wanted',
+        (tester) async {
+      var next = openSession({
+        'status': 'active',
+        'shift_complete': false,
+        'show_dialog': false,
+        'poll_seconds': 15,
+      });
+      var loads = 0;
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async {
+        loads++;
+        return parse(next);
+      });
+
+      // Offline, nothing to show: nothing to poll.
+      await clock.start(home, owner: owner);
+      expect(clock.isPolling, isFalse);
+
+      // Taps ONLINE after regular hours: toggleOnlineStatus flips isOnline,
+      // the PATCH is refused with 409 shift_complete, and it flips back.
+      next = openSession({'poll_seconds': 15, 'pending_request': request()});
+      home.isOnline = true;
+      final refused = clock.onShiftCompleteRefused();
+      home.setOnline(false);
+      await refused;
+      expect(clock.wantsScreen, isTrue);
+      expect(clock.isPolling, isTrue);
+
+      // Support rejects and the push is lost: the next poll shows it.
+      next = openSession({
+        'poll_seconds': 15,
+        'last_decision': request({
+          'status': 'rejected',
+          'review_note': 'Enough packers tonight',
+        }),
+      });
+      final before = loads;
+      await tester.pump(const Duration(seconds: 16));
+      expect(loads, before + 1);
+      expect(clock.state?.lastDecision?.status, ShiftRequestStatus.rejected);
+      expect(clock.state?.pendingRequest, isNull);
+      expect(clock.isPolling, isTrue);
+
+      clock.stop(owner: owner);
+      expect(clock.isPolling, isFalse);
+      // Let the wait for a free navigator (there is none here) give up.
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'packer-2: the shift complete screen offers the owed stock audit and comes back after it',
+        (tester) async {
+      final home = _TestHome()..packerSummary = summary('ongoing');
+      final owner = Object();
+      final clock = ShiftClockProvider(
+          loadSession: () async => parse(openSession({'poll_seconds': 15})));
+      final router = GoRouter(initialLocation: '/', routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => const Scaffold(body: Text('home')),
+          routes: [
+            GoRoute(
+              path: NavigationConstants.shiftCompleteScreenRoute,
+              builder: (_, __) => const ShiftCompleteScreen(),
+            ),
+            GoRoute(
+              path: NavigationConstants.auditProductScreenRoute,
+              builder: (_, __) => const Scaffold(body: Text('audit screen')),
+            ),
+          ],
+        ),
+      ]);
+      await tester.pumpWidget(MultiProvider(
+        providers: [
+          ChangeNotifierProvider<HomeProvider>.value(value: home),
+          ChangeNotifierProvider<ShiftClockProvider>.value(value: clock),
+        ],
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (_, __) => MaterialApp.router(routerConfig: router),
+        ),
+      ));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your shift is complete'), findsOneWidget);
+      expect(
+          find.text(
+              "This shift's stock audit isn't finished. Finish it before you check out."),
+          findsOneWidget);
+      final continueAudit = find.text('Continue stock audit');
+      expect(continueAudit, findsOneWidget);
+
+      await tester.ensureVisible(continueAudit);
+      await tester.pumpAndSettle();
+      await tester.tap(continueAudit);
+      await tester.pumpAndSettle();
+      expect(find.text('audit screen'), findsOneWidget);
+
+      // Back from the audit: the shift complete screen is still there.
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Your shift is complete'), findsOneWidget);
+      expect(find.text('Check out and log out'), findsOneWidget);
+
+      home.setSummary(summary('not_created'));
+      await tester.pump();
+      expect(find.text('Start stock audit'), findsOneWidget);
+
+      home.setSummary(summary('completed'));
+      await tester.pump();
+      expect(find.text('Start stock audit'), findsNothing);
+      expect(find.text('Continue stock audit'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+  });
+}
+
+String packerJwt() {
+  String encode(Map<String, dynamic> map) =>
+      base64Url.encode(utf8.encode(jsonEncode(map))).replaceAll('=', '');
+  return '${encode({'alg': 'HS256', 'typ': 'JWT'})}.'
+      '${encode({
+        'user_id': 5,
+        'name': 'Packer',
+        'role': 'packer',
+        'store_id': 2
+      })}.sig';
+}
+
+PackerSummary summary(String auditStatus) => PackerSummary.fromJson({
+      'total_online_time': '0',
+      'total_order_count': 0,
+      'is_online': false,
+      'store_type': 'dark',
+      'scan_gap_time': 10,
+      'store_id': 2,
+      'audit_status': auditStatus,
+    });
+
+/// HomeProvider without the network.
+class _TestHome extends HomeProvider {
+  int summaryFetches = 0;
+
+  @override
+  Future<void> fetchpackerSummary() async {
+    summaryFetches++;
+  }
+
+  void setOnline(bool value) {
+    isOnline = value;
+    notifyListeners();
+  }
+
+  void setSummary(PackerSummary value) {
+    packerSummary = value;
+    notifyListeners();
+  }
+}
+
+final _dashboards = <State>[];
+
+/// NavigationScreen's shift clock wiring
+/// (lib/features/views/navigation/navigation_page.dart).
+class _FakeDashboard extends StatefulWidget {
+  const _FakeDashboard();
+
+  @override
+  State<_FakeDashboard> createState() => _FakeDashboardState();
+}
+
+class _FakeDashboardState extends State<_FakeDashboard> {
+  ShiftClockProvider? _shiftClock;
+
+  @override
+  void initState() {
+    super.initState();
+    _dashboards.add(this);
+    final home = Provider.of<HomeProvider>(context, listen: false);
+    final shiftClock = Provider.of<ShiftClockProvider>(context, listen: false);
+    _shiftClock = shiftClock;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) shiftClock.start(home, owner: this);
+    });
+  }
+
+  @override
+  void dispose() {
+    _shiftClock?.stop(owner: this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Text('dashboard'));
 }

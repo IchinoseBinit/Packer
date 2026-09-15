@@ -1,4 +1,5 @@
 import 'package:packer/controllers/api/app_exception.dart';
+import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 
 /// Pure shift clock rules and the words packers see. No Flutter, no network,
@@ -244,16 +245,13 @@ ShiftTime? approvedUntilOnTransition(
   return decision?.approvedUntil ?? next.hardLimitAt;
 }
 
-/// Should the "checked out" notice be shown for this state?
+/// Is this an auto or support check-out the app hasn't dealt with yet, however
+/// long ago it happened?
 ///
-/// [handledMarker] is what the app stored the last time it showed one: the
-/// ended_at it announced, or `push:` plus a UTC ISO time when it was shown from a push
-/// before the server could be reached.
-bool isNewCheckoutNotice(
-  ShiftSessionState state,
-  String? handledMarker, {
-  required DateTime now,
-}) {
+/// [handledMarker] is what the app stored the last time it dealt with one: the
+/// ended_at it handled, or `push:` plus a UTC ISO time when it was handled from
+/// a push before the server could be reached.
+bool isUnhandledServerCheckout(ShiftSessionState state, String? handledMarker) {
   if (state.hasSession) return false;
   final last = state.lastSession;
   final endedAt = last?.endedAt;
@@ -262,8 +260,6 @@ bool isNewCheckoutNotice(
       last.endReason != ShiftEndReason.forcedBySupport) {
     return false;
   }
-  final serverNow = state.serverTime?.instant ?? now.toUtc();
-  if (serverNow.difference(endedAt.instant) > checkoutNoticeWindow) return false;
 
   final marker = handledMarker?.trim() ?? '';
   if (marker.isEmpty) return true;
@@ -276,6 +272,106 @@ bool isNewCheckoutNotice(
   }
   final handled = ShiftTime.tryParse(marker);
   return handled == null || endedAt.instant.isAfter(handled.instant);
+}
+
+/// Did the check-out in [state] happen recently enough to tell the packer?
+bool isRecentCheckout(ShiftSessionState state, {required DateTime now}) {
+  final endedAt = state.lastSession?.endedAt;
+  if (endedAt == null) return false;
+  final serverNow = state.serverTime?.instant ?? now.toUtc();
+  return serverNow.difference(endedAt.instant) <= checkoutNoticeWindow;
+}
+
+/// Should the "checked out" notice be shown for this state?
+bool isNewCheckoutNotice(
+  ShiftSessionState state,
+  String? handledMarker, {
+  required DateTime now,
+}) =>
+    isUnhandledServerCheckout(state, handledMarker) &&
+    isRecentCheckout(state, now: now);
+
+enum ServerCheckoutAction {
+  /// Nothing to do.
+  none,
+
+  /// Forget the stored check-in and show the packer offline, quietly: the
+  /// check-out is too old to announce.
+  forgetCheckIn,
+
+  /// Forget the stored check-in, show the packer offline and tell them.
+  forgetCheckInAndTell,
+}
+
+/// What to do about the check-out in [state].
+///
+/// The stored check-in is forgotten for every unhandled auto or support
+/// check-out, however old: otherwise the next go-online would skip the store
+/// QR check-in. Only recent ones are announced.
+///
+/// [wentOnlineMeanwhile]: the packer went online while this state was being
+/// fetched, so it may predate their new check-in. Leave it to the refresh
+/// that follows going online.
+ServerCheckoutAction serverCheckoutAction(
+  ShiftSessionState state,
+  String? handledMarker, {
+  required DateTime now,
+  bool wentOnlineMeanwhile = false,
+}) {
+  if (wentOnlineMeanwhile) return ServerCheckoutAction.none;
+  if (!isUnhandledServerCheckout(state, handledMarker)) {
+    return ServerCheckoutAction.none;
+  }
+  return isRecentCheckout(state, now: now)
+      ? ServerCheckoutAction.forgetCheckInAndTell
+      : ServerCheckoutAction.forgetCheckIn;
+}
+
+// ---------------------------------------------------------------------------
+// Polling and the stock audit
+// ---------------------------------------------------------------------------
+
+/// Keep refreshing every poll_seconds (in the foreground) while the packer is
+/// online, and also while the shift complete screen is up or wanted: an
+/// offline packer refused with 409 sits on that screen, and support's answer
+/// may never arrive as a push.
+bool shouldPollShiftClock({
+  required bool online,
+  required bool screenOpen,
+  required ShiftSessionState? state,
+}) =>
+    online ||
+    screenOpen ||
+    (state != null && state.hasSession && state.showDialog);
+
+/// What the shift complete screen says and offers about the stock audit.
+class ShiftAuditPrompt {
+  final String text;
+  final String button;
+
+  const ShiftAuditPrompt({required this.text, required this.button});
+}
+
+/// The stock audit a dark-store packer still owes before they can check out,
+/// from packerSummary.auditStatus (null for main-store and warehouse packers).
+ShiftAuditPrompt? shiftAuditPrompt(AuditStatusEnum? status) {
+  switch (status) {
+    case AuditStatusEnum.notCreated:
+      return const ShiftAuditPrompt(
+        text: "This shift's stock audit hasn't been started. "
+            'Start it before you check out.',
+        button: 'Start stock audit',
+      );
+    case AuditStatusEnum.ongoing:
+      return const ShiftAuditPrompt(
+        text: "This shift's stock audit isn't finished. "
+            'Finish it before you check out.',
+        button: 'Continue stock audit',
+      );
+    case AuditStatusEnum.completed:
+    case null:
+      return null;
+  }
 }
 
 /// Changes whenever something the packer should see again changes.

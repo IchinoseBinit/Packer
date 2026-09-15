@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import 'package:packer/constants/app_colors.dart';
+import 'package:packer/features/views/audit_product/utils/start_stock_audit.dart';
+import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/profile/utils/packer_logout.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
@@ -14,7 +16,9 @@ import 'package:packer/features/views/widgets/general_elevated_button.dart';
 ///
 /// Back does not leave it. It closes itself when the shift clock stops asking
 /// for it (extension approved, checked out) or when the packer sets it aside
-/// to finish work in hand.
+/// to finish work in hand. A dark-store packer who still owes this shift's
+/// stock audit can start or continue it from here: the audit opens on top and
+/// going back from it returns here, ready to check out.
 class ShiftCompleteScreen extends StatefulWidget {
   const ShiftCompleteScreen({super.key});
 
@@ -31,6 +35,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   bool _canPop = false;
   bool _closeRequested = false;
   bool _checkingOut = false;
+  bool _openingAudit = false;
 
   @override
   void initState() {
@@ -42,7 +47,10 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     _hours = defaultExtensionHours(roster);
     _pay = defaultExtensionPay(roster);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_clock.wantsScreen) _requestClose();
+      if (!mounted) return;
+      if (!_clock.wantsScreen) _requestClose();
+      // Current stock audit status, for the audit prompt.
+      context.read<HomeProvider>().fetchpackerSummary();
     });
   }
 
@@ -82,7 +90,15 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     _closeRequested = false;
     setState(() => _canPop = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      // Something (the stock audit, a dialog) was pushed on top in the
+      // meantime: pop() would close that instead. Close once it is gone.
+      if (_route != null && !_route!.isCurrent) {
+        _closeRequested = true;
+        setState(() => _canPop = false);
+        return;
+      }
+      Navigator.of(context).pop();
     });
   }
 
@@ -96,8 +112,20 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     if (sent && mounted) _reasonController.clear();
   }
 
+  /// Starts this shift's stock audit (after the app's usual confirmation) or
+  /// opens the one in progress, on top of this screen.
+  Future<void> _openAudit() async {
+    if (_openingAudit || _checkingOut) return;
+    setState(() => _openingAudit = true);
+    try {
+      await startStockAudit(context);
+    } finally {
+      if (mounted) setState(() => _openingAudit = false);
+    }
+  }
+
   Future<void> _checkOut() async {
-    if (_checkingOut) return;
+    if (_checkingOut || _openingAudit) return;
     setState(() => _checkingOut = true);
     try {
       await logoutWithCheckout(context);
@@ -116,60 +144,72 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
       child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
         body: SafeArea(
-          child: Consumer<ShiftClockProvider>(builder: (context, clock, _) {
+          child: Consumer2<ShiftClockProvider, HomeProvider>(
+              builder: (context, clock, home, _) {
             final session = clock.state;
             if (session == null || !session.hasSession) {
               return const Center(child: CircularProgressIndicator.adaptive());
             }
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ..._header(session),
-                  SizedBox(height: 16.h),
-                  _ShiftNotice(
-                    icon: Icons.event_note_outlined,
-                    text: rosterLine(session.roster),
-                    color: AppColors.blue500,
-                  ),
-                  _ShiftNotice(
-                    icon: Icons.logout,
-                    text: graceLine(session, DateTime.now()),
-                    color: AppColors.primaryColor,
-                  ),
-                  if (session.note.isNotEmpty)
+            final audit = shiftAuditPrompt(home.packerSummary?.auditStatus);
+            return RefreshIndicator(
+              onRefresh: () => Future.wait([
+                clock.refresh(),
+                home.fetchpackerSummary(),
+              ]),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ..._header(session),
+                    SizedBox(height: 16.h),
                     _ShiftNotice(
-                      icon: Icons.info_outline,
-                      text: session.note,
-                      color: Colors.orange.shade800,
+                      icon: Icons.event_note_outlined,
+                      text: rosterLine(session.roster),
+                      color: AppColors.blue500,
                     ),
-                  ..._requestSection(clock, session),
-                  SizedBox(height: 24.h),
-                  if (clock.hasWorkInHand) ...[
-                    TextButton(
-                      onPressed: _checkingOut ? null : clock.snoozeForWorkInHand,
-                      child: Text(
-                        'Finish my current work first',
-                        style: _textStyle(14, FontWeight.w600,
-                            AppColors.primaryColor),
+                    _ShiftNotice(
+                      icon: Icons.logout,
+                      text: graceLine(session, DateTime.now()),
+                      color: AppColors.primaryColor,
+                    ),
+                    if (session.note.isNotEmpty)
+                      _ShiftNotice(
+                        icon: Icons.info_outline,
+                        text: session.note,
+                        color: Colors.orange.shade800,
                       ),
+                    if (audit != null) _auditCard(audit),
+                    ..._requestSection(clock, session),
+                    SizedBox(height: 24.h),
+                    if (clock.hasWorkInHand) ...[
+                      TextButton(
+                        onPressed: _checkingOut || _openingAudit
+                            ? null
+                            : clock.snoozeForWorkInHand,
+                        child: Text(
+                          'Finish my current work first',
+                          style: _textStyle(
+                              14, FontWeight.w600, AppColors.primaryColor),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                    ],
+                    GeneralElevatedButton(
+                      title: _checkingOut
+                          ? 'Checking out...'
+                          : 'Check out and log out',
+                      isDisabled: _checkingOut || _openingAudit,
+                      bgColor: Colors.white,
+                      borderColor: AppColors.primaryColor,
+                      textStyle: _textStyle(
+                          15, FontWeight.w600, AppColors.primaryColor),
+                      onPressed: _checkOut,
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 12.h),
                   ],
-                  GeneralElevatedButton(
-                    title: _checkingOut
-                        ? 'Checking out...'
-                        : 'Check out and log out',
-                    isDisabled: _checkingOut,
-                    bgColor: Colors.white,
-                    borderColor: AppColors.primaryColor,
-                    textStyle:
-                        _textStyle(15, FontWeight.w600, AppColors.primaryColor),
-                    onPressed: _checkOut,
-                  ),
-                  SizedBox(height: 12.h),
-                ],
+                ),
               ),
             );
           }),
@@ -214,6 +254,46 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
         ),
       ),
     ];
+  }
+
+  Widget _auditCard(ShiftAuditPrompt audit) {
+    final color = Colors.orange.shade800;
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.inventory_2_outlined, color: color, size: 22.w),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  audit.text,
+                  style: _textStyle(14, FontWeight.w500, Colors.black87),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          GeneralElevatedButton(
+            title: audit.button,
+            isDisabled: _openingAudit || _checkingOut,
+            bgColor: Colors.white,
+            borderColor: color,
+            height: 42.h,
+            textStyle: _textStyle(14, FontWeight.w600, color),
+            onPressed: _openAudit,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _timeRow(String label, String value) {

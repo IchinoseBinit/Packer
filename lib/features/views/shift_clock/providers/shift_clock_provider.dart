@@ -23,11 +23,18 @@ import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 /// The packer's shift clock (GET /attendance/session/).
 ///
 /// Started by the dashboard for packers. Refreshes on start, on resume, every
-/// poll_seconds while in the foreground and online, after going online, after
-/// a shift push and after sending or cancelling a request. Opens the shift
-/// complete screen while show_dialog is true and announces server check-outs.
+/// poll_seconds while in the foreground and online (or while the shift
+/// complete screen is up or wanted), after going online, after a shift push
+/// and after sending or cancelling a request. Opens the shift complete screen
+/// while show_dialog is true and handles server check-outs.
 class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   static const _noticePrefsKey = 'shift_clock_checkout_notice_';
+
+  /// [loadSession] replaces GET /attendance/session/ in tests.
+  ShiftClockProvider({Future<ShiftSessionState> Function()? loadSession})
+      : _loadSession = loadSession ?? ShiftClockRepo.getSession;
+
+  final Future<ShiftSessionState> Function() _loadSession;
 
   ShiftSessionState? state;
   bool isSubmitting = false;
@@ -35,7 +42,11 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   String? requestError;
 
   HomeProvider? _home;
-  Object? _owner;
+
+  /// The dashboards that started the clock and are still alive. The app can
+  /// hold more than one (an order call pushes a second dashboard), so the
+  /// clock stops only when the last one goes away.
+  final Set<Object> _owners = Set.identity();
   bool _started = false;
   bool _disposed = false;
   int _epoch = 0;
@@ -82,10 +93,11 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   // Lifecycle
   // ---------------------------------------------------------------------------
 
-  /// Start for the logged-in user. [owner] is the widget that stops it again.
+  /// Start for the logged-in user. [owner] is a dashboard; the clock keeps
+  /// running until every owner has called [stop].
   Future<void> start(HomeProvider home, {required Object owner}) async {
     if (_started && identical(_home, home)) {
-      _owner = owner;
+      _owners.add(owner);
       await refresh();
       return;
     }
@@ -95,7 +107,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       _home = null;
       return;
     }
-    _owner = owner;
+    _owners.add(owner);
     _started = true;
     _epoch++;
     _inForeground = true;
@@ -106,17 +118,21 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     await _handleLaunchMessage();
   }
 
-  /// Stop when [owner] (the dashboard) goes away: logout or session expiry.
+  /// [owner] (a dashboard) went away. Stops once no dashboard is left:
+  /// logout or session expiry.
   void stop({required Object owner}) {
-    if (!identical(owner, _owner)) return;
-    _stop();
+    if (!_owners.remove(owner)) return;
+    if (_owners.isEmpty) _stop();
   }
 
+  /// Still running (started by a dashboard that is alive).
+  bool get isRunning => _started;
+
   void _stop() {
+    _owners.clear();
     if (!_started) return;
     _started = false;
     _epoch++;
-    _owner = null;
     _pollTimer?.cancel();
     _pollTimer = null;
     _home?.removeListener(_onHomeChanged);
@@ -195,11 +211,12 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   Future<void> _load() async {
     final epoch = _epoch;
+    final wasOnline = _home?.isOnline ?? false;
     try {
-      final next = await ShiftClockRepo.getSession();
+      final next = await _loadSession();
       if (epoch != _epoch) return;
       _lastRefreshOk = true;
-      await _apply(next);
+      await _apply(next, wasOnline: wasOnline);
     } catch (e) {
       if (epoch == _epoch) _lastRefreshOk = false;
       debugPrint('Shift clock refresh failed: $e');
@@ -211,12 +228,24 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   void _schedulePoll() {
     _pollTimer?.cancel();
     _pollTimer = null;
-    if (!_started || !_inForeground || !(_home?.isOnline ?? false)) return;
+    if (!_started || !_inForeground) return;
+    if (!shouldPollShiftClock(
+      online: _home?.isOnline ?? false,
+      screenOpen: isScreenOpen,
+      state: state,
+    )) {
+      return;
+    }
     final seconds = state?.pollSeconds ?? ShiftSessionState.defaultPollSeconds;
     _pollTimer = Timer(Duration(seconds: seconds), refresh);
   }
 
-  Future<void> _apply(ShiftSessionState next) async {
+  /// True while a poll is scheduled.
+  bool get isPolling => _pollTimer?.isActive ?? false;
+
+  /// [wasOnline]: whether the packer was online when [next] was requested
+  /// (null when it came back from a request or cancel).
+  Future<void> _apply(ShiftSessionState next, {bool? wasOnline}) async {
     final previous = state;
     state = next;
     if (_snoozedSignature != null &&
@@ -238,7 +267,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       showToast(extensionApprovedMessage(approvedUntil, next.serverTime));
     }
 
-    if (!next.hasSession) await _announceCheckout(next);
+    if (!next.hasSession) {
+      await _handleServerCheckout(next, wasOnline: wasOnline);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -403,18 +434,30 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     }
   }
 
-  Future<void> _announceCheckout(ShiftSessionState next) async {
+  /// An auto or support check-out the app hasn't dealt with: forget the
+  /// check-in whenever it happened; tell the packer only if it was recent.
+  Future<void> _handleServerCheckout(ShiftSessionState next,
+      {bool? wasOnline}) async {
     final key = _noticeKey;
     final last = next.lastSession;
     if (key == null || last == null) return;
     final epoch = _epoch;
     final prefs = await SharedPreferences.getInstance();
     if (epoch != _epoch) return;
-    if (!isNewCheckoutNotice(next, prefs.getString(key), now: DateTime.now())) {
-      return;
-    }
+    final action = serverCheckoutAction(
+      next,
+      prefs.getString(key),
+      now: DateTime.now(),
+      // Offline when this state was requested, online now: the packer checked
+      // in meanwhile and this state may be older than that check-in.
+      wentOnlineMeanwhile:
+          wasOnline == false && (_home?.isOnline ?? false),
+    );
+    if (action == ServerCheckoutAction.none) return;
     await prefs.setString(key, last.endedAtRaw);
-    await _checkedOutByServer(checkoutNoticeMessage(last.endReason));
+    await _checkedOutByServer(action == ServerCheckoutAction.forgetCheckInAndTell
+        ? checkoutNoticeMessage(last.endReason)
+        : null);
   }
 
   Future<void> _rememberNotice(String marker) async {
@@ -425,14 +468,16 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   /// The backend closed the packer's online log: forget the check-in so the
-  /// next logout doesn't ask for a check-out scan, show them offline, tell them.
-  Future<void> _checkedOutByServer(String message) async {
+  /// next go-online asks for the store QR check-in again and the next logout
+  /// doesn't ask for a check-out scan, show them offline and, when [message]
+  /// is given, tell them.
+  Future<void> _checkedOutByServer(String? message) async {
     _snoozedSignature = null;
     _closeScreen?.call();
     await SecureStorageHelper().remove(key: SecureStorageConstants.isOnlineKey);
     final home = _home;
     if (home != null) await home.markCheckedOutByServer();
-    if (!_started) return;
+    if (!_started || message == null) return;
     _whenNothingOnTop(() {
       final context = AppConstants.navigatorKey.currentContext;
       if (context == null) {
