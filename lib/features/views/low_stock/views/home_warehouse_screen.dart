@@ -9,6 +9,8 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/low_stock/model/low_stock_model.dart';
 import 'package:packer/features/views/low_stock/provider/stock_provider.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
+import 'package:packer/features/views/shift_clock/widgets/shift_status_card.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
@@ -114,6 +116,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
               : homeProvider.isOnline
                   ? RefreshIndicator(
                       onRefresh: () async {
+                        context.read<ShiftClockProvider>().refresh();
                         await Provider.of<StockProvider>(context, listen: false)
                             .fetchLowStockProducts(context);
                       },
@@ -124,6 +127,7 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              const ShiftStatusCard(),
                               Expanded(
                                 child: Consumer<StockProvider>(
                                   builder: (context, value, _) {
@@ -184,13 +188,27 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                         ),
                       ),
                     )
-                  : Center(
-                      child: Text(
-                        'You are currently offline.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w700,
+                  : Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 16.h),
+                      child: Column(
+                        children: [
+                          const ShiftStatusCard(),
+                          Expanded(
+                            child: Center(
+                              child: Text(
+                                'You are currently offline.',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
                             ),
+                          ),
+                        ],
                       ),
                     ),
         );

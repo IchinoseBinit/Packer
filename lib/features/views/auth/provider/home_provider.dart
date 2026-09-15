@@ -12,6 +12,8 @@ import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:provider/provider.dart';
 
 class HomeProvider with ChangeNotifier {
@@ -295,6 +297,14 @@ class HomeProvider with ChangeNotifier {
         return false;
       }
       if (!context.mounted) return false;
+      // Shift clock: going online after the shift is complete. Say why and
+      // open the shift complete screen instead of a generic error.
+      if (isShiftCompleteError(ex)) {
+        showToast(ex.toString());
+        Provider.of<ShiftClockProvider>(context, listen: false)
+            .onShiftCompleteRefused();
+        return false;
+      }
       await showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -380,6 +390,18 @@ class HomeProvider with ChangeNotifier {
       isDelivered = false;
       notifyListeners();
     }
+  }
+
+  // markCheckedOutByServer : the shift clock checked this packer out
+  // (auto or by support); show them offline and reload the summary.
+  Future<void> markCheckedOutByServer() async {
+    isOnline = false;
+    isAvailable = false;
+    isOrder = false;
+    isOrderPicked = false;
+    isDelivered = false;
+    notifyListeners();
+    await fetchpackerSummary();
   }
 
   // not in use

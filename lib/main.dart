@@ -33,6 +33,9 @@ import 'package:packer/features/views/profile/provider/order_return_provider.dar
 import 'package:packer/features/views/profile/provider/rack_update_provider.dart';
 import 'package:packer/features/views/receive_baskets/controller/receive_basket_controller.dart';
 import 'package:packer/features/views/scanner/provider/scan_message_provider.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_push.dart';
 import 'package:packer/features/views/stock_verification/provider/stock_verification_provider.dart';
 import 'package:packer/features/views/vendor/providers/vendor_provider.dart';
 import 'package:packer/features/views/widgets/custom_url.dart';
@@ -83,6 +86,9 @@ void main() async {
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     dev.log('A new onMessageOpenedApp event was published!');
     dev.log('Message data: ${message.data}');
+    if (isShiftClockPush(message.data)) {
+      dispatchShiftClockPush(message.data);
+    }
   });
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -203,6 +209,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, RouteAware {
         ChangeNotifierProvider(create: (_) => StockAuditProvider()),
         ChangeNotifierProvider(create: (_) => CleanlinessProvider()),
         ChangeNotifierProvider(create: (_) => GrnExpiryProvider()),
+        ChangeNotifierProvider(create: (_) => ShiftClockProvider()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

@@ -4,6 +4,7 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:packer/main.dart';
 
 class FirebaseAPI {
@@ -126,6 +127,8 @@ class FirebaseAPI {
       Function(OrderNotification order) onNotificationReceived) {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print(message.data);
+      // Shift clock pushes are not orders (handled in handleIncomingCall).
+      if (isShiftClockPush(message.data)) return;
       final order = OrderNotification.fromJson(message.data);
       onNotificationReceived(order);
     });

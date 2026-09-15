@@ -2,22 +2,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
-import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/audit_product/utils/start_stock_audit.dart';
-import 'package:packer/features/views/order/widgets/ask_confirmation.dart';
 import 'package:packer/features/views/packer_transfer/provider/packer_transfer_provider.dart';
+import 'package:packer/features/views/profile/utils/packer_logout.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
 import 'package:provider/provider.dart';
-import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/navigate.dart';
-import 'package:packer/features/views/auth/provider/auth_provider.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
-import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/custom_profile_tile.dart';
 import 'package:packer/constants/app_assets.dart';
 import 'package:packer/constants/app_colors.dart';
@@ -488,80 +483,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryColor,
                             ),
-                            onPressed: () async {
-                              final isConfirmed = await AskConfirmation.show(
-                                context,
-                                title: 'Do you want to logout?',
-                              );
-
-                              if (!isConfirmed) {
-                                return;
-                              }
-
-                              final isOnline =
-                                  await SecureStorageHelper().readKey(
-                                key: SecureStorageConstants.isOnlineKey,
-                              );
-
-                              // Packers must checkout (scan warehouse QR)
-                              // before logout.
-                              if ((value.user.role == UserRole.packer) &&
-                                  isOnline == true.toString()) {
-                                await showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Text('Checkout Required'),
-                                    content: const Text(
-                                        'You need to checkout before logout. '
-                                        'Scan the warehouse QR to continue.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-
-                                if (!context.mounted) return;
-                                final checkedOut = await navigate(
-                                  context,
-                                  route: NavigationConstants
-                                      .packerCheckoutScanRoute,
-                                );
-
-                                // Abort logout if checkout was not completed.
-                                if (checkedOut != true) {
-                                  return;
-                                }
-                                if (!context.mounted) return;
-                              }
-
-                              showLoading(context);
-                              await Provider.of<HomeProvider>(context,
-                                      listen: false)
-                                  .updatepackerStatus(false, context,
-                                      showErrorDialog: false);
-
-                              AuthController().logout().then(
-                                (value) {
-                                  removeLoading(context);
-                                  Provider.of<HomeProvider>(context,
-                                          listen: false)
-                                      .resetUser();
-                                  if (value is bool) {
-                                    navigateAndRemoveAll(context,
-                                        route: NavigationConstants.loginRoute);
-                                  } else {
-                                    ErrorHandler.alertDialog(context,
-                                        "Something went wrong. Please try again later",
-                                        () {
-                                      navigatePop(context);
-                                    });
-                                  }
-                                },
-                              );
-                            },
+                            // Packers check out (scan warehouse QR) before
+                            // logout; shared with the shift complete screen.
+                            onPressed: () => logoutWithCheckout(context),
                             child: Text(
                               'Logout',
                               style: Theme.of(context)

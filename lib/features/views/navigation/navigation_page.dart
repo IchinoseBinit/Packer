@@ -14,6 +14,7 @@ import 'package:packer/features/views/home/product_checker_home_screen.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
 import 'package:packer/features/views/driver/views/driver_profile_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -57,6 +58,21 @@ class _NavigationScreenState extends State<NavigationScreen> {
     } else if (home.isMainStore() == true) {
       widgets[0] = HomeWarehouseScreen();
     }
+
+    // Shift clock (packers only; does nothing for other roles).
+    final shiftClock = Provider.of<ShiftClockProvider>(context, listen: false);
+    _shiftClock = shiftClock;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) shiftClock.start(home, owner: this);
+    });
+  }
+
+  ShiftClockProvider? _shiftClock;
+
+  @override
+  void dispose() {
+    _shiftClock?.stop(owner: this);
+    super.dispose();
   }
 
   @override
