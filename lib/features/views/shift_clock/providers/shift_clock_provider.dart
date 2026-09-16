@@ -173,6 +173,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     _epoch++;
     _cancelTimers();
     _home?.removeListener(_onHomeChanged);
+    // The seed belongs to the shift that just ended (logout, or another
+    // packer signing in on this phone): the next clock must not start on it.
+    _home?.summaryShift = null;
     _home = null;
     _order?.removeListener(_onWorkChanged);
     _order = null;

@@ -197,6 +197,14 @@ String? shiftStatusLine(
   return left == null ? line : '$line · $left';
 }
 
+/// True while [shiftStatusLine] has a countdown in it that still has to move,
+/// so the home card only ticks while something is actually counting down.
+bool shiftStatusLineTicks(ShiftSessionState? state, DateTime now) {
+  if (state == null || !isShiftClockVisible(state)) return false;
+  if (isShiftOver(state) || state.status == ShiftStatus.extended) return false;
+  return shiftCountdown(state.remainingTo(state.regularLimitAt, now)) != null;
+}
+
 /// The smaller line under the status.
 String shiftStatusDetail(
   ShiftSessionState state, {

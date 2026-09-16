@@ -29,27 +29,34 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
   Timer? _timer;
 
   @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(_tick, (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 
+  /// Ticks only while a countdown is on screen: a packer with no session, or
+  /// one whose shift is already over, has nothing to move.
+  void _tickWhile(bool needed) {
+    if (needed == (_timer != null)) return;
+    if (needed) {
+      _timer = Timer.periodic(_tick, (_) {
+        if (mounted) setState(() {});
+      });
+    } else {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ShiftClockProvider>(builder: (_, clock, __) {
+      final now = DateTime.now();
       final session = clock.visibleSession;
       final work = clock.workInHand;
-      final title = session == null
-          ? null
-          : shiftStatusLine(session, now: DateTime.now(), work: work);
+      _tickWhile(shiftStatusLineTicks(session, now));
+      final title =
+          session == null ? null : shiftStatusLine(session, now: now, work: work);
       if (session == null || title == null) {
         return const SizedBox.shrink();
       }

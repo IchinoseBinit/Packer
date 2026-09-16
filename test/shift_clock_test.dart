@@ -17,10 +17,12 @@ import 'package:packer/features/views/audit_product/models/audit_status_enum.dar
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
+import 'package:packer/features/views/widgets/post_basket_model.dart';
 
 ShiftTime at(String iso) => ShiftTime.tryParse(iso)!;
 
@@ -116,6 +118,7 @@ Map<String, dynamic> liveSession({
     'status': 'active',
     'shift_complete': false,
     'show_dialog': false,
+    'can_take_work': true,
     'server_time': isoUtc(now),
     'started_at': isoUtc(now.subtract(const Duration(hours: 8))),
     'regular_limit_at': isoUtc(now.add(endsIn)),
@@ -130,6 +133,31 @@ Map<String, dynamic> liveSession({
 /// [liveSession] read as it would be on arrival (receivedAt = now).
 ShiftSessionState parseLive(Map<String, dynamic> json) =>
     ShiftSessionState.fromJson(json);
+
+/// The summary's `shift` block for [liveSession]'s shift.
+Map<String, dynamic> liveShiftBlock({
+  Duration endsIn = const Duration(hours: 2),
+  Duration grace = const Duration(hours: 1),
+  Map<String, dynamic> changes = const {},
+}) {
+  final now = DateTime.now();
+  return shiftBlock({
+    'server_time': isoUtc(now),
+    'started_at': isoUtc(now.subtract(const Duration(hours: 8))),
+    'regular_limit_at': isoUtc(now.add(endsIn)),
+    'hard_limit_at': isoUtc(now.add(endsIn + grace)),
+    ...changes,
+  });
+}
+
+/// [liveShiftBlock] read as it would be on arrival (receivedAt = now).
+ShiftSessionState liveSeed({
+  Duration endsIn = const Duration(hours: 2),
+  Duration grace = const Duration(hours: 1),
+  Map<String, dynamic> changes = const {},
+}) =>
+    ShiftSessionState.fromSummaryJson(
+        liveShiftBlock(endsIn: endsIn, grace: grace, changes: changes))!;
 
 OrderNotification anOrder() => OrderNotification.fromJson({
       'order_id': 91,
@@ -396,7 +424,38 @@ void main() {
         shiftStatusLine(state, now: received.add(const Duration(minutes: 20))),
         'Shift ends 6 PM · 1 h 40 m left',
       );
+    });
 
+    test('the home card only ticks while a countdown is running', () {
+      final state = seed(shiftBlock());
+      expect(shiftStatusLineTicks(state, received), isTrue);
+      // Run out, over, on an extension, hidden or nothing at all: no ticking.
+      expect(
+          shiftStatusLineTicks(
+              state, received.add(const Duration(hours: 2))),
+          isFalse);
+      expect(shiftStatusLineTicks(parse(openSession()), received), isFalse);
+      expect(
+          shiftStatusLineTicks(
+              parse(openSession({
+                'status': 'extended',
+                'shift_complete': false,
+                'show_dialog': false,
+              })),
+              received),
+          isFalse);
+      expect(
+          shiftStatusLineTicks(
+              seed(shiftBlock({'enforced': false})), received),
+          isFalse);
+      expect(
+          shiftStatusLineTicks(
+              seed(shiftBlock({'regular_limit_at': null})), received),
+          isFalse);
+      expect(shiftStatusLineTicks(null, received), isFalse);
+    });
+
+    test('no server_time leaves the phone clock as it is', () {
       // No server_time: the phone clock is taken as it is.
       final noServerTime = seed(shiftBlock({'server_time': null}));
       expect(noServerTime.clockSkew, Duration.zero);
@@ -956,6 +1015,10 @@ void main() {
           'shift_complete': false,
           'show_dialog': false,
           'poll_seconds': 15,
+          // Support is holding a request, which is one of the few things the
+          // clock keeps asking about.
+          'pending_request': request(),
+          'can_request': false,
         }));
       });
       _dashboards.clear();
@@ -1011,7 +1074,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(_dashboards[0].mounted, isFalse);
       expect(clock.isRunning, isFalse);
-      expect(clock.isPolling, isFalse);
+      expect(clock.isScheduled, isFalse);
     });
 
     testWidgets(
@@ -1136,6 +1199,163 @@ void main() {
     });
 
     testWidgets(
+        'packer-5: counts the shift down itself and asks once when the time is up',
+        (tester) async {
+      var loads = 0;
+      var next = liveSession(endsIn: const Duration(hours: 2));
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async {
+        loads++;
+        return parseLive(next);
+      });
+
+      // The summary fetched at login already knows when this shift ends.
+      home.setShift(liveSeed());
+      await clock.start(home, owner: owner);
+      await tester.pump();
+
+      expect(loads, 1, reason: 'one confirming call at start');
+      expect(clock.isPolling, isFalse, reason: 'the shift end is 2 h away');
+      expect(clock.isWaitingForDeadline, isTrue);
+      expect(clock.state?.regularLimitAt, isNotNull);
+
+      // Another summary arrives saying nothing new: no call, still no poll.
+      home.setShift(liveSeed());
+      await tester.pump();
+      expect(loads, 1);
+      expect(clock.state?.fromSummary, isFalse, reason: 'nothing to confirm');
+      expect(clock.isPolling, isFalse);
+      expect(clock.isWaitingForDeadline, isTrue);
+
+      // Two hours of shift go by without a single call.
+      await tester.pump(const Duration(hours: 1));
+      expect(loads, 1);
+      await tester.pump(const Duration(hours: 1));
+      expect(loads, 1, reason: 'the local countdown has not run out yet');
+
+      // The shift ends: the app's own timer fires and confirms it once.
+      next = liveSession(endsIn: Duration.zero, changes: {
+        'status': 'awaiting_extension',
+        'shift_complete': true,
+        'show_dialog': true,
+        'can_take_work': false,
+      });
+      await tester.pump(const Duration(seconds: 5));
+      expect(loads, 2,
+          reason: 'one GET /attendance/session/ when the timer fires');
+      expect(clock.state?.showDialog, isTrue);
+      expect(clock.wantsScreen, isTrue);
+      expect(clock.isPolling, isTrue,
+          reason: 'now waiting on support or a check-out');
+
+      clock.stop(owner: owner);
+      expect(clock.isScheduled, isFalse);
+      // Let the wait for a free navigator (there is none here) give up.
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'packer-5: a summary saying the shift is over is confirmed before the screen shows',
+        (tester) async {
+      var loads = 0;
+      var next = liveSession(endsIn: const Duration(hours: 2));
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async {
+        loads++;
+        return parseLive(next);
+      });
+
+      home.setShift(liveSeed());
+      await clock.start(home, owner: owner);
+      await tester.pump();
+      expect(loads, 1);
+      expect(clock.wantsScreen, isFalse);
+
+      // The next summary says the shift is over. The status line follows it
+      // at once; the blocking screen waits for the clock itself.
+      next = liveSession(endsIn: Duration.zero, changes: {
+        'status': 'awaiting_extension',
+        'shift_complete': true,
+        'show_dialog': true,
+        'can_take_work': false,
+      });
+      home.setShift(liveSeed(endsIn: Duration.zero, changes: {
+        'status': 'awaiting_extension',
+        'shift_complete': true,
+        'show_dialog': true,
+        'can_take_work': false,
+        'can_request': false,
+      }));
+      expect(clock.state?.fromSummary, isTrue);
+      expect(clock.state?.shiftComplete, isTrue);
+      expect(shiftStatusLine(clock.visibleSession!, now: DateTime.now()),
+          'Shift over');
+      expect(clock.wantsScreen, isFalse, reason: 'not confirmed yet');
+
+      await tester.pump();
+      expect(loads, 2, reason: 'the seed is confirmed with the clock');
+      expect(clock.state?.fromSummary, isFalse);
+      expect(clock.wantsScreen, isTrue);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'packer-6: work in hand keeps the blocking screen away until it is done',
+        (tester) async {
+      var next = openSession({'poll_seconds': 15});
+      final home = _TestHome()
+        ..isOnline = true
+        ..latestOrder = [anOrder()];
+      final orders = _TestOrders();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async => parse(next));
+
+      await clock.start(home, owner: owner, order: orders);
+      await tester.pump();
+
+      final session = clock.visibleSession!;
+      expect(session.showDialog, isTrue);
+      expect(clock.workInHand, ShiftWorkInHand.order);
+      expect(clock.wantsScreen, isFalse, reason: 'an order is still in hand');
+      expect(shiftStatusLine(session, now: received, work: clock.workInHand),
+          'Shift over · finish this order');
+      expect(shiftStatusDetail(session, work: clock.workInHand),
+          'Finish it, then ask for more time or check out');
+      // Nothing to open from the home card either.
+      clock.openScreen();
+      expect(clock.wantsScreen, isFalse);
+
+      // The order goes out, but a basket is still being packed.
+      orders.setBaskets([Basket(identifier: 'B1', productIdentifiers: const [])]);
+      home.setOrders(const []);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.basket);
+      expect(clock.wantsScreen, isFalse);
+      expect(shiftStatusLine(session, now: received, work: clock.workInHand),
+          'Shift over · finish this basket');
+
+      // The basket is closed: now the screen is wanted.
+      orders.setBaskets(const []);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(clock.wantsScreen, isTrue);
+
+      // The server saying it is waiting for work in hand counts too.
+      next = openSession({'poll_seconds': 15, 'note': packerBusyNote});
+      await clock.refresh();
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.order);
+      expect(clock.wantsScreen, isFalse);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
         'packer-2: the shift complete screen offers the owed stock audit and comes back after it',
         (tester) async {
       final home = _TestHome()..packerSummary = summary('ongoing');
@@ -1246,6 +1466,26 @@ class _TestHome extends HomeProvider {
 
   void setSummary(PackerSummary value) {
     packerSummary = value;
+    notifyListeners();
+  }
+
+  /// A packer summary came back carrying a `shift` block.
+  void setShift(ShiftSessionState value) {
+    summaryShift = value;
+    notifyListeners();
+  }
+
+  /// Orders assigned to this packer changed.
+  void setOrders(List<OrderNotification> value) {
+    latestOrder = value;
+    notifyListeners();
+  }
+}
+
+/// OrderProvider without Hive: only the open baskets matter here.
+class _TestOrders extends OrderProvider {
+  void setBaskets(List<Basket> value) {
+    baskets = value;
     notifyListeners();
   }
 }
