@@ -14,6 +14,7 @@ import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
+import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
@@ -76,6 +77,65 @@ Map<String, dynamic> request([Map<String, dynamic> changes = const {}]) => {
 
 ShiftSessionState parse(Map<String, dynamic> json) =>
     ShiftSessionState.fromJson(json, receivedAt: received);
+
+/// The `shift` block the packer summary carries (contract A): a subset of the
+/// session payload, with no roster, requests or seconds_to_* countdowns.
+Map<String, dynamic> shiftBlock([Map<String, dynamic> changes = const {}]) => {
+      'enforced': true,
+      'has_session': true,
+      'session_id': 7,
+      'status': 'active',
+      'started_at': '2026-09-15T06:00:00+05:45',
+      'regular_limit_at': '2026-09-15T18:00:00+05:45',
+      'hard_limit_at': '2026-09-15T19:00:00+05:45',
+      'server_time': '2026-09-15T16:00:00+05:45',
+      'shift_complete': false,
+      'show_dialog': false,
+      'can_take_work': true,
+      'can_request': true,
+      'note': '',
+      'poll_seconds': 60,
+      ...changes,
+    };
+
+ShiftSessionState seed(Map<String, dynamic> json, {DateTime? receivedAt}) =>
+    ShiftSessionState.fromSummaryJson(json,
+        receivedAt: receivedAt ?? received)!;
+
+String isoUtc(DateTime time) => time.toUtc().toIso8601String();
+
+/// An open session around the phone's own clock, for the provider tests: the
+/// shift ends [endsIn] from now and the grace period runs [grace] longer.
+Map<String, dynamic> liveSession({
+  Duration endsIn = const Duration(hours: 2),
+  Duration grace = const Duration(hours: 1),
+  Map<String, dynamic> changes = const {},
+}) {
+  final now = DateTime.now();
+  return openSession({
+    'status': 'active',
+    'shift_complete': false,
+    'show_dialog': false,
+    'server_time': isoUtc(now),
+    'started_at': isoUtc(now.subtract(const Duration(hours: 8))),
+    'regular_limit_at': isoUtc(now.add(endsIn)),
+    'hard_limit_at': isoUtc(now.add(endsIn + grace)),
+    'seconds_to_regular_limit': endsIn.inSeconds,
+    'seconds_to_hard_limit': (endsIn + grace).inSeconds,
+    'extension_base': isoUtc(now.add(endsIn)),
+    ...changes,
+  });
+}
+
+/// [liveSession] read as it would be on arrival (receivedAt = now).
+ShiftSessionState parseLive(Map<String, dynamic> json) =>
+    ShiftSessionState.fromJson(json);
+
+OrderNotification anOrder() => OrderNotification.fromJson({
+      'order_id': 91,
+      'customer_name': 'Anita',
+      'status': 'packer_assigned',
+    });
 
 Map<String, dynamic> noSession(Map<String, dynamic>? last) => {
       'has_session': false,
@@ -229,14 +289,16 @@ void main() {
   });
 
   group('home status line', () {
-    test('active, extended and complete', () {
+    test('active, extended and over', () {
       final active = parse(openSession({
         'status': 'active',
         'shift_complete': false,
         'show_dialog': false,
         'server_time': '2026-09-15T13:00:00+05:45',
       }));
-      expect(shiftStatusLine(active), 'Shift ends 6 PM');
+      // server_time 1 PM arrived at [received], so 5 h of shift are left.
+      expect(shiftStatusLine(active, now: received),
+          'Shift ends 6 PM · 5 h left');
       expect(shiftStatusDetail(active), 'Started 6 AM');
 
       final extended = parse(openSession({
@@ -250,22 +312,97 @@ void main() {
           'approved_pay': 'overtime',
         }),
       }));
-      expect(shiftStatusLine(extended), 'Extension until 8 PM');
+      expect(shiftStatusLine(extended, now: received), 'Extension until 8 PM');
       expect(shiftStatusDetail(extended), 'Approved at overtime pay');
 
-      final complete = parse(openSession());
-      expect(shiftStatusLine(complete), 'Shift complete');
-      expect(shiftStatusDetail(complete), 'Tap to ask for more time or check out');
+      final over = parse(openSession());
+      expect(shiftStatusLine(over, now: received), 'Shift over');
+      expect(shiftStatusDetail(over), 'Tap to ask for more time or check out');
       expect(
           shiftStatusDetail(parse(openSession({'pending_request': request()}))),
           'Waiting for support to approve more time');
+    });
+
+    test('says what to finish first while work is in hand', () {
+      final over = parse(openSession());
+      expect(shiftStatusLine(over, now: received, work: ShiftWorkInHand.order),
+          'Shift over · finish this order');
+      expect(shiftStatusLine(over, now: received, work: ShiftWorkInHand.basket),
+          'Shift over · finish this basket');
+      expect(shiftStatusDetail(over, work: ShiftWorkInHand.order),
+          'Finish it, then ask for more time or check out');
+      // Support already has a request: that is the news, work or not.
+      expect(
+        shiftStatusDetail(parse(openSession({'pending_request': request()})),
+            work: ShiftWorkInHand.order),
+        'Waiting for support to approve more time',
+      );
+      // Still on shift: the countdown, whatever is in hand.
+      final active = parse(openSession({
+        'status': 'active',
+        'shift_complete': false,
+        'show_dialog': false,
+        'server_time': '2026-09-15T17:30:00+05:45',
+      }));
+      expect(shiftStatusLine(active, now: received, work: ShiftWorkInHand.order),
+          'Shift ends 6 PM · 30 m left');
     });
 
     test('hidden when not enforced, no session or not a packer session', () {
       expect(shiftStatusLine(parse(openSession({'enforced': false}))), isNull);
       expect(shiftStatusLine(parse(noSession(null))), isNull);
       expect(shiftStatusLine(parse(openSession({'role': 'rider'}))), isNull);
-      expect(shiftStatusLine(parse(openSession({'role': null}))), 'Shift complete');
+      expect(shiftStatusLine(parse(openSession({'role': null})), now: received),
+          'Shift over');
+    });
+  });
+
+  group('countdown (packer-5)', () {
+    test('hours and minutes, and nothing once it has run out', () {
+      expect(shiftCountdown(const Duration(hours: 2, minutes: 15)),
+          '2 h 15 m left');
+      expect(shiftCountdown(const Duration(hours: 2)), '2 h left');
+      expect(shiftCountdown(const Duration(minutes: 45)), '45 m left');
+      expect(shiftCountdown(const Duration(minutes: 1)), '1 m left');
+      expect(shiftCountdown(const Duration(seconds: 30)),
+          'less than a minute left');
+      expect(shiftCountdown(Duration.zero), isNull);
+      expect(shiftCountdown(const Duration(minutes: -5)), isNull);
+      expect(shiftCountdown(null), isNull);
+      // The seconds inside a minute are dropped, never rounded up.
+      expect(shiftCountdown(const Duration(minutes: 119, seconds: 59)),
+          '1 h 59 m left');
+    });
+
+    test('runs off the server clock, not the phone one', () {
+      final state = seed(shiftBlock());
+      // server_time 4 PM against a phone reading 6:10 PM: 2 h of shift left.
+      expect(state.clockSkew, const Duration(hours: -2, minutes: -10));
+      expect(state.serverInstantAt(received), DateTime.utc(2026, 9, 15, 10, 15));
+      expect(state.remainingTo(state.regularLimitAt, received),
+          const Duration(hours: 2));
+      expect(shiftStatusLine(state, now: received),
+          'Shift ends 6 PM · 2 h left');
+
+      // The same block on a phone running three hours fast still says 2 h.
+      final fast = seed(shiftBlock(),
+          receivedAt: received.add(const Duration(hours: 3)));
+      expect(
+          shiftStatusLine(fast, now: received.add(const Duration(hours: 3))),
+          'Shift ends 6 PM · 2 h left');
+
+      // Twenty minutes later, twenty minutes less.
+      expect(
+        shiftStatusLine(state, now: received.add(const Duration(minutes: 20))),
+        'Shift ends 6 PM · 1 h 40 m left',
+      );
+
+      // No server_time: the phone clock is taken as it is.
+      final noServerTime = seed(shiftBlock({'server_time': null}));
+      expect(noServerTime.clockSkew, Duration.zero);
+      expect(noServerTime.remainingTo(noServerTime.regularLimitAt, received),
+          const Duration(minutes: -10));
+      expect(shiftStatusLine(noServerTime, now: received), 'Shift ends 6 PM');
     });
   });
 
@@ -460,22 +597,6 @@ void main() {
           isFalse);
     });
 
-    test('snooze signature changes only when something to see changes', () {
-      final base = parse(openSession());
-      expect(shiftSnoozeSignature(base), shiftSnoozeSignature(parse(openSession())));
-      expect(shiftSnoozeSignature(base),
-          isNot(shiftSnoozeSignature(parse(openSession({'note': 'Waiting'})))));
-      expect(
-          shiftSnoozeSignature(base),
-          isNot(shiftSnoozeSignature(parse(openSession({
-            'last_decision': request({'status': 'rejected'}),
-          })))));
-      expect(
-          shiftSnoozeSignature(base),
-          isNot(shiftSnoozeSignature(parse(openSession({
-            'hard_limit_at': '2026-09-15T21:00:00+05:45',
-          })))));
-    });
   });
 
   // -------------------------------------------------------------------------
@@ -531,42 +652,270 @@ void main() {
     });
   });
 
-  group('polling rule (packer-4)', () {
-    test('online packers are polled', () {
+  group('work in hand (packer-6)', () {
+    test('an order, a basket or the server saying it is waiting for one', () {
+      ShiftWorkInHand work({
+        bool order = false,
+        bool basket = false,
+        String note = '',
+      }) =>
+          shiftWorkInHand(
+              assignedOrder: order, openBasket: basket, note: note);
+
+      expect(work(order: true), ShiftWorkInHand.order);
+      expect(work(basket: true), ShiftWorkInHand.basket);
+      expect(work(note: packerBusyNote), ShiftWorkInHand.order);
+      expect(work(note: '  waiting for the delivery in hand '),
+          ShiftWorkInHand.order);
+      expect(work(), ShiftWorkInHand.none);
+      // A stock audit is not work in hand: it is started from the screen.
+      expect(work(note: 'Waiting for stock audit: 12 racks left'),
+          ShiftWorkInHand.none);
+      expect(work(note: 'Locked to day closing'), ShiftWorkInHand.none);
+      // An order in hand wins: that is the wording the packer gets.
+      expect(work(order: true, basket: true), ShiftWorkInHand.order);
+    });
+
+    test('the blocking screen waits for the work to be done', () {
+      final complete = parse(openSession());
       expect(
-          shouldPollShiftClock(online: true, screenOpen: false, state: null),
+          canShowShiftCompleteScreen(
+              state: complete, work: ShiftWorkInHand.none),
+          isTrue);
+      expect(
+          canShowShiftCompleteScreen(
+              state: complete, work: ShiftWorkInHand.order),
+          isFalse);
+      expect(
+          canShowShiftCompleteScreen(
+              state: complete, work: ShiftWorkInHand.basket),
+          isFalse);
+
+      // A shift only the summary has told us about is confirmed with
+      // GET /attendance/session/ first.
+      expect(
+        canShowShiftCompleteScreen(
+          state: seed(shiftBlock(
+              {'status': 'awaiting_extension', 'show_dialog': true})),
+          work: ShiftWorkInHand.none,
+        ),
+        isFalse,
+      );
+
+      // Nothing to show.
+      for (final json in [
+        openSession({'show_dialog': false}),
+        openSession({'enforced': false}),
+        openSession({'role': 'rider'}),
+        noSession(null),
+      ]) {
+        expect(
+            canShowShiftCompleteScreen(
+                state: parse(json), work: ShiftWorkInHand.none),
+            isFalse,
+            reason: json.toString());
+      }
+      expect(
+          canShowShiftCompleteScreen(state: null, work: ShiftWorkInHand.none),
+          isFalse);
+    });
+  });
+
+  group('when to look at the clock again (packer-4, packer-5)', () {
+    test('waits for the shift end, then for the grace deadline', () {
+      final state = seed(shiftBlock());
+      // 2 h to the shift end, 3 h to the grace deadline.
+      expect(shiftWakeUpDelay(state, received),
+          const Duration(hours: 2) + shiftWakeUpSlack);
+      // Past the shift end: the grace deadline is next.
+      final late = received.add(const Duration(hours: 2, minutes: 30));
+      expect(shiftWakeUpDelay(state, late),
+          const Duration(minutes: 30) + shiftWakeUpSlack);
+      // Both gone: nothing to wait for, a resume or a push does the rest.
+      expect(
+          shiftWakeUpDelay(state, received.add(const Duration(hours: 4))),
+          isNull);
+      expect(shiftWakeUpDelay(null, received), isNull);
+      expect(shiftWakeUpDelay(seed(shiftBlock({'enforced': false})), received),
+          isNull);
+      expect(shiftWakeUpDelay(parse(noSession(null)), received), isNull);
+      // No limits sent at all.
+      expect(
+        shiftWakeUpDelay(
+            seed(shiftBlock(
+                {'regular_limit_at': null, 'hard_limit_at': null})),
+            received),
+        isNull,
+      );
+    });
+
+    test('polls only while something is waiting on an answer', () {
+      bool polls(ShiftSessionState? state, {bool screenOpen = false}) =>
+          shouldPollShiftClock(
+              screenOpen: screenOpen, state: state, now: received);
+
+      // The shift complete screen is up, or wanted.
+      expect(polls(null, screenOpen: true), isTrue);
+      expect(polls(parse(openSession())), isTrue);
+      // Support is holding a request, or has approved one.
+      expect(
+          polls(parse(openSession({
+            'status': 'extended',
+            'shift_complete': false,
+            'show_dialog': false,
+          }))),
+          isTrue);
+      expect(
+          polls(parse(openSession({
+            'status': 'active',
+            'shift_complete': false,
+            'show_dialog': false,
+            'pending_request': request(),
+          }))),
+          isTrue);
+      // The local countdown has just run out: the server's minute tick has
+      // yet to catch up.
+      expect(polls(seed(shiftBlock({
+            'server_time': '2026-09-15T18:01:00+05:45',
+          }))),
           isTrue);
     });
 
-    test('offline packers are polled while the shift complete screen is wanted',
-        () {
+    test('nothing repeating while the shift end is still ahead', () {
+      bool polls(ShiftSessionState? state) =>
+          shouldPollShiftClock(screenOpen: false, state: state, now: received);
+
+      expect(polls(seed(shiftBlock())), isFalse, reason: '2 h still to go');
+      expect(polls(seed(shiftBlock({'enforced': false}))), isFalse);
+      expect(polls(parse(noSession(null))), isFalse);
+      expect(polls(null), isFalse);
+      // Long past the shift end with the server still calling it active: stop
+      // asking rather than poll for ever.
       expect(
-          shouldPollShiftClock(
-              online: false, screenOpen: false, state: parse(openSession())),
-          isTrue);
-      expect(
-          shouldPollShiftClock(online: false, screenOpen: true, state: null),
-          isTrue);
+          polls(seed(shiftBlock({
+            'server_time': '2026-09-15T18:30:00+05:45',
+          }))),
+          isFalse);
+    });
+  });
+
+  group('the summary shift block (packer-5)', () {
+    test('a missing or broken block is ignored', () {
+      expect(ShiftSessionState.fromSummaryJson(null), isNull);
+      expect(ShiftSessionState.fromSummaryJson('nonsense'), isNull);
+      final empty = ShiftSessionState.fromSummaryJson({})!;
+      expect(empty.enforced, isFalse);
+      expect(empty.hasSession, isFalse);
+      expect(empty.showDialog, isFalse);
+      expect(empty.canTakeWork, isTrue);
+      expect(empty.pollSeconds, ShiftSessionState.defaultPollSeconds);
+      expect(shiftStatusLine(empty, now: received), isNull);
+      expect(shiftWakeUpDelay(empty, received), isNull);
     });
 
-    test('offline packers with nothing to show are not polled', () {
+    test('is read like the clock itself, minus what it does not carry', () {
+      final state = seed(shiftBlock());
+      expect(state.fromSummary, isTrue);
+      expect(state.enforced, isTrue);
+      expect(state.hasSession, isTrue);
+      expect(state.sessionId, 7);
+      expect(state.status, ShiftStatus.active);
+      expect(state.role, isEmpty, reason: 'the block sends no role');
+      expect(state.canRequest, isTrue);
+      expect(state.regularLimitAt, at('2026-09-15T18:00:00+05:45'));
+      expect(state.hardLimitAt, at('2026-09-15T19:00:00+05:45'));
+      expect(state.roster, isNull);
+      expect(state.pendingRequest, isNull);
+      expect(state.lastDecision, isNull);
+      expect(state.secondsToHardLimit, isNull);
+      // Worked out from hard_limit_at and the clock correction instead.
+      expect(state.secondsToHardLimitAt(received), 3 * 3600);
+      expect(isShiftClockVisible(state), isTrue);
+    });
+
+    test('merged over the clock: it keeps the roster and the request', () {
+      final clock = parse(openSession({
+        'status': 'active',
+        'shift_complete': false,
+        'show_dialog': false,
+        'can_take_work': true,
+        'pending_request': request(),
+        'can_request': false,
+      }));
+      final same = clock.withSeed(seed(shiftBlock({'can_request': false}),
+          receivedAt: received.add(const Duration(minutes: 5))));
+      expect(same.fromSummary, isFalse,
+          reason: 'nothing new: no need to ask the clock');
+      expect(same.roster, isNotNull);
+      expect(same.pendingRequest?.id, 31);
+      expect(same.extensionBase, isNotNull);
+      expect(same.receivedAt, received.add(const Duration(minutes: 5)));
+      expect(same.role, 'packer', reason: 'kept: the block sends no role');
+      expect(same.status, ShiftStatus.active);
+
+      // The seed says the shift is over: shown in the status line, but the
+      // screen waits for GET /attendance/session/ to confirm it.
+      final over = clock.withSeed(seed(shiftBlock({
+        'status': 'awaiting_extension',
+        'shift_complete': true,
+        'show_dialog': true,
+        'can_take_work': false,
+        'can_request': false,
+        'note': packerBusyNote,
+      })));
+      expect(over.fromSummary, isTrue);
+      expect(over.shiftComplete, isTrue);
+      expect(over.note, packerBusyNote);
+      expect(over.roster, isNotNull);
+      expect(shiftStatusLine(over, now: received), 'Shift over');
       expect(
-          shouldPollShiftClock(
-              online: false,
-              screenOpen: false,
-              state: parse(openSession({
-                'status': 'active',
-                'shift_complete': false,
-                'show_dialog': false,
-              }))),
+          canShowShiftCompleteScreen(
+              state: over, work: ShiftWorkInHand.none),
           isFalse);
-      expect(
-          shouldPollShiftClock(
-              online: false, screenOpen: false, state: parse(noSession(null))),
-          isFalse);
-      expect(
-          shouldPollShiftClock(online: false, screenOpen: false, state: null),
-          isFalse);
+
+      // Support decided the request while the app was not looking.
+      final decided = clock.withSeed(seed(shiftBlock()));
+      expect(decided.fromSummary, isTrue);
+      expect(decided.pendingRequest, isNull,
+          reason: 'can_request true means the server holds no request');
+    });
+
+    test('a different session, or none, replaces what we had', () {
+      final clock = parse(openSession());
+      final next = clock.withSeed(seed(shiftBlock({'session_id': 8})));
+      expect(next.sessionId, 8);
+      expect(next.roster, isNull);
+      expect(next.pendingRequest, isNull);
+      expect(next.fromSummary, isTrue);
+
+      final ended = clock.withSeed(seed(shiftBlock({
+        'has_session': false,
+        'session_id': null,
+        'status': null,
+        'shift_complete': false,
+        'show_dialog': false,
+        'can_request': false,
+      })));
+      expect(ended.hasSession, isFalse);
+      expect(ended.fromSummary, isTrue, reason: 'the check-out is confirmed');
+      expect(shiftStatusLine(ended, now: received), isNull);
+
+      // Nothing new about a packer who is already checked out.
+      final checkedOut = parse(noSession({
+        'ended_at': '2026-09-15T19:05:00+05:45',
+        'end_reason': 'auto',
+      }));
+      final still = checkedOut.withSeed(seed(shiftBlock({
+        'has_session': false,
+        'session_id': null,
+        'status': null,
+        'shift_complete': false,
+        'show_dialog': false,
+        'can_request': false,
+      })));
+      expect(still.fromSummary, isFalse, reason: 'nothing to confirm');
+      expect(still.lastSession?.endReason, ShiftEndReason.auto,
+          reason: 'the block sends no last_session; keep ours');
     });
   });
 

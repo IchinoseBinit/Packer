@@ -14,19 +14,28 @@ import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/repo/shift_clock_repo.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observer.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-/// The packer's shift clock (GET /attendance/session/).
+/// The packer's shift clock.
 ///
-/// Started by the dashboard for packers. Refreshes on start, on resume, every
-/// poll_seconds while in the foreground and online (or while the shift
-/// complete screen is up or wanted), after going online, after a shift push
-/// and after sending or cancelling a request. Opens the shift complete screen
-/// while show_dialog is true and handles server check-outs.
+/// Started by the dashboard for packers. It knows when the shift ends without
+/// asking: the packer summary carries a `shift` block, the clock keeps it with
+/// the phone time it arrived, corrects the phone clock against server_time and
+/// runs its own countdown to the shift end and to the grace deadline. A local
+/// timer fires at those moments and then asks GET /attendance/session/ once to
+/// confirm. It also refreshes on start, on resume, after going online, after a
+/// shift push, after sending or cancelling a request and on pull-to-refresh,
+/// and keeps a repeating poll only while something is waiting on an answer
+/// (see shouldPollShiftClock).
+///
+/// It opens the shift complete screen while the server says show_dialog - but
+/// never while the packer has work in hand: they read "Shift over · finish
+/// this order" on the home screen and get the screen once the work is done.
 class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   static const _noticePrefsKey = 'shift_clock_checkout_notice_';
 
@@ -42,6 +51,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   String? requestError;
 
   HomeProvider? _home;
+  OrderProvider? _order;
 
   /// The dashboards that started the clock and are still alive. The app can
   /// hold more than one (an order call pushes a second dashboard), so the
@@ -53,13 +63,21 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   bool _inForeground = true;
   bool _lastOnline = false;
   bool _lastRefreshOk = false;
+  ShiftWorkInHand _lastWork = ShiftWorkInHand.none;
+
+  /// The summary seed already taken; a fetch always makes a new object.
+  ShiftSessionState? _lastSeed;
+
+  /// Repeating poll, only while something is waiting on an answer.
   Timer? _pollTimer;
+
+  /// One-shot wake-up at the shift end or the grace deadline.
+  Timer? _deadlineTimer;
   Future<void>? _inFlight;
   bool _refreshAgain = false;
 
   VoidCallback? _closeScreen;
   bool _openingScreen = false;
-  String? _snoozedSignature;
 
   bool get isPacker {
     try {
@@ -76,28 +94,37 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     return current;
   }
 
-  /// The shift complete screen should be up (and hasn't been set aside).
+  /// The shift complete screen should be up: the clock itself says so and the
+  /// packer has nothing in hand.
   bool get wantsScreen =>
-      (visibleSession?.showDialog ?? false) && _snoozedSignature == null;
+      canShowShiftCompleteScreen(state: visibleSession, work: workInHand);
 
   bool get isScreenOpen => _closeScreen != null;
 
-  /// Work the packer has to finish before they can be checked out: the
-  /// server's note (basket/order in hand, stock audit owed) or orders assigned
-  /// to them in the app.
-  bool get hasWorkInHand =>
-      (state?.note.isNotEmpty ?? false) ||
-      (_home?.latestOrder.isNotEmpty ?? false);
+  /// Work the packer has to finish before they can be checked out: an order
+  /// assigned to them, a basket session they are still packing, or the
+  /// server's note saying it is waiting for one. While there is any, the
+  /// blocking screen stays away and the home status line says so instead.
+  ShiftWorkInHand get workInHand => shiftWorkInHand(
+        assignedOrder: _home?.latestOrder.isNotEmpty ?? false,
+        openBasket: _order?.baskets.isNotEmpty ?? false,
+        note: state?.note ?? '',
+      );
+
+  bool get hasWorkInHand => workInHand != ShiftWorkInHand.none;
 
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
 
   /// Start for the logged-in user. [owner] is a dashboard; the clock keeps
-  /// running until every owner has called [stop].
-  Future<void> start(HomeProvider home, {required Object owner}) async {
+  /// running until every owner has called [stop]. [order] is the order flow,
+  /// for the basket session a packer may still have open.
+  Future<void> start(HomeProvider home,
+      {required Object owner, OrderProvider? order}) async {
     if (_started && identical(_home, home)) {
       _owners.add(owner);
+      _attachOrder(order);
       await refresh();
       return;
     }
@@ -113,9 +140,20 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     _inForeground = true;
     _lastOnline = home.isOnline;
     home.addListener(_onHomeChanged);
+    _attachOrder(order);
     WidgetsBinding.instance.addObserver(this);
+    // The summary fetched at login already knows when this shift ends.
+    _takeSeed(confirm: false);
+    _lastWork = workInHand;
     await refresh();
     await _handleLaunchMessage();
+  }
+
+  void _attachOrder(OrderProvider? order) {
+    if (order == null || identical(_order, order)) return;
+    _order?.removeListener(_onWorkChanged);
+    _order = order;
+    order.addListener(_onWorkChanged);
   }
 
   /// [owner] (a dashboard) went away. Stops once no dashboard is left:
@@ -133,16 +171,18 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     if (!_started) return;
     _started = false;
     _epoch++;
-    _pollTimer?.cancel();
-    _pollTimer = null;
+    _cancelTimers();
     _home?.removeListener(_onHomeChanged);
     _home = null;
+    _order?.removeListener(_onWorkChanged);
+    _order = null;
     WidgetsBinding.instance.removeObserver(this);
     state = null;
     isSubmitting = false;
     isCancelling = false;
     requestError = null;
-    _snoozedSignature = null;
+    _lastSeed = null;
+    _lastWork = ShiftWorkInHand.none;
     _openingScreen = false;
     // Called while the dashboard is being disposed; tell listeners afterwards.
     Future.microtask(() {
@@ -155,25 +195,80 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       if (!_inForeground) {
         _inForeground = true;
+        // Timers do not run while the app is away: look at the clock again.
         refresh();
       }
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       _inForeground = false;
-      _pollTimer?.cancel();
-      _pollTimer = null;
+      _cancelTimers();
     }
   }
 
   void _onHomeChanged() {
+    _takeSeed();
     final online = _home?.isOnline ?? false;
-    if (online == _lastOnline) return;
-    _lastOnline = online;
-    if (online) {
-      refresh();
-    } else {
-      _schedulePoll();
+    if (online != _lastOnline) {
+      _lastOnline = online;
+      if (online) {
+        refresh();
+      } else {
+        _scheduleNext();
+      }
     }
+    _onWorkChanged();
+  }
+
+  /// An order was assigned or finished, or a basket session opened or closed:
+  /// the status line changes and the blocking screen comes or goes with it.
+  void _onWorkChanged() {
+    if (!_started) return;
+    final work = workInHand;
+    if (work == _lastWork) return;
+    _lastWork = work;
+    if (wantsScreen) {
+      _openScreen();
+    } else {
+      _closeScreen?.call();
+    }
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // The summary's shift block
+  // ---------------------------------------------------------------------------
+
+  /// Takes the `shift` block of the last packer summary, if it is new.
+  void _takeSeed({bool confirm = true}) {
+    final seed = _home?.summaryShift;
+    if (seed == null || identical(seed, _lastSeed)) return;
+    _lastSeed = seed;
+    seedFromSummary(seed, confirm: confirm);
+  }
+
+  /// Apply a summary's `shift` block: the shift end and the grace deadline,
+  /// which the app counts down to itself. Anything new in it is confirmed with
+  /// GET /attendance/session/ before the app acts on it, so a seed can move
+  /// the status line but never opens the blocking screen on its own.
+  void seedFromSummary(ShiftSessionState seed, {bool confirm = true}) {
+    if (!_started || !isPacker) return;
+    final current = state;
+    final next = current == null ? seed : current.withSeed(seed);
+    state = next;
+    _lastWork = workInHand;
+    notifyListeners();
+
+    if (wantsScreen) {
+      _openScreen();
+    } else {
+      _closeScreen?.call();
+    }
+
+    if (confirm && next.fromSummary && next.enforced) {
+      refresh();
+      return;
+    }
+    _scheduleNext();
   }
 
   Future<void> _handleLaunchMessage() async {
@@ -221,39 +316,50 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       if (epoch == _epoch) _lastRefreshOk = false;
       debugPrint('Shift clock refresh failed: $e');
     } finally {
-      if (epoch == _epoch) _schedulePoll();
+      if (epoch == _epoch) _scheduleNext();
     }
   }
 
-  void _schedulePoll() {
+  void _cancelTimers() {
     _pollTimer?.cancel();
     _pollTimer = null;
-    if (!_started || !_inForeground) return;
-    if (!shouldPollShiftClock(
-      online: _home?.isOnline ?? false,
-      screenOpen: isScreenOpen,
-      state: state,
-    )) {
-      return;
-    }
-    final seconds = state?.pollSeconds ?? ShiftSessionState.defaultPollSeconds;
-    _pollTimer = Timer(Duration(seconds: seconds), refresh);
+    _deadlineTimer?.cancel();
+    _deadlineTimer = null;
   }
 
-  /// True while a poll is scheduled.
+  /// A repeating poll while something is waiting on an answer; otherwise one
+  /// wake-up at the shift end (and at the grace deadline), which is normally
+  /// the only thing the app is waiting for.
+  void _scheduleNext() {
+    _cancelTimers();
+    if (!_started || !_inForeground) return;
+    final current = state;
+    if (shouldPollShiftClock(screenOpen: isScreenOpen, state: current)) {
+      final seconds =
+          current?.pollSeconds ?? ShiftSessionState.defaultPollSeconds;
+      _pollTimer = Timer(Duration(seconds: seconds), refresh);
+      return;
+    }
+    final wait = shiftWakeUpDelay(current, DateTime.now());
+    if (wait != null) _deadlineTimer = Timer(wait, refresh);
+  }
+
+  /// True while the clock keeps asking every poll_seconds.
   bool get isPolling => _pollTimer?.isActive ?? false;
+
+  /// True while a one-shot wake-up is set for the shift end or the grace
+  /// deadline.
+  bool get isWaitingForDeadline => _deadlineTimer?.isActive ?? false;
+
+  /// True while the clock is due to look again, either way.
+  bool get isScheduled => isPolling || isWaitingForDeadline;
 
   /// [wasOnline]: whether the packer was online when [next] was requested
   /// (null when it came back from a request or cancel).
   Future<void> _apply(ShiftSessionState next, {bool? wasOnline}) async {
     final previous = state;
     state = next;
-    if (_snoozedSignature != null &&
-        (!next.showDialog ||
-            shiftSnoozeSignature(next) != _snoozedSignature ||
-            !hasWorkInHand)) {
-      _snoozedSignature = null;
-    }
+    _lastWork = workInHand;
     notifyListeners();
 
     if (wantsScreen) {
@@ -270,6 +376,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     if (!next.hasSession) {
       await _handleServerCheckout(next, wasOnline: wasOnline);
     }
+    _scheduleNext();
   }
 
   // ---------------------------------------------------------------------------
@@ -278,10 +385,6 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   Future<void> handlePush(Map<String, dynamic> data) async {
     if (!_started) return;
-    if (data['type'] == ShiftPushType.limitReached ||
-        data['type'] == ShiftPushType.extensionDecided) {
-      _snoozedSignature = null;
-    }
     await refresh();
     if (!_started) return;
 
@@ -296,10 +399,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   /// Going online was refused with 409 shift_complete.
-  Future<void> onShiftCompleteRefused() async {
-    _snoozedSignature = null;
-    await refresh();
-  }
+  Future<void> onShiftCompleteRefused() => refresh();
 
   // ---------------------------------------------------------------------------
   // Extension requests
@@ -364,20 +464,15 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     if (_closeScreen == close) _closeScreen = null;
   }
 
-  /// Home status card tapped.
+  /// Home status card tapped. A shift only the summary has told us about is
+  /// confirmed with the clock first; the screen opens when that comes back.
   void openScreen() {
-    _snoozedSignature = null;
-    if (wantsScreen) _openScreen();
-  }
-
-  /// "Finish my current work first": set the screen aside while work is in
-  /// hand and nothing about the shift changes.
-  void snoozeForWorkInHand() {
-    final current = state;
-    if (current == null) return;
-    _snoozedSignature = shiftSnoozeSignature(current);
-    _closeScreen?.call();
-    notifyListeners();
+    if (wantsScreen) {
+      _openScreen();
+      return;
+    }
+    final session = visibleSession;
+    if (session != null && session.showDialog && !hasWorkInHand) refresh();
   }
 
   void _openScreen() {
@@ -472,7 +567,6 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// doesn't ask for a check-out scan, show them offline and, when [message]
   /// is given, tell them.
   Future<void> _checkedOutByServer(String? message) async {
-    _snoozedSignature = null;
     _closeScreen?.call();
     await SecureStorageHelper().remove(key: SecureStorageConstants.isOnlineKey);
     final home = _home;

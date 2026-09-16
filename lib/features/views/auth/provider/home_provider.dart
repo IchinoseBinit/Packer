@@ -12,6 +12,7 @@ import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/order/models/see_order_details_packer.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:provider/provider.dart';
@@ -74,6 +75,14 @@ class HomeProvider with ChangeNotifier {
 
   PackerSummary? packerSummary;
 
+  /// The `shift` block of the last packer summary: when this shift ends, when
+  /// the grace period runs out and the server's own time, so ShiftClockProvider
+  /// can run its countdown without asking the clock every minute. Null while no
+  /// summary has carried one (an older backend, or the server couldn't build
+  /// it); a fetch always stores a new object, which is how the clock tells a
+  /// fresh one from the one it has already taken.
+  ShiftSessionState? summaryShift;
+
   // For audio notification sounds
 
   // notifications : order that are not assigned to any packer and comes from notification
@@ -130,8 +139,14 @@ class HomeProvider with ChangeNotifier {
         url: AppUrls.packerSummaryUrl,
       );
 
-      packerSummary = PackerSummary.fromJson(response.data['data']);
+      final data = response.data['data'];
+      packerSummary = PackerSummary.fromJson(data);
       isOnline = packerSummary?.isOnline ?? false;
+      // Shift clock: the shift end the app counts down to itself. Parsing is
+      // defensive and the key is optional, so the summary stands either way.
+      final shift = ShiftSessionState.fromSummaryJson(
+          data is Map ? data['shift'] : null);
+      if (shift != null) summaryShift = shift;
       notifyListeners();
     } catch (ex) {
       debugPrint('Error: $ex');

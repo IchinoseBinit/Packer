@@ -1,4 +1,5 @@
-/// The shift clock as GET /attendance/session/ returns it.
+/// The shift clock as GET /attendance/session/ returns it, and as the packer
+/// summary carries it in its `shift` block.
 ///
 /// Parsing is defensive: any missing key, null or wrong type falls back to a
 /// value that shows nothing, so a partial response can never block a packer.
@@ -220,8 +221,15 @@ class ShiftSessionState {
   final ShiftRequest? pendingRequest;
   final ShiftRequest? lastDecision;
 
-  /// Phone clock when the response arrived; anchors the seconds_to_* values.
+  /// Phone clock when the response arrived; anchors the seconds_to_* values
+  /// and, with [serverTime], the correction for a wrong device clock.
   final DateTime receivedAt;
+
+  /// True while the newest word about this shift came from the summary's
+  /// `shift` block rather than from GET /attendance/session/. Such a state
+  /// runs the countdown but is confirmed with the clock itself before the app
+  /// acts on it (opens the shift complete screen).
+  final bool fromSummary;
 
   const ShiftSessionState({
     required this.hasSession,
@@ -249,10 +257,11 @@ class ShiftSessionState {
     required this.pendingRequest,
     required this.lastDecision,
     required this.receivedAt,
+    this.fromSummary = false,
   });
 
   factory ShiftSessionState.fromJson(Map<dynamic, dynamic> json,
-      {DateTime? receivedAt}) {
+      {DateTime? receivedAt, bool fromSummary = false}) {
     final poll = jsonInt(json['poll_seconds']);
     final hasSession = jsonBool(json['has_session']);
     return ShiftSessionState(
@@ -284,14 +293,95 @@ class ShiftSessionState {
       pendingRequest: ShiftRequest.fromJson(json['pending_request']),
       lastDecision: ShiftRequest.fromJson(json['last_decision']),
       receivedAt: receivedAt ?? DateTime.now(),
+      fromSummary: fromSummary,
     );
   }
 
-  /// seconds_to_hard_limit counted down to [now] on the phone.
+  /// The `shift` block of a summary response, or null when the endpoint sent
+  /// none (an older backend, or the server could not build it).
+  static ShiftSessionState? fromSummaryJson(dynamic json,
+      {DateTime? receivedAt}) {
+    final map = asJsonMap(json);
+    if (map == null) return null;
+    return ShiftSessionState.fromJson(map,
+        receivedAt: receivedAt, fromSummary: true);
+  }
+
+  /// server_time minus the phone clock when this state arrived: what has to be
+  /// added to the phone's own time to read it as the server does. Zero when
+  /// the server sent no server_time, which leaves the phone clock as it is.
+  Duration get clockSkew {
+    final server = serverTime;
+    if (server == null) return Duration.zero;
+    return server.instant.difference(receivedAt.toUtc());
+  }
+
+  /// The phone clock [now] read as the server's clock.
+  DateTime serverInstantAt(DateTime now) => now.toUtc().add(clockSkew);
+
+  /// How long is left until [time] on the server's clock; null when [time] is
+  /// unknown. Negative once it has passed.
+  Duration? remainingTo(ShiftTime? time, DateTime now) =>
+      time?.instant.difference(serverInstantAt(now));
+
+  /// seconds_to_hard_limit counted down to [now] on the phone; worked out from
+  /// hard_limit_at and the clock correction when the server sent no countdown
+  /// (the summary's `shift` block never does).
   int? secondsToHardLimitAt(DateTime now) {
     final seconds = secondsToHardLimit;
-    if (seconds == null) return null;
+    if (seconds == null) return remainingTo(hardLimitAt, now)?.inSeconds;
     return seconds - now.difference(receivedAt).inSeconds;
+  }
+
+  /// This state with the summary's `shift` block [seed] applied over it: the
+  /// times and flags the seed carries win, and everything it does not carry
+  /// (the roster, the requests, the session that closed last) is kept.
+  ///
+  /// The result stays confirmed - [fromSummary] false - only while the seed
+  /// says nothing new about the session, its status or what the packer may
+  /// do; anything new is confirmed with GET /attendance/session/ before the
+  /// app acts on it.
+  ShiftSessionState withSeed(ShiftSessionState seed) {
+    final sameSession = hasSession == seed.hasSession &&
+        (!hasSession || sessionId == seed.sessionId);
+    if (!sameSession) return seed;
+    final confirmed = !fromSummary &&
+        status == seed.status &&
+        showDialog == seed.showDialog &&
+        shiftComplete == seed.shiftComplete &&
+        canTakeWork == seed.canTakeWork &&
+        canRequest == seed.canRequest;
+    return ShiftSessionState(
+      hasSession: seed.hasSession,
+      enforced: seed.enforced,
+      pollSeconds: seed.pollSeconds,
+      serverTime: seed.serverTime ?? serverTime,
+      canTakeWork: seed.canTakeWork,
+      showDialog: seed.showDialog,
+      locked: locked,
+      lastSession: lastSession,
+      sessionId: seed.sessionId ?? sessionId,
+      status: seed.status,
+      role: seed.role.isEmpty ? role : seed.role,
+      startedAt: seed.startedAt ?? startedAt,
+      regularHours: regularHours,
+      regularLimitAt: seed.regularLimitAt ?? regularLimitAt,
+      hardLimitAt: seed.hardLimitAt ?? hardLimitAt,
+      // Anchored to the old receivedAt: the limits above and the clock
+      // correction say the same thing against the seed's own arrival.
+      secondsToRegularLimit: null,
+      secondsToHardLimit: null,
+      shiftComplete: seed.shiftComplete,
+      canRequest: seed.canRequest,
+      note: seed.note,
+      extensionBase: extensionBase,
+      roster: roster,
+      // can_request true means the server holds no pending request any more.
+      pendingRequest: seed.canRequest ? null : pendingRequest,
+      lastDecision: lastDecision,
+      receivedAt: seed.receivedAt,
+      fromSummary: !confirmed,
+    );
   }
 }
 

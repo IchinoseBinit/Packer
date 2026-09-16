@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -7,17 +9,47 @@ import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 
-/// Home screen shift status: "Shift ends 2 PM", "Extension until 8 PM" or
-/// "Shift complete". Hidden unless the packer's shift clock is enforced and a
-/// session is open.
-class ShiftStatusCard extends StatelessWidget {
+/// Home screen shift status: "Shift ends 6 PM · 2 h 15 m left", "Extension
+/// until 8 PM", "Shift over" or, with work in hand, "Shift over · finish this
+/// order". Hidden unless the packer's shift clock is enforced and a session is
+/// open.
+///
+/// The countdown ticks locally off the phone clock corrected against the
+/// server's; nothing here asks the server anything.
+class ShiftStatusCard extends StatefulWidget {
   const ShiftStatusCard({super.key});
+
+  @override
+  State<ShiftStatusCard> createState() => _ShiftStatusCardState();
+}
+
+class _ShiftStatusCardState extends State<ShiftStatusCard> {
+  static const _tick = Duration(seconds: 20);
+
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(_tick, (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ShiftClockProvider>(builder: (_, clock, __) {
       final session = clock.visibleSession;
-      final title = session == null ? null : shiftStatusLine(session);
+      final work = clock.workInHand;
+      final title = session == null
+          ? null
+          : shiftStatusLine(session, now: DateTime.now(), work: work);
       if (session == null || title == null) {
         return const SizedBox.shrink();
       }
@@ -34,7 +66,9 @@ class ShiftStatusCard extends StatelessWidget {
           : extended
               ? Icons.more_time
               : Icons.schedule;
-      final canOpen = over && session.showDialog;
+      // Work in hand: nothing to open, the packer finishes it first.
+      final canOpen =
+          over && session.showDialog && work == ShiftWorkInHand.none;
 
       final radius = BorderRadius.circular(12);
       return Padding(
@@ -66,7 +100,7 @@ class ShiftStatusCard extends StatelessWidget {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          shiftStatusDetail(session),
+                          shiftStatusDetail(session, work: work),
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 12.sp,

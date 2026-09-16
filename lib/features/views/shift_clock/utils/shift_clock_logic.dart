@@ -19,6 +19,19 @@ const shiftExtensionHourChoices = <double>[0.5, 1, 2, 3, 4];
 /// A check-out older than this is not announced any more.
 const checkoutNoticeWindow = Duration(hours: 12);
 
+/// Added to a local deadline before the app looks again, so the server's own
+/// minute tick has had time to move the shift on.
+const shiftWakeUpSlack = Duration(seconds: 2);
+
+/// How long the app keeps asking after its own countdown has run out and the
+/// server has not moved the shift on yet. The backend tick runs every minute;
+/// after this the app waits for a resume, a push or a refresh instead.
+const shiftCatchUpWindow = Duration(minutes: 10);
+
+/// The server's note (attendance.services.PACKER_BUSY_NOTE) while a check-out
+/// is waiting for the packer to finish what they have in hand.
+const packerBusyNote = 'Waiting for the basket/order in hand';
+
 /// True for the data map of a shift clock push (not an order).
 bool isShiftClockPush(Map<dynamic, dynamic>? data) =>
     data != null && ShiftPushType.all.contains(data['type']);
@@ -84,6 +97,51 @@ String payLabel(String pay) =>
     pay == ShiftPay.normal ? 'normal pay' : 'overtime pay';
 
 // ---------------------------------------------------------------------------
+// Work in hand
+// ---------------------------------------------------------------------------
+
+/// What the packer still has to finish before the shift clock can check them
+/// out - and while any of it is true the blocking screen never shows.
+enum ShiftWorkInHand { none, order, basket }
+
+/// True for the server's note about work in hand ("Waiting for the
+/// basket/order in hand"). A stock audit note ("Waiting for stock audit: ...")
+/// is not work in hand: the packer starts that from the shift complete screen.
+bool isWorkInHandNote(String note) {
+  final text = note.trim().toLowerCase();
+  if (text.isEmpty) return false;
+  return text == packerBusyNote.toLowerCase() || text.endsWith('in hand');
+}
+
+/// Work the packer has in hand: an order assigned to them, a basket session
+/// they are still packing, or the server saying it is waiting for one.
+ShiftWorkInHand shiftWorkInHand({
+  required bool assignedOrder,
+  required bool openBasket,
+  required String note,
+}) {
+  if (assignedOrder) return ShiftWorkInHand.order;
+  if (openBasket) return ShiftWorkInHand.basket;
+  return isWorkInHandNote(note) ? ShiftWorkInHand.order : ShiftWorkInHand.none;
+}
+
+/// May the blocking "Your shift is complete" screen show?
+///
+/// Only for a shift the clock itself confirmed (a summary seed is checked with
+/// GET /attendance/session/ first) that the server says to show, and never
+/// while work is in hand: that packer reads it in the home status line and
+/// gets the screen as soon as the work is done.
+bool canShowShiftCompleteScreen({
+  required ShiftSessionState? state,
+  required ShiftWorkInHand work,
+}) =>
+    state != null &&
+    isShiftClockVisible(state) &&
+    state.showDialog &&
+    !state.fromSummary &&
+    work == ShiftWorkInHand.none;
+
+// ---------------------------------------------------------------------------
 // Home status line
 // ---------------------------------------------------------------------------
 
@@ -93,10 +151,39 @@ bool isShiftOver(ShiftSessionState state) =>
     state.status == ShiftStatus.awaitingExtension ||
     state.status == ShiftStatus.closing;
 
-/// "Shift ends 2 PM", "Extension until 8 PM" or "Shift complete"; null when hidden.
-String? shiftStatusLine(ShiftSessionState state) {
+/// "2 h 15 m left", "45 m left", "less than a minute left"; null once [left]
+/// has run out or is unknown.
+String? shiftCountdown(Duration? left) {
+  if (left == null || left <= Duration.zero) return null;
+  if (left < const Duration(minutes: 1)) return 'less than a minute left';
+  final hours = left.inHours;
+  final minutes = left.inMinutes % 60;
+  if (hours == 0) return '$minutes m left';
+  if (minutes == 0) return '$hours h left';
+  return '$hours h $minutes m left';
+}
+
+/// "Shift ends 6 PM · 2 h 15 m left", "Extension until 8 PM", "Shift over" or
+/// "Shift over · finish this order"; null when hidden.
+///
+/// The countdown runs off the phone clock corrected against server_time, so a
+/// phone set to the wrong time still shows the right time left.
+String? shiftStatusLine(
+  ShiftSessionState state, {
+  DateTime? now,
+  ShiftWorkInHand work = ShiftWorkInHand.none,
+}) {
   if (!isShiftClockVisible(state)) return null;
-  if (isShiftOver(state)) return 'Shift complete';
+  if (isShiftOver(state)) {
+    switch (work) {
+      case ShiftWorkInHand.order:
+        return 'Shift over · finish this order';
+      case ShiftWorkInHand.basket:
+        return 'Shift over · finish this basket';
+      case ShiftWorkInHand.none:
+        return 'Shift over';
+    }
+  }
   if (state.status == ShiftStatus.extended) {
     final until = state.hardLimitAt;
     return until == null
@@ -104,17 +191,24 @@ String? shiftStatusLine(ShiftSessionState state) {
         : 'Extension until ${formatShiftClockOn(until, state.serverTime)}';
   }
   final end = state.regularLimitAt;
-  return end == null
-      ? 'On shift'
-      : 'Shift ends ${formatShiftClockOn(end, state.serverTime)}';
+  if (end == null) return 'On shift';
+  final line = 'Shift ends ${formatShiftClockOn(end, state.serverTime)}';
+  final left = shiftCountdown(state.remainingTo(end, now ?? DateTime.now()));
+  return left == null ? line : '$line · $left';
 }
 
 /// The smaller line under the status.
-String shiftStatusDetail(ShiftSessionState state) {
+String shiftStatusDetail(
+  ShiftSessionState state, {
+  ShiftWorkInHand work = ShiftWorkInHand.none,
+}) {
   if (isShiftOver(state)) {
-    return state.pendingRequest != null
-        ? 'Waiting for support to approve more time'
-        : 'Tap to ask for more time or check out';
+    if (state.pendingRequest != null) {
+      return 'Waiting for support to approve more time';
+    }
+    return work == ShiftWorkInHand.none
+        ? 'Tap to ask for more time or check out'
+        : 'Finish it, then ask for more time or check out';
   }
   if (state.status == ShiftStatus.extended) {
     final decision = state.lastDecision;
@@ -328,21 +422,52 @@ ServerCheckoutAction serverCheckoutAction(
 }
 
 // ---------------------------------------------------------------------------
-// Polling and the stock audit
+// When to look at the clock again
 // ---------------------------------------------------------------------------
 
-/// Keep refreshing every poll_seconds (in the foreground) while the packer is
-/// online, and also while the shift complete screen is up or wanted: an
-/// offline packer refused with 409 sits on that screen, and support's answer
-/// may never arrive as a push.
+/// How long to wait before looking at the clock again, from the shift's own
+/// deadlines: the next of the shift end and the grace deadline still ahead on
+/// the server's clock. Null when there is nothing to wait for - no enforced
+/// session, no times, or both deadlines already passed - and the app then
+/// waits for a resume, a push or a refresh instead.
+Duration? shiftWakeUpDelay(ShiftSessionState? state, DateTime now) {
+  if (state == null || !state.enforced || !state.hasSession) return null;
+  Duration? best;
+  for (final deadline in [state.regularLimitAt, state.hardLimitAt]) {
+    final left = state.remainingTo(deadline, now);
+    if (left == null || left <= Duration.zero) continue;
+    if (best == null || left < best) best = left;
+  }
+  return best == null ? null : best + shiftWakeUpSlack;
+}
+
+/// Keep asking every poll_seconds (in the foreground) only while something is
+/// genuinely waiting on an answer: the shift complete screen is up or wanted,
+/// support is holding a request, the shift is past its regular hours
+/// (awaiting_extension) or running on an approved extension, or the app's own
+/// countdown has just run out and the server's minute tick has yet to catch
+/// up. Anything else - enforcement off, or the shift end still ahead - runs on
+/// the local countdown ([shiftWakeUpDelay]) with no repeating calls at all.
 bool shouldPollShiftClock({
-  required bool online,
   required bool screenOpen,
   required ShiftSessionState? state,
-}) =>
-    online ||
-    screenOpen ||
-    (state != null && state.hasSession && state.showDialog);
+  DateTime? now,
+}) {
+  if (screenOpen) return true;
+  if (state == null || !state.enforced || !state.hasSession) return false;
+  if (state.showDialog || state.pendingRequest != null) return true;
+  if (state.status == ShiftStatus.awaitingExtension ||
+      state.status == ShiftStatus.extended ||
+      state.status == ShiftStatus.closing) {
+    return true;
+  }
+  final left = state.remainingTo(state.regularLimitAt, now ?? DateTime.now());
+  return left != null && left <= Duration.zero && left > -shiftCatchUpWindow;
+}
+
+// ---------------------------------------------------------------------------
+// The stock audit
+// ---------------------------------------------------------------------------
 
 /// What the shift complete screen says and offers about the stock audit.
 class ShiftAuditPrompt {
@@ -373,14 +498,3 @@ ShiftAuditPrompt? shiftAuditPrompt(AuditStatusEnum? status) {
       return null;
   }
 }
-
-/// Changes whenever something the packer should see again changes.
-String shiftSnoozeSignature(ShiftSessionState state) => [
-      state.sessionId,
-      state.status,
-      state.note,
-      state.pendingRequest?.id,
-      state.lastDecision?.id,
-      state.lastDecision?.status,
-      state.hardLimitAt?.instant.millisecondsSinceEpoch,
-    ].join('|');

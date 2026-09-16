@@ -12,13 +12,16 @@ import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observer.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 
-/// Full-screen "Your shift is complete", up while show_dialog is true.
+/// Full-screen "Your shift is complete", up while the clock says show_dialog
+/// and the packer has nothing in hand. A packer still packing an order or a
+/// basket never sees it: they read "Shift over · finish this order" on the home
+/// screen, and this opens once that work is done.
 ///
 /// Back does not leave it. It closes itself when the shift clock stops asking
-/// for it (extension approved, checked out) or when the packer sets it aside
-/// to finish work in hand. A dark-store packer who still owes this shift's
-/// stock audit can start or continue it from here: the audit opens on top and
-/// going back from it returns here, ready to check out.
+/// for it: an extension is approved, work lands in the packer's hands, or they
+/// are checked out. A dark-store packer who still owes this shift's stock audit
+/// can start or continue it from here: the audit opens on top and going back
+/// from it returns here, ready to check out.
 class ShiftCompleteScreen extends StatefulWidget {
   const ShiftCompleteScreen({super.key});
 
@@ -183,19 +186,6 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                     if (audit != null) _auditCard(audit),
                     ..._requestSection(clock, session),
                     SizedBox(height: 24.h),
-                    if (clock.hasWorkInHand) ...[
-                      TextButton(
-                        onPressed: _checkingOut || _openingAudit
-                            ? null
-                            : clock.snoozeForWorkInHand,
-                        child: Text(
-                          'Finish my current work first',
-                          style: _textStyle(
-                              14, FontWeight.w600, AppColors.primaryColor),
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                    ],
                     GeneralElevatedButton(
                       title: _checkingOut
                           ? 'Checking out...'
