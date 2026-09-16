@@ -327,7 +327,7 @@ void main() {
       // server_time 1 PM arrived at [received], so 5 h of shift are left.
       expect(shiftStatusLine(active, now: received),
           'Shift ends 6 PM · 5 h left');
-      expect(shiftStatusDetail(active), 'Started 6 AM');
+      expect(shiftStatusDetail(active, now: received), 'Started 6 AM');
 
       final extended = parse(openSession({
         'status': 'extended',
@@ -341,13 +341,16 @@ void main() {
         }),
       }));
       expect(shiftStatusLine(extended, now: received), 'Extension until 8 PM');
-      expect(shiftStatusDetail(extended), 'Approved at overtime pay');
+      expect(shiftStatusDetail(extended, now: received),
+          'Approved at overtime pay');
 
       final over = parse(openSession());
       expect(shiftStatusLine(over, now: received), 'Shift over');
-      expect(shiftStatusDetail(over), 'Tap to ask for more time or check out');
+      expect(shiftStatusDetail(over, now: received),
+          'Tap to ask for more time or check out');
       expect(
-          shiftStatusDetail(parse(openSession({'pending_request': request()}))),
+          shiftStatusDetail(parse(openSession({'pending_request': request()})),
+              now: received),
           'Waiting for support to approve more time');
     });
 
@@ -357,12 +360,12 @@ void main() {
           'Shift over · finish this order');
       expect(shiftStatusLine(over, now: received, work: ShiftWorkInHand.basket),
           'Shift over · finish this basket');
-      expect(shiftStatusDetail(over, work: ShiftWorkInHand.order),
+      expect(shiftStatusDetail(over, now: received, work: ShiftWorkInHand.order),
           'Finish it, then ask for more time or check out');
       // Support already has a request: that is the news, work or not.
       expect(
         shiftStatusDetail(parse(openSession({'pending_request': request()})),
-            work: ShiftWorkInHand.order),
+            now: received, work: ShiftWorkInHand.order),
         'Waiting for support to approve more time',
       );
       // Still on shift: the countdown, whatever is in hand.
@@ -374,6 +377,34 @@ void main() {
       }));
       expect(shiftStatusLine(active, now: received, work: ShiftWorkInHand.order),
           'Shift ends 6 PM · 30 m left');
+    });
+
+    test('the day word follows the clock, not the last response (packer-2)', () {
+      // A 22:00 - 06:00 shift, seeded at 22:05 and never asked about again:
+      // this round's whole point is that the app can hold one response for the
+      // length of a shift. The countdown moves, so the day word must too.
+      final seededAt = DateTime.utc(2026, 9, 15, 16, 20); // 22:05 +05:45
+      final night = seed(
+        shiftBlock({
+          'started_at': '2026-09-15T22:00:00+05:45',
+          'regular_limit_at': '2026-09-16T06:00:00+05:45',
+          'hard_limit_at': '2026-09-16T07:00:00+05:45',
+          'server_time': '2026-09-15T22:05:00+05:45',
+        }),
+        receivedAt: seededAt,
+      );
+      expect(shiftStatusLine(night, now: seededAt),
+          'Shift ends 6 AM tomorrow · 7 h 55 m left');
+      expect(shiftStatusDetail(night, now: seededAt), 'Started 10 PM');
+
+      // 03:05, same response: it is the 16th now, so 6 AM is today.
+      final afterMidnight = seededAt.add(const Duration(hours: 5));
+      expect(shiftStatusLine(night, now: afterMidnight),
+          'Shift ends 6 AM · 2 h 55 m left');
+      expect(shiftStatusDetail(night, now: afterMidnight),
+          'Started 10 PM yesterday');
+      expect(graceLine(night, afterMidnight),
+          "You'll be checked out at 7 AM unless support approves more time");
     });
 
     test('hidden when not enforced, no session or not a packer session', () {
@@ -504,15 +535,17 @@ void main() {
           'Waiting for support to approve working until 8 PM at overtime pay');
       expect(rejectedRequestLine, "Support didn't approve your last request");
       expect(
-        extensionEndedLine(parse(openSession({
-          'last_decision': request({
-            'status': 'approved',
-            'approved_until': '2026-09-15T20:00:00+05:45',
-          }),
-        }))),
+        extensionEndedLine(
+            parse(openSession({
+              'last_decision': request({
+                'status': 'approved',
+                'approved_until': '2026-09-15T20:00:00+05:45',
+              }),
+            })),
+            now: received),
         'Your extension ended at 8 PM',
       );
-      expect(extensionEndedLine(parse(openSession())), isNull);
+      expect(extensionEndedLine(parse(openSession()), now: received), isNull);
       expect(extensionApprovedMessage(at('2026-09-15T20:00:00+05:45'), null),
           'Extension approved until 8 PM');
     });
@@ -1323,7 +1356,7 @@ void main() {
       expect(clock.wantsScreen, isFalse, reason: 'an order is still in hand');
       expect(shiftStatusLine(session, now: received, work: clock.workInHand),
           'Shift over · finish this order');
-      expect(shiftStatusDetail(session, work: clock.workInHand),
+      expect(shiftStatusDetail(session, now: received, work: clock.workInHand),
           'Finish it, then ask for more time or check out');
       // Nothing to open from the home card either.
       clock.openScreen();
@@ -1338,9 +1371,13 @@ void main() {
       expect(shiftStatusLine(session, now: received, work: clock.workInHand),
           'Shift over · finish this basket');
 
-      // The basket is closed: now the screen is wanted.
+      // The basket is closed. Work only counts as done once it has stayed
+      // done for a moment (see the pull-to-refresh test below).
       orders.setBaskets(const []);
       await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.basket);
+      expect(clock.wantsScreen, isFalse);
+      await tester.pump(shiftWorkSettleDelay);
       expect(clock.workInHand, ShiftWorkInHand.none);
       expect(clock.wantsScreen, isTrue);
 
@@ -1352,6 +1389,95 @@ void main() {
       expect(clock.wantsScreen, isFalse);
 
       clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'packer-1: pull to refresh never puts the blocking screen up over an order in hand',
+        (tester) async {
+      final home = _TestHome()
+        ..isOnline = true
+        ..latestOrder = [anOrder()];
+      final orders = _TestOrders();
+      final owner = Object();
+      final clock = ShiftClockProvider(
+          loadSession: () async => parse(openSession({'poll_seconds': 15})));
+
+      await clock.start(home, owner: owner, order: orders);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.order);
+      expect(clock.wantsScreen, isFalse);
+
+      // Pull to refresh: HomeProvider.initialize empties the assigned orders
+      // and tells everyone, then asks the server for them again. The packer is
+      // still holding that order all the while.
+      home.clearLatestOrder();
+      home.isLoading = true;
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.order,
+          reason: 'an emptied list on its own is not a finished order');
+      expect(clock.wantsScreen, isFalse);
+      expect(clock.isScreenOpen, isFalse);
+      expect(
+          shiftStatusLine(clock.visibleSession!,
+              now: received, work: clock.workInHand),
+          'Shift over · finish this order');
+
+      // A slow answer: the wait holds while the orders are still being asked for.
+      await tester.pump(shiftWorkSettleDelay * 3);
+      expect(clock.workInHand, ShiftWorkInHand.order);
+      expect(clock.wantsScreen, isFalse);
+
+      // The orders come back, the same one among them: nothing has changed.
+      home.isLoading = false;
+      home.setOrders([anOrder()]);
+      await tester.pump(shiftWorkSettleDelay);
+      expect(clock.workInHand, ShiftWorkInHand.order);
+      expect(clock.wantsScreen, isFalse);
+
+      // The order really is done: the screen follows once that has held.
+      home.setOrders(<OrderNotification>[]);
+      await tester.pump();
+      expect(clock.wantsScreen, isFalse, reason: 'not believed yet');
+      await tester.pump(shiftWorkSettleDelay);
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(clock.wantsScreen, isTrue);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'packer-3: a basket left behind is not work in hand for the next packer',
+        (tester) async {
+      final orders = _TestOrders()
+        ..setBaskets([Basket(identifier: 'B1', productIdentifiers: const [])]);
+      final first = _TestHome()..isOnline = true;
+      final firstOwner = Object();
+      final clock = ShiftClockProvider(
+          loadSession: () async => parse(openSession({'poll_seconds': 15})));
+
+      await clock.start(first, owner: firstOwner, order: orders);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.basket);
+      expect(clock.wantsScreen, isFalse);
+
+      // They log out with it still scanned. The order flow is app-scoped and
+      // outlives the login, so the clock empties it as it stops.
+      clock.stop(owner: firstOwner);
+      await tester.pump();
+      expect(orders.baskets, isEmpty);
+
+      // The next packer signs in on the same phone: they have nothing in hand.
+      final second = _TestHome()..isOnline = true;
+      final secondOwner = Object();
+      await clock.start(second, owner: secondOwner, order: orders);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(clock.wantsScreen, isTrue,
+          reason: "someone else's basket must not hold the screen back");
+
+      clock.stop(owner: secondOwner);
       await tester.pump(const Duration(seconds: 31));
     });
 
@@ -1484,8 +1610,9 @@ class _TestHome extends HomeProvider {
 
 /// OrderProvider without Hive: only the open baskets matter here.
 class _TestOrders extends OrderProvider {
+  /// Growable, as basketDao.getAll() gives it: resetState() clears it in place.
   void setBaskets(List<Basket> value) {
-    baskets = value;
+    baskets = List.of(value);
     notifyListeners();
   }
 }

@@ -107,7 +107,7 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          shiftStatusDetail(session, work: work),
+                          shiftStatusDetail(session, now: now, work: work),
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 12.sp,

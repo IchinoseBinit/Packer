@@ -63,7 +63,19 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   bool _inForeground = true;
   bool _lastOnline = false;
   bool _lastRefreshOk = false;
+
+  /// The work in hand the app believes, which is what the packer is shown.
   ShiftWorkInHand _lastWork = ShiftWorkInHand.none;
+
+  /// Work that has just gone from the order flow and is not believed gone yet
+  /// (see [workInHand]); null when nothing is settling.
+  ShiftWorkInHand? _clearingWork;
+  Timer? _workSettleTimer;
+
+  /// Extra rounds the settle waits while the home screen is still asking for
+  /// this packer's orders, so a slow answer never reads as "no work".
+  static const _maxWorkSettleRounds = 4;
+  int _workSettleRound = 0;
 
   /// The summary seed already taken; a fetch always makes a new object.
   ShiftSessionState? _lastSeed;
@@ -105,7 +117,21 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// assigned to them, a basket session they are still packing, or the
   /// server's note saying it is waiting for one. While there is any, the
   /// blocking screen stays away and the home status line says so instead.
-  ShiftWorkInHand get workInHand => shiftWorkInHand(
+  ///
+  /// Work going away is believed only once it has held for
+  /// [shiftWorkSettleDelay] (and, while the home screen is still asking for
+  /// the packer's orders, a little longer): pull to refresh empties the
+  /// assigned orders before it asks for them again, and the blocking screen
+  /// must not jump up over a packer who still has the order in hand. Work
+  /// landing in their hands is believed at once.
+  ShiftWorkInHand get workInHand {
+    final work = _workInHandNow;
+    if (work != ShiftWorkInHand.none) return work;
+    return _clearingWork ?? ShiftWorkInHand.none;
+  }
+
+  /// What the order flow says this instant, before the settle above.
+  ShiftWorkInHand get _workInHandNow => shiftWorkInHand(
         assignedOrder: _home?.latestOrder.isNotEmpty ?? false,
         openBasket: _order?.baskets.isNotEmpty ?? false,
         note: state?.note ?? '',
@@ -177,7 +203,12 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     // packer signing in on this phone): the next clock must not start on it.
     _home?.summaryShift = null;
     _home = null;
+    _cancelWorkSettle();
     _order?.removeListener(_onWorkChanged);
+    // A basket this packer walked away from must not read as work in hand for
+    // whoever signs in on this phone next: the order provider outlives them
+    // both. Clears the scanned tags and racks with it, nothing on the server.
+    _order?.resetState();
     _order = null;
     WidgetsBinding.instance.removeObserver(this);
     state = null;
@@ -226,15 +257,62 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// the status line changes and the blocking screen comes or goes with it.
   void _onWorkChanged() {
     if (!_started) return;
-    final work = workInHand;
+    final work = _workInHandNow;
+    if (work == ShiftWorkInHand.none && _lastWork != ShiftWorkInHand.none) {
+      // The work looks done. It may only be the home screen emptying its
+      // orders before it asks for them again: wait and look once more.
+      // Nothing changes for the packer meanwhile.
+      if (_workSettleTimer == null) {
+        _clearingWork = _lastWork;
+        _workSettleRound = 0;
+        _workSettleTimer = Timer(shiftWorkSettleDelay, _onWorkSettled);
+      }
+      return;
+    }
+    _cancelWorkSettle();
+    _applyWork(work);
+  }
+
+  /// The wait above is over: believe what the order flow says now, unless the
+  /// home screen is still waiting for the answer to its own request.
+  void _onWorkSettled() {
+    _workSettleTimer = null;
+    if (!_started) {
+      _clearingWork = null;
+      return;
+    }
+    if ((_home?.isLoading ?? false) && _workSettleRound < _maxWorkSettleRounds) {
+      _workSettleRound++;
+      _workSettleTimer = Timer(shiftWorkSettleDelay, _onWorkSettled);
+      return;
+    }
+    _clearingWork = null;
+    _workSettleRound = 0;
+    _applyWork(_workInHandNow);
+  }
+
+  void _cancelWorkSettle() {
+    _workSettleTimer?.cancel();
+    _workSettleTimer = null;
+    _clearingWork = null;
+    _workSettleRound = 0;
+  }
+
+  void _applyWork(ShiftWorkInHand work) {
     if (work == _lastWork) return;
     _lastWork = work;
+    _syncScreen();
+    notifyListeners();
+  }
+
+  /// Put the blocking screen up or take it down, as the clock and the work in
+  /// hand now stand.
+  void _syncScreen() {
     if (wantsScreen) {
       _openScreen();
     } else {
       _closeScreen?.call();
     }
-    notifyListeners();
   }
 
   // ---------------------------------------------------------------------------
@@ -260,12 +338,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     state = next;
     _lastWork = workInHand;
     notifyListeners();
-
-    if (wantsScreen) {
-      _openScreen();
-    } else {
-      _closeScreen?.call();
-    }
+    _syncScreen();
 
     if (confirm && next.fromSummary && next.enforced) {
       refresh();
@@ -364,16 +437,12 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     state = next;
     _lastWork = workInHand;
     notifyListeners();
-
-    if (wantsScreen) {
-      _openScreen();
-    } else {
-      _closeScreen?.call();
-    }
+    _syncScreen();
 
     final approvedUntil = approvedUntilOnTransition(previous, next);
     if (approvedUntil != null && isShiftClockVisible(next)) {
-      showToast(extensionApprovedMessage(approvedUntil, next.serverTime));
+      showToast(extensionApprovedMessage(
+          approvedUntil, next.serverTimeAt(DateTime.now())));
     }
 
     if (!next.hasSession) {

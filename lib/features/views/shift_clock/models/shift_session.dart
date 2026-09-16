@@ -319,6 +319,19 @@ class ShiftSessionState {
   /// The phone clock [now] read as the server's clock.
   DateTime serverInstantAt(DateTime now) => now.toUtc().add(clockSkew);
 
+  /// server_time moved on to [now], in the offset the server sent: the
+  /// server's own clock as it reads at this moment. Null when the server sent
+  /// no server_time.
+  ///
+  /// This, not [serverTime], is what "today" means to the words on screen: the
+  /// app can hold one response for a whole shift, so the stored server_time
+  /// goes stale while the countdown next to it keeps ticking.
+  ShiftTime? serverTimeAt(DateTime now) {
+    final server = serverTime;
+    if (server == null) return null;
+    return ShiftTime(serverInstantAt(now), server.offset);
+  }
+
   /// How long is left until [time] on the server's clock; null when [time] is
   /// unknown. Negative once it has passed.
   Duration? remainingTo(ShiftTime? time, DateTime now) =>

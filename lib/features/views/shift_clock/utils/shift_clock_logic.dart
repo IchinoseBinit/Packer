@@ -32,6 +32,16 @@ const shiftCatchUpWindow = Duration(minutes: 10);
 /// is waiting for the packer to finish what they have in hand.
 const packerBusyNote = 'Waiting for the basket/order in hand';
 
+/// How long work has to look finished before the app believes it is.
+///
+/// The home screen empties the packer's assigned orders *before* it asks for
+/// them again (HomeProvider.initialize -> clearLatestOrder, then
+/// fetchLatestOrders), so on every pull to refresh "no order" means "asking
+/// the server" for a whole round trip. The blocking screen must not jump up
+/// over a packer who is still holding that order, so a work -> none edge is
+/// believed only once it has held this long. Work arriving is believed at once.
+const shiftWorkSettleDelay = Duration(seconds: 3);
+
 /// True for the data map of a shift clock push (not an order).
 bool isShiftClockPush(Map<dynamic, dynamic>? data) =>
     data != null && ShiftPushType.all.contains(data['type']);
@@ -68,7 +78,12 @@ String formatShiftClock(ShiftTime time) {
 }
 
 /// [formatShiftClock], plus "tomorrow" / "yesterday" / a date when [time] is
-/// not on the same day as [reference] (normally server_time).
+/// not on the same day as [reference].
+///
+/// [reference] must be the server's clock as it reads now
+/// (`state.serverTimeAt(now)`), not the server_time the last response carried:
+/// a night shift seeded before midnight would otherwise keep calling its own
+/// morning "tomorrow" for the rest of the night.
 String formatShiftClockOn(ShiftTime time, ShiftTime? reference) {
   final clock = formatShiftClock(time);
   if (reference == null) return clock;
@@ -184,16 +199,17 @@ String? shiftStatusLine(
         return 'Shift over';
     }
   }
+  final at = now ?? DateTime.now();
   if (state.status == ShiftStatus.extended) {
     final until = state.hardLimitAt;
     return until == null
         ? 'Extension approved'
-        : 'Extension until ${formatShiftClockOn(until, state.serverTime)}';
+        : 'Extension until ${formatShiftClockOn(until, state.serverTimeAt(at))}';
   }
   final end = state.regularLimitAt;
   if (end == null) return 'On shift';
-  final line = 'Shift ends ${formatShiftClockOn(end, state.serverTime)}';
-  final left = shiftCountdown(state.remainingTo(end, now ?? DateTime.now()));
+  final line = 'Shift ends ${formatShiftClockOn(end, state.serverTimeAt(at))}';
+  final left = shiftCountdown(state.remainingTo(end, at));
   return left == null ? line : '$line · $left';
 }
 
@@ -208,6 +224,7 @@ bool shiftStatusLineTicks(ShiftSessionState? state, DateTime now) {
 /// The smaller line under the status.
 String shiftStatusDetail(
   ShiftSessionState state, {
+  DateTime? now,
   ShiftWorkInHand work = ShiftWorkInHand.none,
 }) {
   if (isShiftOver(state)) {
@@ -228,7 +245,7 @@ String shiftStatusDetail(
   final started = state.startedAt;
   return started == null
       ? 'On shift'
-      : 'Started ${formatShiftClockOn(started, state.serverTime)}';
+      : 'Started ${formatShiftClockOn(started, state.serverTimeAt(now ?? DateTime.now()))}';
 }
 
 // ---------------------------------------------------------------------------
@@ -250,7 +267,7 @@ String graceLine(ShiftSessionState state, DateTime now) {
   final secondsLeft = state.secondsToHardLimitAt(now);
   if (hardLimit != null && (secondsLeft == null || secondsLeft > 0)) {
     return "You'll be checked out at "
-        '${formatShiftClockOn(hardLimit, state.serverTime)} '
+        '${formatShiftClockOn(hardLimit, state.serverTimeAt(now))} '
         'unless support approves more time';
   }
   if (state.pendingRequest != null) {
@@ -272,7 +289,7 @@ String pendingRequestLine(ShiftRequest request, ShiftTime? reference) {
 const rejectedRequestLine = "Support didn't approve your last request";
 
 /// "Your extension ended at 8 PM" when an approved extension ran out.
-String? extensionEndedLine(ShiftSessionState state) {
+String? extensionEndedLine(ShiftSessionState state, {DateTime? now}) {
   final decision = state.lastDecision;
   if (state.pendingRequest != null ||
       decision == null ||
@@ -281,7 +298,7 @@ String? extensionEndedLine(ShiftSessionState state) {
     return null;
   }
   return 'Your extension ended at '
-      '${formatShiftClockOn(decision.approvedUntil!, state.serverTime)}';
+      '${formatShiftClockOn(decision.approvedUntil!, state.serverTimeAt(now ?? DateTime.now()))}';
 }
 
 String extensionApprovedMessage(ShiftTime? until, ShiftTime? reference) =>

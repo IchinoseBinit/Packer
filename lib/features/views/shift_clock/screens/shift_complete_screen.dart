@@ -153,6 +153,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
             if (session == null || !session.hasSession) {
               return const Center(child: CircularProgressIndicator.adaptive());
             }
+            final now = DateTime.now();
             final audit = shiftAuditPrompt(home.packerSummary?.auditStatus);
             return RefreshIndicator(
               onRefresh: () => Future.wait([
@@ -165,7 +166,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ..._header(session),
+                    ..._header(session, now),
                     SizedBox(height: 16.h),
                     _ShiftNotice(
                       icon: Icons.event_note_outlined,
@@ -174,7 +175,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                     ),
                     _ShiftNotice(
                       icon: Icons.logout,
-                      text: graceLine(session, DateTime.now()),
+                      text: graceLine(session, now),
                       color: AppColors.primaryColor,
                     ),
                     if (session.note.isNotEmpty)
@@ -184,7 +185,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                         color: Colors.orange.shade800,
                       ),
                     if (audit != null) _auditCard(audit),
-                    ..._requestSection(clock, session),
+                    ..._requestSection(clock, session, now),
                     SizedBox(height: 24.h),
                     GeneralElevatedButton(
                       title: _checkingOut
@@ -208,9 +209,10 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     );
   }
 
-  List<Widget> _header(ShiftSessionState session) {
+  List<Widget> _header(ShiftSessionState session, DateTime now) {
     final started = session.startedAt;
     final ended = session.regularLimitAt;
+    final serverNow = session.serverTimeAt(now);
     return [
       Icon(Icons.timer_off_outlined, size: 48.w, color: AppColors.primaryColor),
       SizedBox(height: 12.h),
@@ -231,14 +233,12 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           children: [
             _timeRow(
               'You started',
-              started == null
-                  ? '-'
-                  : formatShiftClockOn(started, session.serverTime),
+              started == null ? '-' : formatShiftClockOn(started, serverNow),
             ),
             SizedBox(height: 8.h),
             _timeRow(
               'Regular hours ended',
-              ended == null ? '-' : formatShiftClockOn(ended, session.serverTime),
+              ended == null ? '-' : formatShiftClockOn(ended, serverNow),
             ),
           ],
         ),
@@ -299,12 +299,12 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   }
 
   List<Widget> _requestSection(
-      ShiftClockProvider clock, ShiftSessionState session) {
+      ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
     final pending = session.pendingRequest;
-    if (pending != null) return [_pendingCard(clock, session, pending)];
+    if (pending != null) return [_pendingCard(clock, session, pending, now)];
 
     final decision = session.lastDecision;
-    final ended = extensionEndedLine(session);
+    final ended = extensionEndedLine(session, now: now);
     return [
       if (decision?.status == ShiftRequestStatus.rejected)
         _ShiftNotice(
@@ -319,12 +319,12 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           text: ended,
           color: AppColors.homeScreenDimTextColor,
         ),
-      if (session.canRequest) _requestForm(clock, session),
+      if (session.canRequest) _requestForm(clock, session, now),
     ];
   }
 
   Widget _pendingCard(ShiftClockProvider clock, ShiftSessionState session,
-      ShiftRequest pending) {
+      ShiftRequest pending, DateTime now) {
     final id = pending.id;
     return Container(
       margin: EdgeInsets.only(top: 8.h),
@@ -343,7 +343,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
-                  pendingRequestLine(pending, session.serverTime),
+                  pendingRequestLine(pending, session.serverTimeAt(now)),
                   style: _textStyle(14, FontWeight.w500, Colors.black87),
                 ),
               ),
@@ -373,8 +373,9 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     );
   }
 
-  Widget _requestForm(ShiftClockProvider clock, ShiftSessionState session) {
-    final until = estimateRequestedUntil(session, _hours, DateTime.now());
+  Widget _requestForm(
+      ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
+    final until = estimateRequestedUntil(session, _hours, now);
     final busy = clock.isSubmitting;
     return Container(
       margin: EdgeInsets.only(top: 8.h),
@@ -408,7 +409,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           if (until != null) ...[
             SizedBox(height: 8.h),
             Text(
-              "You'd work until about ${formatShiftClockOn(until, session.serverTime)}",
+              "You'd work until about ${formatShiftClockOn(until, session.serverTimeAt(now))}",
               style: _textStyle(12, FontWeight.w400, Colors.black54),
             ),
           ],
