@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/firebase_opt/fcm_api.dart';
 import 'package:packer/controllers/services/api/enum/request_type.dart';
+import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/model/token.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
@@ -84,6 +85,23 @@ class AuthController {
     );
     DioClient.token = "";
     DioClient.refreshToken = "";
+
+    await discardSavedBaskets();
+  }
+
+  /// Drops the baskets saved on this phone, on every way out of a session -
+  /// the ordinary logout, the shift complete one, and the forced logouts
+  /// DioClient does without calling [removeTokens].
+  ///
+  /// The tags went with the session: whoever signs in next must not pick up
+  /// what someone else scanned. Never worth failing a logout over, so a phone
+  /// that will not give the files up is only logged.
+  Future<void> discardSavedBaskets() async {
+    try {
+      await HiveDBService.clearSavedBaskets();
+    } catch (e) {
+      debugPrint('Clearing saved baskets at logout: $e');
+    }
   }
 
   Future refreshToken() async {

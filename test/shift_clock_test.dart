@@ -1,18 +1,25 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:packer/constants/app_constants.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/services/hive_db/basket_dao.dart';
+import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
+import 'package:packer/features/views/auth/provider/auth_provider.dart';
 import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
@@ -1550,6 +1557,100 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       clock.stop(owner: owner);
       await tester.pump(const Duration(seconds: 31));
+    });
+  });
+
+  group('logout', () {
+    const pathProvider = MethodChannel('plugins.flutter.io/path_provider');
+    late Directory appDocDir;
+
+    void answerWith(Future<dynamic> Function(MethodCall call) handler) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(pathProvider, handler);
+    }
+
+    setUpAll(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      appDocDir = await Directory.systemTemp.createTemp('packer_hive');
+      answerWith((_) async => appDocDir.path);
+      await HiveDBService.initHive();
+    });
+
+    tearDownAll(() async {
+      await Hive.close();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(pathProvider, null);
+      await appDocDir.delete(recursive: true);
+    });
+
+    setUp(() {
+      FlutterSecureStorage.setMockInitialValues(
+          {SecureStorageConstants.accessTokenKey: 'token'});
+      DioClient.token = packerJwt();
+    });
+
+    test('leaves no saved basket behind, and nothing else of anyone\'s',
+        () async {
+      // A packer part-way through two orders and a return: until those are
+      // posted the tags they scanned are on this phone and nowhere else, and
+      // the return is restored into the same scanned list the order is.
+      const first = '${HiveConstants.order}4321';
+      const second = '${HiveConstants.order}99';
+      const aReturn = '${HiveConstants.orderReturn}4321';
+      for (final order in [first, second, aReturn]) {
+        await BasketDao(await Hive.openBox<Basket>(order)).addOrUpdateBasket(
+            Basket(identifier: 'B1', productIdentifiers: ['77-1']));
+      }
+
+      // A box that is not a basket: stock counted against the store.
+      final audit = Hive.box(HiveConstants.auditScanBox);
+      await audit.put('rack-3', 'counted');
+
+      await AuthController().removeTokens();
+
+      for (final order in [first, second, aReturn]) {
+        expect(await Hive.boxExists(order), isFalse,
+            reason: 'the next packer on this phone inherits nothing');
+        expect(Hive.isBoxOpen(order), isFalse);
+      }
+      expect(audit.get('rack-3'), 'counted',
+          reason: 'the owed stock audit is not a basket');
+    });
+
+    test('a session expiring clears the baskets, and only the baskets',
+        () async {
+      // DioClient's 401 branch puts the packer back on the login screen
+      // without a logout call of any kind; it goes out through here, and
+      // leaves the tokens exactly as it found them.
+      const order = '${HiveConstants.order}77';
+      await BasketDao(await Hive.openBox<Basket>(order)).addOrUpdateBasket(
+          Basket(identifier: 'B2', productIdentifiers: ['77-2']));
+
+      await AuthController().discardSavedBaskets();
+
+      expect(await Hive.boxExists(order), isFalse);
+      expect(DioClient.token, isNotEmpty,
+          reason: 'clearing baskets is not a token change');
+      expect(
+          await SecureStorageHelper()
+              .readKey(key: SecureStorageConstants.accessTokenKey),
+          isNotNull);
+    });
+
+    test('goes through even when the baskets cannot be cleared', () async {
+      // Nothing can be read off disk: the clear cannot even start. A logout
+      // that threw here would leave the packer signed out of the server with
+      // the app still on their screen.
+      answerWith((_) async => throw PlatformException(code: 'unavailable'));
+      addTearDown(() => answerWith((_) async => appDocDir.path));
+
+      await expectLater(AuthController().removeTokens(), completes);
+
+      expect(DioClient.token, isEmpty);
+      expect(
+          await SecureStorageHelper()
+              .readKey(key: SecureStorageConstants.accessTokenKey),
+          isNull);
     });
   });
 }
