@@ -1617,24 +1617,30 @@ void main() {
           reason: 'the owed stock audit is not a basket');
     });
 
-    test('a session expiring clears the baskets, and only the baskets',
-        () async {
+    test('a session expiring takes the tokens with the baskets', () async {
       // DioClient's 401 branch puts the packer back on the login screen
-      // without a logout call of any kind; it goes out through here, and
-      // leaves the tokens exactly as it found them.
+      // without a logout call of any kind. It ends the session through
+      // removeTokens, the same as every other way out: the tokens it was
+      // refused with are dead, so they do not sit on the phone afterwards.
+      // (The call site itself needs a live interceptor, so it is read, not run.)
       const order = '${HiveConstants.order}77';
       await BasketDao(await Hive.openBox<Basket>(order)).addOrUpdateBasket(
           Basket(identifier: 'B2', productIdentifiers: ['77-2']));
 
-      await AuthController().discardSavedBaskets();
+      await AuthController().removeTokens();
 
       expect(await Hive.boxExists(order), isFalse);
-      expect(DioClient.token, isNotEmpty,
-          reason: 'clearing baskets is not a token change');
+      expect(DioClient.token, isEmpty,
+          reason: 'a refused token is not kept');
+      expect(DioClient.refreshToken, isEmpty);
       expect(
           await SecureStorageHelper()
               .readKey(key: SecureStorageConstants.accessTokenKey),
-          isNotNull);
+          isNull);
+      expect(
+          await SecureStorageHelper()
+              .readKey(key: SecureStorageConstants.refreshTokenKey),
+          isNull);
     });
 
     test('goes through even when the baskets cannot be cleared', () async {

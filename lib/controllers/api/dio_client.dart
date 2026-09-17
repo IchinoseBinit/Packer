@@ -204,10 +204,12 @@ class DioClient {
 
       // 401 – unauthorized token → go login
       if (token.isNotEmpty && response?.statusCode == 401) {
-        // Dropped on the login screen without a logout, so the baskets have to
-        // go the same way they do on every other one: the next packer to sign
-        // in here must not inherit the tags.
-        await AuthController().discardSavedBaskets();
+        // Dropped on the login screen without a logout, so the session has to
+        // be ended the same way every other exit ends it: the tokens are dead
+        // anyway, and the next packer to sign in here must not inherit the
+        // tags. Local only - removeTokens calls nothing, so it cannot 401
+        // again from inside this handler.
+        await AuthController().removeTokens();
         navigateAndRemoveAllWithRouter(
           AppRouter.router,
           route: NavigationConstants.loginRoute,

@@ -89,9 +89,8 @@ class AuthController {
     await discardSavedBaskets();
   }
 
-  /// Drops the baskets saved on this phone, on every way out of a session -
-  /// the ordinary logout, the shift complete one, and the forced logouts
-  /// DioClient does without calling [removeTokens].
+  /// Drops the baskets saved on this phone. Every way out of a session goes
+  /// through [removeTokens], which ends with this.
   ///
   /// The tags went with the session: whoever signs in next must not pick up
   /// what someone else scanned. Never worth failing a logout over, so a phone
