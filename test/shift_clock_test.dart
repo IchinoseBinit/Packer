@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart'
+    show Headers, HttpClientAdapter, RequestOptions, ResponseBody;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,27 +14,37 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:packer/constants/app_constants.dart';
+import 'package:packer/constants/app_urls.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/dio_client.dart';
 import 'package:packer/controllers/api/error_handler.dart';
+import 'package:packer/controllers/api/model/custom_exception.dart';
+import 'package:packer/controllers/services/api/enum/request_type.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
+import 'package:packer/controllers/services/router.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/provider/auth_provider.dart';
 import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
+import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/auth/views/login_screen.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
+import 'package:packer/features/views/shift_clock/models/shift_refusal.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
+import 'package:packer/features/views/shift_clock/utils/sign_in_refusal.dart';
+import 'package:packer/features/views/shift_clock/widgets/shift_refusal_card.dart';
 import 'package:packer/features/views/shift_clock/widgets/shift_status_card.dart';
+import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/post_basket_model.dart';
 
 ShiftTime at(String iso) => ShiftTime.tryParse(iso)!;
@@ -186,6 +198,36 @@ Map<String, dynamic> noSession(Map<String, dynamic>? last) => {
       'locked': false,
       'last_session': last,
     };
+
+// The roster sign-in gate's sentences (attendance.login_gate, services).
+const notStartedMessage =
+    'Your shift starts at 6:00 AM. You can sign in from 5:00 AM.';
+const overMessage =
+    'Your shift ended at 6:00 PM. Your next shift starts at 6:00 AM tomorrow.';
+const notRosteredMessage =
+    "You are not on today's roster. Ask your manager to add you to it.";
+const clockSignedOutMessage =
+    'Your shift has ended and you have been checked out. Sign in again when your next shift starts.';
+
+/// The gate's 403 body (login_gate.Refusal.as_json).
+Map<String, dynamic> refusalBody(String code, String message,
+        [Map<String, dynamic>? shift]) =>
+    {'success': false, 'error': code, 'message': message, 'shift': shift};
+
+/// A refusal's `shift` block: 6 AM to 6 PM on [date].
+Map<String, dynamic> dayShift([String date = '2026-09-15']) => {
+      'starts_at': '${date}T06:00:00+05:45',
+      'ends_at': '${date}T18:00:00+05:45',
+      'name': 'Day',
+    };
+
+/// Today on the server's clock (+05:45), for a screen that reads the phone's.
+String kathmanduToday() {
+  final now =
+      DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 45));
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${now.year}-${two(now.month)}-${two(now.day)}';
+}
 
 void main() {
   group('ShiftTime', () {
@@ -2340,6 +2382,476 @@ void main() {
           isNull);
     });
   });
+
+  group('sign-in refused outside the shift (login gate)', () {
+    final early = ShiftRefusal.fromResponse(
+        403,
+        refusalBody(ShiftRefusalCode.shiftNotStarted, notStartedMessage,
+            dayShift()))!;
+    final over = ShiftRefusal.fromResponse(
+        403, refusalBody(ShiftRefusalCode.shiftOver, overMessage, dayShift()))!;
+    final stranger = ShiftRefusal.fromResponse(
+        403, refusalBody(ShiftRefusalCode.notRostered, notRosteredMessage))!;
+    // A token the clock signed out: the server names no shift then.
+    final checkedOut = ShiftRefusal.fromResponse(
+        403, refusalBody(ShiftRefusalCode.shiftOver, clockSignedOutMessage))!;
+
+    test("reads the gate's 403 for each of its three codes", () {
+      expect(early.code, 'shift_not_started');
+      expect(early.message, notStartedMessage);
+      expect(early.startsAt, at('2026-09-15T06:00:00+05:45'));
+      expect(early.endsAt, at('2026-09-15T18:00:00+05:45'));
+      expect(early.shiftName, 'Day');
+
+      expect(over.code, 'shift_over');
+      expect(over.message, overMessage);
+      expect(over.startsAt, isNotNull);
+
+      expect(stranger.code, 'not_rostered');
+      expect(stranger.message, notRosteredMessage);
+      expect(stranger.startsAt, isNull);
+      expect(stranger.endsAt, isNull);
+      expect(stranger.shiftName, isEmpty);
+
+      expect(checkedOut.code, 'shift_over');
+      expect(checkedOut.startsAt, isNull);
+    });
+
+    test('nothing else is a refusal, so nothing else changes', () {
+      // Going online answers this first once the shift is complete.
+      expect(
+          ShiftRefusal.fromResponse(409, {
+            'success': false,
+            'error': 'shift_complete',
+            'message': 'Your shift is complete.',
+          }),
+          isNull);
+      // A 403 of another kind: an endpoint that does not serve this role, an
+      // account the server has turned off, a carton claimed elsewhere.
+      expect(
+          ShiftRefusal.fromResponse(403, {
+            'success': false,
+            'message': 'Only packers can access cleanliness tasks.',
+          }),
+          isNull);
+      expect(
+          ShiftRefusal.fromResponse(403, {
+            'message': 'You have been blacklisted and cannot access the system.',
+            'type': '',
+          }),
+          isNull);
+      expect(
+          ShiftRefusal.fromResponse(
+              403, {'detail': 'This carton was claimed from another phone.'}),
+          isNull);
+      expect(ShiftRefusal.fromResponse(403, {'error': 'shift_complete'}),
+          isNull);
+      // Not JSON at all: a proxy's page.
+      expect(ShiftRefusal.fromResponse(403, '<html>Forbidden</html>'), isNull);
+      expect(ShiftRefusal.fromResponse(403, null), isNull);
+      // The gate never answers 401: the app refreshes and retries those.
+      expect(
+          ShiftRefusal.fromResponse(
+              401, refusalBody(ShiftRefusalCode.shiftOver, overMessage)),
+          isNull);
+    });
+
+    test('a shift block it cannot read leaves the refusal without a shift', () {
+      final named = ShiftRefusal.fromResponse(403, {
+        ...refusalBody(ShiftRefusalCode.shiftNotStarted, notStartedMessage),
+        'shift': 'Day',
+      })!;
+      expect(named.startsAt, isNull);
+      expect(shiftRefusalShiftLine(named), isNull);
+
+      final garbled = ShiftRefusal.fromResponse(
+          403,
+          refusalBody(ShiftRefusalCode.shiftNotStarted, notStartedMessage,
+              {'starts_at': 'soon', 'ends_at': null, 'name': null}))!;
+      expect(garbled.startsAt, isNull);
+      expect(garbled.shiftName, isEmpty);
+      expect(shiftRefusalMessage(garbled), notStartedMessage);
+    });
+
+    test("shows the server's sentence as it is, with a heading for each code",
+        () {
+      expect(shiftRefusalTitle(early), "Your shift hasn't started yet");
+      expect(shiftRefusalMessage(early), notStartedMessage);
+      expect(shiftRefusalTitle(over), 'Your shift is over');
+      expect(shiftRefusalMessage(over), overMessage);
+      expect(shiftRefusalTitle(checkedOut), 'Your shift is over');
+      expect(shiftRefusalMessage(checkedOut), clockSignedOutMessage);
+      // not_rostered: the sentence says why and who can put it right, so the
+      // heading does not say it again.
+      expect(shiftRefusalTitle(stranger), "You can't sign in right now");
+      expect(shiftRefusalMessage(stranger), notRosteredMessage);
+    });
+
+    test('says something for each code should the sentence ever be missing',
+        () {
+      for (final code in ShiftRefusalCode.all) {
+        final bare = ShiftRefusal.fromResponse(
+            403, {'success': false, 'error': code, 'shift': null})!;
+        expect(bare.message, isEmpty);
+        expect(shiftRefusalMessage(bare), isNotEmpty, reason: code);
+      }
+    });
+
+    test('the same words for a driver as for a packer', () {
+      // Both sign in on this screen; the server's sentences name no role,
+      // and nothing the app adds may either.
+      final now = DateTime.utc(2026, 9, 14, 23, 0);
+      for (final refusal in [early, over, stranger, checkedOut]) {
+        final words = [
+          shiftRefusalTitle(refusal),
+          shiftRefusalMessage(refusal),
+          shiftRefusalShiftLine(refusal, now: now) ?? '',
+        ].join(' ').toLowerCase();
+        expect(words, isNot(contains('packer')), reason: refusal.code);
+        expect(words, isNot(contains('order')), reason: refusal.code);
+        expect(words, isNot(contains('basket')), reason: refusal.code);
+      }
+    });
+
+    test('names the shift with its start and end in 12-hour time', () {
+      // 4:45 AM on the 15th in Kathmandu.
+      final dawn = DateTime.utc(2026, 9, 14, 23, 0);
+      expect(shiftRefusalShiftLine(early, now: dawn),
+          'Day shift · 6:00 AM – 6:00 PM');
+      expect(shiftRefusalShiftLine(over, now: DateTime.utc(2026, 9, 15, 13, 15)),
+          'Day shift · 6:00 AM – 6:00 PM');
+
+      // Turned away at 11 PM: the shift is tomorrow's.
+      expect(
+          shiftRefusalShiftLine(early, now: DateTime.utc(2026, 9, 14, 17, 15)),
+          'Day shift tomorrow · 6:00 AM – 6:00 PM');
+      // A night shift that ended this morning.
+      final night = ShiftRefusal.fromResponse(
+          403,
+          refusalBody(ShiftRefusalCode.shiftOver, overMessage, {
+            'starts_at': '2026-09-14T22:00:00+05:45',
+            'ends_at': '2026-09-15T06:00:00+05:45',
+            'name': 'Night',
+          }))!;
+      expect(shiftRefusalShiftLine(night, now: DateTime.utc(2026, 9, 15, 1, 45)),
+          'Night shift yesterday · 10:00 PM – 6:00 AM');
+      // Further off.
+      expect(shiftRefusalShiftLine(early, now: DateTime.utc(2026, 9, 12, 6, 15)),
+          'Day shift, 15 Sep · 6:00 AM – 6:00 PM');
+      // Refused on a phone set to another time zone: the shift's own offset.
+      expect(
+          shiftRefusalShiftLine(early, now: DateTime.utc(2026, 9, 15, 3, 0)),
+          'Day shift · 6:00 AM – 6:00 PM');
+
+      ShiftRefusal named(Map<String, dynamic> shift) => ShiftRefusal.fromResponse(
+          403,
+          refusalBody(
+              ShiftRefusalCode.shiftNotStarted, notStartedMessage, shift))!;
+      expect(
+          shiftRefusalShiftLine(
+              named({
+                'starts_at': '2026-09-15T07:30:00+05:45',
+                'ends_at': '2026-09-15T15:30:00+05:45',
+                'name': 'Morning Shift',
+              }),
+              now: dawn),
+          'Morning Shift · 7:30 AM – 3:30 PM');
+      expect(
+          shiftRefusalShiftLine(
+              named({
+                'starts_at': '2026-09-15T06:00:00+05:45',
+                'ends_at': '2026-09-15T12:00:00+05:45',
+                'name': '',
+              }),
+              now: dawn),
+          'Your shift · 6:00 AM – 12:00 PM');
+      expect(
+          shiftRefusalShiftLine(
+              named({'starts_at': '2026-09-15T06:00:00+05:45', 'name': 'Day'}),
+              now: dawn),
+          'Day shift · from 6:00 AM');
+
+      expect(shiftRefusalShiftLine(stranger, now: dawn), isNull);
+      expect(shiftRefusalShiftLine(checkedOut, now: dawn), isNull);
+    });
+
+    test('the refusal card writes 6:00 AM; the clock elsewhere keeps 6 AM', () {
+      expect(formatShiftClock(at('2026-09-15T18:00:00+05:45'), withMinutes: true),
+          '6:00 PM');
+      expect(formatShiftClock(at('2026-09-15T00:00:00+05:45'), withMinutes: true),
+          '12:00 AM');
+      expect(formatShiftClock(at('2026-09-15T18:30:00+05:45'), withMinutes: true),
+          '6:30 PM');
+      expect(formatShiftClock(at('2026-09-15T18:00:00+05:45')), '6 PM');
+    });
+  });
+
+  group('the login screen after a shift refusal', () {
+    const toastChannel = MethodChannel('PonnamKarthik/fluttertoast');
+    const pathProvider = MethodChannel('plugins.flutter.io/path_provider');
+    final toasts = <String>[];
+    late _FakeServer server;
+
+    void answerChannel(
+        MethodChannel channel, Future<dynamic> Function(MethodCall)? handler) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, handler);
+    }
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
+      DioClient.token = '';
+      DioClient.refreshToken = '';
+      signInRefusal.value = null;
+      toasts.clear();
+      server = _FakeServer();
+      DioClient().httpClientAdapter = server;
+      answerChannel(toastChannel, (call) async {
+        if (call.method == 'showToast') {
+          toasts.add((call.arguments as Map)['msg'].toString());
+        }
+        return true;
+      });
+      // No saved baskets to clear: removeTokens logs that and goes on.
+      answerChannel(pathProvider,
+          (_) async => throw PlatformException(code: 'unavailable'));
+    });
+
+    tearDown(() {
+      signInRefusal.value = null;
+      DioClient.token = '';
+      DioClient.refreshToken = '';
+      answerChannel(toastChannel, null);
+      answerChannel(pathProvider, null);
+    });
+
+    /// Signed in, as the app is while someone works.
+    void signedInAs(String jwt) {
+      FlutterSecureStorage.setMockInitialValues({
+        SecureStorageConstants.accessTokenKey: jwt,
+        SecureStorageConstants.refreshTokenKey: 'refresh-1',
+      });
+      DioClient.token = jwt;
+      DioClient.refreshToken = 'refresh-1';
+    }
+
+    Future<Object?> requestSummary(WidgetTester tester) => _request(
+        tester, RequestType.getWithToken, AppUrls.packerSummaryUrl);
+
+    testWidgets(
+        'a sign-in refused before the shift keeps the reason on the login screen, not in a toast',
+        (tester) async {
+      server.answer(
+          AppUrls.loginUrl,
+          403,
+          refusalBody(ShiftRefusalCode.shiftNotStarted, notStartedMessage,
+              dayShift(kathmanduToday())));
+      await tester.pumpWidget(_loginApp(_loginRouter()));
+      await tester.pumpAndSettle();
+      final login = tester.state(find.byType(LoginScreen));
+
+      await _signIn(tester, 'packer1', 'secret');
+
+      expect(find.text("Your shift hasn't started yet"), findsOneWidget);
+      expect(find.text(notStartedMessage), findsOneWidget);
+      expect(find.text('Day shift · 6:00 AM – 6:00 PM'), findsOneWidget);
+      expect(toasts, isEmpty, reason: 'the card says it, and keeps saying it');
+      // The same login screen, as they typed it, with the loader gone.
+      expect(tester.state(find.byType(LoginScreen)), same(login));
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('packer1'), findsOneWidget);
+      expect(DioClient.token, isEmpty);
+      expect(server.calls, ['POST /auth/api/token/']);
+
+      // Nothing takes it down but another try.
+      await tester.pump(const Duration(minutes: 5));
+      expect(find.text(notStartedMessage), findsOneWidget);
+
+      // Someone else, with a wrong password: the card was not about them.
+      server.answer(
+          AppUrls.loginUrl, 401, {'error': 'Invalid username or password.'});
+      await _signIn(tester, 'driver2', 'wrong');
+      expect(find.text(notStartedMessage), findsNothing);
+      expect(find.text("Your shift hasn't started yet"), findsNothing);
+      expect(toasts, ['Invalid username or password.']);
+    });
+
+    testWidgets('a sign-in refused off the roster says so with no shift to name',
+        (tester) async {
+      server.answer(AppUrls.loginUrl, 403,
+          refusalBody(ShiftRefusalCode.notRostered, notRosteredMessage));
+      await tester.pumpWidget(_loginApp(_loginRouter()));
+      await tester.pumpAndSettle();
+
+      await _signIn(tester, 'packer1', 'secret');
+
+      expect(find.text("You can't sign in right now"), findsOneWidget);
+      expect(find.text(notRosteredMessage), findsOneWidget);
+      expect(find.textContaining(' shift · '), findsNothing);
+      expect(toasts, isEmpty);
+    });
+
+    testWidgets(
+        'a packer the clock checked out lands on the login screen with the reason',
+        (tester) async {
+      signedInAs(packerJwt());
+      server.answer(AppUrls.packerSummaryUrl, 403,
+          refusalBody(ShiftRefusalCode.shiftOver, clockSignedOutMessage));
+      await tester.pumpWidget(_loginApp(_loginRouter(location: '/dashboard')));
+      await tester.pumpAndSettle();
+      expect(find.text('dashboard of packer'), findsOneWidget);
+
+      final thrown = await requestSummary(tester);
+      await tester.pumpAndSettle();
+
+      expect(thrown, isA<LogoutException>());
+      expect(thrown.toString(), clockSignedOutMessage);
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(find.text('Your shift is over'), findsOneWidget);
+      expect(find.text(clockSignedOutMessage), findsOneWidget);
+      expect(DioClient.token, isEmpty, reason: 'a refused token is not kept');
+      expect(
+          await SecureStorageHelper()
+              .readKey(key: SecureStorageConstants.accessTokenKey),
+          isNull);
+    });
+
+    testWidgets(
+        'a driver the clock checked out reads the same, with no packer wording',
+        (tester) async {
+      signedInAs(driverJwt());
+      server.answer(
+          AppUrls.driverInTransitTransfersUrl,
+          403,
+          refusalBody(ShiftRefusalCode.shiftOver, overMessage,
+              dayShift(kathmanduToday())));
+      await tester.pumpWidget(_loginApp(_loginRouter(location: '/dashboard')));
+      await tester.pumpAndSettle();
+      expect(find.text('dashboard of driver'), findsOneWidget);
+
+      final thrown = await _request(tester, RequestType.getWithToken,
+          AppUrls.driverInTransitTransfersUrl);
+      await tester.pumpAndSettle();
+
+      expect(thrown, isA<LogoutException>());
+
+      expect(find.text('Your shift is over'), findsOneWidget);
+      expect(find.text(overMessage), findsOneWidget);
+      expect(find.text('Day shift · 6:00 AM – 6:00 PM'), findsOneWidget);
+      expect(find.textContaining(RegExp('packer', caseSensitive: false)),
+          findsNothing);
+    });
+
+    testWidgets(
+        'a refresh refused outside the shift lands on the login screen with the reason',
+        (tester) async {
+      // The access token ran out overnight; the refresh is a sign-in too.
+      signedInAs(packerJwt());
+      server.answer(AppUrls.packerSummaryUrl, 401, {
+        'message': 'Given token not valid for any token type',
+        'type': 'invalid_token',
+      });
+      server.answer(
+          AppUrls.refreshTokenUrl,
+          403,
+          refusalBody(ShiftRefusalCode.shiftNotStarted, notStartedMessage,
+              dayShift(kathmanduToday())));
+      await tester.pumpWidget(_loginApp(_loginRouter(location: '/dashboard')));
+      await tester.pumpAndSettle();
+
+      final thrown = await requestSummary(tester);
+      await tester.pumpAndSettle();
+
+      expect(thrown, isNotNull);
+      expect(server.calls,
+          ['GET /staff/packer/summary/', 'POST /auth/verify-otp/refresh']);
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(find.text("Your shift hasn't started yet"), findsOneWidget);
+      expect(find.text(notStartedMessage), findsOneWidget);
+      expect(DioClient.token, isEmpty);
+    });
+
+    testWidgets(
+        'any other 403 still signs out as it always has, with no shift reason on screen',
+        (tester) async {
+      // An account the server turned off: DRF answers its authentication
+      // failures with a 403 here, and signing out is right for those.
+      signedInAs(packerJwt());
+      server.answer(AppUrls.packerSummaryUrl, 403, {
+        'message': 'You have been blacklisted and cannot access the system.',
+        'type': '',
+      });
+      await tester.pumpWidget(_loginApp(_loginRouter(location: '/dashboard')));
+      await tester.pumpAndSettle();
+
+      final thrown = await requestSummary(tester);
+      await tester.pumpAndSettle();
+
+      expect(thrown, isA<LogoutException>());
+      expect(thrown.toString(),
+          'You have been blacklisted and cannot access the system.');
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(DioClient.token, isEmpty);
+      expect(signInRefusal.value, isNull);
+      expect(find.byType(ShiftRefusalCard), findsOneWidget);
+      expect(find.text('Your shift is over'), findsNothing);
+      expect(find.text("You can't sign in right now"), findsNothing);
+    });
+
+    testWidgets(
+        'the 409 going online answers first is no refusal: nobody is signed out',
+        (tester) async {
+      signedInAs(packerJwt());
+      server.answer(AppUrls.packerOnlineStatus, 409, {
+        'success': false,
+        'error': 'shift_complete',
+        'message': 'Your shift is complete.',
+      });
+      await tester.pumpWidget(_loginApp(_loginRouter(location: '/dashboard')));
+      await tester.pumpAndSettle();
+
+      final thrown = await _request(
+          tester, RequestType.patchWithToken, AppUrls.packerOnlineStatus,
+          body: {'is_online': true});
+      await tester.pumpAndSettle();
+
+      expect(isShiftCompleteError(thrown), isTrue);
+      expect(DioClient.token, packerJwt());
+      expect(signInRefusal.value, isNull);
+      expect(find.text('dashboard of packer'), findsOneWidget);
+    });
+
+    testWidgets(
+        'signing in drops the refusal and the person the clock signed out before',
+        (tester) async {
+      // A packer worked on this phone until the clock checked them out and
+      // their next request was refused: no logout, so their user stayed.
+      DioClient.token = packerJwt();
+      final home = _TestHome();
+      expect(home.user.role, UserRole.packer);
+      DioClient.token = '';
+      signInRefusal.value = ShiftRefusal.fromResponse(
+          403, refusalBody(ShiftRefusalCode.shiftOver, clockSignedOutMessage));
+
+      server.answer(
+          AppUrls.loginUrl, 200, {'access': driverJwt(), 'refresh': 'refresh-2'});
+      server.answer(AppUrls.fcmTokenUrl, 200, {'success': true});
+      await tester.pumpWidget(_loginApp(_loginRouter(), home: home));
+      await tester.pumpAndSettle();
+      expect(find.text('Your shift is over'), findsOneWidget);
+
+      await _signIn(tester, 'driver2', 'secret');
+      await tester.pumpAndSettle();
+
+      expect(signInRefusal.value, isNull);
+      expect(find.text('dashboard of driver'), findsOneWidget,
+          reason: 'the driver who signed in, not the packer before them');
+      expect(home.user.name, 'Driver');
+      expect(home.summaryFetches, 1);
+      expect(toasts, isEmpty);
+    });
+  });
 }
 
 String packerJwt() =>
@@ -2504,4 +3016,95 @@ class _FakeDashboardState extends State<_FakeDashboard> {
   @override
   Widget build(BuildContext context) =>
       const Scaffold(body: Text('dashboard'));
+}
+
+/// The server, for DioClient: answers by path, so its error branches run as
+/// they do in the app. Anything unanswered is a 404.
+class _FakeServer implements HttpClientAdapter {
+  final _answers = <String, (int, Object?)>{};
+
+  /// Every request made, as "METHOD /path".
+  final calls = <String>[];
+
+  void answer(String url, int status, Object? body) {
+    _answers[Uri.parse(url).path] = (status, body);
+  }
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options,
+      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+    final path = options.uri.path;
+    calls.add('${options.method} $path');
+    final (status, body) = _answers[path] ?? (404, {'detail': 'Not found.'});
+    return ResponseBody.fromString(jsonEncode(body), status, headers: {
+      Headers.contentTypeHeader: [Headers.jsonContentType],
+    });
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// The app's login screen, and a dashboard that shows whose it is, behind a
+/// router DioClient drives as it does the app's (AppRouter.router).
+GoRouter _loginRouter({String location = '/login'}) =>
+    AppRouter.router = GoRouter(initialLocation: location, routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, __) => const Scaffold(body: Text('splash')),
+        routes: [
+          GoRoute(
+            path: NavigationConstants.loginRoute,
+            builder: (_, __) => const LoginScreen(),
+          ),
+          GoRoute(
+            path: NavigationConstants.dashboardRoute,
+            builder: (context, __) => Scaffold(
+                body: Text('dashboard of '
+                    '${Provider.of<HomeProvider>(context, listen: false).user.role.name}')),
+          ),
+        ],
+      ),
+    ]);
+
+Widget _loginApp(GoRouter router, {HomeProvider? home}) =>
+    ChangeNotifierProvider<HomeProvider>.value(
+      value: home ?? _TestHome(),
+      child: ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (_, __) => MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+/// Fills the login form and taps Login, then lets the answer come in. Frames,
+/// not settle: the loader spins until it does.
+Future<void> _signIn(
+    WidgetTester tester, String username, String password) async {
+  await tester.enterText(find.byType(TextFormField).at(0), username);
+  await tester.enterText(find.byType(TextFormField).at(1), password);
+  final login = find.widgetWithText(GeneralElevatedButton, 'Login');
+  await tester.ensureVisible(login);
+  await tester.tap(login);
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
+/// One DioClient request from a widget test, pumping frames while it runs:
+/// it only finishes as the test's clock moves. Returns what it failed with,
+/// or null when it went through.
+Future<Object?> _request(WidgetTester tester, RequestType type, String url,
+    {dynamic body}) async {
+  Object? error;
+  var done = false;
+  DioClient().request(requestType: type, url: url, body: body).then<void>(
+      (_) => done = true, onError: (Object e) {
+    error = e;
+    done = true;
+  });
+  for (var i = 0; i < 50 && !done; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  expect(done, isTrue, reason: 'the request never finished');
+  return error;
 }

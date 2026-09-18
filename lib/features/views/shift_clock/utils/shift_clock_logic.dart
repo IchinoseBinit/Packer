@@ -1,5 +1,6 @@
 import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
+import 'package:packer/features/views/shift_clock/models/shift_refusal.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 
 /// Pure shift clock rules and the words packers and drivers see. No Flutter,
@@ -116,12 +117,13 @@ const _months = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-/// "6 AM", "6:30 PM", "12 PM" in the server's own time.
-String formatShiftClock(ShiftTime time) {
+/// "6 AM", "6:30 PM", "12 PM" in the server's own time. [withMinutes] writes
+/// "6:00 AM", for a line that sits beside one of the server's own sentences.
+String formatShiftClock(ShiftTime time, {bool withMinutes = false}) {
   final wall = time.wallClock;
   final hour = wall.hour % 12 == 0 ? 12 : wall.hour % 12;
   final suffix = wall.hour < 12 ? 'AM' : 'PM';
-  if (wall.minute == 0) return '$hour $suffix';
+  if (wall.minute == 0 && !withMinutes) return '$hour $suffix';
   return '$hour:${wall.minute.toString().padLeft(2, '0')} $suffix';
 }
 
@@ -640,4 +642,72 @@ ShiftAuditPrompt? shiftAuditPrompt(AuditStatusEnum? status) {
     case null:
       return null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Sign-in refused outside the shift
+// ---------------------------------------------------------------------------
+
+/// The heading over a sign-in refusal. Packers and drivers sign in on the same
+/// screen, so nothing here names a role.
+String shiftRefusalTitle(ShiftRefusal refusal) {
+  switch (refusal.code) {
+    case ShiftRefusalCode.shiftNotStarted:
+      return "Your shift hasn't started yet";
+    case ShiftRefusalCode.shiftOver:
+      return 'Your shift is over';
+    default:
+      // not_rostered: the server's sentence under it says why and who can
+      // put it right, so the heading only says what happened.
+      return "You can't sign in right now";
+  }
+}
+
+/// The server's own sentence, which says when they can sign in. Should one
+/// ever come without it, what the code alone can tell them.
+String shiftRefusalMessage(ShiftRefusal refusal) {
+  if (refusal.message.isNotEmpty) return refusal.message;
+  switch (refusal.code) {
+    case ShiftRefusalCode.shiftNotStarted:
+      return 'You can sign in shortly before your shift starts.';
+    case ShiftRefusalCode.shiftOver:
+      return 'Sign in again when your next shift starts.';
+    default:
+      return "You are not on today's roster. Ask your manager to add you to it.";
+  }
+}
+
+/// "Day shift · 6:00 AM – 6:00 PM" for the shift a refusal names, with
+/// "tomorrow", "yesterday" or the date after the name when it does not start
+/// today. Null when it names none: not_rostered, and a sign-in the clock ended.
+///
+/// A refusal carries no server_time, so "today" is [now] - the phone's clock -
+/// read in the shift's own offset.
+String? shiftRefusalShiftLine(ShiftRefusal refusal, {DateTime? now}) {
+  final start = refusal.startsAt;
+  if (start == null) return null;
+  final name = refusal.shiftName;
+  var label = name.isEmpty
+      ? 'Your shift'
+      : name.toLowerCase().contains('shift')
+          ? name
+          : '$name shift';
+
+  final phone = ShiftTime((now ?? DateTime.now()).toUtc(), start.offset);
+  final day = _dateOnly(start.wallClock);
+  final days = day.difference(_dateOnly(phone.wallClock)).inDays;
+  if (days == 1) {
+    label = '$label tomorrow';
+  } else if (days == -1) {
+    label = '$label yesterday';
+  } else if (days != 0) {
+    label = '$label, ${day.day} ${_months[day.month - 1]}';
+  }
+
+  final from = formatShiftClock(start, withMinutes: true);
+  final end = refusal.endsAt;
+  final times = end == null
+      ? 'from $from'
+      : '$from – ${formatShiftClock(end, withMinutes: true)}';
+  return '$label · $times';
 }

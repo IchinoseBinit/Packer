@@ -13,6 +13,8 @@ import 'package:packer/controllers/services/navigate.dart';
 import 'package:packer/controllers/services/router.dart';
 import 'package:packer/enum/environment_config.dart';
 import 'package:packer/features/views/auth/provider/auth_provider.dart';
+import 'package:packer/features/views/shift_clock/models/shift_refusal.dart';
+import 'package:packer/features/views/shift_clock/utils/sign_in_refusal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'error_handler.dart';
@@ -96,6 +98,12 @@ class DioClient {
       await prefs.setString('customBaseUrl', newUrl);
     }
   }
+
+  /// What carries the requests. Only tests set it, to answer them without a
+  /// server and run the error branches below as they are.
+  @visibleForTesting
+  set httpClientAdapter(HttpClientAdapter adapter) =>
+      _dio.httpClientAdapter = adapter;
 
   final timeOutDuration = const Duration(seconds: 300);
 
@@ -219,6 +227,14 @@ class DioClient {
 
       // 403 → force logout token
       if (response?.statusCode == 403) {
+        // The roster sign-in gate answers with a 403 (ShiftRefusal): at
+        // sign-in, at a refresh, going online, or on any request once the
+        // clock has checked this person out. Its sentence says when they can
+        // sign in, so the login screen keeps it up (ShiftRefusalCard) instead
+        // of leaving it to a toast. Every other 403 signs out as it always
+        // has, with nothing added there.
+        final refusal = ShiftRefusal.fromResponse(response?.statusCode, data);
+        if (refusal != null) signInRefusal.value = refusal;
         await AuthController().removeTokens();
         navigateAndRemoveAllWithRouter(
           AppRouter.router,
