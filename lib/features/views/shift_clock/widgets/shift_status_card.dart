@@ -17,7 +17,12 @@ import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 /// The countdown ticks locally off the phone clock corrected against the
 /// server's; nothing here asks the server anything.
 class ShiftStatusCard extends StatefulWidget {
-  const ShiftStatusCard({super.key});
+  const ShiftStatusCard({super.key, this.margin});
+
+  /// Room around the card, taken only while it shows. A screen that wraps the
+  /// card in its own padding instead keeps that strip empty whenever the card
+  /// is hidden - which, with enforcement off, is always.
+  final EdgeInsetsGeometry? margin;
 
   @override
   State<ShiftStatusCard> createState() => _ShiftStatusCardState();
@@ -78,7 +83,7 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
           over && session.showDialog && work == ShiftWorkInHand.none;
 
       final radius = BorderRadius.circular(12);
-      return Padding(
+      final card = Padding(
         padding: EdgeInsets.only(bottom: 16.h),
         child: Material(
           color: color.withValues(alpha: 0.08),
@@ -129,6 +134,8 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
           ),
         ),
       );
+      final margin = widget.margin;
+      return margin == null ? card : Padding(padding: margin, child: card);
     });
   }
 }

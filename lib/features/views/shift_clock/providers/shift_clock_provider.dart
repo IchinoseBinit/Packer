@@ -21,9 +21,11 @@ import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observer.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 
-/// The packer's shift clock.
+/// The packer's (and the driver's) shift clock.
 ///
-/// Started by the dashboard for packers. It knows when the shift ends without
+/// Started by the dashboard for packers and drivers: a driver signs in on this
+/// app and gets the same clock, with a transfer as their work in hand instead
+/// of an order or a basket. It knows when the shift ends without
 /// asking: the packer summary carries a `shift` block, the clock keeps it with
 /// the phone time it arrived, corrects the phone clock against server_time and
 /// runs its own countdown to the shift end and to the grace deadline. A local
@@ -39,11 +41,26 @@ import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   static const _noticePrefsKey = 'shift_clock_checkout_notice_';
 
-  /// [loadSession] replaces GET /attendance/session/ in tests.
-  ShiftClockProvider({Future<ShiftSessionState> Function()? loadSession})
-      : _loadSession = loadSession ?? ShiftClockRepo.getSession;
+  /// [loadSession] replaces GET /attendance/session/ and [loadDriverTransfers]
+  /// the driver's two transfer lists in tests.
+  ShiftClockProvider({
+    Future<ShiftSessionState> Function()? loadSession,
+    Future<int> Function()? loadDriverTransfers,
+  })  : _loadSession = loadSession ?? ShiftClockRepo.getSession,
+        _loadDriverTransfers =
+            loadDriverTransfers ?? ShiftClockRepo.driverTransfersInHand;
 
   final Future<ShiftSessionState> Function() _loadSession;
+  final Future<int> Function() _loadDriverTransfers;
+
+  /// How many transfers the driver held when the clock last asked, together
+  /// with the session that says their shift is over. Null while that isn't
+  /// known: not asked yet in this stretch of overtime, or the last ask failed
+  /// with no screen up (see [_checkTransfers]). Only ever set for a driver.
+  int? _transfersInHand;
+
+  /// The session [_transfersInHand] was read for.
+  int? _transfersSessionId;
 
   ShiftSessionState? state;
   bool isSubmitting = false;
@@ -91,32 +108,49 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   VoidCallback? _closeScreen;
   bool _openingScreen = false;
 
-  bool get isPacker {
+  UserRole? get _role {
     try {
-      return _home?.user.role == UserRole.packer;
+      return _home?.user.role;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
-  /// The session to show on this packer's screens, or null for nothing.
+  bool get isPacker => _role == UserRole.packer;
+
+  /// A driver: the clock runs for them too, but nothing packer-only (the
+  /// order flow's baskets, the stock audit) is theirs.
+  bool get isDriver => _role == UserRole.driver;
+
+  /// The roles this app runs the clock for; everyone else sees nothing.
+  bool get _runsClock => isPacker || isDriver;
+
+  /// The session to show on this packer's or driver's screens, or null for
+  /// nothing.
   ShiftSessionState? get visibleSession {
     final current = state;
-    if (!_started || !isPacker || !isShiftClockVisible(current)) return null;
+    if (!_started || !_runsClock || !isShiftClockVisible(current)) return null;
     return current;
   }
 
   /// The shift complete screen should be up: the clock itself says so and the
-  /// packer has nothing in hand.
-  bool get wantsScreen =>
-      canShowShiftCompleteScreen(state: visibleSession, work: workInHand);
+  /// packer or driver has nothing in hand. For a driver "nothing" has to be a
+  /// count the app actually read in this stretch of overtime: transfers it
+  /// could not see may be there.
+  bool get wantsScreen => canShowShiftCompleteScreen(
+        state: visibleSession,
+        work: workInHand,
+        workKnown: !isDriver || _transfersInHand != null,
+      );
 
   bool get isScreenOpen => _closeScreen != null;
 
   /// Work the packer has to finish before they can be checked out: an order
   /// assigned to them, a basket session they are still packing, or the
-  /// server's note saying it is waiting for one. While there is any, the
-  /// blocking screen stays away and the home status line says so instead.
+  /// server's note saying it is waiting for one. A driver's is a transfer
+  /// assigned to them that is packed or on the road (see [_load]). While there
+  /// is any, the blocking screen stays away and the home status line says so
+  /// instead.
   ///
   /// Work going away is believed only once it has held for
   /// [shiftWorkSettleDelay] (and, while the home screen is still asking for
@@ -130,12 +164,21 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     return _clearingWork ?? ShiftWorkInHand.none;
   }
 
-  /// What the order flow says this instant, before the settle above.
-  ShiftWorkInHand get _workInHandNow => shiftWorkInHand(
-        assignedOrder: _home?.latestOrder.isNotEmpty ?? false,
-        openBasket: _order?.baskets.isNotEmpty ?? false,
-        note: state?.note ?? '',
-      );
+  /// What the order flow (or, for a driver, the last look at their
+  /// transfers) says this instant, before the settle above.
+  ShiftWorkInHand get _workInHandNow {
+    final note = state?.note ?? '';
+    if (isDriver) {
+      // Never the order flow: a driver is not dispatched orders or baskets,
+      // and "finish this order" would send them looking for one.
+      return driverWorkInHand(transfers: _transfersInHand, note: note);
+    }
+    return shiftWorkInHand(
+      assignedOrder: _home?.latestOrder.isNotEmpty ?? false,
+      openBasket: _order?.baskets.isNotEmpty ?? false,
+      note: note,
+    );
+  }
 
   bool get hasWorkInHand => workInHand != ShiftWorkInHand.none;
 
@@ -145,7 +188,8 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   /// Start for the logged-in user. [owner] is a dashboard; the clock keeps
   /// running until every owner has called [stop]. [order] is the order flow,
-  /// for the basket session a packer may still have open.
+  /// for the basket session a packer may still have open; a driver's clock
+  /// leaves it alone.
   Future<void> start(HomeProvider home,
       {required Object owner, OrderProvider? order}) async {
     if (_started && identical(_home, home)) {
@@ -156,7 +200,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     }
     _stop();
     _home = home;
-    if (!isPacker) {
+    if (!_runsClock) {
       _home = null;
       return;
     }
@@ -176,7 +220,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   void _attachOrder(OrderProvider? order) {
-    if (order == null || identical(_order, order)) return;
+    // Baskets are a packer's. A driver's clock must neither read them as work
+    // in hand nor empty them on the way out (see _stop).
+    if (order == null || identical(_order, order) || !isPacker) return;
     _order?.removeListener(_onWorkChanged);
     _order = order;
     order.addListener(_onWorkChanged);
@@ -217,6 +263,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     requestError = null;
     _lastSeed = null;
     _lastWork = ShiftWorkInHand.none;
+    // What one driver held says nothing about whoever signs in next.
+    _transfersInHand = null;
+    _transfersSessionId = null;
     _openingScreen = false;
     // Called while the dashboard is being disposed; tell listeners afterwards.
     Future.microtask(() {
@@ -332,7 +381,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// GET /attendance/session/ before the app acts on it, so a seed can move
   /// the status line but never opens the blocking screen on its own.
   void seedFromSummary(ShiftSessionState seed, {bool confirm = true}) {
-    if (!_started || !isPacker) return;
+    if (!_started || !_runsClock) return;
     final current = state;
     final next = current == null ? seed : current.withSeed(seed);
     state = next;
@@ -386,6 +435,10 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     try {
       final next = await _loadSession();
       if (epoch != _epoch) return;
+      if (isDriver) {
+        await _checkTransfers(next, epoch);
+        if (epoch != _epoch) return;
+      }
       _lastRefreshOk = true;
       await _apply(next, wasOnline: wasOnline);
     } catch (e) {
@@ -393,6 +446,53 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       debugPrint('Shift clock refresh failed: $e');
     } finally {
       if (epoch == _epoch) _scheduleNext();
+    }
+  }
+
+  /// A driver's work in hand, read in the same refresh as the session [next]
+  /// it goes with, so the blocking screen is never put up on an older answer.
+  ///
+  /// The server's own note ([driverBusyNote]) only comes once the grace
+  /// period is over, so the app looks itself - but only while the shift is
+  /// over, which is the only time the answer changes anything. The clock
+  /// polls then, so a received transfer brings the screen within one poll.
+  /// Outside that the count is dropped, and the next stretch of overtime
+  /// starts from "not known".
+  Future<void> _checkTransfers(ShiftSessionState next, int epoch) async {
+    if (!shouldCheckDriverTransfers(next)) {
+      _transfersInHand = null;
+      _transfersSessionId = null;
+      return;
+    }
+    int? count;
+    try {
+      count = await _loadDriverTransfers();
+    } catch (e) {
+      debugPrint('Shift clock driver transfers: $e');
+      // Can't tell whether they are carrying stock. That keeps a screen from
+      // opening, but it must not take down one already up for this stretch
+      // of overtime - along with whatever the driver was typing into the
+      // request form - over one blip: keep what the last look found, as a
+      // failed read of the session itself leaves the screen alone. A good
+      // read that finds a transfer still closes it.
+      if (isScreenOpen && _transfersSessionId == next.sessionId) {
+        count = _transfersInHand;
+      }
+    }
+    if (epoch != _epoch) return;
+    _transfersInHand = count;
+    _transfersSessionId = count == null ? null : next.sessionId;
+  }
+
+  /// A fresh look at how many transfers this driver holds, or null when it
+  /// can't be read. For a refused check-out: only a transfer in hand makes a
+  /// refusal worth stopping the logout for (driverCheckoutRefusalStops).
+  Future<int?> readDriverTransfers() async {
+    try {
+      return await _loadDriverTransfers();
+    } catch (e) {
+      debugPrint('Driver transfers at check-out: $e');
+      return null;
     }
   }
 
@@ -538,6 +638,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   /// Home status card tapped. A shift only the summary has told us about is
   /// confirmed with the clock first; the screen opens when that comes back.
+  /// So is a driver's work, when their transfers could not be read last time.
   void openScreen() {
     if (wantsScreen) {
       _openScreen();

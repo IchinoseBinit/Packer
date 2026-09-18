@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/driver/widgets/driver_transfer_card.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
+import 'package:packer/features/views/shift_clock/widgets/shift_status_card.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
 import 'package:packer/features/views/widgets/general_appbar.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
@@ -43,11 +46,12 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             return const CustomSwitch();
           }),
         ),
-        body: RefreshIndicator(
+        body: _withShiftStatus(RefreshIndicator(
           onRefresh: () async {
             final driverController =
                 Provider.of<DriverController>(context, listen: false);
             driverController.fetchDriverTransfers(context, fromBuild: true);
+            context.read<ShiftClockProvider>().refresh();
           },
           child: Consumer<HomeProvider>(
             builder: (context, homeProvider, c) {
@@ -85,6 +89,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                           Provider.of<DriverController>(context, listen: false);
                       driverController.fetchDriverTransfers(context,
                           fromBuild: true);
+                      context.read<ShiftClockProvider>().refresh();
                     },
                     child: ListView.builder(
                       shrinkWrap: true,
@@ -117,8 +122,21 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
               );
             },
           ),
-        ),
+        )),
       ),
+    );
+  }
+
+  /// The shift clock's status line above [content], online or not: an
+  /// offline driver whose shift is still open is still on the clock. The
+  /// card's own margin, not a wrapper, so a hidden card (every driver, while
+  /// driver enforcement is off) takes no room above the transfers.
+  Widget _withShiftStatus(Widget content) {
+    return Column(
+      children: [
+        ShiftStatusCard(margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0)),
+        Expanded(child: content),
+      ],
     );
   }
 

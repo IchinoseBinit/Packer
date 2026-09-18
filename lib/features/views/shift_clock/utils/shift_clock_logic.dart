@@ -2,8 +2,8 @@ import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/features/views/audit_product/models/audit_status_enum.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 
-/// Pure shift clock rules and the words packers see. No Flutter, no network,
-/// so all of it is covered by test/shift_clock_test.dart.
+/// Pure shift clock rules and the words packers and drivers see. No Flutter,
+/// no network, so all of it is covered by test/shift_clock_test.dart.
 
 class ShiftPushType {
   static const limitReached = 'shift_limit_reached';
@@ -32,6 +32,18 @@ const shiftCatchUpWindow = Duration(minutes: 10);
 /// is waiting for the packer to finish what they have in hand.
 const packerBusyNote = 'Waiting for the basket/order in hand';
 
+/// The same for a driver (attendance.services.DRIVER_BUSY_NOTE): a load packed
+/// for them or on the road that the store at the other end has not received
+/// yet. The server only writes it once the grace period is over, so before
+/// that the app has to know about the driver's transfers itself (see
+/// driverTransferCount). The wording it replaced, "Waiting for the transfer in
+/// hand", is still read as work in hand by isWorkInHandNote.
+const driverBusyNote = 'Waiting for the transfer to be received';
+
+/// Session roles this app shows the clock for. A driver signs in on this app
+/// too, and gets the same clock as a packer.
+const shiftClockAppRoles = {'packer', 'driver'};
+
 /// How long work has to look finished before the app believes it is.
 ///
 /// The home screen empties the packer's assigned orders *before* it asks for
@@ -53,10 +65,46 @@ bool isShiftCompleteError(Object? error) {
   return json is Map && json['error'] == 'shift_complete';
 }
 
-/// Shift clock UI applies to a packer's own open, enforced session.
+/// Was a check-out refused by the server - a 4xx answer - rather than never
+/// reaching it or failing on the way? A refusal says something about the
+/// person checking out; the rest only say "try again".
+bool isCheckoutRefusal(Object? error) {
+  if (error is! AppException) return false;
+  final code = error.statusCode;
+  return code != null && code >= 400 && code < 500;
+}
+
+/// A refused check-out whose `error` names a transfer in hand
+/// ('transfer_in_hand'). The backend words that refusal only in `message` so
+/// far, which is why the app also looks at the driver's transfers itself (see
+/// driverCheckoutRefusalStops); this takes the server's word once it gives it.
+bool isTransferInHandRefusal(Object? error) {
+  if (error is! AppException) return false;
+  final json = error.json;
+  return json is Map && json['error'] == 'transfer_in_hand';
+}
+
+/// Does a driver's refused check-out stop their logout?
+///
+/// Only a transfer in hand does: they have to deliver it first. The app reads
+/// that from the driver's own transfers right after the refusal
+/// ([transfersInHand]; null when it could not). Any other refusal is nothing
+/// the driver can fix - "No active login session found.", say, once a plain
+/// logout has already closed their online log - and stopping on it would
+/// leave them on a screen Back does not leave, so the logout goes on, as a
+/// packer's does when there is nothing to check out. No answer at all, or a
+/// server error, stops it: they can try again.
+bool driverCheckoutRefusalStops(Object? error, {required int? transfersInHand}) {
+  if (!isCheckoutRefusal(error)) return true;
+  if (isTransferInHandRefusal(error)) return true;
+  return transfersInHand != 0;
+}
+
+/// Shift clock UI applies to a packer's or a driver's own open, enforced
+/// session. The summary's `shift` block carries no role, so none means ours.
 bool isShiftClockVisible(ShiftSessionState? state) {
   if (state == null || !state.enforced || !state.hasSession) return false;
-  return state.role.isEmpty || state.role == 'packer';
+  return state.role.isEmpty || shiftClockAppRoles.contains(state.role);
 }
 
 // ---------------------------------------------------------------------------
@@ -115,17 +163,21 @@ String payLabel(String pay) =>
 // Work in hand
 // ---------------------------------------------------------------------------
 
-/// What the packer still has to finish before the shift clock can check them
-/// out - and while any of it is true the blocking screen never shows.
-enum ShiftWorkInHand { none, order, basket }
+/// What the packer or driver still has to finish before the shift clock can
+/// check them out - and while any of it is true the blocking screen never
+/// shows. A packer holds an order or a basket, a driver a transfer.
+enum ShiftWorkInHand { none, order, basket, transfer }
 
 /// True for the server's note about work in hand ("Waiting for the
-/// basket/order in hand"). A stock audit note ("Waiting for stock audit: ...")
-/// is not work in hand: the packer starts that from the shift complete screen.
+/// basket/order in hand", "Waiting for the transfer to be received"). A stock
+/// audit note ("Waiting for stock audit: ...") is not work in hand: the packer
+/// starts that from the shift complete screen.
 bool isWorkInHandNote(String note) {
   final text = note.trim().toLowerCase();
   if (text.isEmpty) return false;
-  return text == packerBusyNote.toLowerCase() || text.endsWith('in hand');
+  return text == packerBusyNote.toLowerCase() ||
+      text == driverBusyNote.toLowerCase() ||
+      text.endsWith('in hand');
 }
 
 /// Work the packer has in hand: an order assigned to them, a basket session
@@ -140,20 +192,74 @@ ShiftWorkInHand shiftWorkInHand({
   return isWorkInHandNote(note) ? ShiftWorkInHand.order : ShiftWorkInHand.none;
 }
 
+/// Work a driver has in hand: a transfer assigned to them that is packed (they
+/// may be scanning its baskets onto the vehicle right now) or on the road, or
+/// the server saying it is waiting for one.
+///
+/// The same two statuses hold the driver's check-out on the server
+/// (attendance.services.DRIVER_BUSY_STATUSES), which also lets them load a
+/// packed transfer past their hours. So a driver held here can always finish:
+/// load it, deliver it, and the screen comes once the store has received it.
+///
+/// [transfers] is how many the app last found (null: it could not find out).
+/// Not knowing reads as nothing in hand here, so the status line says only
+/// "Shift over"; the blocking screen still waits for a count it could read
+/// (see canShowShiftCompleteScreen's workKnown).
+ShiftWorkInHand driverWorkInHand({
+  required int? transfers,
+  required String note,
+}) {
+  if ((transfers ?? 0) > 0 || isWorkInHandNote(note)) {
+    return ShiftWorkInHand.transfer;
+  }
+  return ShiftWorkInHand.none;
+}
+
+/// How many transfers one of the driver transfer lists holds
+/// (GET /driver/scan-baskets/ for the packed ones assigned to the driver,
+/// GET /driver/in-transit-transfers/ for the ones on the road with them), both
+/// `{"transfers": [...]}`.
+///
+/// Throws a FormatException for anything else: an answer the app cannot read
+/// says nothing about whether the driver is carrying stock.
+int driverTransferCount(dynamic data) {
+  final transfers = data is Map ? data['transfers'] : null;
+  if (transfers is! List) {
+    throw const FormatException('Unexpected driver transfer list');
+  }
+  return transfers.length;
+}
+
+/// Should the clock look at the driver's transfers along with [state]?
+///
+/// Only once the shift is over: that is when the transfers decide whether the
+/// blocking screen may show and what the status line says. Before that they
+/// change nothing, and with enforcement off the clock shows nothing at all,
+/// so a driver's app makes no extra calls.
+bool shouldCheckDriverTransfers(ShiftSessionState? state) =>
+    state != null &&
+    isShiftClockVisible(state) &&
+    (state.showDialog || isShiftOver(state));
+
 /// May the blocking "Your shift is complete" screen show?
 ///
 /// Only for a shift the clock itself confirmed (a summary seed is checked with
 /// GET /attendance/session/ first) that the server says to show, and never
-/// while work is in hand: that packer reads it in the home status line and
-/// gets the screen as soon as the work is done.
+/// while work is in hand: that packer or driver reads it in the home status
+/// line and gets the screen as soon as the work is done.
+///
+/// [workKnown] false: the app could not read what is in hand (a driver's
+/// transfers), so it cannot promise there is nothing - no screen until it can.
 bool canShowShiftCompleteScreen({
   required ShiftSessionState? state,
   required ShiftWorkInHand work,
+  bool workKnown = true,
 }) =>
     state != null &&
     isShiftClockVisible(state) &&
     state.showDialog &&
     !state.fromSummary &&
+    workKnown &&
     work == ShiftWorkInHand.none;
 
 // ---------------------------------------------------------------------------
@@ -178,8 +284,9 @@ String? shiftCountdown(Duration? left) {
   return '$hours h $minutes m left';
 }
 
-/// "Shift ends 6 PM · 2 h 15 m left", "Extension until 8 PM", "Shift over" or
-/// "Shift over · finish this order"; null when hidden.
+/// "Shift ends 6 PM · 2 h 15 m left", "Extension until 8 PM", "Shift over",
+/// "Shift over · finish this order" or, for a driver, "Shift over · deliver
+/// this transfer"; null when hidden.
 ///
 /// The countdown runs off the phone clock corrected against server_time, so a
 /// phone set to the wrong time still shows the right time left.
@@ -195,6 +302,8 @@ String? shiftStatusLine(
         return 'Shift over · finish this order';
       case ShiftWorkInHand.basket:
         return 'Shift over · finish this basket';
+      case ShiftWorkInHand.transfer:
+        return 'Shift over · deliver this transfer';
       case ShiftWorkInHand.none:
         return 'Shift over';
     }
@@ -231,9 +340,18 @@ String shiftStatusDetail(
     if (state.pendingRequest != null) {
       return 'Waiting for support to approve more time';
     }
-    return work == ShiftWorkInHand.none
-        ? 'Tap to ask for more time or check out'
-        : 'Finish it, then ask for more time or check out';
+    switch (work) {
+      case ShiftWorkInHand.none:
+        return 'Tap to ask for more time or check out';
+      case ShiftWorkInHand.transfer:
+        // A transfer holds the driver until the store at the other end scans
+        // it in, not until they hand it over: say what ends the wait, or a
+        // driver who has delivered keeps waiting for a screen with no idea why.
+        return 'Once the store receives it, ask for more time or check out';
+      case ShiftWorkInHand.order:
+      case ShiftWorkInHand.basket:
+        return 'Finish it, then ask for more time or check out';
+    }
   }
   if (state.status == ShiftStatus.extended) {
     final decision = state.lastDecision;

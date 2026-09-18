@@ -16,6 +16,7 @@ import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/api/app_exception.dart';
 import 'package:packer/controllers/api/dio_client.dart';
+import 'package:packer/controllers/api/error_handler.dart';
 import 'package:packer/controllers/services/hive_db/basket_dao.dart';
 import 'package:packer/controllers/services/hive_db/hive_db_service.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
@@ -24,11 +25,14 @@ import 'package:packer/features/views/audit_product/models/audit_status_enum.dar
 import 'package:packer/features/views/auth/model/order_notification.dart';
 import 'package:packer/features/views/auth/model/packer_summary.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/driver/controller/driver_controller.dart';
+import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
+import 'package:packer/features/views/shift_clock/widgets/shift_status_card.dart';
 import 'package:packer/features/views/widgets/post_basket_model.dart';
 
 ShiftTime at(String iso) => ShiftTime.tryParse(iso)!;
@@ -1036,6 +1040,172 @@ void main() {
     });
   });
 
+  group('drivers (driver-1)', () {
+    test('a driver session is shown like a packer one, other roles still are not',
+        () {
+      final driver = parse(openSession({'role': 'driver'}));
+      expect(isShiftClockVisible(driver), isTrue);
+      expect(shiftStatusLine(driver, now: received), 'Shift over');
+      for (final role in ['rider', 'staff', 'manager', 'tagger']) {
+        expect(isShiftClockVisible(parse(openSession({'role': role}))), isFalse,
+            reason: role);
+      }
+    });
+
+    test('a transfer packed for them or on the road, or the server waiting for one',
+        () {
+      ShiftWorkInHand work({int? transfers, String note = ''}) =>
+          driverWorkInHand(transfers: transfers, note: note);
+
+      expect(work(transfers: 1), ShiftWorkInHand.transfer);
+      expect(work(transfers: 3), ShiftWorkInHand.transfer);
+      expect(work(transfers: 0, note: driverBusyNote), ShiftWorkInHand.transfer);
+      // attendance.services.DRIVER_BUSY_NOTE, word for word (p-1): the server
+      // holds a driver until the load is received, and says so.
+      expect(work(note: 'Waiting for the transfer to be received'),
+          ShiftWorkInHand.transfer);
+      // ...and the wording it had before.
+      expect(work(note: '  waiting for the transfer in hand '),
+          ShiftWorkInHand.transfer);
+      expect(work(transfers: 0), ShiftWorkInHand.none);
+      // Not knowing says nothing in the words; the screen has its own gate.
+      expect(work(), ShiftWorkInHand.none);
+      // Never a packer's audit.
+      expect(work(transfers: 0, note: 'Waiting for stock audit: 12 racks left'),
+          ShiftWorkInHand.none);
+    });
+
+    test('the words a driver reads', () {
+      final over = parse(openSession({'role': 'driver'}));
+      expect(
+          shiftStatusLine(over, now: received, work: ShiftWorkInHand.transfer),
+          'Shift over · deliver this transfer');
+      // What ends the wait is the store receiving it, not the hand-over
+      // (p-1): a driver who has delivered is not told to deliver again.
+      expect(
+          shiftStatusDetail(over,
+              now: received, work: ShiftWorkInHand.transfer),
+          'Once the store receives it, ask for more time or check out');
+      expect(shiftStatusDetail(over, now: received),
+          'Tap to ask for more time or check out');
+    });
+
+    test('a refused check-out stops a driver only over a transfer in hand (p-2)',
+        () {
+      final noLog = AppException(
+        statusCode: 400,
+        message: 'No active login session found.',
+        json: {'success': false, 'message': 'No active login session found.'},
+      );
+      final coded = AppException(
+        statusCode: 400,
+        message: 'Deliver it first.',
+        json: {'success': false, 'error': 'transfer_in_hand'},
+      );
+      final offline = AppException(message: 'Cannot process at the moment.');
+      final serverDown = AppException(statusCode: 502, message: 'Bad gateway');
+
+      expect(isCheckoutRefusal(noLog), isTrue);
+      expect(isCheckoutRefusal(AppException(statusCode: 404, message: 'x')),
+          isTrue);
+      for (final error in <Object?>[
+        offline,
+        serverDown,
+        const SocketException('no network'),
+        null,
+      ]) {
+        expect(isCheckoutRefusal(error), isFalse, reason: '$error');
+      }
+      expect(isTransferInHandRefusal(coded), isTrue);
+      expect(isTransferInHandRefusal(noLog), isFalse);
+
+      bool stops(Object? error, int? transfers) =>
+          driverCheckoutRefusalStops(error, transfersInHand: transfers);
+
+      // Nothing in hand: the refusal is nothing the driver can fix, so the
+      // logout goes on.
+      expect(stops(noLog, 0), isFalse);
+      // A transfer in hand, or no way to tell: they stay and are told why.
+      expect(stops(noLog, 1), isTrue);
+      expect(stops(noLog, null), isTrue);
+      // The server naming the transfer is believed over the app's own look.
+      expect(stops(coded, 0), isTrue);
+      // No answer, or the server failing: nothing was refused - try again.
+      expect(stops(offline, 0), isTrue);
+      expect(stops(serverDown, 0), isTrue);
+      expect(stops(const SocketException('no network'), 0), isTrue);
+    });
+
+    test('no blocking screen over a transfer, or over transfers nobody could read',
+        () {
+      final complete = parse(openSession({'role': 'driver'}));
+      expect(
+          canShowShiftCompleteScreen(
+              state: complete, work: ShiftWorkInHand.none),
+          isTrue);
+      expect(
+          canShowShiftCompleteScreen(
+              state: complete, work: ShiftWorkInHand.transfer),
+          isFalse);
+      expect(
+          canShowShiftCompleteScreen(
+              state: complete, work: ShiftWorkInHand.none, workKnown: false),
+          isFalse);
+    });
+
+    test('reads the driver transfer lists, and refuses anything else', () {
+      Map<String, dynamic> transfer(int id) => {
+            'inventory_transfer_id': id,
+            'transfer_identifier': 'transfer-Mother Warehouse-Nayabazar DS-$id',
+            'destination_store_id': 7,
+            'destination_store_name': 'Nayabazar DS',
+            'destination_store_latitude': 27.728817,
+            'destination_store_longitude': 85.309325,
+            'basket_identifiers': ['basket-Nayabazar DS-328c62'],
+          };
+      expect(driverTransferCount({'transfers': []}), 0);
+      expect(driverTransferCount({'transfers': [transfer(15), transfer(16)]}), 2);
+      for (final junk in <dynamic>[
+        null,
+        'Server in deployment phase',
+        <String, dynamic>{},
+        {'transfers': null},
+        {'transfers': 'none'},
+        [transfer(15)],
+      ]) {
+        expect(() => driverTransferCount(junk), throwsFormatException,
+            reason: '$junk');
+      }
+    });
+
+    test('transfers are looked at only once an enforced shift is over', () {
+      expect(shouldCheckDriverTransfers(parse(openSession({'role': 'driver'}))),
+          isTrue);
+      for (final json in [
+        // Still on shift, or on an approved extension: nothing to decide.
+        openSession({
+          'role': 'driver',
+          'status': 'active',
+          'shift_complete': false,
+          'show_dialog': false,
+        }),
+        openSession({
+          'role': 'driver',
+          'status': 'extended',
+          'shift_complete': false,
+          'show_dialog': false,
+        }),
+        // Enforcement off: the clock shows nothing, so it asks nothing.
+        openSession({'role': 'driver', 'enforced': false, 'show_dialog': false}),
+        noSession(null),
+      ]) {
+        expect(shouldCheckDriverTransfers(parse(json)), isFalse,
+            reason: json.toString());
+      }
+      expect(shouldCheckDriverTransfers(null), isFalse);
+    });
+  });
+
   group('ShiftClockProvider', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
@@ -1560,6 +1730,517 @@ void main() {
     });
   });
 
+  group('ShiftClockProvider for a driver', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
+      DioClient.token = driverJwt();
+    });
+
+    Map<String, dynamic> driverOver([Map<String, dynamic> changes = const {}]) =>
+        openSession({'role': 'driver', 'poll_seconds': 15, ...changes});
+
+    testWidgets(
+        'driver-1: counts down like a packer and asks about transfers only once the shift is over',
+        (tester) async {
+      var loads = 0;
+      var transferLoads = 0;
+      var next = liveSession(changes: {'role': 'driver'});
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async {
+          loads++;
+          return parseLive(next);
+        },
+        loadDriverTransfers: () async {
+          transferLoads++;
+          return 0;
+        },
+      );
+
+      // The summary fetched at login already knows when this shift ends.
+      home.setShift(liveSeed());
+      await clock.start(home, owner: owner);
+      await tester.pump();
+
+      expect(clock.isDriver, isTrue);
+      expect(clock.isRunning, isTrue);
+      final session = clock.visibleSession;
+      expect(session, isNotNull, reason: 'a driver gets the clock');
+      expect(shiftStatusLine(session!), startsWith('Shift ends '));
+      expect(clock.isPolling, isFalse, reason: 'the shift end is 2 h away');
+      expect(clock.isWaitingForDeadline, isTrue);
+      expect(transferLoads, 0, reason: 'nothing to decide before the shift end');
+
+      // The shift ends: the app's own timer fires, reads the clock and then
+      // the transfers that decide whether the screen may show.
+      next = liveSession(endsIn: Duration.zero, changes: {
+        'role': 'driver',
+        'status': 'awaiting_extension',
+        'shift_complete': true,
+        'show_dialog': true,
+        'can_take_work': false,
+      });
+      await tester.pump(const Duration(hours: 1));
+      await tester.pump(const Duration(hours: 1));
+      expect(loads, 1);
+      await tester.pump(const Duration(seconds: 5));
+      expect(loads, 2);
+      expect(transferLoads, 1);
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(clock.wantsScreen, isTrue);
+      expect(clock.isPolling, isTrue,
+          reason: 'now waiting on support or a check-out');
+
+      clock.stop(owner: owner);
+      expect(clock.isScheduled, isFalse);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'driver-2: a transfer in hand keeps the screen away; it comes within a poll of the delivery',
+        (tester) async {
+      var transfers = 1;
+      var transferLoads = 0;
+      var next = driverOver();
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(next),
+        loadDriverTransfers: () async {
+          transferLoads++;
+          return transfers;
+        },
+      );
+
+      await clock.start(home, owner: owner);
+      await tester.pump();
+      expect(transferLoads, 1);
+      expect(clock.workInHand, ShiftWorkInHand.transfer);
+      expect(clock.wantsScreen, isFalse, reason: 'a transfer is still in hand');
+      clock.openScreen();
+      expect(clock.wantsScreen, isFalse);
+
+      // The home card says so, in a driver's words, and opens nothing.
+      await tester.pumpWidget(ChangeNotifierProvider<ShiftClockProvider>.value(
+        value: clock,
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (_, __) =>
+              const MaterialApp(home: Scaffold(body: ShiftStatusCard())),
+        ),
+      ));
+      expect(find.text('Shift over · deliver this transfer'), findsOneWidget);
+      expect(
+          find.text(
+              'Once the store receives it, ask for more time or check out'),
+          findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsNothing);
+
+      // Received at the destination store. Nothing tells the driver's phone;
+      // the clock polls while the shift is over and the next poll reads the
+      // transfers again.
+      expect(clock.isPolling, isTrue);
+      transfers = 0;
+      await tester.pump(const Duration(seconds: 16));
+      expect(transferLoads, 2);
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(clock.wantsScreen, isTrue);
+      expect(find.text('Shift over'), findsOneWidget);
+      expect(find.text('Tap to ask for more time or check out'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
+
+      // The server saying it is waiting for the transfer holds it too.
+      next = driverOver({'note': driverBusyNote});
+      await clock.refresh();
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.transfer);
+      expect(clock.wantsScreen, isFalse);
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'driver-3: transfers that could not be read hold the screen back; the home card asks again',
+        (tester) async {
+      var reachable = false;
+      var transferLoads = 0;
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(driverOver()),
+        loadDriverTransfers: () async {
+          transferLoads++;
+          if (!reachable) throw const SocketException('no network');
+          return 0;
+        },
+      );
+
+      await clock.start(home, owner: owner);
+      await tester.pump();
+      expect(transferLoads, 1);
+      expect(clock.visibleSession, isNotNull);
+      expect(clock.wantsScreen, isFalse,
+          reason: 'a transfer may be in hand for all the app knows');
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(
+          shiftStatusLine(clock.visibleSession!,
+              now: received, work: clock.workInHand),
+          'Shift over');
+
+      // A tap on the home card makes the clock look again.
+      reachable = true;
+      clock.openScreen();
+      await tester.pump();
+      expect(transferLoads, 2);
+      expect(clock.wantsScreen, isTrue);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'driver-4: with driver enforcement off nothing shows and nothing asks about transfers',
+        (tester) async {
+      var transferLoads = 0;
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(driverOver({
+              'enforced': false,
+              'show_dialog': false,
+              'can_take_work': true,
+            })),
+        loadDriverTransfers: () async {
+          transferLoads++;
+          return 1;
+        },
+      );
+
+      await clock.start(home, owner: owner);
+      await tester.pump();
+      expect(clock.isRunning, isTrue);
+      expect(clock.visibleSession, isNull);
+      expect(clock.wantsScreen, isFalse);
+      expect(clock.isScheduled, isFalse);
+      expect(transferLoads, 0);
+
+      clock.stop(owner: owner);
+    });
+
+    testWidgets("driver-5: a driver's clock never reads the packer order flow",
+        (tester) async {
+      final orders = _TestOrders()
+        ..setBaskets([Basket(identifier: 'B1', productIdentifiers: const [])]);
+      final home = _TestHome()
+        ..isOnline = true
+        ..latestOrder = [anOrder()];
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(driverOver()),
+        loadDriverTransfers: () async => 0,
+      );
+
+      await clock.start(home, owner: owner, order: orders);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.none,
+          reason: "orders and baskets are a packer's, never a driver's");
+      expect(clock.wantsScreen, isTrue);
+
+      // Nor does it empty it on the way out: it never took it on.
+      clock.stop(owner: owner);
+      await tester.pump();
+      expect(orders.baskets, hasLength(1));
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets('driver-5: roles other than packer and driver still get no clock',
+        (tester) async {
+      DioClient.token = managerJwt();
+      var loads = 0;
+      final clock = ShiftClockProvider(loadSession: () async {
+        loads++;
+        return parse(openSession({'role': 'manager'}));
+      });
+
+      await clock.start(_TestHome(), owner: Object());
+      expect(clock.isRunning, isFalse);
+      expect(clock.visibleSession, isNull);
+      expect(loads, 0);
+    });
+
+    testWidgets(
+        'driver-6: the shift complete screen offers a driver no stock audit and checks them out without a QR',
+        (tester) async {
+      // The flag a packer's QR check-out goes by: a driver never sets it, and
+      // even with it set a driver is not sent to the scanner.
+      FlutterSecureStorage.setMockInitialValues(
+          {SecureStorageConstants.isOnlineKey: 'true'});
+      const refusal = 'A transfer loaded for you has not been received yet. '
+          'Deliver it before logging out.';
+      final home = _TestHome()
+        // A driver on a dark store's books still gets its audit status.
+        ..packerSummary = summary('ongoing')
+        ..driverCheckoutError = AppException(
+          statusCode: 400,
+          message: refusal,
+          json: {'success': false, 'message': refusal},
+        );
+      final owner = Object();
+      var transfers = 0;
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(driverOver()),
+        loadDriverTransfers: () async => transfers,
+      );
+      final router = GoRouter(initialLocation: '/', routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) => const Scaffold(body: Text('home')),
+          routes: [
+            GoRoute(
+              path: NavigationConstants.shiftCompleteScreenRoute,
+              builder: (_, __) => const ShiftCompleteScreen(),
+            ),
+            GoRoute(
+              path: NavigationConstants.packerCheckoutScanRoute,
+              builder: (_, __) => const Scaffold(body: Text('qr scanner')),
+            ),
+          ],
+        ),
+      ]);
+      await tester.pumpWidget(MultiProvider(
+        providers: [
+          ChangeNotifierProvider<HomeProvider>.value(value: home),
+          ChangeNotifierProvider<ShiftClockProvider>.value(value: clock),
+        ],
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (_, __) => MaterialApp.router(routerConfig: router),
+        ),
+      ));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your shift is complete'), findsOneWidget);
+      expect(find.text('Continue stock audit'), findsNothing);
+      expect(find.text('Start stock audit'), findsNothing);
+      expect(home.summaryFetches, 0,
+          reason: "no audit status is fetched for a driver's screen");
+      expect(find.text('Request extension'), findsOneWidget);
+
+      // A transfer is packed for them after the clock last looked.
+      transfers = 1;
+      final checkOut = find.text('Check out and log out');
+      await tester.ensureVisible(checkOut);
+      await tester.pumpAndSettle();
+      await tester.tap(checkOut);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yes'));
+      await tester.pumpAndSettle();
+
+      expect(home.driverCheckouts, 1);
+      expect(find.text('qr scanner'), findsNothing);
+      // Refused over it: they hear why, and are neither taken offline nor
+      // logged out.
+      expect(find.text(refusal), findsOneWidget);
+      expect(home.onlineUpdates, isEmpty);
+
+      await tester.tap(find.text('Ok'));
+      await tester.pumpAndSettle();
+      expect(find.text('Your shift is complete'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'driver-7: a check-out refused over anything but a transfer in hand still logs the driver out (p-2)',
+        (tester) async {
+      const noLog = 'No active login session found.';
+      // Set at sign-in in the app; the logout this reaches sends it.
+      DioClient.refreshToken = 'refresh';
+      final home = _TestHome()
+        // No answer at all first: nothing was refused, so they stay on the
+        // screen and can try again.
+        ..driverCheckoutError = AppException(message: ErrorHandler.errorMessage);
+      final owner = Object();
+      var transferLoads = 0;
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(driverOver()),
+        loadDriverTransfers: () async {
+          transferLoads++;
+          return 0;
+        },
+      );
+      final router = _shiftScreenRouter();
+      await tester.pumpWidget(_shiftScreenApp(home, clock, router));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+      expect(find.text('Your shift is complete'), findsOneWidget);
+      expect(transferLoads, 1, reason: "the clock's own look");
+
+      Future<void> checkOut() async {
+        final button = find.text('Check out and log out');
+        await tester.ensureVisible(button);
+        await tester.pumpAndSettle();
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Yes'));
+        await tester.pumpAndSettle();
+      }
+
+      await checkOut();
+      expect(home.driverCheckouts, 1);
+      expect(transferLoads, 1,
+          reason: 'with no answer there is no refusal to tell apart');
+      expect(find.text(ErrorHandler.errorMessage), findsOneWidget);
+      expect(home.onlineUpdates, isEmpty);
+      await tester.tap(find.text('Ok'));
+      await tester.pumpAndSettle();
+      expect(find.text('Your shift is complete'), findsOneWidget);
+
+      // Their plain logout earlier in the shift closed the online log, and
+      // past their hours they cannot go online to open another: the server
+      // finds nothing to check out. With no transfer in hand that is no
+      // reason to keep them on a screen Back does not leave.
+      home.driverCheckoutError = AppException(
+        statusCode: 400,
+        message: noLog,
+        json: {'success': false, 'message': noLog},
+      );
+      await checkOut();
+      expect(home.driverCheckouts, 2);
+      expect(transferLoads, 2, reason: 'looked before letting them go');
+      expect(find.text(noLog), findsNothing);
+      expect(home.onlineUpdates, [false],
+          reason: 'taken offline, and on to the logout');
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'driver-8: one failed look at the transfers leaves an open shift complete screen alone (p-3)',
+        (tester) async {
+      // What the transfer lists give: a count, or an error to throw.
+      Object transfers = 0;
+      var transferLoads = 0;
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async => parse(driverOver()),
+        loadDriverTransfers: () async {
+          transferLoads++;
+          final answer = transfers;
+          if (answer is int) return answer;
+          throw answer;
+        },
+      );
+      final router = _shiftScreenRouter();
+      await tester.pumpWidget(_shiftScreenApp(home, clock, router));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+      expect(clock.isScreenOpen, isTrue);
+      expect(clock.isPolling, isTrue);
+
+      const reason = 'Two more stores to cover';
+      await tester.enterText(find.byType(TextField), reason);
+      await tester.pump();
+
+      // A network blip on the next poll, on the transfer lists alone.
+      transfers = const SocketException('no network');
+      var before = transferLoads;
+      await tester.pump(const Duration(seconds: 16));
+      await tester.pumpAndSettle();
+      expect(transferLoads, before + 1);
+      expect(clock.wantsScreen, isTrue);
+      expect(find.text('Your shift is complete'), findsOneWidget);
+      expect(find.text(reason), findsOneWidget, reason: 'nothing typed is lost');
+      expect(find.text('home'), findsNothing);
+
+      // A good look that finds a transfer still takes it down.
+      transfers = 1;
+      before = transferLoads;
+      await tester.pump(const Duration(seconds: 16));
+      await tester.pumpAndSettle();
+      expect(transferLoads, before + 1);
+      expect(clock.workInHand, ShiftWorkInHand.transfer);
+      expect(find.text('Your shift is complete'), findsNothing);
+      expect(find.text('home'), findsOneWidget);
+
+      // With the screen down, not knowing keeps it down.
+      transfers = const SocketException('no network');
+      await tester.pump(const Duration(seconds: 16));
+      await tester.pumpAndSettle();
+      expect(clock.wantsScreen, isFalse);
+      expect(find.text('Your shift is complete'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'driver-9: a hidden status card takes no room on the driver home (p-4)',
+        (tester) async {
+      // Driver enforcement off, as it ships.
+      var next = parse(driverOver({
+        'enforced': false,
+        'show_dialog': false,
+        'can_take_work': true,
+      }));
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(
+        loadSession: () async => next,
+        loadDriverTransfers: () async => 0,
+      );
+      await tester.pumpWidget(MultiProvider(
+        providers: [
+          ChangeNotifierProvider<HomeProvider>.value(value: home),
+          ChangeNotifierProvider<ShiftClockProvider>.value(value: clock),
+          ChangeNotifierProvider<DriverController>.value(value: _TestDrivers()),
+        ],
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (_, __) => const MaterialApp(home: DriverHomeScreen()),
+        ),
+      ));
+      await clock.start(home, owner: owner);
+      await tester.pump();
+
+      double appBarBottom() => tester.getBottomLeft(find.byType(AppBar)).dy;
+      double contentTop() =>
+          tester.getTopLeft(find.byType(RefreshIndicator).first).dy;
+
+      expect(clock.visibleSession, isNull);
+      expect(find.text('You are offline'), findsOneWidget);
+      expect(contentTop(), appBarBottom(),
+          reason: 'nothing between the app bar and the transfers');
+
+      // Enforcement on: the card shows, with its room around it.
+      next = parseLive(liveSession(changes: {'role': 'driver'}));
+      await clock.refresh();
+      await tester.pump();
+      final line = find.textContaining('Shift ends ');
+      expect(line, findsOneWidget);
+      expect(tester.getTopLeft(line).dy, greaterThan(appBarBottom()));
+      expect(contentTop(), greaterThan(tester.getBottomLeft(line).dy));
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump();
+    });
+  });
+
   group('logout', () {
     const pathProvider = MethodChannel('plugins.flutter.io/path_provider');
     late Directory appDocDir;
@@ -1661,16 +2342,20 @@ void main() {
   });
 }
 
-String packerJwt() {
+String packerJwt() =>
+    _jwt({'user_id': 5, 'name': 'Packer', 'role': 'packer', 'store_id': 2});
+
+/// A driver signs in on this app too, on the main store's books.
+String driverJwt() =>
+    _jwt({'user_id': 6, 'name': 'Driver', 'role': 'driver', 'store_id': 1});
+
+String managerJwt() =>
+    _jwt({'user_id': 8, 'name': 'Manager', 'role': 'manager', 'store_id': 2});
+
+String _jwt(Map<String, dynamic> claims) {
   String encode(Map<String, dynamic> map) =>
       base64Url.encode(utf8.encode(jsonEncode(map))).replaceAll('=', '');
-  return '${encode({'alg': 'HS256', 'typ': 'JWT'})}.'
-      '${encode({
-        'user_id': 5,
-        'name': 'Packer',
-        'role': 'packer',
-        'store_id': 2
-      })}.sig';
+  return '${encode({'alg': 'HS256', 'typ': 'JWT'})}.${encode(claims)}.sig';
 }
 
 PackerSummary summary(String auditStatus) => PackerSummary.fromJson({
@@ -1690,6 +2375,28 @@ class _TestHome extends HomeProvider {
   @override
   Future<void> fetchpackerSummary() async {
     summaryFetches++;
+  }
+
+  /// What a driver's check-out is refused with; null lets it through.
+  AppException? driverCheckoutError;
+  int driverCheckouts = 0;
+
+  @override
+  Future<bool> driverCheckout() async {
+    driverCheckouts++;
+    final error = driverCheckoutError;
+    if (error != null) throw error;
+    return true;
+  }
+
+  /// Every online-status change the app asked the server for.
+  final onlineUpdates = <bool>[];
+
+  @override
+  Future<bool> updatepackerStatus(bool status, BuildContext context,
+      {bool showErrorDialog = true}) async {
+    onlineUpdates.add(status);
+    return true;
   }
 
   void setOnline(bool value) {
@@ -1714,6 +2421,44 @@ class _TestHome extends HomeProvider {
     notifyListeners();
   }
 }
+
+/// DriverController without the network: the driver home asks it for the
+/// packed transfers as it opens.
+class _TestDrivers extends DriverController {
+  @override
+  void fetchDriverTransfers(BuildContext context, {bool fromBuild = false}) {}
+}
+
+/// Home, with the shift complete screen and the check-out scanner above it.
+GoRouter _shiftScreenRouter() => GoRouter(initialLocation: '/', routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, __) => const Scaffold(body: Text('home')),
+        routes: [
+          GoRoute(
+            path: NavigationConstants.shiftCompleteScreenRoute,
+            builder: (_, __) => const ShiftCompleteScreen(),
+          ),
+          GoRoute(
+            path: NavigationConstants.packerCheckoutScanRoute,
+            builder: (_, __) => const Scaffold(body: Text('qr scanner')),
+          ),
+        ],
+      ),
+    ]);
+
+Widget _shiftScreenApp(
+        HomeProvider home, ShiftClockProvider clock, GoRouter router) =>
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<HomeProvider>.value(value: home),
+        ChangeNotifierProvider<ShiftClockProvider>.value(value: clock),
+      ],
+      child: ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (_, __) => MaterialApp.router(routerConfig: router),
+      ),
+    );
 
 /// OrderProvider without Hive: only the open baskets matter here.
 class _TestOrders extends OrderProvider {

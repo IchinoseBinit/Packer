@@ -359,6 +359,32 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
+  // driverCheckout : a driver's check-out, the same call as a packer's QR
+  // check-out without the QR (a driver checks in with the switch alone, and
+  // the backend reads no QR). It is the only thing that ends a driver's
+  // shift: going offline leaves their online log and shift session open. The
+  // backend refuses while a transfer loaded for them has not been received,
+  // and when it finds no open online log; either error is rethrown with its
+  // message, for logoutWithCheckout to tell apart. Returns true on success.
+  Future<bool> driverCheckout() async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.packerCheckoutLogoutUrl,
+        body: {},
+      );
+
+      if (response.statusCode == 200) {
+        showToast("Checkout successful");
+        return true;
+      }
+      return false;
+    } catch (ex) {
+      debugPrint('Error: $ex');
+      rethrow;
+    }
+  }
+
   // not in use
   Future<void> updatepackerAvailability(bool status) async {
     try {

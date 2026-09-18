@@ -60,9 +60,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
       widgets[0] = HomeWarehouseScreen();
     }
 
-    // Shift clock (packers only; does nothing for other roles). The order flow
-    // goes with it: an order or a basket in hand keeps the shift complete
-    // screen away until the packer is done with it.
+    // Shift clock (packers and drivers; does nothing for other roles). The
+    // order flow goes with it: an order or a basket in hand keeps the shift
+    // complete screen away until the packer is done with it. A driver's clock
+    // ignores it and looks at their transfers instead.
     final shiftClock = Provider.of<ShiftClockProvider>(context, listen: false);
     final order = Provider.of<OrderProvider>(context, listen: false);
     _shiftClock = shiftClock;

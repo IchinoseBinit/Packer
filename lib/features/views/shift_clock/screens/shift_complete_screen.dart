@@ -13,15 +13,18 @@ import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observ
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 
 /// Full-screen "Your shift is complete", up while the clock says show_dialog
-/// and the packer has nothing in hand. A packer still packing an order or a
-/// basket never sees it: they read "Shift over · finish this order" on the home
-/// screen, and this opens once that work is done.
+/// and the packer or driver has nothing in hand. A packer still packing an
+/// order or a basket never sees it: they read "Shift over · finish this order"
+/// on the home screen, and this opens once that work is done. A driver with a
+/// transfer packed for them or on the road reads "Shift over · deliver this
+/// transfer" the same way.
 ///
 /// Back does not leave it. It closes itself when the shift clock stops asking
-/// for it: an extension is approved, work lands in the packer's hands, or they
-/// are checked out. A dark-store packer who still owes this shift's stock audit
+/// for it: an extension is approved, work lands in their hands, or they are
+/// checked out. A dark-store packer who still owes this shift's stock audit
 /// can start or continue it from here: the audit opens on top and going back
-/// from it returns here, ready to check out.
+/// from it returns here, ready to check out. A driver owes no audit and is
+/// never offered one.
 class ShiftCompleteScreen extends StatefulWidget {
   const ShiftCompleteScreen({super.key});
 
@@ -52,8 +55,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_clock.wantsScreen) _requestClose();
-      // Current stock audit status, for the audit prompt.
-      context.read<HomeProvider>().fetchpackerSummary();
+      // Current stock audit status, for the audit prompt (a packer's only).
+      if (_clock.isPacker) context.read<HomeProvider>().fetchpackerSummary();
     });
   }
 
@@ -154,11 +157,17 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
               return const Center(child: CircularProgressIndicator.adaptive());
             }
             final now = DateTime.now();
-            final audit = shiftAuditPrompt(home.packerSummary?.auditStatus);
+            // The stock audit hand-off is a packer's. A driver on a dark
+            // store's books still gets an audit_status in their summary (it
+            // is worked out from the store, not the role), and it is not
+            // theirs to start.
+            final audit = clock.isPacker
+                ? shiftAuditPrompt(home.packerSummary?.auditStatus)
+                : null;
             return RefreshIndicator(
               onRefresh: () => Future.wait([
                 clock.refresh(),
-                home.fetchpackerSummary(),
+                if (clock.isPacker) home.fetchpackerSummary(),
               ]),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
