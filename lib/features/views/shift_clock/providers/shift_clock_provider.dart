@@ -108,12 +108,14 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   VoidCallback? _closeScreen;
   bool _openingScreen = false;
 
-  /// The session whose approval the screen is still showing. Support said yes
-  /// while the screen was in front of them, so it stays up to say until when
-  /// and to offer the check-out, instead of vanishing and leaving them to
-  /// work out on the home screen whether anything happened. Cleared when they
-  /// go back to work.
-  int? _approvalShownFor;
+  /// The approval this packer has already read and gone back to work from.
+  ///
+  /// Kept per person on the device, because the page has to survive the app
+  /// being killed: the push that tells them support said yes is tapped from
+  /// the tray, and it has to land on the page that says until when. Read once
+  /// at start and written when they press Back to work.
+  int? _approvalRead;
+  bool _approvalReadLoaded = false;
 
   UserRole? get _role {
     try {
@@ -152,18 +154,67 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   /// The screen is up to tell them their extension was approved: until when,
   /// and the check-out they now make themselves.
+  ///
+  /// Not "was the screen open when it landed": they may have been in the tray
+  /// tapping the push, or have killed the app entirely. It is up until they
+  /// have read this particular approval and said so.
   bool get showsApproval {
     final session = visibleSession;
-    return session != null &&
-        session.status == ShiftStatus.extended &&
-        session.sessionId != null &&
-        session.sessionId == _approvalShownFor;
+    if (session == null || session.status != ShiftStatus.extended) return false;
+    final approvalId = _approvalId(session);
+    return approvalId != null &&
+        _approvalReadLoaded &&
+        approvalId != _approvalRead;
   }
 
-  /// They read the approval and went back to work.
-  void dismissApproval() {
-    if (_approvalShownFor == null) return;
-    _approvalShownFor = null;
+  /// The id of the approval running this extension, or null when there is none
+  /// to show - an extension nobody in this app asked for, or an older backend.
+  int? _approvalId(ShiftSessionState session) {
+    final decision = session.lastDecision;
+    if (decision == null ||
+        decision.status != ShiftRequestStatus.approved ||
+        decision.approvedUntil == null) {
+      return null;
+    }
+    return decision.id;
+  }
+
+  /// They read the approval and went back to work. Remembered on the device,
+  /// so closing the app does not put the page back in front of them.
+  Future<void> dismissApproval() async {
+    final session = visibleSession;
+    final approvalId = session == null ? null : _approvalId(session);
+    if (approvalId == null) return;
+    _approvalRead = approvalId;
+    notifyListeners();
+    _syncScreen();
+    final key = _approvalKey;
+    if (key == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, approvalId);
+  }
+
+  String? get _approvalKey {
+    try {
+      final id = _home?.user.id;
+      return id == null ? null : 'shift_clock_approval_read_$id';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reads the last approval they went back to work from, once per start.
+  Future<void> _loadApprovalRead() async {
+    if (_approvalReadLoaded) return;
+    final key = _approvalKey;
+    if (key == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _approvalRead = prefs.getInt(key);
+    } catch (_) {
+      _approvalRead = null;
+    }
+    _approvalReadLoaded = true;
     notifyListeners();
     _syncScreen();
   }
@@ -235,6 +286,8 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     _owners.add(owner);
     _started = true;
     _epoch++;
+    _approvalReadLoaded = false;
+    _approvalRead = null;
     _inForeground = true;
     _lastOnline = home.isOnline;
     home.addListener(_onHomeChanged);
@@ -243,6 +296,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     // The summary fetched at login already knows when this shift ends.
     _takeSeed(confirm: false);
     _lastWork = workInHand;
+    // Before the first state lands, so an approval they already read does not
+    // put its page back in front of them on every launch.
+    await _loadApprovalRead();
     await refresh();
     await _handleLaunchMessage();
   }
@@ -385,9 +441,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// Put the blocking screen up or take it down, as the clock and the work in
   /// hand now stand.
   void _syncScreen() {
-    if (wantsScreen) {
+    if (wantsScreen || showsApproval) {
       _openScreen();
-    } else if (!showsApproval) {
+    } else {
       _closeScreen?.call();
     }
   }
@@ -564,18 +620,6 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// (null when it came back from a request or cancel).
   Future<void> _apply(ShiftSessionState next, {bool? wasOnline}) async {
     final previous = state;
-    // Approved while they were standing at the blocking screen: keep it up to
-    // say so. Their own check-out is on it, and it is the page the push and
-    // the refresh button both land on.
-    if (next.status == ShiftStatus.extended &&
-        next.sessionId != null &&
-        previous?.status != ShiftStatus.extended &&
-        (isScreenOpen || _openingScreen)) {
-      _approvalShownFor = next.sessionId;
-    } else if (next.status != ShiftStatus.extended ||
-        next.sessionId != _approvalShownFor) {
-      _approvalShownFor = null;
-    }
     state = next;
     _lastWork = workInHand;
     notifyListeners();
@@ -693,7 +737,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     _openingScreen = true;
     final epoch = _epoch;
     _whenNothingOnTop(() {
-      if (epoch != _epoch || isScreenOpen || !wantsScreen) {
+      if (epoch != _epoch || isScreenOpen || !(wantsScreen || showsApproval)) {
         _openingScreen = false;
         return;
       }
