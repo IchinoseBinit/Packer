@@ -41,9 +41,11 @@ class ShiftClockRepo {
   }
 
   // POST /attendance/request/ -> 201 with the session state
+  //
+  // No pay is sent: the server works the extra hours' pay out from the roster
+  // placement when the request is made (see extra_hours_pay on the session).
   static Future<ShiftSessionState> requestExtension({
     required double hours,
-    required String payType,
     String reason = '',
   }) async {
     try {
@@ -52,7 +54,6 @@ class ShiftClockRepo {
         url: AppUrls.attendanceRequestUrl,
         body: {
           "hours": hours,
-          "pay_type": payType,
           "reason": reason,
         },
       );

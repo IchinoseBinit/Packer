@@ -431,10 +431,16 @@ String checkoutNoticeMessage(String endReason) =>
         ? 'Support has checked you out'
         : "Your shift has ended and you've been checked out";
 
-String defaultExtensionPay(ShiftRoster? roster) =>
-    roster != null && ShiftPay.isValid(roster.otPayType)
-        ? roster.otPayType
-        : ShiftPay.overtime;
+/// What the request form says the extra hours will be paid at, from the
+/// server's `extra_hours_pay`: the roster decides it, nobody on this screen
+/// picks it, and support can still change it when they approve.
+///
+/// Null when the server said nothing about it - an older backend, or no open
+/// session - and the form then says nothing rather than naming a rate it does
+/// not know.
+String? extraHoursPayLine(String? pay) => ShiftPay.isValid(pay)
+    ? 'Extra hours will be paid at ${payLabel(pay!)}.'
+    : null;
 
 double defaultExtensionHours(ShiftRoster? roster) {
   final max = roster?.otMaxHours;

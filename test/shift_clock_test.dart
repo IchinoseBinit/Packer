@@ -39,6 +39,7 @@ import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/shift_clock/models/shift_refusal.dart';
 import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
+import 'package:packer/features/views/shift_clock/repo/shift_clock_repo.dart';
 import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:packer/features/views/shift_clock/utils/sign_in_refusal.dart';
@@ -72,6 +73,7 @@ Map<String, dynamic> openSession([Map<String, dynamic> changes = const {}]) => {
       'can_take_work': false,
       'can_request': true,
       'note': '',
+      'extra_hours_pay': 'overtime',
       'extension_base': '2026-09-15T18:10:00+05:45',
       'roster': {
         'shift': 'Day',
@@ -119,6 +121,7 @@ Map<String, dynamic> shiftBlock([Map<String, dynamic> changes = const {}]) => {
       'can_take_work': true,
       'can_request': true,
       'note': '',
+      'extra_hours_pay': 'overtime',
       'poll_seconds': 60,
       ...changes,
     };
@@ -284,6 +287,8 @@ void main() {
       expect(state.roster?.otAllowed, isTrue);
       expect(state.roster?.otPayType, ShiftPay.overtime);
       expect(state.roster?.otMaxHours, 2.0);
+      expect(state.extraHoursPay, ShiftPay.overtime,
+          reason: 'the server works the pay out from the roster placement');
       expect(state.pendingRequest?.id, 31);
       expect(state.pendingRequest?.requestedUntil, at('2026-09-15T20:00:00+05:45'));
       expect(state.pendingRequest?.approvedPay, isNull);
@@ -300,6 +305,7 @@ void main() {
       expect(empty.canTakeWork, isTrue);
       expect(empty.pollSeconds, ShiftSessionState.defaultPollSeconds);
       expect(empty.lastSession, isNull);
+      expect(empty.extraHoursPay, isNull);
 
       final odd = parse({
         'has_session': 'true',
@@ -312,6 +318,7 @@ void main() {
         'last_decision': {'status': 'approved', 'approved_pay': 'double'},
         'note': null,
         'show_dialog': null,
+        'extra_hours_pay': 3,
       });
       expect(odd.hasSession, isTrue);
       expect(odd.enforced, isTrue);
@@ -325,6 +332,7 @@ void main() {
       expect(odd.note, '');
       expect(odd.showDialog, isFalse);
       expect(odd.canRequest, isFalse);
+      expect(odd.extraHoursPay, isNull);
     });
 
     test('show_dialog without a session is ignored', () {
@@ -610,22 +618,55 @@ void main() {
           'Support has checked you out');
     });
 
-    test('form defaults come from the roster', () {
+    test('the hours the form starts on come from the roster', () {
       final roster = parse(openSession()).roster;
-      expect(defaultExtensionPay(roster), ShiftPay.overtime);
       expect(defaultExtensionHours(roster), 2);
-      expect(defaultExtensionPay(null), ShiftPay.overtime);
       expect(defaultExtensionHours(null), 1);
-      expect(
-        defaultExtensionPay(const ShiftRoster(
-            shift: 'Day', otAllowed: true, otPayType: 'normal', otMaxHours: 6)),
-        ShiftPay.normal,
-      );
       expect(
         defaultExtensionHours(const ShiftRoster(
             shift: 'Day', otAllowed: true, otPayType: 'normal', otMaxHours: 6)),
         1,
       );
+    });
+
+    test('the pay is the server\'s word, never a choice on the form', () {
+      expect(extraHoursPayLine(ShiftPay.normal),
+          'Extra hours will be paid at normal pay.');
+      expect(extraHoursPayLine(ShiftPay.overtime),
+          'Extra hours will be paid at overtime pay.');
+
+      // Rostered where overtime is allowed: the roster's own pay.
+      expect(extraHoursPayLine(parse(openSession()).extraHoursPay),
+          'Extra hours will be paid at overtime pay.');
+
+      // Rostered with no overtime allowed, and not rostered at all: the form
+      // is still offered, at normal pay.
+      final noOvertime = parse(openSession({
+        'extra_hours_pay': 'normal',
+        'roster': {
+          'shift': 'Day',
+          'ot_allowed': false,
+          'ot_pay_type': '',
+          'ot_max_hours': null,
+        },
+      }));
+      expect(noOvertime.canRequest, isTrue);
+      expect(extraHoursPayLine(noOvertime.extraHoursPay),
+          'Extra hours will be paid at normal pay.');
+      final offRoster = parse(openSession({
+        'extra_hours_pay': 'normal',
+        'roster': null,
+      }));
+      expect(offRoster.canRequest, isTrue);
+      expect(extraHoursPayLine(offRoster.extraHoursPay),
+          'Extra hours will be paid at normal pay.');
+
+      // Nothing to say: an older server, no session, or a word we don't know.
+      expect(extraHoursPayLine(null), isNull);
+      expect(extraHoursPayLine(''), isNull);
+      expect(extraHoursPayLine('double'), isNull);
+      expect(parse(openSession({'extra_hours_pay': null})).extraHoursPay,
+          isNull);
     });
 
     test('estimated end of a request', () {
@@ -640,6 +681,59 @@ void main() {
       }));
       expect(formatShiftClock(estimateRequestedUntil(ahead, 0.5, later)!),
           '8:30 PM');
+    });
+  });
+
+  group('asking for more time', () {
+    late _FakeServer server;
+    final requestPath = Uri.parse(AppUrls.attendanceRequestUrl).path;
+
+    setUp(() {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
+      DioClient.token = packerJwt();
+      DioClient.refreshToken = '';
+      server = _FakeServer();
+      DioClient().httpClientAdapter = server;
+    });
+
+    tearDown(() => DioClient.token = '');
+
+    test('the request carries the hours and the reason, and no pay', () async {
+      server.answer(
+          AppUrls.attendanceRequestUrl,
+          201,
+          openSession({
+            'pending_request': request(),
+            'can_request': false,
+          }));
+
+      final state = await ShiftClockRepo.requestExtension(
+          hours: 2, reason: 'Evening rush');
+
+      expect(server.calls, ['POST $requestPath']);
+      final body =
+          jsonDecode(server.bodies[requestPath] as String) as Map<String, dynamic>;
+      // The server works the pay out from the roster placement when the
+      // request is made; this app has nothing to say about it.
+      expect(body, {'hours': 2.0, 'reason': 'Evening rush'});
+      expect(body.containsKey('pay_type'), isFalse);
+      expect(state.pendingRequest?.id, 31);
+      expect(state.canRequest, isFalse);
+      expect(state.extraHoursPay, ShiftPay.overtime);
+    });
+
+    test('an empty reason is still sent, and no pay with it', () async {
+      server.answer(AppUrls.attendanceRequestUrl, 201,
+          openSession({'extra_hours_pay': 'normal'}));
+
+      final state = await ShiftClockRepo.requestExtension(hours: 0.5);
+
+      final body =
+          jsonDecode(server.bodies[requestPath] as String) as Map<String, dynamic>;
+      expect(body, {'hours': 0.5, 'reason': ''});
+      expect(state.extraHoursPay, ShiftPay.normal);
     });
   });
 
@@ -1023,6 +1117,23 @@ void main() {
       expect(decided.fromSummary, isTrue);
       expect(decided.pendingRequest, isNull,
           reason: 'can_request true means the server holds no request');
+    });
+
+    test('it carries the pay for extra hours, and an older one keeps ours',
+        () {
+      expect(seed(shiftBlock()).extraHoursPay, ShiftPay.overtime);
+
+      final clock = parse(openSession());
+      expect(clock.extraHoursPay, ShiftPay.overtime);
+
+      // The roster placement changed while the app was not looking.
+      final moved =
+          clock.withSeed(seed(shiftBlock({'extra_hours_pay': 'normal'})));
+      expect(moved.extraHoursPay, ShiftPay.normal);
+
+      // A backend whose summary doesn't send it yet: keep the clock's word.
+      final older = clock.withSeed(seed(shiftBlock({'extra_hours_pay': null})));
+      expect(older.extraHoursPay, ShiftPay.overtime);
     });
 
     test('a different session, or none, replaces what we had', () {
@@ -1697,6 +1808,54 @@ void main() {
           reason: "someone else's basket must not hold the screen back");
 
       clock.stop(owner: secondOwner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'the request form states the pay for the extra hours and offers no choice',
+        (tester) async {
+      var session = openSession();
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async => parse(session));
+      final router = _shiftScreenRouter();
+      await tester.pumpWidget(_shiftScreenApp(home, clock, router));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ask to keep working'), findsOneWidget);
+      expect(find.text('Request extension'), findsOneWidget);
+      expect(find.text('Extra hours will be paid at overtime pay.'),
+          findsOneWidget);
+      // Nobody picks their own rate any more.
+      expect(find.text('Pay'), findsNothing);
+      expect(find.text('Overtime pay'), findsNothing);
+      expect(find.text('Normal pay'), findsNothing);
+      // The hours are still theirs to choose.
+      expect(find.widgetWithText(ChoiceChip, '2 h'), findsOneWidget);
+
+      // Off the roster, or rostered where overtime isn't allowed: the form is
+      // still offered, and the server says the hours are at normal pay.
+      session = openSession({'extra_hours_pay': 'normal', 'roster': null});
+      await clock.refresh();
+      await tester.pumpAndSettle();
+      expect(find.text("You're not on today's roster"), findsOneWidget);
+      expect(find.text('Request extension'), findsOneWidget);
+      expect(
+          find.text('Extra hours will be paid at normal pay.'), findsOneWidget);
+      expect(find.text('Normal pay'), findsNothing);
+
+      // A backend that doesn't send it yet: the form works, and says nothing
+      // about the pay rather than naming a rate.
+      session = openSession({'extra_hours_pay': null});
+      await clock.refresh();
+      await tester.pumpAndSettle();
+      expect(find.text('Request extension'), findsOneWidget);
+      expect(find.textContaining('Extra hours will be paid'), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
       await tester.pump(const Duration(seconds: 31));
     });
 
@@ -3026,6 +3185,9 @@ class _FakeServer implements HttpClientAdapter {
   /// Every request made, as "METHOD /path".
   final calls = <String>[];
 
+  /// What was sent with the last request to each path, as DioClient wrote it.
+  final bodies = <String, Object?>{};
+
   void answer(String url, int status, Object? body) {
     _answers[Uri.parse(url).path] = (status, body);
   }
@@ -3035,6 +3197,7 @@ class _FakeServer implements HttpClientAdapter {
       Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     final path = options.uri.path;
     calls.add('${options.method} $path');
+    bodies[path] = options.data;
     final (status, body) = _answers[path] ?? (404, {'detail': 'Not found.'});
     return ResponseBody.fromString(jsonEncode(body), status, headers: {
       Headers.contentTypeHeader: [Headers.jsonContentType],

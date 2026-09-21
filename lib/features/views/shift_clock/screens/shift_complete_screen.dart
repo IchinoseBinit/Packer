@@ -37,7 +37,6 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   final _reasonController = TextEditingController();
   ModalRoute<dynamic>? _route;
   late double _hours;
-  late String _pay;
   bool _canPop = false;
   bool _closeRequested = false;
   bool _checkingOut = false;
@@ -51,7 +50,6 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     shiftClockRouteObserver.top.addListener(_onTopRouteChanged);
     final roster = _clock.state?.roster;
     _hours = defaultExtensionHours(roster);
-    _pay = defaultExtensionPay(roster);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_clock.wantsScreen) _requestClose();
@@ -112,7 +110,6 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     FocusScope.of(context).unfocus();
     final sent = await _clock.requestExtension(
       hours: _hours,
-      payType: _pay,
       reason: _reasonController.text.trim(),
     );
     if (sent && mounted) _reasonController.clear();
@@ -385,6 +382,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   Widget _requestForm(
       ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
     final until = estimateRequestedUntil(session, _hours, now);
+    // The roster decides the pay; this only says which it is.
+    final payLine = extraHoursPayLine(session.extraHoursPay);
     final busy = clock.isSubmitting;
     return Container(
       margin: EdgeInsets.only(top: 8.h),
@@ -422,28 +421,11 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
               style: _textStyle(12, FontWeight.w400, Colors.black54),
             ),
           ],
-          SizedBox(height: 14.h),
-          Text('Pay', style: _textStyle(13, FontWeight.w500, Colors.black87)),
-          SizedBox(height: 8.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            children: [
-              _choice(
-                label: 'Overtime pay',
-                selected: _pay == ShiftPay.overtime,
-                onSelected: busy
-                    ? null
-                    : () => setState(() => _pay = ShiftPay.overtime),
-              ),
-              _choice(
-                label: 'Normal pay',
-                selected: _pay == ShiftPay.normal,
-                onSelected:
-                    busy ? null : () => setState(() => _pay = ShiftPay.normal),
-              ),
-            ],
-          ),
+          if (payLine != null) ...[
+            SizedBox(height: 14.h),
+            Text(payLine,
+                style: _textStyle(13, FontWeight.w500, Colors.black87)),
+          ],
           SizedBox(height: 14.h),
           TextField(
             controller: _reasonController,

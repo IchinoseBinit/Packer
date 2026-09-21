@@ -579,7 +579,6 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   Future<bool> requestExtension({
     required double hours,
-    required String payType,
     String reason = '',
   }) async {
     if (isSubmitting) return false;
@@ -589,7 +588,6 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     try {
       final next = await ShiftClockRepo.requestExtension(
         hours: hours,
-        payType: payType,
         reason: reason,
       );
       isSubmitting = false;

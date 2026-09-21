@@ -216,6 +216,15 @@ class ShiftSessionState {
   final bool shiftComplete;
   final bool canRequest;
   final String note;
+
+  /// What the extra hours would be paid at if this packer or driver asked for
+  /// more time now: [ShiftPay.normal], [ShiftPay.overtime], or null when the
+  /// server said nothing - there is no open session, or an older backend that
+  /// doesn't send `extra_hours_pay` yet.
+  ///
+  /// The server works it out from their roster placement; nobody in this app
+  /// chooses it. Support can still change it when they approve.
+  final String? extraHoursPay;
   final ShiftTime? extensionBase;
   final ShiftRoster? roster;
   final ShiftRequest? pendingRequest;
@@ -252,6 +261,7 @@ class ShiftSessionState {
     required this.shiftComplete,
     required this.canRequest,
     required this.note,
+    required this.extraHoursPay,
     required this.extensionBase,
     required this.roster,
     required this.pendingRequest,
@@ -264,6 +274,7 @@ class ShiftSessionState {
       {DateTime? receivedAt, bool fromSummary = false}) {
     final poll = jsonInt(json['poll_seconds']);
     final hasSession = jsonBool(json['has_session']);
+    final extraPay = json['extra_hours_pay'];
     return ShiftSessionState(
       hasSession: hasSession,
       enforced: jsonBool(json['enforced']),
@@ -288,6 +299,10 @@ class ShiftSessionState {
       // Missing means "don't offer a form": the server always sends it with a session.
       canRequest: jsonBool(json['can_request']),
       note: jsonString(json['note']).trim(),
+      // Anything but the two words the server may send says nothing, and the
+      // form then leaves the pay unsaid rather than guessing a rate.
+      extraHoursPay:
+          extraPay is String && ShiftPay.isValid(extraPay) ? extraPay : null,
       extensionBase: ShiftTime.tryParse(json['extension_base']),
       roster: ShiftRoster.fromJson(json['roster']),
       pendingRequest: ShiftRequest.fromJson(json['pending_request']),
@@ -387,6 +402,9 @@ class ShiftSessionState {
       shiftComplete: seed.shiftComplete,
       canRequest: seed.canRequest,
       note: seed.note,
+      // The summary block carries it too; an older backend that leaves it out
+      // keeps whatever the clock itself last said.
+      extraHoursPay: seed.extraHoursPay ?? extraHoursPay,
       extensionBase: extensionBase,
       roster: roster,
       // can_request true means the server holds no pending request any more.
