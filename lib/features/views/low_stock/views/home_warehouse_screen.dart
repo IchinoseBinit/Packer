@@ -174,9 +174,11 @@ class _HomeWarehouseScreenState extends State<HomeWarehouseScreen>
                                     )
                                   : GeneralElevatedButton(
                                       title: 'Scan Carton',
-                                      onPressed: () => navigate(context,
-                                          route: NavigationConstants
-                                              .cartonScanScreenRoute),
+                                      onPressed: () => navigate(
+                                        context,
+                                        route: NavigationConstants
+                                            .cartonScanScreenRoute,
+                                      ),
                                     ),
                               SizedBox(height: 20.h),
                             ],

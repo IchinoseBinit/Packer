@@ -149,7 +149,8 @@ class StockProvider extends ChangeNotifier {
   }
 
   /// Get carton info
-  Future callCartonInfoApi(BuildContext context, String code) async {
+  Future callCartonInfoApi(BuildContext context, String code,
+      {bool forLowStock = false}) async {
     try {
       showLoading(context);
       if (!code.contains("carton")) {
@@ -158,8 +159,8 @@ class StockProvider extends ChangeNotifier {
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: AppUrls.cartonInfoUrl.replaceAll(':id', code),
+        queryParameters: forLowStock ? {'for': 'low-stock'} : null,
       );
-      log("Carton Info: ${response.statusCode}");
 
       if (context.mounted) {
         removeLoading(context);
@@ -168,6 +169,7 @@ class StockProvider extends ChangeNotifier {
         cartonModel = CartonModel.fromJson(response.data, code);
       }
     } catch (e) {
+      removeLoading(context);
       rethrow;
     }
   }
@@ -385,9 +387,9 @@ class StockProvider extends ChangeNotifier {
   }
 
   Future onScanCarton(BuildContext context, String code,
-      {int? cartonId}) async {
+      {int? cartonId, bool forLowStock = false}) async {
     try {
-      await callCartonInfoApi(context, code);
+      await callCartonInfoApi(context, code, forLowStock: forLowStock);
       if (cartonId != null && cartonModel != null) {
         final result = await navigateReplacement(
           context,
@@ -458,9 +460,10 @@ class StockProvider extends ChangeNotifier {
     }
   }
 
-  Future lowStockCartonScan(BuildContext context, String code) async {
+  Future lowStockCartonScan(BuildContext context, String code,
+      {bool forLowStock = false}) async {
     try {
-      await callCartonInfoApi(context, code);
+      await callCartonInfoApi(context, code, forLowStock: forLowStock);
 
       if (cartonModel != null) {
         final matchedModel = selectedModel?.products.firstWhereOrNull(

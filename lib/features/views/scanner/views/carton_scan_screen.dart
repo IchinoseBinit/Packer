@@ -21,6 +21,7 @@ class CartonScanScreen extends BaseScanScreen {
   final bool isMainStoreAudit;
   final String? cartonCode;
   final String? tag;
+  final bool forLowStock;
   CartonScanScreen({
     super.key,
     this.cartonId,
@@ -28,6 +29,7 @@ class CartonScanScreen extends BaseScanScreen {
     this.isMainStoreAudit = false,
     this.cartonCode,
     this.tag,
+    this.forLowStock = false,
   }) : super(
           scanTitle: 'Carton Scanner',
           showFlash: true,
@@ -102,7 +104,8 @@ class CartonScanScreen extends BaseScanScreen {
                 .singleVerification(context, cartonId!, tag!);
       } else if (!fromVerification && context.mounted) {
         result = await Provider.of<StockProvider>(context, listen: false)
-            .onScanCarton(context, code, cartonId: cartonId);
+            .onScanCarton(context, code,
+                cartonId: cartonId, forLowStock: forLowStock);
       } else if (fromVerification && context.mounted) {
         await Provider.of<StockVerificationProvider>(context, listen: false)
             .onScanCarton(context, code, cartonCode: cartonCode);

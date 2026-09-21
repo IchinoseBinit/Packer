@@ -600,6 +600,7 @@ class _LowStockDetailsState extends State<LowStockDetails> {
                         extra: {
                           'scanCarton': true,
                           'isLowStockCarton': true,
+                          'forLowStock': true,
                         },
                       ),
                       title: "Scan",

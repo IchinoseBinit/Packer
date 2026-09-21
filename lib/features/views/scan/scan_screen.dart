@@ -30,6 +30,7 @@ class ScanScreen extends StatefulWidget {
     this.forBasket = false,
     this.message = "",
     this.isLowStockCarton = false,
+    this.forLowStock = false,
   });
 
   final bool isfromCartItem;
@@ -40,6 +41,7 @@ class ScanScreen extends StatefulWidget {
   final bool forBasket;
   final String message;
   final bool isLowStockCarton;
+  final bool forLowStock;
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -88,7 +90,8 @@ class _ScanScreenState extends State<ScanScreen> {
         bool? val;
         if (widget.isLowStockCarton) {
           val = await Provider.of<StockProvider>(context, listen: false)
-              .lowStockCartonScan(context, code);
+              .lowStockCartonScan(context, code,
+                  forLowStock: widget.forLowStock);
         } else {
           val = await Provider.of<StockProvider>(context, listen: false)
               .onScanCarton(context, code);

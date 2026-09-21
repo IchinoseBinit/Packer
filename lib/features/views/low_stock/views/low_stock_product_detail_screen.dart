@@ -100,6 +100,7 @@ class LowStockProductDetailScreen extends StatelessWidget {
             extra: {
               'scanCarton': true,
               'isLowStockCarton': true,
+              'forLowStock': true,
             },
           ),
           title: "Scan",

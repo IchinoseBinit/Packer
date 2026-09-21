@@ -367,6 +367,7 @@ class AppRouter {
                   message: args['message'] ?? '',
                   forBasket: args['forBasket'] ?? false,
                   isLowStockCarton: args['isLowStockCarton'] ?? false,
+                  forLowStock: args['forLowStock'] ?? false,
                 );
               },
             ),
@@ -508,6 +509,7 @@ class AppRouter {
                   isMainStoreAudit: args['isMainStoreAudit'] ?? false,
                   cartonCode: args['code'],
                   tag: args['tag'],
+                  forLowStock: args['forLowStock'] ?? false,
                 );
               },
             ),
