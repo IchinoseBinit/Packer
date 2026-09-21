@@ -52,7 +52,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     _hours = defaultExtensionHours(roster);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!_clock.wantsScreen) _requestClose();
+      if (!_clock.wantsScreen && !_clock.showsApproval) _requestClose();
       // Current stock audit status, for the audit prompt (a packer's only).
       if (_clock.isPacker) context.read<HomeProvider>().fetchpackerSummary();
     });
@@ -85,7 +85,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
 
   void _tryClose() {
     if (!mounted || !_closeRequested || _checkingOut || _canPop) return;
-    if (_clock.wantsScreen) {
+    if (_clock.wantsScreen || _clock.showsApproval) {
       _closeRequested = false;
       return;
     }
@@ -161,6 +161,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
             final audit = clock.isPacker
                 ? shiftAuditPrompt(home.packerSummary?.auditStatus)
                 : null;
+            final approved = clock.showsApproval;
             return RefreshIndicator(
               onRefresh: () => Future.wait([
                 clock.refresh(),
@@ -169,7 +170,9 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-                child: Column(
+                child: approved
+                    ? _approvalBody(clock, session, now)
+                    : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ..._header(session, now),
@@ -212,6 +215,55 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           }),
         ),
       ),
+    );
+  }
+
+  /// Support said yes while they stood here: until when, and what to do next.
+  ///
+  /// The same page a tap on the approval notification lands on, and the one
+  /// the refresh button leads to, so the answer reads the same however they
+  /// arrive at it.
+  Widget _approvalBody(
+      ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
+    final until = session.hardLimitAt;
+    final serverNow = session.serverTimeAt(now);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(Icons.check_circle_outline,
+            size: 48.w, color: AppColors.primaryColor),
+        SizedBox(height: 12.h),
+        Text(
+          until == null
+              ? 'Support approved more time'
+              : 'Extended until ${formatShiftClockOn(until, serverNow)}',
+          textAlign: TextAlign.center,
+          style: _textStyle(22, FontWeight.w700, Colors.black),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          'You are back on shift. Check out here when you are done, and sign '
+          'in again for your next one.',
+          textAlign: TextAlign.center,
+          style: _textStyle(14, FontWeight.w400, Colors.black54),
+        ),
+        SizedBox(height: 24.h),
+        GeneralElevatedButton(
+          title: 'Back to work',
+          isDisabled: _checkingOut,
+          onPressed: clock.dismissApproval,
+        ),
+        SizedBox(height: 12.h),
+        GeneralElevatedButton(
+          title: _checkingOut ? 'Checking out...' : 'Check out and log out',
+          isDisabled: _checkingOut,
+          bgColor: Colors.white,
+          borderColor: AppColors.primaryColor,
+          textStyle: _textStyle(15, FontWeight.w600, AppColors.primaryColor),
+          onPressed: _checkOut,
+        ),
+        SizedBox(height: 12.h),
+      ],
     );
   }
 
@@ -363,6 +415,18 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
             ),
           ],
           SizedBox(height: 12.h),
+          // A button of their own, not only the pull down: this is the one
+          // thing they are waiting on, and a notification may not arrive.
+          GeneralElevatedButton(
+            title: clock.isRefreshing ? 'Checking...' : 'Check for an answer',
+            isDisabled: clock.isRefreshing || clock.isCancelling,
+            bgColor: AppColors.blue500,
+            borderColor: AppColors.blue500,
+            height: 42.h,
+            textStyle: _textStyle(14, FontWeight.w600, Colors.white),
+            onPressed: clock.refresh,
+          ),
+          SizedBox(height: 8.h),
           GeneralElevatedButton(
             title: clock.isCancelling ? 'Cancelling...' : 'Cancel request',
             isDisabled: clock.isCancelling || id == null,

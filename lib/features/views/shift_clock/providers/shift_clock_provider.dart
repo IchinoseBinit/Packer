@@ -108,6 +108,13 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   VoidCallback? _closeScreen;
   bool _openingScreen = false;
 
+  /// The session whose approval the screen is still showing. Support said yes
+  /// while the screen was in front of them, so it stays up to say until when
+  /// and to offer the check-out, instead of vanishing and leaving them to
+  /// work out on the home screen whether anything happened. Cleared when they
+  /// go back to work.
+  int? _approvalShownFor;
+
   UserRole? get _role {
     try {
       return _home?.user.role;
@@ -143,7 +150,28 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
         workKnown: !isDriver || _transfersInHand != null,
       );
 
+  /// The screen is up to tell them their extension was approved: until when,
+  /// and the check-out they now make themselves.
+  bool get showsApproval {
+    final session = visibleSession;
+    return session != null &&
+        session.status == ShiftStatus.extended &&
+        session.sessionId != null &&
+        session.sessionId == _approvalShownFor;
+  }
+
+  /// They read the approval and went back to work.
+  void dismissApproval() {
+    if (_approvalShownFor == null) return;
+    _approvalShownFor = null;
+    notifyListeners();
+    _syncScreen();
+  }
+
   bool get isScreenOpen => _closeScreen != null;
+
+  /// A look at the clock is in flight, so the button that asked says so.
+  bool get isRefreshing => _inFlight != null;
 
   /// Work the packer has to finish before they can be checked out: an order
   /// assigned to them, a basket session they are still packing, or the
@@ -359,7 +387,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   void _syncScreen() {
     if (wantsScreen) {
       _openScreen();
-    } else {
+    } else if (!showsApproval) {
       _closeScreen?.call();
     }
   }
@@ -420,12 +448,14 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     }
     final future = _load().whenComplete(() {
       _inFlight = null;
+      notifyListeners();
       if (_refreshAgain) {
         _refreshAgain = false;
         refresh();
       }
     });
     _inFlight = future;
+    notifyListeners();  // so a button that asked for this can say it is asking
     return future;
   }
 
@@ -534,6 +564,18 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// (null when it came back from a request or cancel).
   Future<void> _apply(ShiftSessionState next, {bool? wasOnline}) async {
     final previous = state;
+    // Approved while they were standing at the blocking screen: keep it up to
+    // say so. Their own check-out is on it, and it is the page the push and
+    // the refresh button both land on.
+    if (next.status == ShiftStatus.extended &&
+        next.sessionId != null &&
+        previous?.status != ShiftStatus.extended &&
+        (isScreenOpen || _openingScreen)) {
+      _approvalShownFor = next.sessionId;
+    } else if (next.status != ShiftStatus.extended ||
+        next.sessionId != _approvalShownFor) {
+      _approvalShownFor = null;
+    }
     state = next;
     _lastWork = workInHand;
     notifyListeners();

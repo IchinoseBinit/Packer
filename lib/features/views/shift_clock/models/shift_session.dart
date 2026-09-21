@@ -200,7 +200,15 @@ class ShiftSessionState {
   final int pollSeconds;
   final ShiftTime? serverTime;
   final bool canTakeWork;
+
+  /// The grace is over: the blocking screen goes up and no new work comes.
   final bool showDialog;
+
+  /// The regular hours are over but the grace is not: a warning only. They
+  /// keep packing, keep taking orders, and the screen stays away until the
+  /// extra time runs out.
+  final bool showWarning;
+  final bool inExtraTime;
   final bool locked;
   final LastShiftSession? lastSession;
 
@@ -247,6 +255,8 @@ class ShiftSessionState {
     required this.serverTime,
     required this.canTakeWork,
     required this.showDialog,
+    required this.showWarning,
+    required this.inExtraTime,
     required this.locked,
     required this.lastSession,
     required this.sessionId,
@@ -284,6 +294,8 @@ class ShiftSessionState {
       serverTime: ShiftTime.tryParse(json['server_time']),
       canTakeWork: jsonBool(json['can_take_work'], fallback: true),
       showDialog: hasSession && jsonBool(json['show_dialog']),
+      showWarning: hasSession && jsonBool(json['show_warning']),
+      inExtraTime: hasSession && jsonBool(json['in_extra_time']),
       locked: jsonBool(json['locked']),
       lastSession: LastShiftSession.fromJson(json['last_session']),
       sessionId: jsonInt(json['session_id']),
@@ -376,6 +388,7 @@ class ShiftSessionState {
     final confirmed = !fromSummary &&
         status == seed.status &&
         showDialog == seed.showDialog &&
+        showWarning == seed.showWarning &&
         shiftComplete == seed.shiftComplete &&
         canTakeWork == seed.canTakeWork &&
         canRequest == seed.canRequest;
@@ -386,6 +399,8 @@ class ShiftSessionState {
       serverTime: seed.serverTime ?? serverTime,
       canTakeWork: seed.canTakeWork,
       showDialog: seed.showDialog,
+      showWarning: seed.showWarning,
+      inExtraTime: seed.inExtraTime,
       locked: locked,
       lastSession: lastSession,
       sessionId: seed.sessionId ?? sessionId,

@@ -7,11 +7,18 @@ import 'package:packer/features/views/shift_clock/models/shift_session.dart';
 /// no network, so all of it is covered by test/shift_clock_test.dart.
 
 class ShiftPushType {
+  /// The regular hours are over: a warning, sent at the start of the extra time.
   static const limitReached = 'shift_limit_reached';
+
+  /// The extra time is over: the work stops and the screen goes up.
+  static const blocked = 'shift_blocked';
   static const extensionDecided = 'shift_extension_decided';
+
+  /// No longer sent - nobody is checked out by the clock any more - but an old
+  /// one still in flight is read rather than ignored.
   static const autoCheckout = 'shift_auto_checkout';
 
-  static const all = {limitReached, extensionDecided, autoCheckout};
+  static const all = {limitReached, blocked, extensionDecided, autoCheckout};
 }
 
 /// Hour choices on the extension request form.
@@ -241,7 +248,7 @@ int driverTransferCount(dynamic data) {
 bool shouldCheckDriverTransfers(ShiftSessionState? state) =>
     state != null &&
     isShiftClockVisible(state) &&
-    (state.showDialog || isShiftOver(state));
+    (state.showDialog || isShiftOver(state) || isInExtraTime(state));
 
 /// May the blocking "Your shift is complete" screen show?
 ///
@@ -268,11 +275,21 @@ bool canShowShiftCompleteScreen({
 // Home status line
 // ---------------------------------------------------------------------------
 
-/// Regular hours (or the approved extension) are over.
+/// The work has stopped: the extra time ran out with nothing approved.
+///
+/// Not merely "past the regular hours" - see [isInExtraTime] for that. Between
+/// the two marks a packer keeps packing and a driver keeps driving, so
+/// anything that stands down work has to read this one.
 bool isShiftOver(ShiftSessionState state) =>
-    state.shiftComplete ||
-    state.status == ShiftStatus.awaitingExtension ||
-    state.status == ShiftStatus.closing;
+    state.shiftComplete || state.status == ShiftStatus.closing;
+
+/// Past the regular hours, inside the grace: warned, and still working.
+///
+/// The status falls back for an older backend that sends neither flag, where
+/// awaiting_extension without shift_complete means exactly this.
+bool isInExtraTime(ShiftSessionState state) =>
+    !isShiftOver(state) &&
+    (state.inExtraTime || state.status == ShiftStatus.awaitingExtension);
 
 /// "2 h 15 m left", "45 m left", "less than a minute left"; null once [left]
 /// has run out or is unknown.
@@ -311,6 +328,14 @@ String? shiftStatusLine(
     }
   }
   final at = now ?? DateTime.now();
+  if (isInExtraTime(state)) {
+    final until = state.hardLimitAt;
+    if (until == null) return 'Extra time';
+    final line = 'Extra time until '
+        '${formatShiftClockOn(until, state.serverTimeAt(at))}';
+    final left = shiftCountdown(state.remainingTo(until, at));
+    return left == null ? line : '$line · $left';
+  }
   if (state.status == ShiftStatus.extended) {
     final until = state.hardLimitAt;
     return until == null
@@ -329,7 +354,9 @@ String? shiftStatusLine(
 bool shiftStatusLineTicks(ShiftSessionState? state, DateTime now) {
   if (state == null || !isShiftClockVisible(state)) return false;
   if (isShiftOver(state) || state.status == ShiftStatus.extended) return false;
-  return shiftCountdown(state.remainingTo(state.regularLimitAt, now)) != null;
+  final deadline =
+      isInExtraTime(state) ? state.hardLimitAt : state.regularLimitAt;
+  return shiftCountdown(state.remainingTo(deadline, now)) != null;
 }
 
 /// The smaller line under the status.
@@ -338,6 +365,12 @@ String shiftStatusDetail(
   DateTime? now,
   ShiftWorkInHand work = ShiftWorkInHand.none,
 }) {
+  if (isInExtraTime(state)) {
+    if (state.pendingRequest != null) {
+      return 'Waiting for support to approve more time';
+    }
+    return 'Ask for more time or check out before it runs out';
+  }
   if (isShiftOver(state)) {
     if (state.pendingRequest != null) {
       return 'Waiting for support to approve more time';
@@ -381,19 +414,19 @@ String rosterLine(ShiftRoster? roster) {
   return 'Your roster allows overtime$pay$upTo';
 }
 
-/// When the packer will be checked out if nothing is approved.
+/// What happens next, now that nothing checks anyone out for them.
 String graceLine(ShiftSessionState state, DateTime now) {
   final hardLimit = state.hardLimitAt;
   final secondsLeft = state.secondsToHardLimitAt(now);
   if (hardLimit != null && (secondsLeft == null || secondsLeft > 0)) {
-    return "You'll be checked out at "
-        '${formatShiftClockOn(hardLimit, state.serverTimeAt(now))} '
-        'unless support approves more time';
+    return 'Your extra time runs to '
+        '${formatShiftClockOn(hardLimit, state.serverTimeAt(now))}. '
+        'After that no new work comes until support approves more';
   }
   if (state.pendingRequest != null) {
-    return "Support is looking at your request. You won't be checked out until they decide";
+    return 'Support is looking at your request. Nothing else happens until they decide';
   }
-  return "Your time is up. You'll be checked out soon unless support approves more time";
+  return 'Your time is up. Ask support for more, or check out';
 }
 
 String pendingRequestLine(ShiftRequest request, ShiftTime? reference) {

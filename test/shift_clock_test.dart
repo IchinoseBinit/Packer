@@ -59,7 +59,8 @@ Map<String, dynamic> openSession([Map<String, dynamic> changes = const {}]) => {
       'poll_seconds': 60,
       'server_time': '2026-09-15T18:10:00+05:45',
       'session_id': 7,
-      'status': 'awaiting_extension',
+      // Past the grace: stopped. The extra time before it is extraTime() below.
+      'status': 'closing',
       'role': 'packer',
       'started_at': '2026-09-15T06:00:00+05:45',
       'regular_hours': 12.0,
@@ -68,8 +69,10 @@ Map<String, dynamic> openSession([Map<String, dynamic> changes = const {}]) => {
       'seconds_to_regular_limit': -600,
       'seconds_to_hard_limit': 3000,
       'shift_complete': true,
+      'in_extra_time': false,
       'locked': false,
       'show_dialog': true,
+      'show_warning': false,
       'can_take_work': false,
       'can_request': true,
       'note': '',
@@ -101,6 +104,19 @@ Map<String, dynamic> request([Map<String, dynamic> changes = const {}]) => {
       'approved_pay': null,
       ...changes,
     };
+
+/// The same shift ten minutes earlier: past the regular hours, inside the
+/// grace. Warned, still packing, still taking orders - the screen stays away.
+Map<String, dynamic> extraTime([Map<String, dynamic> changes = const {}]) =>
+    openSession({
+      'status': 'awaiting_extension',
+      'shift_complete': false,
+      'in_extra_time': true,
+      'show_dialog': false,
+      'show_warning': true,
+      'can_take_work': true,
+      ...changes,
+    });
 
 ShiftSessionState parse(Map<String, dynamic> json) =>
     ShiftSessionState.fromJson(json, receivedAt: received);
@@ -280,9 +296,11 @@ void main() {
       }));
       expect(state.hasSession, isTrue);
       expect(state.sessionId, 7);
-      expect(state.status, ShiftStatus.awaitingExtension);
+      expect(state.status, ShiftStatus.closing);
       expect(state.regularHours, 12.0);
       expect(state.showDialog, isTrue);
+      expect(state.showWarning, isFalse);
+      expect(state.inExtraTime, isFalse);
       expect(state.canRequest, isFalse);
       expect(state.roster?.otAllowed, isTrue);
       expect(state.roster?.otPayType, ShiftPay.overtime);
@@ -295,6 +313,37 @@ void main() {
       expect(state.lastDecision?.status, ShiftRequestStatus.rejected);
       expect(state.lastDecision?.reviewNote, 'Enough packers tonight');
       expect(isShiftClockVisible(state), isTrue);
+    });
+
+    test('the two marks the clock has: warned, then stopped', () {
+      final warned = parse(extraTime());
+      expect(warned.status, ShiftStatus.awaitingExtension);
+      expect(warned.inExtraTime, isTrue);
+      expect(warned.showWarning, isTrue);
+      expect(warned.showDialog, isFalse);
+      expect(warned.canTakeWork, isTrue);
+      expect(isInExtraTime(warned), isTrue);
+      expect(isShiftOver(warned), isFalse,
+          reason: 'past the regular hours is not stopped: they pack on');
+
+      final stopped = parse(openSession());
+      expect(isInExtraTime(stopped), isFalse);
+      expect(isShiftOver(stopped), isTrue);
+      expect(stopped.canTakeWork, isFalse);
+    });
+
+    test('an older backend that sends neither flag still reads the status', () {
+      final json = openSession({
+        'status': 'awaiting_extension',
+        'shift_complete': false,
+        'show_dialog': false,
+      })
+        ..remove('in_extra_time')
+        ..remove('show_warning');
+      final warned = parse(json);
+      expect(warned.inExtraTime, isFalse);
+      expect(isInExtraTime(warned), isTrue,
+          reason: 'awaiting_extension without shift_complete is the extra time');
     });
 
     test('missing keys, nulls and wrong types fall back to showing nothing', () {
@@ -464,8 +513,32 @@ void main() {
           'Shift ends 6 AM · 2 h 55 m left');
       expect(shiftStatusDetail(night, now: afterMidnight),
           'Started 10 PM yesterday');
-      expect(graceLine(night, afterMidnight),
-          "You'll be checked out at 7 AM unless support approves more time");
+      expect(
+          graceLine(night, afterMidnight),
+          'Your extra time runs to 7 AM. After that no new work comes until '
+          'support approves more');
+    });
+
+    test('the extra time says so and leaves the work alone', () {
+      final warned = parse(extraTime());
+      expect(shiftStatusLine(warned, now: received),
+          'Extra time until 7 PM · 50 m left');
+      expect(shiftStatusDetail(warned, now: received),
+          'Ask for more time or check out before it runs out');
+      expect(shiftStatusLineTicks(warned, received), isTrue,
+          reason: 'the countdown to the grace mark is still moving');
+      expect(
+        canShowShiftCompleteScreen(
+            state: warned, work: ShiftWorkInHand.none),
+        isFalse,
+        reason: 'no screen while they are still working',
+      );
+    });
+
+    test('a request waiting for support shows in the extra time too', () {
+      final warned = parse(extraTime({'pending_request': request()}));
+      expect(shiftStatusDetail(warned, now: received),
+          'Waiting for support to approve more time');
     });
 
     test('hidden when not enforced, no session or not a packer session', () {
@@ -579,14 +652,16 @@ void main() {
 
     test('grace line', () {
       final state = parse(openSession());
-      expect(graceLine(state, received),
-          "You'll be checked out at 7 PM unless support approves more time");
+      expect(
+          graceLine(state, received),
+          'Your extra time runs to 7 PM. After that no new work comes until '
+          'support approves more');
       final later = received.add(const Duration(seconds: 3001));
       expect(graceLine(state, later),
-          "Your time is up. You'll be checked out soon unless support approves more time");
+          'Your time is up. Ask support for more, or check out');
       expect(
         graceLine(parse(openSession({'pending_request': request()})), later),
-        "Support is looking at your request. You won't be checked out until they decide",
+        'Support is looking at your request. Nothing else happens until they decide',
       );
     });
 
