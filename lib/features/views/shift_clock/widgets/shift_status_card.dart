@@ -66,7 +66,7 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
         return const SizedBox.shrink();
       }
 
-      final over = isShiftOver(session);
+      final over = isShiftOver(session, now: now);
       final extended = !over && session.status == ShiftStatus.extended;
       final color = over
           ? AppColors.primaryColor
@@ -79,8 +79,12 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
               ? Icons.more_time
               : Icons.schedule;
       // Work in hand: nothing to open, the packer finishes it first.
-      final canOpen =
-          over && session.showDialog && work == ShiftWorkInHand.none;
+      //
+      // Whether the server has said show_dialog yet is not part of this. The
+      // line above already reads "Shift over - tap to ask for more time", and
+      // a card that says tap and does nothing is how the last one of these
+      // went wrong; isShiftOver knows the mark has gone by on its own.
+      final canOpen = over && work == ShiftWorkInHand.none;
 
       final radius = BorderRadius.circular(12);
       final card = Padding(

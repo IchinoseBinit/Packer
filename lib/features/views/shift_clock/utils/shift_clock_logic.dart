@@ -245,17 +245,25 @@ int driverTransferCount(dynamic data) {
 /// blocking screen may show and what the status line says. Before that they
 /// change nothing, and with enforcement off the clock shows nothing at all,
 /// so a driver's app makes no extra calls.
-bool shouldCheckDriverTransfers(ShiftSessionState? state) =>
-    state != null &&
-    isShiftClockVisible(state) &&
-    (state.showDialog || isShiftOver(state) || isInExtraTime(state));
+bool shouldCheckDriverTransfers(ShiftSessionState? state, {DateTime? now}) {
+  if (state == null || !isShiftClockVisible(state)) return false;
+  final at = now ?? DateTime.now();
+  return state.showDialog ||
+      isShiftOver(state, now: at) ||
+      isInExtraTime(state, now: at);
+}
 
 /// May the blocking "Your shift is complete" screen show?
 ///
 /// Only for a shift the clock itself confirmed (a summary seed is checked with
-/// GET /attendance/session/ first) that the server says to show, and never
-/// while work is in hand: that packer or driver reads it in the home status
-/// line and gets the screen as soon as the work is done.
+/// GET /attendance/session/ first), and never while work is in hand: that
+/// packer or driver reads it in the home status line and gets the screen as
+/// soon as the work is done.
+///
+/// The server saying so ([ShiftSessionState.showDialog]) is one way in; the
+/// phone's own clock reaching the stop mark is the other, so the screen still
+/// arrives on time between two polls, and still arrives on a day nothing is
+/// running the clock on the server.
 ///
 /// [workKnown] false: the app could not read what is in hand (a driver's
 /// transfers), so it cannot promise there is nothing - no screen until it can.
@@ -263,10 +271,11 @@ bool canShowShiftCompleteScreen({
   required ShiftSessionState? state,
   required ShiftWorkInHand work,
   bool workKnown = true,
+  DateTime? now,
 }) =>
     state != null &&
     isShiftClockVisible(state) &&
-    state.showDialog &&
+    (state.showDialog || stoppedOnOurClock(state, now)) &&
     !state.fromSummary &&
     workKnown &&
     work == ShiftWorkInHand.none;
@@ -275,21 +284,44 @@ bool canShowShiftCompleteScreen({
 // Home status line
 // ---------------------------------------------------------------------------
 
+/// The phone's own corrected clock says the work has stopped.
+///
+/// Deliberately narrower than [isShiftOver], which also reads `shift_complete`
+/// - the server stating a fact. `show_dialog` is the server's INSTRUCTION, and
+/// where the two disagree the instruction wins, so the screen goes up on the
+/// server saying so or on our own clock running out, never on the fact alone.
+bool stoppedOnOurClock(ShiftSessionState state, DateTime? now) =>
+    state.enforced && state.hasStopped(now ?? DateTime.now());
+
 /// The work has stopped: the extra time ran out with nothing approved.
 ///
 /// Not merely "past the regular hours" - see [isInExtraTime] for that. Between
 /// the two marks a packer keeps packing and a driver keeps driving, so
 /// anything that stands down work has to read this one.
-bool isShiftOver(ShiftSessionState state) =>
-    state.shiftComplete || state.status == ShiftStatus.closing;
+///
+/// The server's own word comes first, and the phone's clock is the backstop:
+/// once the stop mark has gone by the shift is over whether or not any answer
+/// has said so yet. That covers the minute between polls, an answer that never
+/// arrives, and the day the clock on the server has stopped being run at all.
+/// It can only ever stop the shift EARLIER than the server would, never keep
+/// one running that the server has already ended.
+bool isShiftOver(ShiftSessionState state, {DateTime? now}) =>
+    state.shiftComplete ||
+    state.status == ShiftStatus.closing ||
+    (state.enforced && state.hasStopped(now ?? DateTime.now()));
 
 /// Past the regular hours, inside the grace: warned, and still working.
 ///
 /// The status falls back for an older backend that sends neither flag, where
-/// awaiting_extension without shift_complete means exactly this.
-bool isInExtraTime(ShiftSessionState state) =>
-    !isShiftOver(state) &&
-    (state.inExtraTime || state.status == ShiftStatus.awaitingExtension);
+/// awaiting_extension without shift_complete means exactly this, and the
+/// phone's clock backs both up the way it does for [isShiftOver].
+bool isInExtraTime(ShiftSessionState state, {DateTime? now}) {
+  final at = now ?? DateTime.now();
+  if (isShiftOver(state, now: at)) return false;
+  return state.inExtraTime ||
+      state.status == ShiftStatus.awaitingExtension ||
+      (state.enforced && state.pastExtraTimeMark(at));
+}
 
 /// "2 h 15 m left", "45 m left", "less than a minute left"; null once [left]
 /// has run out or is unknown.
@@ -315,7 +347,8 @@ String? shiftStatusLine(
   ShiftWorkInHand work = ShiftWorkInHand.none,
 }) {
   if (!isShiftClockVisible(state)) return null;
-  if (isShiftOver(state)) {
+  final at = now ?? DateTime.now();
+  if (isShiftOver(state, now: at)) {
     switch (work) {
       case ShiftWorkInHand.order:
         return 'Shift over · finish this order';
@@ -327,9 +360,10 @@ String? shiftStatusLine(
         return 'Shift over';
     }
   }
-  final at = now ?? DateTime.now();
-  if (isInExtraTime(state)) {
-    final until = state.hardLimitAt;
+  if (isInExtraTime(state, now: at)) {
+    // The real end, grace and all - for an extension that has run out, the
+    // approved end is already behind them and would read as "0 m left".
+    final until = state.stopMark;
     if (until == null) return 'Extra time';
     final line = 'Extra time until '
         '${formatShiftClockOn(until, state.serverTimeAt(at))}';
@@ -353,9 +387,12 @@ String? shiftStatusLine(
 /// so the home card only ticks while something is actually counting down.
 bool shiftStatusLineTicks(ShiftSessionState? state, DateTime now) {
   if (state == null || !isShiftClockVisible(state)) return false;
-  if (isShiftOver(state) || state.status == ShiftStatus.extended) return false;
-  final deadline =
-      isInExtraTime(state) ? state.hardLimitAt : state.regularLimitAt;
+  if (isShiftOver(state, now: now) || state.status == ShiftStatus.extended) {
+    return false;
+  }
+  final deadline = isInExtraTime(state, now: now)
+      ? state.stopMark
+      : state.regularLimitAt;
   return shiftCountdown(state.remainingTo(deadline, now)) != null;
 }
 
@@ -365,13 +402,14 @@ String shiftStatusDetail(
   DateTime? now,
   ShiftWorkInHand work = ShiftWorkInHand.none,
 }) {
-  if (isInExtraTime(state)) {
+  final at = now ?? DateTime.now();
+  if (isInExtraTime(state, now: at)) {
     if (state.pendingRequest != null) {
       return 'Waiting for support to approve more time';
     }
     return 'Ask for more time or check out before it runs out';
   }
-  if (isShiftOver(state)) {
+  if (isShiftOver(state, now: at)) {
     if (state.pendingRequest != null) {
       return 'Waiting for support to approve more time';
     }
@@ -617,7 +655,14 @@ ServerCheckoutAction serverCheckoutAction(
 Duration? shiftWakeUpDelay(ShiftSessionState? state, DateTime now) {
   if (state == null || !state.enforced || !state.hasSession) return null;
   Duration? best;
-  for (final deadline in [state.regularLimitAt, state.hardLimitAt]) {
+  // The stop mark is in here as well as the hard limit: for an extension that
+  // has run out they are not the same moment, and the stop is the one that
+  // takes the work away.
+  for (final deadline in [
+    state.regularLimitAt,
+    state.hardLimitAt,
+    state.stopMark,
+  ]) {
     final left = state.remainingTo(deadline, now);
     if (left == null || left <= Duration.zero) continue;
     if (best == null || left < best) best = left;
@@ -645,8 +690,14 @@ bool shouldPollShiftClock({
       state.status == ShiftStatus.closing) {
     return true;
   }
-  final left = state.remainingTo(state.regularLimitAt, now ?? DateTime.now());
-  return left != null && left <= Duration.zero && left > -shiftCatchUpWindow;
+  final at = now ?? DateTime.now();
+  for (final mark in [state.regularLimitAt, state.stopMark]) {
+    final left = state.remainingTo(mark, at);
+    if (left != null && left <= Duration.zero && left > -shiftCatchUpWindow) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------

@@ -225,6 +225,15 @@ class ShiftSessionState {
   final double? regularHours;
   final ShiftTime? regularLimitAt;
   final ShiftTime? hardLimitAt;
+
+  /// When the work really stops, the grace included - what the app arms its
+  /// own countdown on and derives both marks from.
+  ///
+  /// Not always [hardLimitAt]: an approved extension that runs out is given a
+  /// fresh grace rather than being stopped dead, so for one of those this sits
+  /// a grace period past the approved end. Null from a backend too old to send
+  /// it, and then the app falls back to [hardLimitAt].
+  final ShiftTime? stopsAt;
   final int? secondsToRegularLimit;
   final int? secondsToHardLimit;
   final bool shiftComplete;
@@ -273,6 +282,7 @@ class ShiftSessionState {
     required this.regularHours,
     required this.regularLimitAt,
     required this.hardLimitAt,
+    required this.stopsAt,
     required this.secondsToRegularLimit,
     required this.secondsToHardLimit,
     required this.shiftComplete,
@@ -313,6 +323,7 @@ class ShiftSessionState {
       regularHours: jsonDouble(json['regular_hours']),
       regularLimitAt: ShiftTime.tryParse(json['regular_limit_at']),
       hardLimitAt: ShiftTime.tryParse(json['hard_limit_at']),
+      stopsAt: ShiftTime.tryParse(json['stops_at']),
       secondsToRegularLimit: jsonInt(json['seconds_to_regular_limit']),
       secondsToHardLimit: jsonInt(json['seconds_to_hard_limit']),
       shiftComplete: jsonBool(json['shift_complete']),
@@ -367,6 +378,55 @@ class ShiftSessionState {
     return ShiftTime(serverInstantAt(now), server.offset);
   }
 
+  /// Can the phone's clock be trusted against the server's?
+  ///
+  /// Only once a response has carried `server_time`, which is what [clockSkew]
+  /// corrects the phone by. Without it the app is reading a clock that may be
+  /// hours out, and a wrong one would stand a packer down in the middle of
+  /// their shift - so nothing is derived locally until a server time arrives.
+  bool get clockIsCorrected => serverTime != null;
+
+  /// The moment the work really stops: [stopsAt], or [hardLimitAt] from a
+  /// backend too old to send it. Every local decision about the shift being
+  /// over reads this, so the fallback lives in one place.
+  ShiftTime? get stopMark => stopsAt ?? hardLimitAt;
+
+  /// Has the work stopped on the server's clock as it reads at [now]?
+  ///
+  /// False when the server sent no mark to read - the app never stands work
+  /// down on a time it does not have. An approved extension from a backend too
+  /// old to send `stops_at` is one of those: its hard limit is the approved
+  /// end, and the server grants a grace past that rather than stopping dead,
+  /// so reading the hard limit here would stand them down early and then let
+  /// them back a minute later.
+  bool hasStopped(DateTime now) {
+    if (!clockIsCorrected) return false;
+    final mark =
+        stopsAt ?? (status == ShiftStatus.extended ? null : hardLimitAt);
+    final left = remainingTo(mark, now);
+    return left != null && left <= Duration.zero;
+  }
+
+  /// Are they past the mark that starts their extra time, on the server's
+  /// clock as it reads at [now]?
+  ///
+  /// Which mark that is depends on where the shift is, exactly as the server's
+  /// own tick decides it: a running shift passes its regular hours, and an
+  /// approved extension passes the end that was approved for it. Anything
+  /// else - already warned, already stopped - is not read off the clock here.
+  bool pastExtraTimeMark(DateTime now) {
+    if (!clockIsCorrected) return false;
+    final Duration? left;
+    if (status == ShiftStatus.active) {
+      left = remainingTo(regularLimitAt, now);
+    } else if (status == ShiftStatus.extended) {
+      left = remainingTo(hardLimitAt, now);
+    } else {
+      return false;
+    }
+    return left != null && left <= Duration.zero;
+  }
+
   /// How long is left until [time] on the server's clock; null when [time] is
   /// unknown. Negative once it has passed.
   Duration? remainingTo(ShiftTime? time, DateTime now) =>
@@ -419,6 +479,7 @@ class ShiftSessionState {
       regularHours: regularHours,
       regularLimitAt: seed.regularLimitAt ?? regularLimitAt,
       hardLimitAt: seed.hardLimitAt ?? hardLimitAt,
+      stopsAt: seed.stopsAt ?? stopsAt,
       // Anchored to the old receivedAt: the limits above and the clock
       // correction say the same thing against the seed's own arrival.
       secondsToRegularLimit: null,

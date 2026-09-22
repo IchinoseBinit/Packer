@@ -732,7 +732,10 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       return;
     }
     final session = visibleSession;
-    if (session != null && session.showDialog && !hasWorkInHand) refresh();
+    // Our own clock counts here as much as the server's word: the card is
+    // tappable as soon as the shift is over by either reading, and a tap that
+    // did nothing is exactly how the last one of these was reported.
+    if (session != null && isShiftOver(session) && !hasWorkInHand) refresh();
   }
 
   void _openScreen() {

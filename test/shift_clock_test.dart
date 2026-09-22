@@ -66,6 +66,9 @@ Map<String, dynamic> openSession([Map<String, dynamic> changes = const {}]) => {
       'regular_hours': 12.0,
       'regular_limit_at': '2026-09-15T18:00:00+05:45',
       'hard_limit_at': '2026-09-15T19:00:00+05:45',
+      // Where the work really stops, grace and all: the same as the hard limit
+      // for a running shift, a grace past it for an approved extension.
+      'stops_at': '2026-09-15T19:00:00+05:45',
       'seconds_to_regular_limit': -600,
       'seconds_to_hard_limit': 3000,
       'shift_complete': true,
@@ -132,6 +135,7 @@ Map<String, dynamic> shiftBlock([Map<String, dynamic> changes = const {}]) => {
       'started_at': '2026-09-15T06:00:00+05:45',
       'regular_limit_at': '2026-09-15T18:00:00+05:45',
       'hard_limit_at': '2026-09-15T19:00:00+05:45',
+      'stops_at': '2026-09-15T19:00:00+05:45',
       'server_time': '2026-09-15T16:00:00+05:45',
       'shift_complete': false,
       'show_dialog': false,
@@ -166,6 +170,7 @@ Map<String, dynamic> liveSession({
     'started_at': isoUtc(now.subtract(const Duration(hours: 8))),
     'regular_limit_at': isoUtc(now.add(endsIn)),
     'hard_limit_at': isoUtc(now.add(endsIn + grace)),
+    'stops_at': isoUtc(now.add(endsIn + grace)),
     'seconds_to_regular_limit': endsIn.inSeconds,
     'seconds_to_hard_limit': (endsIn + grace).inSeconds,
     'extension_base': isoUtc(now.add(endsIn)),
@@ -189,6 +194,7 @@ Map<String, dynamic> liveShiftBlock({
     'started_at': isoUtc(now.subtract(const Duration(hours: 8))),
     'regular_limit_at': isoUtc(now.add(endsIn)),
     'hard_limit_at': isoUtc(now.add(endsIn + grace)),
+    'stops_at': isoUtc(now.add(endsIn + grace)),
     ...changes,
   });
 }
@@ -334,13 +340,13 @@ void main() {
       expect(warned.showWarning, isTrue);
       expect(warned.showDialog, isFalse);
       expect(warned.canTakeWork, isTrue);
-      expect(isInExtraTime(warned), isTrue);
-      expect(isShiftOver(warned), isFalse,
+      expect(isInExtraTime(warned, now: received), isTrue);
+      expect(isShiftOver(warned, now: received), isFalse,
           reason: 'past the regular hours is not stopped: they pack on');
 
       final stopped = parse(openSession());
-      expect(isInExtraTime(stopped), isFalse);
-      expect(isShiftOver(stopped), isTrue);
+      expect(isInExtraTime(stopped, now: received), isFalse);
+      expect(isShiftOver(stopped, now: received), isTrue);
       expect(stopped.canTakeWork, isFalse);
     });
 
@@ -354,7 +360,7 @@ void main() {
         ..remove('show_warning');
       final warned = parse(json);
       expect(warned.inExtraTime, isFalse);
-      expect(isInExtraTime(warned), isTrue,
+      expect(isInExtraTime(warned, now: received), isTrue,
           reason: 'awaiting_extension without shift_complete is the extra time');
     });
 
@@ -511,6 +517,7 @@ void main() {
           'started_at': '2026-09-15T22:00:00+05:45',
           'regular_limit_at': '2026-09-16T06:00:00+05:45',
           'hard_limit_at': '2026-09-16T07:00:00+05:45',
+          'stops_at': '2026-09-16T07:00:00+05:45',
           'server_time': '2026-09-15T22:05:00+05:45',
         }),
         receivedAt: seededAt,
@@ -541,7 +548,7 @@ void main() {
           reason: 'the countdown to the grace mark is still moving');
       expect(
         canShowShiftCompleteScreen(
-            state: warned, work: ShiftWorkInHand.none),
+            state: warned, work: ShiftWorkInHand.none, now: received),
         isFalse,
         reason: 'no screen while they are still working',
       );
@@ -606,10 +613,14 @@ void main() {
     test('the home card only ticks while a countdown is running', () {
       final state = seed(shiftBlock());
       expect(shiftStatusLineTicks(state, received), isTrue);
-      // Run out, over, on an extension, hidden or nothing at all: no ticking.
+      // The regular hours running out does not end the ticking: it starts the
+      // extra time, which counts down to the stop mark in its turn.
       expect(
-          shiftStatusLineTicks(
-              state, received.add(const Duration(hours: 2))),
+          shiftStatusLineTicks(state, received.add(const Duration(hours: 2))),
+          isTrue);
+      // Over, on an extension, hidden or nothing at all: no ticking.
+      expect(
+          shiftStatusLineTicks(state, received.add(const Duration(hours: 3))),
           isFalse);
       expect(shiftStatusLineTicks(parse(openSession()), received), isFalse);
       expect(
@@ -1006,15 +1017,15 @@ void main() {
       final complete = parse(openSession());
       expect(
           canShowShiftCompleteScreen(
-              state: complete, work: ShiftWorkInHand.none),
+              state: complete, work: ShiftWorkInHand.none, now: received),
           isTrue);
       expect(
           canShowShiftCompleteScreen(
-              state: complete, work: ShiftWorkInHand.order),
+              state: complete, work: ShiftWorkInHand.order, now: received),
           isFalse);
       expect(
           canShowShiftCompleteScreen(
-              state: complete, work: ShiftWorkInHand.basket),
+              state: complete, work: ShiftWorkInHand.basket, now: received),
           isFalse);
 
       // A shift only the summary has told us about is confirmed with
@@ -1024,6 +1035,7 @@ void main() {
           state: seed(shiftBlock(
               {'status': 'awaiting_extension', 'show_dialog': true})),
           work: ShiftWorkInHand.none,
+        now: received,
         ),
         isFalse,
       );
@@ -1037,13 +1049,134 @@ void main() {
       ]) {
         expect(
             canShowShiftCompleteScreen(
-                state: parse(json), work: ShiftWorkInHand.none),
+                state: parse(json), work: ShiftWorkInHand.none, now: received),
             isFalse,
             reason: json.toString());
       }
       expect(
-          canShowShiftCompleteScreen(state: null, work: ShiftWorkInHand.none),
+          canShowShiftCompleteScreen(state: null, work: ShiftWorkInHand.none, now: received),
           isFalse);
+    });
+  });
+
+  group('the clock on the phone, when the server is behind (packer-5)', () {
+    // The server writes the two marks on a celery worker that has been killed
+    // in staging more than once, and even a healthy one only runs every
+    // minute. These read the marks the response already carried, so the app
+    // warns and stops on time whatever the server has got round to saying.
+    //
+    // openSession() is at 6:10 PM on a 6 AM - 6 PM shift: regular mark 6 PM,
+    // stop mark 7 PM. received is the phone clock at that moment.
+    DateTime after(Duration d) => received.add(d);
+
+    Map<String, dynamic> stillRunning([Map<String, dynamic> changes = const {}]) =>
+        openSession({
+          // What a server whose clock has not been run says: nothing is wrong.
+          'status': 'active',
+          'shift_complete': false,
+          'in_extra_time': false,
+          'show_dialog': false,
+          'show_warning': false,
+          'can_take_work': true,
+          ...changes,
+        });
+
+    test('the warning comes on our own clock, not on the server saying so', () {
+      final state = parse(stillRunning());
+      expect(state.inExtraTime, isFalse, reason: 'the server has not said so');
+      expect(isInExtraTime(state, now: received), isTrue);
+      expect(isShiftOver(state, now: received), isFalse,
+          reason: 'past the regular mark is warned, not stopped');
+    });
+
+    test('the shift stops on our own clock, and the screen goes up', () {
+      final state = parse(stillRunning());
+      final past = after(const Duration(hours: 1)); // 7:10 PM: the stop is gone
+      expect(state.showDialog, isFalse, reason: 'the server has not said so');
+      expect(isShiftOver(state, now: past), isTrue);
+      expect(isInExtraTime(state, now: past), isFalse);
+      expect(
+          canShowShiftCompleteScreen(
+              state: state, work: ShiftWorkInHand.none, now: past),
+          isTrue);
+    });
+
+    test('work in hand still holds the screen back', () {
+      final state = parse(stillRunning());
+      final past = after(const Duration(hours: 1));
+      expect(
+          canShowShiftCompleteScreen(
+              state: state, work: ShiftWorkInHand.basket, now: past),
+          isFalse);
+    });
+
+    test('an expired extension gets its grace, not the screen', () {
+      // The approved time ran out at 8 PM; the server grants a grace rather
+      // than stopping them dead, so stops_at is 8:15 and the screen waits.
+      final state = parse(stillRunning({
+        'status': 'extended',
+        'hard_limit_at': '2026-09-15T20:00:00+05:45',
+        'stops_at': '2026-09-15T20:15:00+05:45',
+      }));
+      final inGrace = after(const Duration(hours: 1, minutes: 55)); // 8:05 PM
+      expect(isInExtraTime(state, now: inGrace), isTrue);
+      expect(isShiftOver(state, now: inGrace), isFalse);
+      expect(
+          canShowShiftCompleteScreen(
+              state: state, work: ShiftWorkInHand.none, now: inGrace),
+          isFalse,
+          reason: 'the screen here would flash up and retract at 8:15');
+
+      final after815 = after(const Duration(hours: 2, minutes: 10)); // 8:20 PM
+      expect(isShiftOver(state, now: after815), isTrue);
+      expect(
+          canShowShiftCompleteScreen(
+              state: state, work: ShiftWorkInHand.none, now: after815),
+          isTrue);
+    });
+
+    test('an extension from a backend with no stops_at is left to the server', () {
+      final json = stillRunning({
+        'status': 'extended',
+        'hard_limit_at': '2026-09-15T19:00:00+05:45',
+      })
+        ..remove('stops_at');
+      final state = parse(json);
+      // 7:10 PM: past the approved end, but the grace the server would grant
+      // is not ours to guess, so nothing is derived here.
+      expect(isShiftOver(state, now: after(const Duration(hours: 1))), isFalse);
+    });
+
+    test('nothing is derived from a phone clock we could not correct', () {
+      // No server_time, so the skew is unknown and the phone may be hours out.
+      // Standing a packer down on that would be worse than being a poll late.
+      final state = parse(stillRunning({'server_time': null}));
+      expect(state.clockIsCorrected, isFalse);
+      expect(isInExtraTime(state, now: received), isFalse);
+      expect(isShiftOver(state, now: after(const Duration(hours: 1))), isFalse);
+    });
+
+    test('the server saying stop still wins with no clock of our own', () {
+      final state = parse(openSession({'server_time': null})); // status closing
+      expect(isShiftOver(state, now: received), isTrue);
+    });
+
+    test('with the role switched off nothing is derived at all', () {
+      final state = parse(stillRunning({'enforced': false}));
+      expect(isInExtraTime(state, now: after(const Duration(hours: 1))), isFalse);
+      expect(isShiftOver(state, now: after(const Duration(hours: 1))), isFalse);
+    });
+
+    test('the app wakes at the stop mark, not only at the hard limit', () {
+      final state = parse(stillRunning({
+        'status': 'extended',
+        'hard_limit_at': '2026-09-15T20:00:00+05:45',
+        'stops_at': '2026-09-15T20:15:00+05:45',
+      }));
+      // 8:05 PM: the approved end has gone, the stop is 10 minutes off.
+      final inGrace = after(const Duration(hours: 1, minutes: 55));
+      expect(shiftWakeUpDelay(state, inGrace),
+          const Duration(minutes: 10) + shiftWakeUpSlack);
     });
   });
 
@@ -1068,8 +1201,11 @@ void main() {
       // No limits sent at all.
       expect(
         shiftWakeUpDelay(
-            seed(shiftBlock(
-                {'regular_limit_at': null, 'hard_limit_at': null})),
+            seed(shiftBlock({
+              'regular_limit_at': null,
+              'hard_limit_at': null,
+              'stops_at': null,
+            })),
             received),
         isNull,
       );
@@ -1196,7 +1332,7 @@ void main() {
       expect(shiftStatusLine(over, now: received), 'Shift over');
       expect(
           canShowShiftCompleteScreen(
-              state: over, work: ShiftWorkInHand.none),
+              state: over, work: ShiftWorkInHand.none, now: received),
           isFalse);
 
       // Support decided the request while the app was not looking.
@@ -1381,15 +1517,15 @@ void main() {
       final complete = parse(openSession({'role': 'driver'}));
       expect(
           canShowShiftCompleteScreen(
-              state: complete, work: ShiftWorkInHand.none),
+              state: complete, work: ShiftWorkInHand.none, now: received),
           isTrue);
       expect(
           canShowShiftCompleteScreen(
-              state: complete, work: ShiftWorkInHand.transfer),
+              state: complete, work: ShiftWorkInHand.transfer, now: received),
           isFalse);
       expect(
           canShowShiftCompleteScreen(
-              state: complete, work: ShiftWorkInHand.none, workKnown: false),
+              state: complete, work: ShiftWorkInHand.none, workKnown: false, now: received),
           isFalse);
     });
 
@@ -1419,15 +1555,19 @@ void main() {
     });
 
     test('transfers are looked at only once an enforced shift is over', () {
-      expect(shouldCheckDriverTransfers(parse(openSession({'role': 'driver'}))),
+      expect(shouldCheckDriverTransfers(parse(openSession({'role': 'driver'})), now: received),
           isTrue);
       for (final json in [
         // Still on shift, or on an approved extension: nothing to decide.
+        // The marks say so too - the clock is read now, not just the status.
         openSession({
           'role': 'driver',
           'status': 'active',
           'shift_complete': false,
           'show_dialog': false,
+          'regular_limit_at': '2026-09-15T22:00:00+05:45',
+          'hard_limit_at': '2026-09-15T23:00:00+05:45',
+          'stops_at': '2026-09-15T23:00:00+05:45',
         }),
         openSession({
           'role': 'driver',
@@ -1439,10 +1579,10 @@ void main() {
         openSession({'role': 'driver', 'enforced': false, 'show_dialog': false}),
         noSession(null),
       ]) {
-        expect(shouldCheckDriverTransfers(parse(json)), isFalse,
+        expect(shouldCheckDriverTransfers(parse(json), now: received), isFalse,
             reason: json.toString());
       }
-      expect(shouldCheckDriverTransfers(null), isFalse);
+      expect(shouldCheckDriverTransfers(null, now: received), isFalse);
     });
   });
 
