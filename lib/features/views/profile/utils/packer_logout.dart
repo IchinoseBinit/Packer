@@ -37,10 +37,20 @@ Future<void> logoutWithCheckout(BuildContext context) async {
   );
   if (!context.mounted) return;
 
-  // Packers must checkout (scan warehouse QR)
-  // before logout.
+  // Packers must checkout (scan warehouse QR) before logout.
+  //
+  // Being online is not the test: the shift clock takes them offline at the
+  // grace mark and leaves the shift open, so a packer stopped at the blocking
+  // screen reads as offline while still being very much checked in. Going by
+  // the switch alone, the check-out below was skipped and the plain logout
+  // that followed closed nothing - and the next sign-in was handed the same
+  // stopped shift straight back, with no way out of it. An open shift is what
+  // has to be checked out of, whichever side of the grace mark it is on.
   final role = Provider.of<HomeProvider>(context, listen: false).user.role;
-  if ((role == UserRole.packer) && isOnline == true.toString()) {
+  final onShift =
+      Provider.of<ShiftClockProvider>(context, listen: false).state?.hasSession ??
+          false;
+  if ((role == UserRole.packer) && (isOnline == true.toString() || onShift)) {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
