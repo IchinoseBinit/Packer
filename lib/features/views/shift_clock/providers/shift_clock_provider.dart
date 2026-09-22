@@ -161,6 +161,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   bool get showsApproval {
     final session = visibleSession;
     if (session == null || session.status != ShiftStatus.extended) return false;
+    // Already working it: this shift IS the extension, so there is nothing
+    // left to act on and a screen here would shut them in.
+    if (session.isExtensionShift) return false;
     final approvalId = _approvalId(session);
     return approvalId != null &&
         _approvalReadLoaded &&

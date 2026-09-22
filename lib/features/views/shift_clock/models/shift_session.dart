@@ -209,6 +209,12 @@ class ShiftSessionState {
   /// extra time runs out.
   final bool showWarning;
   final bool inExtraTime;
+
+  /// This shift IS the approved extension - they checked out of the stopped
+  /// one and signed back in to work it. Both are `extended`, so without this
+  /// the "you have been approved, now check out" screen would go up again in
+  /// front of somebody already working it.
+  final bool isExtensionShift;
   final bool locked;
   final LastShiftSession? lastSession;
 
@@ -257,6 +263,7 @@ class ShiftSessionState {
     required this.showDialog,
     required this.showWarning,
     required this.inExtraTime,
+    required this.isExtensionShift,
     required this.locked,
     required this.lastSession,
     required this.sessionId,
@@ -296,6 +303,7 @@ class ShiftSessionState {
       showDialog: hasSession && jsonBool(json['show_dialog']),
       showWarning: hasSession && jsonBool(json['show_warning']),
       inExtraTime: hasSession && jsonBool(json['in_extra_time']),
+      isExtensionShift: hasSession && jsonBool(json['is_extension_shift']),
       locked: jsonBool(json['locked']),
       lastSession: LastShiftSession.fromJson(json['last_session']),
       sessionId: jsonInt(json['session_id']),
@@ -401,6 +409,7 @@ class ShiftSessionState {
       showDialog: seed.showDialog,
       showWarning: seed.showWarning,
       inExtraTime: seed.inExtraTime,
+      isExtensionShift: seed.isExtensionShift,
       locked: locked,
       lastSession: lastSession,
       sessionId: seed.sessionId ?? sessionId,

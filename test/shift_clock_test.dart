@@ -70,6 +70,7 @@ Map<String, dynamic> openSession([Map<String, dynamic> changes = const {}]) => {
       'seconds_to_hard_limit': 3000,
       'shift_complete': true,
       'in_extra_time': false,
+      'is_extension_shift': false,
       'locked': false,
       'show_dialog': true,
       'show_warning': false,
@@ -313,6 +314,17 @@ void main() {
       expect(state.lastDecision?.status, ShiftRequestStatus.rejected);
       expect(state.lastDecision?.reviewNote, 'Enough packers tonight');
       expect(isShiftClockVisible(state), isTrue);
+    });
+
+    test('the extension shift is told apart from the one it was approved on', () {
+      final approvedOn = parse(openSession({'status': 'extended'}));
+      expect(approvedOn.isExtensionShift, isFalse,
+          reason: 'the stopped shift, now approved: they still have to check out');
+      final working = parse(openSession({
+        'status': 'extended',
+        'is_extension_shift': true,
+      }));
+      expect(working.isExtensionShift, isTrue);
     });
 
     test('the two marks the clock has: warned, then stopped', () {

@@ -242,24 +242,20 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
         ),
         SizedBox(height: 8.h),
         Text(
-          'You are back on shift. Check out here when you are done, and sign '
-          'in again for your next one.',
+          'Check out of this shift and sign in again to work the extra time. '
+          'It is recorded on its own, so the extra hours are paid as agreed.',
           textAlign: TextAlign.center,
           style: _textStyle(14, FontWeight.w400, Colors.black54),
         ),
         SizedBox(height: 24.h),
-        GeneralElevatedButton(
-          title: 'Back to work',
-          isDisabled: _checkingOut,
-          onPressed: clock.dismissApproval,
-        ),
-        SizedBox(height: 12.h),
+        // One way on: check out, then sign in again. That sign-in opens the
+        // extension as a shift of its own, priced at the approved rate and
+        // ending at the approved time (attendance.services.live_approval).
+        // There is deliberately nothing here that carries on in place - the
+        // stopped shift has to be closed for the extra time to be its own row.
         GeneralElevatedButton(
           title: _checkingOut ? 'Checking out...' : 'Check out and log out',
           isDisabled: _checkingOut,
-          bgColor: Colors.white,
-          borderColor: AppColors.primaryColor,
-          textStyle: _textStyle(15, FontWeight.w600, AppColors.primaryColor),
           onPressed: _checkOut,
         ),
         SizedBox(height: 12.h),
