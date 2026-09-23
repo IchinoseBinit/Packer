@@ -439,8 +439,10 @@ void main() {
       expect(formatShiftHours(1), '1 h');
       expect(formatShiftHours(1.5), '1 h 30 min');
       expect(formatShiftHours(2), '2 h');
-      expect(shiftExtensionHourChoices.map(formatShiftHours),
-          ['30 min', '1 h', '2 h', '3 h', '4 h']);
+      // The form works in whole minutes now, so these are the words it uses.
+      expect(formatShiftMinutes(5), '5 min');
+      expect(formatShiftMinutes(80), '1 h 20 min');
+      expect(formatShiftMinutes(720), '12 h');
     });
   });
 
@@ -716,15 +718,43 @@ void main() {
           'Support has checked you out');
     });
 
-    test('the hours the form starts on come from the roster', () {
-      final roster = parse(openSession()).roster;
-      expect(defaultExtensionHours(roster), 2);
-      expect(defaultExtensionHours(null), 1);
+    test('the minutes the form starts on come from the roster', () {
+      // openSession()'s placement allows 2 h, and the cap admits it.
+      expect(defaultExtensionMinutes(parse(openSession())), 120);
+      // Nothing known at all: an hour.
+      expect(defaultExtensionMinutes(null), 60);
+      // A placement asking for more than the role's cap does not win.
       expect(
-        defaultExtensionHours(const ShiftRoster(
-            shift: 'Day', otAllowed: true, otPayType: 'normal', otMaxHours: 6)),
-        1,
+        defaultExtensionMinutes(parse(openSession({
+          'max_extension_hours': 1.0,
+          'roster': {
+            'shift': 'Day',
+            'ot_allowed': true,
+            'ot_pay_type': 'normal',
+            'ot_max_hours': 6.0,
+          },
+        }))),
+        60,
       );
+    });
+
+    test('the form caps itself where the server would refuse', () {
+      final rider = parse(openSession({'max_extension_hours': 8.0}));
+      expect(maxExtensionMinutes(rider), 480);
+      expect(extensionSpanProblem(480, rider), isNull);
+      expect(extensionSpanProblem(481, rider),
+          'You can ask for at most 8 h at a time.');
+      expect(extensionSpanProblem(0, rider), 'Ask for at least 5 min.');
+      expect(extensionSpanProblem(90, rider), isNull);
+      // An older backend naming no cap falls back rather than going unbounded.
+      final old = parse(openSession()..remove('max_extension_hours'));
+      expect(maxExtensionMinutes(old), 720);
+    });
+
+    test('the extension being spent is read off the server', () {
+      expect(parse(openSession()).extensionUsed, isFalse);
+      final used = parse(openSession({'extension_used': true}));
+      expect(used.extensionUsed, isTrue);
     });
 
     test('the pay is the server\'s word, never a choice on the form', () {
@@ -769,15 +799,18 @@ void main() {
 
     test('estimated end of a request', () {
       final state = parse(openSession());
-      expect(formatShiftClock(estimateRequestedUntil(state, 2, received)!),
+      expect(formatShiftClock(estimateRequestedUntil(state, 120, received)!),
           '8:10 PM');
       final later = received.add(const Duration(minutes: 10));
-      expect(formatShiftClock(estimateRequestedUntil(state, 2, later)!),
+      expect(formatShiftClock(estimateRequestedUntil(state, 120, later)!),
           '8:20 PM');
+      // A span a decimal could not have said, landing on the exact minute.
+      expect(formatShiftClock(estimateRequestedUntil(state, 80, received)!),
+          '7:30 PM');
       final ahead = parse(openSession({
         'extension_base': '2026-09-15T20:00:00+05:45',
       }));
-      expect(formatShiftClock(estimateRequestedUntil(ahead, 0.5, later)!),
+      expect(formatShiftClock(estimateRequestedUntil(ahead, 30, later)!),
           '8:30 PM');
     });
   });
@@ -808,14 +841,14 @@ void main() {
           }));
 
       final state = await ShiftClockRepo.requestExtension(
-          hours: 2, reason: 'Evening rush');
+          minutes: 120, reason: 'Evening rush');
 
       expect(server.calls, ['POST $requestPath']);
       final body =
           jsonDecode(server.bodies[requestPath] as String) as Map<String, dynamic>;
       // The server works the pay out from the roster placement when the
       // request is made; this app has nothing to say about it.
-      expect(body, {'hours': 2.0, 'reason': 'Evening rush'});
+      expect(body, {'hours': 2, 'minutes': 0, 'reason': 'Evening rush'});
       expect(body.containsKey('pay_type'), isFalse);
       expect(state.pendingRequest?.id, 31);
       expect(state.canRequest, isFalse);
@@ -826,11 +859,11 @@ void main() {
       server.answer(AppUrls.attendanceRequestUrl, 201,
           openSession({'extra_hours_pay': 'normal'}));
 
-      final state = await ShiftClockRepo.requestExtension(hours: 0.5);
+      final state = await ShiftClockRepo.requestExtension(minutes: 30);
 
       final body =
           jsonDecode(server.bodies[requestPath] as String) as Map<String, dynamic>;
-      expect(body, {'hours': 0.5, 'reason': ''});
+      expect(body, {'hours': 0, 'minutes': 30, 'reason': ''});
       expect(state.extraHoursPay, ShiftPay.normal);
     });
   });
@@ -2039,6 +2072,68 @@ void main() {
     });
 
     testWidgets(
+        'a span typed in hours and minutes goes up as whole minutes',
+        (tester) async {
+      var session = openSession();
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async => parse(session));
+      final router = _shiftScreenRouter();
+      await tester.pumpWidget(_shiftScreenApp(home, clock, router));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+
+      // A span a chip list could never have offered.
+      await tester.enterText(find.widgetWithText(TextField, 'hours'), '1');
+      await tester.enterText(find.widgetWithText(TextField, 'minutes'), '20');
+      await tester.pump();
+      expect(find.text('At most 12 h at a time.'), findsOneWidget,
+          reason: 'inside the cap, so the form says only where the cap is');
+
+      // Past the cap the form says so instead, and refuses to send.
+      await tester.enterText(find.widgetWithText(TextField, 'hours'), '13');
+      await tester.pump();
+      expect(find.text('You can ask for at most 12 h at a time.'), findsOneWidget);
+      await tester.tap(find.text('Request extension'));
+      await tester.pump();
+      expect(find.text('You can ask for at most 12 h at a time.'), findsOneWidget,
+          reason: 'still on the form: nothing was sent');
+
+      // Nothing at all is refused the same way.
+      await tester.enterText(find.widgetWithText(TextField, 'hours'), '0');
+      await tester.enterText(find.widgetWithText(TextField, 'minutes'), '0');
+      await tester.pump();
+      expect(find.text('Ask for at least 5 min.'), findsOneWidget);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
+        'the form is gone once the extension has been used', (tester) async {
+      final session = openSession({'extension_used': true, 'can_request': false});
+      final home = _TestHome();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async => parse(session));
+      final router = _shiftScreenRouter();
+      await tester.pumpWidget(_shiftScreenApp(home, clock, router));
+      await clock.start(home, owner: owner);
+      router.push('/${NavigationConstants.shiftCompleteScreenRoute}');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ask to keep working'), findsNothing);
+      expect(find.text('Request extension'), findsNothing);
+      expect(find.text('You have already had an extension on this shift.'),
+          findsOneWidget);
+      // Checking out is still theirs to do.
+      expect(find.text('Check out and log out'), findsOneWidget);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
+
+    testWidgets(
         'the request form states the pay for the extra hours and offers no choice',
         (tester) async {
       var session = openSession();
@@ -2059,8 +2154,11 @@ void main() {
       expect(find.text('Pay'), findsNothing);
       expect(find.text('Overtime pay'), findsNothing);
       expect(find.text('Normal pay'), findsNothing);
-      // The hours are still theirs to choose.
-      expect(find.widgetWithText(ChoiceChip, '2 h'), findsOneWidget);
+      // How long is still theirs to say, now typed rather than picked, and
+      // the form says where the server will stop them.
+      expect(find.widgetWithText(TextField, 'hours'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'minutes'), findsOneWidget);
+      expect(find.text('At most 12 h at a time.'), findsOneWidget);
 
       // Off the roster, or rostered where overtime isn't allowed: the form is
       // still offered, and the server says the hours are at normal pay.
@@ -2580,7 +2678,9 @@ void main() {
       expect(clock.isPolling, isTrue);
 
       const reason = 'Two more stores to cover';
-      await tester.enterText(find.byType(TextField), reason);
+      // Three fields on this form now: hours, minutes, and the reason.
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Reason (optional)'), reason);
       await tester.pump();
 
       // A network blip on the next poll, on the transfer lists alone.

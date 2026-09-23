@@ -215,6 +215,15 @@ class ShiftSessionState {
   /// the "you have been approved, now check out" screen would go up again in
   /// front of somebody already working it.
   final bool isExtensionShift;
+
+  /// Their one extension is spent: the server will refuse another, so the
+  /// form goes away rather than taking an ask that can only be turned down.
+  final bool extensionUsed;
+
+  /// The longest extension this role may ask for, in hours. Null when the
+  /// server said nothing - an older backend, or nobody on shift - and the
+  /// form then falls back to [shiftFallbackMaxExtensionHours].
+  final double? maxExtensionHours;
   final bool locked;
   final LastShiftSession? lastSession;
 
@@ -273,6 +282,8 @@ class ShiftSessionState {
     required this.showWarning,
     required this.inExtraTime,
     required this.isExtensionShift,
+    required this.extensionUsed,
+    required this.maxExtensionHours,
     required this.locked,
     required this.lastSession,
     required this.sessionId,
@@ -314,6 +325,8 @@ class ShiftSessionState {
       showWarning: hasSession && jsonBool(json['show_warning']),
       inExtraTime: hasSession && jsonBool(json['in_extra_time']),
       isExtensionShift: hasSession && jsonBool(json['is_extension_shift']),
+      extensionUsed: hasSession && jsonBool(json['extension_used']),
+      maxExtensionHours: jsonDouble(json['max_extension_hours']),
       locked: jsonBool(json['locked']),
       lastSession: LastShiftSession.fromJson(json['last_session']),
       sessionId: jsonInt(json['session_id']),
@@ -459,7 +472,8 @@ class ShiftSessionState {
         showWarning == seed.showWarning &&
         shiftComplete == seed.shiftComplete &&
         canTakeWork == seed.canTakeWork &&
-        canRequest == seed.canRequest;
+        canRequest == seed.canRequest &&
+        extensionUsed == seed.extensionUsed;
     return ShiftSessionState(
       hasSession: seed.hasSession,
       enforced: seed.enforced,
@@ -470,6 +484,8 @@ class ShiftSessionState {
       showWarning: seed.showWarning,
       inExtraTime: seed.inExtraTime,
       isExtensionShift: seed.isExtensionShift,
+      extensionUsed: seed.extensionUsed,
+      maxExtensionHours: seed.maxExtensionHours ?? maxExtensionHours,
       locked: locked,
       lastSession: lastSession,
       sessionId: seed.sessionId ?? sessionId,

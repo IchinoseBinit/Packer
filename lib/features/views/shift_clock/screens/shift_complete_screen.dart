@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
@@ -36,7 +37,10 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   late final ShiftClockProvider _clock;
   final _reasonController = TextEditingController();
   ModalRoute<dynamic>? _route;
-  late double _hours;
+  late int _minutes;
+  final _hoursField = TextEditingController();
+  final _minutesField = TextEditingController();
+  String? _spanProblem;
   bool _canPop = false;
   bool _closeRequested = false;
   bool _checkingOut = false;
@@ -48,8 +52,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     _clock = context.read<ShiftClockProvider>();
     _clock.attachScreen(_requestClose);
     shiftClockRouteObserver.top.addListener(_onTopRouteChanged);
-    final roster = _clock.state?.roster;
-    _hours = defaultExtensionHours(roster);
+    _minutes = defaultExtensionMinutes(_clock.state);
+    _writeSpanFields();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_clock.wantsScreen && !_clock.showsApproval) _requestClose();
@@ -69,6 +73,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     _clock.detachScreen(_requestClose);
     shiftClockRouteObserver.top.removeListener(_onTopRouteChanged);
     _reasonController.dispose();
+    _hoursField.dispose();
+    _minutesField.dispose();
     super.dispose();
   }
 
@@ -106,10 +112,33 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     });
   }
 
+  /// Put [_minutes] back into the two fields, so what is typed and what will
+  /// be sent can never drift apart.
+  void _writeSpanFields() {
+    _hoursField.text = (_minutes ~/ 60).toString();
+    _minutesField.text = (_minutes % 60).toString();
+  }
+
+  /// Read the two fields back into whole minutes. Empty reads as zero, so a
+  /// half-filled form is simply a short one rather than an error.
+  void _readSpanFields() {
+    final hours = int.tryParse(_hoursField.text.trim()) ?? 0;
+    final minutes = int.tryParse(_minutesField.text.trim()) ?? 0;
+    setState(() {
+      _minutes = (hours * 60) + minutes;
+      _spanProblem = extensionSpanProblem(_minutes, _clock.state);
+    });
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+    final problem = extensionSpanProblem(_minutes, _clock.state);
+    if (problem != null) {
+      setState(() => _spanProblem = problem);
+      return;
+    }
     final sent = await _clock.requestExtension(
-      hours: _hours,
+      minutes: _minutes,
       reason: _reasonController.text.trim(),
     );
     if (sent && mounted) _reasonController.clear();
@@ -373,6 +402,13 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           text: ended,
           color: AppColors.homeScreenDimTextColor,
         ),
+      if (session.extensionUsed)
+        _ShiftNotice(
+          icon: Icons.hourglass_disabled,
+          text: 'You have already had an extension on this shift.',
+          detail: 'Check out, or ask support to check you out.',
+          color: AppColors.primaryColor,
+        ),
       if (session.canRequest) _requestForm(clock, session, now),
     ];
   }
@@ -441,7 +477,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
 
   Widget _requestForm(
       ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
-    final until = estimateRequestedUntil(session, _hours, now);
+    final until = estimateRequestedUntil(session, _minutes, now);
     // The roster decides the pay; this only says which it is.
     final payLine = extraHoursPayLine(session.extraHoursPay);
     final busy = clock.isSubmitting;
@@ -462,17 +498,35 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           Text('How much more time?',
               style: _textStyle(13, FontWeight.w500, Colors.black87)),
           SizedBox(height: 8.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final hours in shiftExtensionHourChoices)
-                _choice(
-                  label: formatShiftHours(hours),
-                  selected: _hours == hours,
-                  onSelected: busy ? null : () => setState(() => _hours = hours),
+              Expanded(
+                child: _spanField(
+                  controller: _hoursField,
+                  suffix: 'hours',
+                  enabled: !busy,
                 ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _spanField(
+                  controller: _minutesField,
+                  suffix: 'minutes',
+                  enabled: !busy,
+                ),
+              ),
             ],
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            _spanProblem ??
+                'At most ${formatShiftMinutes(maxExtensionMinutes(session))} at a time.',
+            style: _textStyle(
+              12,
+              FontWeight.w400,
+              _spanProblem == null ? Colors.black54 : Colors.red.shade700,
+            ),
           ),
           if (until != null) ...[
             SizedBox(height: 8.h),
@@ -523,26 +577,30 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     );
   }
 
-  Widget _choice({
-    required String label,
-    required bool selected,
-    required VoidCallback? onSelected,
+  /// One of the two number fields the span is typed into.
+  Widget _spanField({
+    required TextEditingController controller,
+    required String suffix,
+    required bool enabled,
   }) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: false,
-      onSelected: onSelected == null ? null : (_) => onSelected(),
-      selectedColor: AppColors.primaryColor,
-      backgroundColor: Colors.white,
-      labelStyle: _textStyle(
-          13, FontWeight.w500, selected ? Colors.white : Colors.black87),
-      side: BorderSide(
-        color: selected ? AppColors.primaryColor : AppColors.borderColor,
+    return TextField(
+      controller: controller,
+      enabled: enabled,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      onChanged: (_) => _readSpanFields(),
+      style: _textStyle(15, FontWeight.w500, Colors.black),
+      decoration: InputDecoration(
+        suffixText: suffix,
+        filled: true,
+        fillColor: Colors.white,
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
+
 }
 
 TextStyle _textStyle(double size, FontWeight weight, Color color) => TextStyle(

@@ -21,8 +21,19 @@ class ShiftPushType {
   static const all = {limitReached, blocked, extensionDecided, autoCheckout};
 }
 
-/// Hour choices on the extension request form.
-const shiftExtensionHourChoices = <double>[0.5, 1, 2, 3, 4];
+/// What the form falls back to when the server named no cap - an older
+/// backend, or a response with no session on it. The server is the one that
+/// decides; this only keeps the picker from being unbounded meanwhile.
+const shiftFallbackMaxExtensionHours = 12.0;
+
+/// The least anyone can ask for. Below this the form has nothing to send.
+const shiftMinExtensionMinutes = 5;
+
+/// Minutes the form starts on.
+const shiftDefaultExtensionMinutes = 60;
+
+/// How far the minutes field steps.
+const shiftExtensionMinuteStep = 5;
 
 /// A check-out older than this is not announced any more.
 const checkoutNoticeWindow = Duration(hours: 12);
@@ -156,8 +167,10 @@ String formatShiftClockOn(ShiftTime time, ShiftTime? reference) {
 DateTime _dateOnly(DateTime wall) => DateTime.utc(wall.year, wall.month, wall.day);
 
 /// "30 min", "1 h", "1 h 30 min".
-String formatShiftHours(double hours) {
-  final minutes = (hours * 60).round();
+String formatShiftHours(double hours) => formatShiftMinutes((hours * 60).round());
+
+/// The same, from the whole minutes the form actually works in.
+String formatShiftMinutes(int minutes) {
   if (minutes < 60) return '$minutes min';
   final whole = minutes ~/ 60;
   final rest = minutes % 60;
@@ -513,21 +526,46 @@ String? extraHoursPayLine(String? pay) => ShiftPay.isValid(pay)
     ? 'Extra hours will be paid at ${payLabel(pay!)}.'
     : null;
 
-double defaultExtensionHours(ShiftRoster? roster) {
-  final max = roster?.otMaxHours;
-  if (roster != null &&
-      roster.otAllowed &&
-      max != null &&
-      shiftExtensionHourChoices.contains(max)) {
-    return max;
+/// The most this person may ask for, in minutes, as the server last said.
+///
+/// The server refuses anything past it (services.max_extension_hours), so the
+/// form caps itself here rather than letting them fill in a number that can
+/// only come back as an error.
+int maxExtensionMinutes(ShiftSessionState? state) {
+  final hours = state?.maxExtensionHours ?? shiftFallbackMaxExtensionHours;
+  final minutes = (hours * 60).round();
+  return minutes < shiftMinExtensionMinutes ? shiftMinExtensionMinutes : minutes;
+}
+
+/// Minutes the form opens on: what the roster planned for them where that
+/// fits inside the cap, otherwise an hour.
+int defaultExtensionMinutes(ShiftSessionState? state) {
+  final cap = maxExtensionMinutes(state);
+  final roster = state?.roster;
+  final planned = roster?.otMaxHours;
+  if (roster != null && roster.otAllowed && planned != null && planned > 0) {
+    final minutes = (planned * 60).round();
+    if (minutes >= shiftMinExtensionMinutes && minutes <= cap) return minutes;
   }
-  return 1;
+  return shiftDefaultExtensionMinutes > cap ? cap : shiftDefaultExtensionMinutes;
+}
+
+/// Why this span cannot be sent, or null when it can.
+String? extensionSpanProblem(int minutes, ShiftSessionState? state) {
+  if (minutes < shiftMinExtensionMinutes) {
+    return 'Ask for at least ${formatShiftMinutes(shiftMinExtensionMinutes)}.';
+  }
+  final cap = maxExtensionMinutes(state);
+  if (minutes > cap) {
+    return 'You can ask for at most ${formatShiftMinutes(cap)} at a time.';
+  }
+  return null;
 }
 
 /// Roughly when a request for [hours] would end: extra hours count from
 /// extension_base, or from now once that has passed.
 ShiftTime? estimateRequestedUntil(
-    ShiftSessionState state, double hours, DateTime now) {
+    ShiftSessionState state, int minutes, DateTime now) {
   final base = state.extensionBase;
   if (base == null) return null;
   var start = base;
@@ -539,7 +577,7 @@ ShiftTime? estimateRequestedUntil(
       start = ShiftTime(serverNow.instant, base.offset);
     }
   }
-  return start.add(Duration(seconds: (hours * 3600).round()));
+  return start.add(Duration(minutes: minutes));
 }
 
 // ---------------------------------------------------------------------------

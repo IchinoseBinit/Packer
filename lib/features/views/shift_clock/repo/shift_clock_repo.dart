@@ -45,7 +45,7 @@ class ShiftClockRepo {
   // No pay is sent: the server works the extra hours' pay out from the roster
   // placement when the request is made (see extra_hours_pay on the session).
   static Future<ShiftSessionState> requestExtension({
-    required double hours,
+    required int minutes,
     String reason = '',
   }) async {
     try {
@@ -53,7 +53,10 @@ class ShiftClockRepo {
         requestType: RequestType.postWithToken,
         url: AppUrls.attendanceRequestUrl,
         body: {
-          "hours": hours,
+          // The server adds the two up, and builds the span from the minutes
+          // so that a request like 1 h 20 m lands on the exact moment.
+          "hours": minutes ~/ 60,
+          "minutes": minutes % 60,
           "reason": reason,
         },
       );
