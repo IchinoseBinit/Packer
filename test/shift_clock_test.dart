@@ -69,6 +69,11 @@ Map<String, dynamic> openSession([Map<String, dynamic> changes = const {}]) => {
       // Where the work really stops, grace and all: the same as the hard limit
       // for a running shift, a grace past it for an approved extension.
       'stops_at': '2026-09-15T19:00:00+05:45',
+      // The whole allowance is the shift's own regular hours, and none of it
+      // has been spent on this fixture.
+      'max_extension_hours': 12.0,
+      'extension_left_hours': 12.0,
+      'extension_used_hours': 0.0,
       'seconds_to_regular_limit': -600,
       'seconds_to_hard_limit': 3000,
       'shift_complete': true,
@@ -136,6 +141,9 @@ Map<String, dynamic> shiftBlock([Map<String, dynamic> changes = const {}]) => {
       'regular_limit_at': '2026-09-15T18:00:00+05:45',
       'hard_limit_at': '2026-09-15T19:00:00+05:45',
       'stops_at': '2026-09-15T19:00:00+05:45',
+      'max_extension_hours': 12.0,
+      'extension_left_hours': 12.0,
+      'extension_used_hours': 0.0,
       'server_time': '2026-09-15T16:00:00+05:45',
       'shift_complete': false,
       'show_dialog': false,
@@ -726,7 +734,7 @@ void main() {
       // A placement asking for more than the role's cap does not win.
       expect(
         defaultExtensionMinutes(parse(openSession({
-          'max_extension_hours': 1.0,
+          'extension_left_hours': 1.0,
           'roster': {
             'shift': 'Day',
             'ot_allowed': true,
@@ -738,23 +746,48 @@ void main() {
       );
     });
 
-    test('the form caps itself where the server would refuse', () {
-      final rider = parse(openSession({'max_extension_hours': 8.0}));
+    test('the form asks against what is LEFT, not the whole allowance', () {
+      final rider = parse(openSession({
+        'max_extension_hours': 8.0,
+        'extension_left_hours': 8.0,
+        'extension_used_hours': 0.0,
+      }));
       expect(maxExtensionMinutes(rider), 480);
       expect(extensionSpanProblem(480, rider), isNull);
       expect(extensionSpanProblem(481, rider),
-          'You can ask for at most 8 h at a time.');
+          'You can ask for at most 8 h on this shift.');
       expect(extensionSpanProblem(0, rider), 'Ask for at least 5 min.');
-      expect(extensionSpanProblem(90, rider), isNull);
-      // An older backend naming no cap falls back rather than going unbounded.
-      final old = parse(openSession()..remove('max_extension_hours'));
+      expect(extensionAllowanceLine(rider), 'At most 8 h on this shift.');
+
+      // Four of the twelve are gone: the form offers the other eight, and
+      // says so rather than repeating the whole allowance.
+      final part = parse(openSession({
+        'max_extension_hours': 12.0,
+        'extension_left_hours': 8.0,
+        'extension_used_hours': 4.0,
+      }));
+      expect(maxExtensionMinutes(part), 480);
+      expect(extensionSpanProblem(481, part),
+          'You have already had 4 h extra. You can ask for 8 h more.');
+      expect(extensionAllowanceLine(part),
+          'You have had 4 h already. 8 h left on this shift.');
+
+      // An older backend naming nothing falls back rather than going unbounded.
+      final old = parse(openSession()
+        ..remove('max_extension_hours')
+        ..remove('extension_left_hours'));
       expect(maxExtensionMinutes(old), 720);
     });
 
-    test('the extension being spent is read off the server', () {
-      expect(parse(openSession()).extensionUsed, isFalse);
-      final used = parse(openSession({'extension_used': true}));
-      expect(used.extensionUsed, isTrue);
+    test('nothing left closes the form', () {
+      expect(extensionSpent(parse(openSession())), isFalse);
+      final spent = parse(openSession({
+        'extension_left_hours': 0.0,
+        'extension_used_hours': 12.0,
+        'can_request': false,
+      }));
+      expect(extensionSpent(spent), isTrue);
+      expect(maxExtensionMinutes(spent), 0);
     });
 
     test('the pay is the server\'s word, never a choice on the form', () {
@@ -2088,16 +2121,16 @@ void main() {
       await tester.enterText(find.widgetWithText(TextField, 'hours'), '1');
       await tester.enterText(find.widgetWithText(TextField, 'minutes'), '20');
       await tester.pump();
-      expect(find.text('At most 12 h at a time.'), findsOneWidget,
+      expect(find.text('At most 12 h on this shift.'), findsOneWidget,
           reason: 'inside the cap, so the form says only where the cap is');
 
       // Past the cap the form says so instead, and refuses to send.
       await tester.enterText(find.widgetWithText(TextField, 'hours'), '13');
       await tester.pump();
-      expect(find.text('You can ask for at most 12 h at a time.'), findsOneWidget);
+      expect(find.text('You can ask for at most 12 h on this shift.'), findsOneWidget);
       await tester.tap(find.text('Request extension'));
       await tester.pump();
-      expect(find.text('You can ask for at most 12 h at a time.'), findsOneWidget,
+      expect(find.text('You can ask for at most 12 h on this shift.'), findsOneWidget,
           reason: 'still on the form: nothing was sent');
 
       // Nothing at all is refused the same way.
@@ -2112,7 +2145,11 @@ void main() {
 
     testWidgets(
         'the form is gone once the extension has been used', (tester) async {
-      final session = openSession({'extension_used': true, 'can_request': false});
+      final session = openSession({
+        'extension_left_hours': 0.0,
+        'extension_used_hours': 12.0,
+        'can_request': false,
+      });
       final home = _TestHome();
       final owner = Object();
       final clock = ShiftClockProvider(loadSession: () async => parse(session));
@@ -2124,7 +2161,9 @@ void main() {
 
       expect(find.text('Ask to keep working'), findsNothing);
       expect(find.text('Request extension'), findsNothing);
-      expect(find.text('You have already had an extension on this shift.'),
+      expect(
+          find.text('You have already had 12 h extra on this shift, which is '
+              'all it allows.'),
           findsOneWidget);
       // Checking out is still theirs to do.
       expect(find.text('Check out and log out'), findsOneWidget);
@@ -2158,7 +2197,7 @@ void main() {
       // the form says where the server will stop them.
       expect(find.widgetWithText(TextField, 'hours'), findsOneWidget);
       expect(find.widgetWithText(TextField, 'minutes'), findsOneWidget);
-      expect(find.text('At most 12 h at a time.'), findsOneWidget);
+      expect(find.text('At most 12 h on this shift.'), findsOneWidget);
 
       // Off the roster, or rostered where overtime isn't allowed: the form is
       // still offered, and the server says the hours are at normal pay.

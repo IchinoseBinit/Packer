@@ -532,9 +532,28 @@ String? extraHoursPayLine(String? pay) => ShiftPay.isValid(pay)
 /// form caps itself here rather than letting them fill in a number that can
 /// only come back as an error.
 int maxExtensionMinutes(ShiftSessionState? state) {
-  final hours = state?.maxExtensionHours ?? shiftFallbackMaxExtensionHours;
+  final hours = state?.extensionLeftHours ??
+      state?.maxExtensionHours ??
+      shiftFallbackMaxExtensionHours;
   final minutes = (hours * 60).round();
-  return minutes < shiftMinExtensionMinutes ? shiftMinExtensionMinutes : minutes;
+  return minutes < 0 ? 0 : minutes;
+}
+
+/// Extra time this shift has already been granted, in minutes.
+int usedExtensionMinutes(ShiftSessionState? state) =>
+    ((state?.extensionUsedHours ?? 0) * 60).round();
+
+/// Nothing left to ask for: the form goes and the screen says why.
+bool extensionSpent(ShiftSessionState? state) =>
+    state != null && state.hasSession && maxExtensionMinutes(state) <= 0;
+
+/// What the form says under the two fields when there is still time to ask
+/// for: where the cap is, and how much of it has gone.
+String extensionAllowanceLine(ShiftSessionState? state) {
+  final left = formatShiftMinutes(maxExtensionMinutes(state));
+  final used = usedExtensionMinutes(state);
+  if (used <= 0) return 'At most $left on this shift.';
+  return 'You have had ${formatShiftMinutes(used)} already. $left left on this shift.';
 }
 
 /// Minutes the form opens on: what the roster planned for them where that
@@ -557,7 +576,12 @@ String? extensionSpanProblem(int minutes, ShiftSessionState? state) {
   }
   final cap = maxExtensionMinutes(state);
   if (minutes > cap) {
-    return 'You can ask for at most ${formatShiftMinutes(cap)} at a time.';
+    final used = usedExtensionMinutes(state);
+    if (used > 0) {
+      return 'You have already had ${formatShiftMinutes(used)} extra. '
+          'You can ask for ${formatShiftMinutes(cap)} more.';
+    }
+    return 'You can ask for at most ${formatShiftMinutes(cap)} on this shift.';
   }
   return null;
 }

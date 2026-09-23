@@ -216,14 +216,17 @@ class ShiftSessionState {
   /// front of somebody already working it.
   final bool isExtensionShift;
 
-  /// Their one extension is spent: the server will refuse another, so the
-  /// form goes away rather than taking an ask that can only be turned down.
-  final bool extensionUsed;
-
-  /// The longest extension this role may ask for, in hours. Null when the
-  /// server said nothing - an older backend, or nobody on shift - and the
-  /// form then falls back to [shiftFallbackMaxExtensionHours].
+  /// The most extra time this shift may be granted in ALL, in hours, and how
+  /// much of that is still going. Null when the server said nothing - an
+  /// older backend, or nobody on shift - and the form then falls back to
+  /// [shiftFallbackMaxExtensionHours].
+  ///
+  /// The form asks against [extensionLeftHours], never the whole allowance:
+  /// somebody granted 4 of their 12 may ask for 8 more, and asking for more
+  /// than that only comes back as an error.
   final double? maxExtensionHours;
+  final double? extensionLeftHours;
+  final double? extensionUsedHours;
   final bool locked;
   final LastShiftSession? lastSession;
 
@@ -282,8 +285,9 @@ class ShiftSessionState {
     required this.showWarning,
     required this.inExtraTime,
     required this.isExtensionShift,
-    required this.extensionUsed,
     required this.maxExtensionHours,
+    required this.extensionLeftHours,
+    required this.extensionUsedHours,
     required this.locked,
     required this.lastSession,
     required this.sessionId,
@@ -325,8 +329,15 @@ class ShiftSessionState {
       showWarning: hasSession && jsonBool(json['show_warning']),
       inExtraTime: hasSession && jsonBool(json['in_extra_time']),
       isExtensionShift: hasSession && jsonBool(json['is_extension_shift']),
-      extensionUsed: hasSession && jsonBool(json['extension_used']),
-      maxExtensionHours: jsonDouble(json['max_extension_hours']),
+      // Null with nobody on shift, as the server sends them: an allowance
+      // belongs to a session, and a stale one would make a check-out look
+      // like a change worth confirming (withSeed).
+      maxExtensionHours:
+          hasSession ? jsonDouble(json['max_extension_hours']) : null,
+      extensionLeftHours:
+          hasSession ? jsonDouble(json['extension_left_hours']) : null,
+      extensionUsedHours:
+          hasSession ? jsonDouble(json['extension_used_hours']) : null,
       locked: jsonBool(json['locked']),
       lastSession: LastShiftSession.fromJson(json['last_session']),
       sessionId: jsonInt(json['session_id']),
@@ -473,7 +484,7 @@ class ShiftSessionState {
         shiftComplete == seed.shiftComplete &&
         canTakeWork == seed.canTakeWork &&
         canRequest == seed.canRequest &&
-        extensionUsed == seed.extensionUsed;
+        extensionLeftHours == seed.extensionLeftHours;
     return ShiftSessionState(
       hasSession: seed.hasSession,
       enforced: seed.enforced,
@@ -484,8 +495,9 @@ class ShiftSessionState {
       showWarning: seed.showWarning,
       inExtraTime: seed.inExtraTime,
       isExtensionShift: seed.isExtensionShift,
-      extensionUsed: seed.extensionUsed,
       maxExtensionHours: seed.maxExtensionHours ?? maxExtensionHours,
+      extensionLeftHours: seed.extensionLeftHours ?? extensionLeftHours,
+      extensionUsedHours: seed.extensionUsedHours ?? extensionUsedHours,
       locked: locked,
       lastSession: lastSession,
       sessionId: seed.sessionId ?? sessionId,

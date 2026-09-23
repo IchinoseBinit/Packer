@@ -402,10 +402,12 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           text: ended,
           color: AppColors.homeScreenDimTextColor,
         ),
-      if (session.extensionUsed)
+      if (extensionSpent(session))
         _ShiftNotice(
           icon: Icons.hourglass_disabled,
-          text: 'You have already had an extension on this shift.',
+          text: 'You have already had '
+              '${formatShiftMinutes(usedExtensionMinutes(session))} extra on this '
+              'shift, which is all it allows.',
           detail: 'Check out, or ask support to check you out.',
           color: AppColors.primaryColor,
         ),
@@ -520,8 +522,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           ),
           SizedBox(height: 6.h),
           Text(
-            _spanProblem ??
-                'At most ${formatShiftMinutes(maxExtensionMinutes(session))} at a time.',
+            _spanProblem ?? extensionAllowanceLine(session),
             style: _textStyle(
               12,
               FontWeight.w400,
