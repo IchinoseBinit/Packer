@@ -14,6 +14,10 @@ import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 /// order". Hidden unless the packer's shift clock is enforced and a session is
 /// open.
 ///
+/// Once the shift is over the card carries an arrow and opens the shift
+/// complete screen, where they ask support for more time - work in hand or not
+/// (see [shiftStatusCardOpens]).
+///
 /// The countdown ticks locally off the phone clock corrected against the
 /// server's; nothing here asks the server anything.
 class ShiftStatusCard extends StatefulWidget {
@@ -60,8 +64,9 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
       final session = clock.visibleSession;
       final work = clock.workInHand;
       _tickWhile(shiftStatusLineTicks(session, now));
-      final title =
-          session == null ? null : shiftStatusLine(session, now: now, work: work);
+      final title = session == null
+          ? null
+          : shiftStatusLine(session, now: now, work: work);
       if (session == null || title == null) {
         return const SizedBox.shrink();
       }
@@ -78,13 +83,16 @@ class _ShiftStatusCardState extends State<ShiftStatusCard> {
           : extended
               ? Icons.more_time
               : Icons.schedule;
-      // Work in hand: nothing to open, the packer finishes it first.
+      // Once the shift is over the card leads somewhere, work in hand or not:
+      // with an order still to finish, this is the only way to the page that
+      // asks support for more time, and it opens there without offering a
+      // check-out the server would refuse.
       //
       // Whether the server has said show_dialog yet is not part of this. The
-      // line above already reads "Shift over - tap to ask for more time", and
-      // a card that says tap and does nothing is how the last one of these
-      // went wrong; isShiftOver knows the mark has gone by on its own.
-      final canOpen = over && work == ShiftWorkInHand.none;
+      // line below already says "Tap to ask for more time", and a card that
+      // says tap and does nothing is how the last one of these went wrong;
+      // isShiftOver knows the mark has gone by on its own.
+      final canOpen = shiftStatusCardOpens(session, now: now);
 
       final radius = BorderRadius.circular(12);
       final card = Padding(

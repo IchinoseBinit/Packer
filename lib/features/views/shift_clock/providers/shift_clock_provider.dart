@@ -29,15 +29,19 @@ import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 /// asking: the packer summary carries a `shift` block, the clock keeps it with
 /// the phone time it arrived, corrects the phone clock against server_time and
 /// runs its own countdown to the shift end and to the grace deadline. A local
-/// timer fires at those moments and then asks GET /attendance/session/ once to
-/// confirm. It also refreshes on start, on resume, after going online, after a
-/// shift push, after sending or cancelling a request and on pull-to-refresh,
-/// and keeps a repeating poll only while something is waiting on an answer
-/// (see shouldPollShiftClock).
+/// timer fires at those moments, puts up whatever that countdown running out
+/// calls for and then asks GET /attendance/session/ once to confirm. It also
+/// refreshes on start, on resume, after going online, after a shift push, after
+/// sending or cancelling a request and on pull-to-refresh, and keeps a
+/// repeating poll only while something is waiting on an answer (see
+/// shouldPollShiftClock).
 ///
-/// It opens the shift complete screen while the server says show_dialog - but
-/// never while the packer has work in hand: they read "Shift over · finish
+/// It opens the shift complete screen when the server says show_dialog or when
+/// its own countdown has run out (see [_onDeadline]) - but never while the
+/// packer has work in hand: they read "Shift over · finish
 /// this order" on the home screen and get the screen once the work is done.
+/// They can still go to that screen themselves from the card, to ask support
+/// for more time while they finish (see [ShiftClockProvider.visitingScreen]).
 class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   static const _noticePrefsKey = 'shift_clock_checkout_notice_';
 
@@ -107,6 +111,24 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
 
   VoidCallback? _closeScreen;
   bool _openingScreen = false;
+
+  /// The shift complete screen is up because they went to it from the home
+  /// card, not because the clock put it there: someone past the stop mark with
+  /// work still in hand, who came to ask support for more time.
+  ///
+  /// A visit is theirs to leave - Back works - and the clock leaves it alone
+  /// while the shift is still over. It stops being a visit the moment the clock
+  /// wants the screen itself (the work is done, or an approval landed), and
+  /// from then on the page behaves as it always has.
+  bool _visiting = false;
+
+  /// The session the clock has already taken to the shift complete screen on
+  /// its own while work was still in hand, so it does that once and not again
+  /// on every poll: they ask support for more time, press Back and finish the
+  /// order. Once the work is done the screen comes up for real (wantsScreen)
+  /// whatever is remembered here.
+  int? _autoVisitSession;
+  bool _autoVisitTaken = false;
 
   /// The approval this packer has already read and gone back to work from.
   ///
@@ -223,6 +245,10 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   bool get isScreenOpen => _closeScreen != null;
+
+  /// The screen up now is a visit from the home card (see [_visiting]), so it
+  /// can be left and offers no check-out while work is in hand.
+  bool get visitingScreen => _visiting;
 
   /// A look at the clock is in flight, so the button that asked says so.
   bool get isRefreshing => _inFlight != null;
@@ -354,6 +380,9 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     _transfersInHand = null;
     _transfersSessionId = null;
     _openingScreen = false;
+    _visiting = false;
+    _autoVisitSession = null;
+    _autoVisitTaken = false;
     // Called while the dashboard is being disposed; tell listeners afterwards.
     Future.microtask(() {
       if (!_disposed) notifyListeners();
@@ -417,7 +446,8 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       _clearingWork = null;
       return;
     }
-    if ((_home?.isLoading ?? false) && _workSettleRound < _maxWorkSettleRounds) {
+    if ((_home?.isLoading ?? false) &&
+        _workSettleRound < _maxWorkSettleRounds) {
       _workSettleRound++;
       _workSettleTimer = Timer(shiftWorkSettleDelay, _onWorkSettled);
       return;
@@ -445,10 +475,54 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   /// hand now stand.
   void _syncScreen() {
     if (wantsScreen || showsApproval) {
+      // A visit becomes the real thing: Back stops leaving the screen.
+      _setVisiting(false);
       _openScreen();
-    } else {
-      _closeScreen?.call();
+      return;
     }
+    // A visit is not the clock's to take down while the shift is still over:
+    // they are standing there typing a request for more time.
+    if (_visiting && _visitStands) return;
+    // Their time is up but the server is still waiting for the order or the
+    // basket in hand. The blocking screen is not theirs to get - it would shut
+    // them in with work they still have to finish - but the page IS where the
+    // countdown running out leads, so the clock takes them there once, as a
+    // visit: they can ask for more time and leave with Back.
+    //
+    // Without this the screen went up on the countdown and then popped itself
+    // the moment the answer carrying "Waiting for the basket/order in hand"
+    // landed, which is what dropped them back on the dashboard.
+    if (_shouldVisit) {
+      final session = visibleSession;
+      _autoVisitSession = session?.sessionId;
+      _autoVisitTaken = true;
+      _openScreen(visit: true);
+      return;
+    }
+    _setVisiting(false);
+    _closeScreen?.call();
+  }
+
+  /// The clock should take them to the screen as a visit: the shift is over on
+  /// a reading the app may act on, work in hand is keeping the blocking screen
+  /// away, and this session has not been taken there already.
+  bool get _shouldVisit {
+    final session = visibleSession;
+    if (session == null || session.fromSummary) return false;
+    if (!isShiftOver(session) || !hasWorkInHand) return false;
+    return !(_autoVisitTaken && _autoVisitSession == session.sessionId);
+  }
+
+  /// The visited screen still has something to be there for.
+  bool get _visitStands {
+    final session = visibleSession;
+    return session != null && isShiftOver(session);
+  }
+
+  void _setVisiting(bool visiting) {
+    if (_visiting == visiting) return;
+    _visiting = visiting;
+    if (!_disposed) notifyListeners();
   }
 
   // ---------------------------------------------------------------------------
@@ -514,7 +588,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       }
     });
     _inFlight = future;
-    notifyListeners();  // so a button that asked for this can say it is asking
+    notifyListeners(); // so a button that asked for this can say it is asking
     return future;
   }
 
@@ -533,6 +607,12 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     } catch (e) {
       if (epoch == _epoch) _lastRefreshOk = false;
       debugPrint('Shift clock refresh failed: $e');
+      // An answer that never came says nothing about the clock in hand, and
+      // our own countdown may have run out while this call was failing: look
+      // again at what belongs in front of them. Only ever to put the screen UP
+      // - a failed read leaves one already open alone (p-3), and the passing
+      // of time can only ever end the shift, never start it again.
+      if (epoch == _epoch && !isScreenOpen) _syncScreen();
     } finally {
       if (epoch == _epoch) _scheduleNext();
     }
@@ -592,9 +672,17 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     _deadlineTimer = null;
   }
 
-  /// A repeating poll while something is waiting on an answer; otherwise one
-  /// wake-up at the shift end (and at the grace deadline), which is normally
-  /// the only thing the app is waiting for.
+  /// A repeating poll while something is waiting on an answer, and, alongside
+  /// it, the one-shot wake-up at the next of this shift's own deadlines: the
+  /// regular hours, the approved end of an extension, and the stop mark the
+  /// grace runs to.
+  ///
+  /// Both, not one or the other. The poll asks the server how things stand;
+  /// the wake-up is what makes the app act the moment a countdown lands on
+  /// zero - the extra time starting, and then the screen going up when it runs
+  /// out. Left to the poll alone, someone whose time was up would sit on the
+  /// home screen for up to poll_seconds after it happened, which is precisely
+  /// the stretch of the shift where that matters most.
   void _scheduleNext() {
     _cancelTimers();
     if (!_started || !_inForeground) return;
@@ -603,10 +691,35 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       final seconds =
           current?.pollSeconds ?? ShiftSessionState.defaultPollSeconds;
       _pollTimer = Timer(Duration(seconds: seconds), refresh);
-      return;
     }
     final wait = shiftWakeUpDelay(current, DateTime.now());
-    if (wait != null) _deadlineTimer = Timer(wait, refresh);
+    if (wait != null) _deadlineTimer = Timer(wait, _onDeadline);
+  }
+
+  /// The local countdown has run out: the shift end, the grace deadline or the
+  /// stop mark the app has been counting down to has gone by on the phone's
+  /// own corrected clock.
+  ///
+  /// The screen goes up on that alone, and the confirming call follows it
+  /// rather than the other way round: a packer or driver whose time is up must
+  /// not be left on the home screen because the answer is slow, never comes, or
+  /// comes back from a server whose own minute tick is not being run. Nothing
+  /// opens early - [_syncScreen] reads the same stop mark the countdown just
+  /// finished, and the wake-up at the regular hours lands here too, where
+  /// nothing is over yet.
+  void _onDeadline() {
+    if (!_started) return;
+    // The status line is counting the same seconds down: let it land on zero,
+    // so the card moves to the extra time in the same instant the shift end
+    // goes by rather than at the next tick of its own timer.
+    notifyListeners();
+    _syncScreen();
+    refresh();
+    // refresh() re-arms this from _load's `finally`, but only once the answer
+    // is in. Arm the next mark now as well, so the grace deadline that follows
+    // the shift end - or the stop that follows an extension's own end - is
+    // still counted down on a phone whose call is slow or never comes back.
+    _scheduleNext();
   }
 
   /// True while the clock keeps asking every poll_seconds.
@@ -720,31 +833,53 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   }
 
   void detachScreen(VoidCallback close) {
-    if (_closeScreen == close) _closeScreen = null;
+    if (_closeScreen != close) return;
+    _closeScreen = null;
+    // The page they visited has gone; the next one is the clock's to open.
+    _visiting = false;
   }
 
   /// Home status card tapped. A shift only the summary has told us about is
   /// confirmed with the clock first; the screen opens when that comes back.
   /// So is a driver's work, when their transfers could not be read last time.
+  ///
+  /// Our own clock counts here as much as the server's word: the card is
+  /// tappable as soon as the shift is over by either reading, and a tap that
+  /// did nothing is exactly how the last one of these was reported.
   void openScreen() {
     if (wantsScreen) {
       _openScreen();
       return;
     }
     final session = visibleSession;
-    // Our own clock counts here as much as the server's word: the card is
-    // tappable as soon as the shift is over by either reading, and a tap that
-    // did nothing is exactly how the last one of these was reported.
-    if (session != null && isShiftOver(session) && !hasWorkInHand) refresh();
+    if (session == null || !isShiftOver(session)) return;
+    // Work in hand keeps the screen from coming up on its own, but not from
+    // being visited: this page is the only way to ask support for more time,
+    // and someone finishing an order past the stop mark is exactly who needs
+    // it. It opens as a visit - theirs to leave, and with the check-out held
+    // back until the work is done.
+    if (hasWorkInHand) {
+      _openScreen(visit: true);
+      return;
+    }
+    refresh();
   }
 
-  void _openScreen() {
+  void _openScreen({bool visit = false}) {
+    // Before the guard: an open started a moment ago as the clock's own screen
+    // may have become a visit since (work landed back in hand while the push
+    // was being made), and the screen that attaches has to know that, or it
+    // closes itself on arrival.
+    if (visit) _setVisiting(true);
     if (isScreenOpen || _openingScreen) return;
     _openingScreen = true;
     final epoch = _epoch;
     _whenNothingOnTop(() {
-      if (epoch != _epoch || isScreenOpen || !(wantsScreen || showsApproval)) {
+      if (epoch != _epoch ||
+          isScreenOpen ||
+          !(wantsScreen || showsApproval || _visiting)) {
         _openingScreen = false;
+        _setVisiting(false);
         return;
       }
       navigateWithRouter(
@@ -763,6 +898,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
   void _whenNothingOnTop(VoidCallback action, [int attempt = 0]) {
     if (!_started) {
       _openingScreen = false;
+      _setVisiting(false);
       return;
     }
     final blocked = AppConstants.navigatorKey.currentContext == null ||
@@ -774,6 +910,7 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
     }
     if (AppConstants.navigatorKey.currentContext == null) {
       _openingScreen = false;
+      _setVisiting(false);
       return;
     }
     action();
@@ -808,14 +945,14 @@ class ShiftClockProvider with ChangeNotifier, WidgetsBindingObserver {
       now: DateTime.now(),
       // Offline when this state was requested, online now: the packer checked
       // in meanwhile and this state may be older than that check-in.
-      wentOnlineMeanwhile:
-          wasOnline == false && (_home?.isOnline ?? false),
+      wentOnlineMeanwhile: wasOnline == false && (_home?.isOnline ?? false),
     );
     if (action == ServerCheckoutAction.none) return;
     await prefs.setString(key, last.endedAtRaw);
-    await _checkedOutByServer(action == ServerCheckoutAction.forgetCheckInAndTell
-        ? checkoutNoticeMessage(last.endReason)
-        : null);
+    await _checkedOutByServer(
+        action == ServerCheckoutAction.forgetCheckInAndTell
+            ? checkoutNoticeMessage(last.endReason)
+            : null);
   }
 
   Future<void> _rememberNotice(String marker) async {

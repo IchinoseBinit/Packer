@@ -385,9 +385,14 @@ String? shiftStatusLine(
   }
   if (state.status == ShiftStatus.extended) {
     final until = state.hardLimitAt;
-    return until == null
-        ? 'Extension approved'
-        : 'Extension until ${formatShiftClockOn(until, state.serverTimeAt(at))}';
+    if (until == null) return 'Extension approved';
+    final line =
+        'Extension until ${formatShiftClockOn(until, state.serverTimeAt(at))}';
+    // The extension runs out like any other stretch of the shift, and what
+    // follows it is the same: extra time, then the screen. Counting it down
+    // says so before it happens, instead of the end arriving unannounced.
+    final left = shiftCountdown(state.remainingTo(until, at));
+    return left == null ? line : '$line · $left';
   }
   final end = state.regularLimitAt;
   if (end == null) return 'On shift';
@@ -400,14 +405,33 @@ String? shiftStatusLine(
 /// so the home card only ticks while something is actually counting down.
 bool shiftStatusLineTicks(ShiftSessionState? state, DateTime now) {
   if (state == null || !isShiftClockVisible(state)) return false;
-  if (isShiftOver(state, now: now) || state.status == ShiftStatus.extended) {
-    return false;
+  if (isShiftOver(state, now: now)) return false;
+  final ShiftTime? deadline;
+  if (isInExtraTime(state, now: now)) {
+    deadline = state.stopMark;
+  } else if (state.status == ShiftStatus.extended) {
+    // The approved end, which the line now counts down to as well.
+    deadline = state.hardLimitAt;
+  } else {
+    deadline = state.regularLimitAt;
   }
-  final deadline = isInExtraTime(state, now: now)
-      ? state.stopMark
-      : state.regularLimitAt;
   return shiftCountdown(state.remainingTo(deadline, now)) != null;
 }
+
+/// The home status card leads to the shift complete screen: the shift is over,
+/// so there is more time to ask for.
+///
+/// Deliberately wider than [canShowShiftCompleteScreen]: work in hand keeps
+/// that screen from coming up on its own, but it does not keep the packer or
+/// driver from going there. Past the stop mark, asking support for more time is
+/// the only thing left to do, and the card is the only way in - so it stays
+/// tappable while they finish the order, the basket or the transfer, and the
+/// page they land on offers no check-out until that work is done (see
+/// [shiftCheckoutHeldLine]).
+bool shiftStatusCardOpens(ShiftSessionState? state, {DateTime? now}) =>
+    state != null &&
+    isShiftClockVisible(state) &&
+    isShiftOver(state, now: now);
 
 /// The smaller line under the status.
 String shiftStatusDetail(
@@ -433,10 +457,10 @@ String shiftStatusDetail(
         // A transfer holds the driver until the store at the other end scans
         // it in, not until they hand it over: say what ends the wait, or a
         // driver who has delivered keeps waiting for a screen with no idea why.
-        return 'Once the store receives it, ask for more time or check out';
+        return 'Tap to ask for more time; check out once the store has it';
       case ShiftWorkInHand.order:
       case ShiftWorkInHand.basket:
-        return 'Finish it, then ask for more time or check out';
+        return 'Tap to ask for more time; finish it to check out';
     }
   }
   if (state.status == ShiftStatus.extended) {
@@ -455,6 +479,28 @@ String shiftStatusDetail(
 // ---------------------------------------------------------------------------
 // Shift complete screen
 // ---------------------------------------------------------------------------
+
+/// Why the shift complete screen offers no check-out, while [work] is still in
+/// hand; null when nothing holds it and the button stands.
+///
+/// The server refuses the check-out of a packer or driver with work on them
+/// (attendance.services), so the page says what is holding it rather than
+/// offering a button that comes back with a refusal.
+String? shiftCheckoutHeldLine(ShiftWorkInHand work) {
+  switch (work) {
+    case ShiftWorkInHand.none:
+      return null;
+    case ShiftWorkInHand.order:
+      return 'Finish this order before you check out';
+    case ShiftWorkInHand.basket:
+      return 'Finish this basket before you check out';
+    case ShiftWorkInHand.transfer:
+      return 'The store has to receive this transfer before you check out';
+  }
+}
+
+/// The smaller line under [shiftCheckoutHeldLine]: what they came here for.
+const shiftCheckoutHeldDetail = 'Ask support for more time from here meanwhile';
 
 String rosterLine(ShiftRoster? roster) {
   if (roster == null) return "You're not on today's roster";

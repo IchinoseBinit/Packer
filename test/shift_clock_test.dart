@@ -42,6 +42,7 @@ import 'package:packer/features/views/shift_clock/providers/shift_clock_provider
 import 'package:packer/features/views/shift_clock/repo/shift_clock_repo.dart';
 import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observer.dart';
 import 'package:packer/features/views/shift_clock/utils/sign_in_refusal.dart';
 import 'package:packer/features/views/shift_clock/widgets/shift_refusal_card.dart';
 import 'package:packer/features/views/shift_clock/widgets/shift_status_card.dart';
@@ -499,7 +500,10 @@ void main() {
       expect(shiftStatusLine(over, now: received, work: ShiftWorkInHand.basket),
           'Shift over · finish this basket');
       expect(shiftStatusDetail(over, now: received, work: ShiftWorkInHand.order),
-          'Finish it, then ask for more time or check out');
+          'Tap to ask for more time; finish it to check out');
+      // The card leads to the screen either way: the shift is over, and more
+      // time is there to ask for whether or not an order is still in hand.
+      expect(shiftStatusCardOpens(over, now: received), isTrue);
       // Support already has a request: that is the news, work or not.
       expect(
         shiftStatusDetail(parse(openSession({'pending_request': request()})),
@@ -1527,7 +1531,7 @@ void main() {
       expect(
           shiftStatusDetail(over,
               now: received, work: ShiftWorkInHand.transfer),
-          'Once the store receives it, ask for more time or check out');
+          'Tap to ask for more time; check out once the store has it');
       expect(shiftStatusDetail(over, now: received),
           'Tap to ask for more time or check out');
     });
@@ -1980,10 +1984,13 @@ void main() {
       expect(shiftStatusLine(session, now: received, work: clock.workInHand),
           'Shift over · finish this order');
       expect(shiftStatusDetail(session, now: received, work: clock.workInHand),
-          'Finish it, then ask for more time or check out');
-      // Nothing to open from the home card either.
+          'Tap to ask for more time; finish it to check out');
+      // The card still leads there, to ask for more time - but as a visit, not
+      // as the blocking screen (packer-7).
+      expect(shiftStatusCardOpens(session, now: received), isTrue);
       clock.openScreen();
       expect(clock.wantsScreen, isFalse);
+      expect(clock.visitingScreen, isTrue);
 
       // The order goes out, but a basket is still being packed.
       orders.setBaskets([Basket(identifier: 'B1', productIdentifiers: const [])]);
@@ -2293,6 +2300,69 @@ void main() {
       clock.stop(owner: owner);
       await tester.pump(const Duration(seconds: 31));
     });
+
+    testWidgets(
+        'packer-8: the countdown running out opens the screen itself, with no answer from the server',
+        (tester) async {
+      // One second of shift left, and a server that says the shift is still
+      // running - what the app is left holding on a day the server's own
+      // minute tick is not being run.
+      var reachable = true;
+      final next = liveSession(
+        endsIn: const Duration(seconds: 1),
+        grace: Duration.zero,
+        changes: {'poll_seconds': 15},
+      );
+      final home = _TestHome()..isOnline = true;
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async {
+        if (!reachable) throw const SocketException('no network');
+        return parseLive(next);
+      });
+
+      final router = GoRouter(
+        initialLocation: '/',
+        navigatorKey: AppConstants.navigatorKey,
+        observers: [shiftClockRouteObserver],
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => const Scaffold(body: Text('home')),
+            routes: [
+              GoRoute(
+                path: NavigationConstants.shiftCompleteScreenRoute,
+                builder: (_, __) => const ShiftCompleteScreen(),
+              ),
+            ],
+          ),
+        ],
+      );
+      AppRouter.router = router;
+      await tester.pumpWidget(_shiftScreenApp(home, clock, router));
+      await clock.start(home, owner: owner);
+      await tester.pumpAndSettle();
+      expect(clock.wantsScreen, isFalse, reason: 'a second still to go');
+      expect(clock.isWaitingForDeadline, isTrue);
+      expect(find.text('home'), findsOneWidget);
+
+      // The second goes by on the phone, and the network goes with it.
+      reachable = false;
+      await tester
+          .runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
+
+      // The app's own wake-up. Nothing comes back from the server, and the
+      // screen goes up all the same: the packer is not left on the home screen
+      // with a countdown that has run out.
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+      expect(clock.wantsScreen, isTrue);
+      expect(clock.isScreenOpen, isTrue);
+      expect(find.text('Your shift is complete'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
   });
 
   group('ShiftClockProvider for a driver', () {
@@ -2304,6 +2374,49 @@ void main() {
 
     Map<String, dynamic> driverOver([Map<String, dynamic> changes = const {}]) =>
         openSession({'role': 'driver', 'poll_seconds': 15, ...changes});
+
+    testWidgets(
+        'packer-7: work in hand still visits the screen to ask for more time',
+        (tester) async {
+      final next = openSession({'poll_seconds': 15});
+      final home = _TestHome()
+        ..isOnline = true
+        ..latestOrder = [anOrder()];
+      final orders = _TestOrders();
+      final owner = Object();
+      final clock = ShiftClockProvider(loadSession: () async => parse(next));
+
+      await clock.start(home, owner: owner, order: orders);
+      await tester.pump();
+      expect(clock.workInHand, ShiftWorkInHand.order);
+      expect(clock.wantsScreen, isFalse, reason: 'an order is still in hand');
+
+      // The card opens it as a visit.
+      clock.openScreen();
+      expect(clock.visitingScreen, isTrue);
+      // Which the clock leaves alone while the shift is still over: a refresh
+      // saying the same thing must not take the page out from under someone
+      // typing a request into it.
+      await clock.refresh();
+      await tester.pump();
+      expect(clock.visitingScreen, isTrue);
+      expect(clock.wantsScreen, isFalse);
+      // The check-out is what waits for the work, not the request form.
+      expect(shiftCheckoutHeldLine(clock.workInHand),
+          'Finish this order before you check out');
+      expect(shiftCheckoutHeldLine(ShiftWorkInHand.none), isNull);
+
+      // The order goes out: the visit is the blocking screen from here on, and
+      // the check-out it was holding back is offered.
+      home.setOrders(const []);
+      await tester.pump(shiftWorkSettleDelay);
+      expect(clock.workInHand, ShiftWorkInHand.none);
+      expect(clock.wantsScreen, isTrue);
+      expect(clock.visitingScreen, isFalse);
+
+      clock.stop(owner: owner);
+      await tester.pump(const Duration(seconds: 31));
+    });
 
     testWidgets(
         'driver-1: counts down like a packer and asks about transfers only once the shift is over',
@@ -2386,8 +2499,10 @@ void main() {
       expect(clock.wantsScreen, isFalse, reason: 'a transfer is still in hand');
       clock.openScreen();
       expect(clock.wantsScreen, isFalse);
+      expect(clock.visitingScreen, isTrue,
+          reason: 'a visit to ask for more time, not the blocking screen');
 
-      // The home card says so, in a driver's words, and opens nothing.
+      // The home card says so, in a driver's words, and leads there.
       await tester.pumpWidget(ChangeNotifierProvider<ShiftClockProvider>.value(
         value: clock,
         child: ScreenUtilInit(
@@ -2399,9 +2514,9 @@ void main() {
       expect(find.text('Shift over · deliver this transfer'), findsOneWidget);
       expect(
           find.text(
-              'Once the store receives it, ask for more time or check out'),
+              'Tap to ask for more time; check out once the store has it'),
           findsOneWidget);
-      expect(find.byIcon(Icons.arrow_forward_ios), findsNothing);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
 
       // Received at the destination store. Nothing tells the driver's phone;
       // the clock polls while the shift is over and the next poll reads the
@@ -2412,6 +2527,8 @@ void main() {
       expect(transferLoads, 2);
       expect(clock.workInHand, ShiftWorkInHand.none);
       expect(clock.wantsScreen, isTrue);
+      expect(clock.visitingScreen, isFalse,
+          reason: 'the visit is the clock\'s own screen now');
       expect(find.text('Shift over'), findsOneWidget);
       expect(find.text('Tap to ask for more time or check out'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);

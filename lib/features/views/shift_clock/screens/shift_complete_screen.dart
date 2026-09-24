@@ -22,7 +22,15 @@ import 'package:packer/features/views/widgets/general_elevated_button.dart';
 ///
 /// Back does not leave it. It closes itself when the shift clock stops asking
 /// for it: an extension is approved, work lands in their hands, or they are
-/// checked out. A dark-store packer who still owes this shift's stock audit
+/// checked out.
+///
+/// A visit ([ShiftClockProvider.visitingScreen]) - someone past the stop mark
+/// with work still in hand, brought here by the countdown or by a tap on the
+/// home status card - is blocking just the same: Back does not leave it
+/// either. Both ways out are on the page whatever is in hand: ask support for
+/// more time, or check out and log out - with a line saying what is still
+/// open, since the server may refuse a check-out over it. Should the work
+/// finish while they stand here, the visit turns into the clock's own screen. A dark-store packer who still owes this shift's stock audit
 /// can start or continue it from here: the audit opens on top and going back
 /// from it returns here, ready to check out. A driver owes no audit and is
 /// never offered one.
@@ -56,7 +64,11 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     _writeSpanFields();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!_clock.wantsScreen && !_clock.showsApproval) _requestClose();
+      if (!_clock.wantsScreen &&
+          !_clock.showsApproval &&
+          !_clock.visitingScreen) {
+        _requestClose();
+      }
       // Current stock audit status, for the audit prompt (a packer's only).
       if (_clock.isPacker) context.read<HomeProvider>().fetchpackerSummary();
     });
@@ -171,6 +183,11 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Nobody leaves this page by hand, however they got here - the clock put
+    // them here because their time is up, and the system Back gesture, the
+    // hardware button and any back arrow all stop at it. It goes only when the
+    // clock itself says so (_requestClose sets _canPop): more time approved,
+    // work back in hand, or checked out.
     return PopScope(
       canPop: _canPop,
       child: Scaffold(
@@ -187,6 +204,10 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
             // store's books still gets an audit_status in their summary (it
             // is worked out from the store, not the role), and it is not
             // theirs to start.
+            //
+            // Not while work is in hand either: a packer who came here to ask
+            // for more time has an order to get back to, not an audit to start.
+            // final held = shiftCheckoutHeldLine(clock.workInHand);
             final audit = clock.isPacker
                 ? shiftAuditPrompt(home.packerSummary?.auditStatus)
                 : null;
@@ -202,43 +223,43 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                 child: approved
                     ? _approvalBody(clock, session, now)
                     : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ..._header(session, now),
-                    SizedBox(height: 16.h),
-                    _ShiftNotice(
-                      icon: Icons.event_note_outlined,
-                      text: rosterLine(session.roster),
-                      color: AppColors.blue500,
-                    ),
-                    _ShiftNotice(
-                      icon: Icons.logout,
-                      text: graceLine(session, now),
-                      color: AppColors.primaryColor,
-                    ),
-                    if (session.note.isNotEmpty)
-                      _ShiftNotice(
-                        icon: Icons.info_outline,
-                        text: session.note,
-                        color: Colors.orange.shade800,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ..._header(session, now),
+                          SizedBox(height: 16.h),
+                          _ShiftNotice(
+                            icon: Icons.event_note_outlined,
+                            text: rosterLine(session.roster),
+                            color: AppColors.blue500,
+                          ),
+                          _ShiftNotice(
+                            icon: Icons.logout,
+                            text: graceLine(session, now),
+                            color: AppColors.primaryColor,
+                          ),
+                          if (session.note.isNotEmpty)
+                            _ShiftNotice(
+                              icon: Icons.info_outline,
+                              text: session.note,
+                              color: Colors.orange.shade800,
+                            ),
+                          if (audit != null) _auditCard(audit),
+                          ..._requestSection(clock, session, now),
+                          SizedBox(height: 24.h),
+                          GeneralElevatedButton(
+                            title: _checkingOut
+                                ? 'Checking out...'
+                                : 'Check out and log out',
+                            isDisabled: _checkingOut || _openingAudit,
+                            bgColor: Colors.white,
+                            borderColor: AppColors.primaryColor,
+                            textStyle: _textStyle(
+                                15, FontWeight.w600, AppColors.primaryColor),
+                            onPressed: _checkOut,
+                          ),
+                          SizedBox(height: 12.h),
+                        ],
                       ),
-                    if (audit != null) _auditCard(audit),
-                    ..._requestSection(clock, session, now),
-                    SizedBox(height: 24.h),
-                    GeneralElevatedButton(
-                      title: _checkingOut
-                          ? 'Checking out...'
-                          : 'Check out and log out',
-                      isDisabled: _checkingOut || _openingAudit,
-                      bgColor: Colors.white,
-                      borderColor: AppColors.primaryColor,
-                      textStyle: _textStyle(
-                          15, FontWeight.w600, AppColors.primaryColor),
-                      onPressed: _checkOut,
-                    ),
-                    SizedBox(height: 12.h),
-                  ],
-                ),
               ),
             );
           }),
@@ -601,7 +622,6 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
       ),
     );
   }
-
 }
 
 TextStyle _textStyle(double size, FontWeight weight, Color color) => TextStyle(
