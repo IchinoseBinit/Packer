@@ -266,6 +266,12 @@ class AppUrls {
   static String get stockAuditCompleteUrl =>
       "$_packerUrl/stock-audit/complete/";
 
+  // shift clock (attendance)
+  static String get attendanceSessionUrl => "$baseUrl/attendance/session/";
+  static String get attendanceRequestUrl => "$baseUrl/attendance/request/";
+  static String attendanceCancelRequestUrl(int id) =>
+      "$baseUrl/attendance/request/$id/cancel/";
+
   // store cleanliness
   static String get storeCleanlinessUrl => "$baseUrl/staff/store-cleanliness/";
   static String get storeCleanlinessUnavailableUrl =>

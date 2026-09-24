@@ -32,6 +32,46 @@ class HiveDBService {
     await Hive.close();
   }
 
+  /// Deletes every saved basket from disk: the tags a packer scanned into a
+  /// basket for an order, or for a return, that they never finished.
+  ///
+  /// Local only. A basket reaches the server once, when it is posted, and the
+  /// record is deleted with it - so nothing dropped here is a hand-over the
+  /// server is still waiting for. Leaves the trolley, audit and transfer boxes
+  /// alone: those hold stock counted against the store, not the tags of one
+  /// packer's session.
+  static Future<void> clearSavedBaskets() async {
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final hivePath = '${appDocDir.path}/${HiveConstants.hivePath}';
+    final hiveDir = Directory(hivePath);
+    if (!await hiveDir.exists()) {
+      return;
+    }
+
+    // Both families BasketDao writes: a return box holds the same scanned tags
+    // and is restored the same way, and its name is not under the order prefix.
+    const prefixes = [HiveConstants.order, HiveConstants.orderReturn];
+
+    // A box is up to three files; name it from whichever holds the data and
+    // let Hive take the rest, closing the box if it is still open.
+    final boxes = <String>{};
+    await for (final entity in hiveDir.list()) {
+      final file = entity.uri.pathSegments.last;
+      if (!prefixes.any(file.startsWith)) {
+        continue;
+      }
+      for (final suffix in const ['.hive', '.hivec']) {
+        if (file.endsWith(suffix)) {
+          boxes.add(file.substring(0, file.length - suffix.length));
+        }
+      }
+    }
+
+    for (final box in boxes) {
+      await Hive.deleteBoxFromDisk(box);
+    }
+  }
+
   /// Closes all open boxes and deletes every Hive box from disk.
   static Future<void> wipeHiveCompletely() async {
     await Hive.deleteFromDisk();

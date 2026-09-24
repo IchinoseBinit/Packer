@@ -150,4 +150,7 @@ class NavigationConstants {
   static const String cleanlinessScreenRoute = 'cleanliness_screen';
   static const String grnExpiryScanRoute = 'grn-expiry-scan-screen';
   static const String grnExpiryPhotosRoute = 'grn-expiry-photos-screen';
+
+  // shift clock
+  static const String shiftCompleteScreenRoute = 'shift-complete-screen';
 }

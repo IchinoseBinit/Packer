@@ -8,6 +8,8 @@ import 'package:is_lock_screen2/is_lock_screen2.dart';
 import 'package:packer/constants/app_colors.dart';
 import 'package:packer/constants/secure_storage_constants.dart';
 import 'package:packer/controllers/services/secure_storage_helper.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_push.dart';
 import 'package:packer/utils/notification_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -49,6 +51,14 @@ void setupCallKeep() async {
 
 @pragma('vm:entry-point')
 void handleIncomingCall(RemoteMessage message, bool isBackground) async {
+  // Shift clock pushes are not orders: never ring them as a call. In the
+  // background the system tray already shows them; in the foreground the
+  // app refreshes the shift clock.
+  if (isShiftClockPush(message.data)) {
+    if (!isBackground) dispatchShiftClockPush(message.data);
+    return;
+  }
+
   // bool ringtone = true;
   AwesomeNotifications awesomeNotification =
       await NotificationUtils.changeNotification();

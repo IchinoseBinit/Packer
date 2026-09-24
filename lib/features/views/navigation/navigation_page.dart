@@ -12,8 +12,10 @@ import 'package:packer/features/views/driver/views/driver_home_screen.dart';
 import 'package:packer/features/views/home/home_screen.dart';
 import 'package:packer/features/views/home/product_checker_home_screen.dart';
 import 'package:packer/features/views/low_stock/views/home_warehouse_screen.dart';
+import 'package:packer/features/views/order/provider/order_provider.dart';
 import 'package:packer/features/views/driver/views/driver_profile_screen.dart';
 import 'package:packer/features/views/profile/profile_screen.dart';
+import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/stock_verification/views/store_selection_screen.dart';
 import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -57,6 +59,25 @@ class _NavigationScreenState extends State<NavigationScreen> {
     } else if (home.isMainStore() == true) {
       widgets[0] = HomeWarehouseScreen();
     }
+
+    // Shift clock (packers and drivers; does nothing for other roles). The
+    // order flow goes with it: an order or a basket in hand keeps the shift
+    // complete screen away until the packer is done with it. A driver's clock
+    // ignores it and looks at their transfers instead.
+    final shiftClock = Provider.of<ShiftClockProvider>(context, listen: false);
+    final order = Provider.of<OrderProvider>(context, listen: false);
+    _shiftClock = shiftClock;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) shiftClock.start(home, owner: this, order: order);
+    });
+  }
+
+  ShiftClockProvider? _shiftClock;
+
+  @override
+  void dispose() {
+    _shiftClock?.stop(owner: this);
+    super.dispose();
   }
 
   @override

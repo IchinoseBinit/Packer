@@ -83,6 +83,8 @@ import 'package:packer/features/views/summary/views/summary_screen.dart';
 import 'package:packer/features/views/vendor/screens/vendor_screen.dart';
 import 'package:packer/controllers/services/route_observer.dart';
 import 'package:packer/features/views/cleanliness/screens/cleanliness_screen.dart';
+import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
+import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observer.dart';
 
 class AppRouter {
   static late GoRouter router;
@@ -93,7 +95,11 @@ class AppRouter {
       onException: (context, state, exception) {
         'An exception occurred: ${state.fullPath}'.logError();
       },
-      observers: [GoRouterObserver(), appRouteObserver],
+      observers: [
+        GoRouterObserver(),
+        appRouteObserver,
+        shiftClockRouteObserver,
+      ],
       routes: <RouteBase>[
         GoRoute(
           path: NavigationConstants.initialRoute,
@@ -715,6 +721,12 @@ class AppRouter {
                 return AuditProductScreen(
                   preselectedStore: state.extra as Store?,
                 );
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.shiftCompleteScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return const ShiftCompleteScreen();
               },
             ),
           ],

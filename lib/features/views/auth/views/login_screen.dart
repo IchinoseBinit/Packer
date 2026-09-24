@@ -8,6 +8,8 @@ import 'package:packer/controllers/services/show_toast_message.dart';
 import 'package:packer/controllers/services/validation_mixin.dart';
 import 'package:packer/features/views/auth/provider/auth_provider.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
+import 'package:packer/features/views/shift_clock/utils/sign_in_refusal.dart';
+import 'package:packer/features/views/shift_clock/widgets/shift_refusal_card.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 import 'package:packer/features/views/widgets/general_elevated_button.dart';
 import 'package:packer/features/views/widgets/general_text_field.dart';
@@ -36,6 +38,9 @@ class _LoginScreenState extends State<LoginScreen> {
       String username = usernameController.text.trim();
       String password = passwordController.text.trim();
 
+      // A new attempt, maybe by someone else on this phone: the last refusal
+      // was about whoever tried before. A refusal of this one sets it again.
+      signInRefusal.value = null;
       showLoading(context);
 
       authProvider
@@ -44,9 +49,14 @@ class _LoginScreenState extends State<LoginScreen> {
         if (value is bool) {
           usernameController.clear();
           passwordController.clear();
-          Provider.of<HomeProvider>(context, listen: false)
-              .fetchpackerSummary()
-              .then((v) {
+          signInRefusal.value = null;
+          final home = Provider.of<HomeProvider>(context, listen: false);
+          // The user is read from the token once and kept. A 401 or a 403 -
+          // the clock checking the last person out - lands here with no
+          // logout to drop it, and the next person on this phone would work
+          // under the last one's name, role and store.
+          home.resetUser();
+          home.fetchpackerSummary().then((v) {
             removeLoading(context);
             if (DioClient.token.isEmpty) return;
 
@@ -54,7 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
           });
         } else {
           removeLoading(context);
-          showToast(value.toString());
+          // Refused outside their shift: ShiftRefusalCard already says so,
+          // and keeps saying it; a toast would only repeat it.
+          if (signInRefusal.value == null) showToast(value.toString());
         }
       });
     }
@@ -92,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                         textAlign: TextAlign.center,
                       ),
+                      ShiftRefusalCard(margin: EdgeInsets.only(top: 24.h)),
                       SizedBox(height: 30.h),
                       GeneralTextField(
                         hintText: "Enter your username",
