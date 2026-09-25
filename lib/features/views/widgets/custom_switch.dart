@@ -62,7 +62,7 @@ class CustomSwitchState extends State<CustomSwitch> {
                   title: const Text('Check-in Required'),
                   content:
                       const Text('You need to check in before getting login. '
-                          'Scan the warehouse QR to continue.'),
+                          'Scan the waitlist QR to continue.'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),

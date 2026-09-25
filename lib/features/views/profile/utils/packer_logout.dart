@@ -47,16 +47,17 @@ Future<void> logoutWithCheckout(BuildContext context) async {
   // stopped shift straight back, with no way out of it. An open shift is what
   // has to be checked out of, whichever side of the grace mark it is on.
   final role = Provider.of<HomeProvider>(context, listen: false).user.role;
-  final onShift =
-      Provider.of<ShiftClockProvider>(context, listen: false).state?.hasSession ??
-          false;
+  final onShift = Provider.of<ShiftClockProvider>(context, listen: false)
+          .state
+          ?.hasSession ??
+      false;
   if ((role == UserRole.packer) && (isOnline == true.toString() || onShift)) {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Checkout Required'),
         content: const Text('You need to checkout before logout. '
-            'Scan the warehouse QR to continue.'),
+            'Scan the waitlist QR to continue.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -117,7 +118,6 @@ Future<void> logoutWithCheckout(BuildContext context) async {
       .updatepackerStatus(false, context, showErrorDialog: false);
 
   final value = await AuthController().logout();
-  if (!context.mounted) return;
   removeLoading(context);
   Provider.of<HomeProvider>(context, listen: false).resetUser();
   if (value is bool) {

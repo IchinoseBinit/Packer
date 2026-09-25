@@ -53,6 +53,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   bool _closeRequested = false;
   bool _checkingOut = false;
   bool _openingAudit = false;
+  bool _coveredByPage = false;
 
   @override
   void initState() {
@@ -96,9 +97,33 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   }
 
   void _onTopRouteChanged() {
+    // A page (the stock audit) went on top: refresh once it is gone, so a
+    // finished audit lifts the audit gate. Dialogs and loaders don't count,
+    // nor the check-out scanner: logout is running then, and a refresh racing
+    // it (clock, summary, orders) knocks its loader off and leaves it stuck.
+    final top = shiftClockRouteObserver.top.value;
+    if (_checkingOut) {
+      _coveredByPage = false;
+    } else if (top != null && top != _route && top is PageRoute) {
+      _coveredByPage = true;
+    } else if (top == _route && _coveredByPage) {
+      _coveredByPage = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshAll());
+    }
     if (!_closeRequested) return;
     // Runs while the navigator is updating; act once the frame is done.
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryClose());
+  }
+
+  /// The dashboard's own pull-down refresh, plus the shift clock.
+  Future<void> _refreshAll() async {
+    if (!mounted) return;
+    final home = context.read<HomeProvider>();
+    home.initialize(context, isFirstTime: false);
+    await Future.wait([
+      _clock.refresh(),
+      if (_clock.isPacker) home.fetchpackerSummary(),
+    ]);
   }
 
   void _tryClose() {
@@ -213,10 +238,7 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                 : null;
             final approved = clock.showsApproval;
             return RefreshIndicator(
-              onRefresh: () => Future.wait([
-                clock.refresh(),
-                if (clock.isPacker) home.fetchpackerSummary(),
-              ]),
+              onRefresh: _refreshAll,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
