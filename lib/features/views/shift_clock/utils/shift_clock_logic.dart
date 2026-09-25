@@ -113,7 +113,8 @@ bool isTransferInHandRefusal(Object? error) {
 /// leave them on a screen Back does not leave, so the logout goes on, as a
 /// packer's does when there is nothing to check out. No answer at all, or a
 /// server error, stops it: they can try again.
-bool driverCheckoutRefusalStops(Object? error, {required int? transfersInHand}) {
+bool driverCheckoutRefusalStops(Object? error,
+    {required int? transfersInHand}) {
   if (!isCheckoutRefusal(error)) return true;
   if (isTransferInHandRefusal(error)) return true;
   return transfersInHand != 0;
@@ -131,8 +132,18 @@ bool isShiftClockVisible(ShiftSessionState? state) {
 // ---------------------------------------------------------------------------
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 /// "6 AM", "6:30 PM", "12 PM" in the server's own time. [withMinutes] writes
@@ -164,10 +175,12 @@ String formatShiftClockOn(ShiftTime time, ShiftTime? reference) {
   return '$clock, ${day.day} ${_months[day.month - 1]}';
 }
 
-DateTime _dateOnly(DateTime wall) => DateTime.utc(wall.year, wall.month, wall.day);
+DateTime _dateOnly(DateTime wall) =>
+    DateTime.utc(wall.year, wall.month, wall.day);
 
 /// "30 min", "1 h", "1 h 30 min".
-String formatShiftHours(double hours) => formatShiftMinutes((hours * 60).round());
+String formatShiftHours(double hours) =>
+    formatShiftMinutes((hours * 60).round());
 
 /// The same, from the whole minutes the form actually works in.
 String formatShiftMinutes(int minutes) {
@@ -429,9 +442,7 @@ bool shiftStatusLineTicks(ShiftSessionState? state, DateTime now) {
 /// page they land on offers no check-out until that work is done (see
 /// [shiftCheckoutHeldLine]).
 bool shiftStatusCardOpens(ShiftSessionState? state, {DateTime? now}) =>
-    state != null &&
-    isShiftClockVisible(state) &&
-    isShiftOver(state, now: now);
+    state != null && isShiftClockVisible(state) && isShiftOver(state, now: now);
 
 /// The smaller line under the status.
 String shiftStatusDetail(
@@ -505,9 +516,11 @@ const shiftCheckoutHeldDetail = 'Ask support for more time from here meanwhile';
 String rosterLine(ShiftRoster? roster) {
   if (roster == null) return "You're not on today's roster";
   if (!roster.otAllowed) return 'No overtime planned on your roster';
-  final pay = roster.otPayType.isEmpty ? '' : ' at ${payLabel(roster.otPayType)}';
+  final pay =
+      roster.otPayType.isEmpty ? '' : ' at ${payLabel(roster.otPayType)}';
   final max = roster.otMaxHours;
-  final upTo = max == null || max <= 0 ? '' : ', up to ${formatShiftHours(max)}';
+  final upTo =
+      max == null || max <= 0 ? '' : ', up to ${formatShiftHours(max)}';
   return 'Your roster allows overtime$pay$upTo';
 }
 
@@ -612,7 +625,9 @@ int defaultExtensionMinutes(ShiftSessionState? state) {
     final minutes = (planned * 60).round();
     if (minutes >= shiftMinExtensionMinutes && minutes <= cap) return minutes;
   }
-  return shiftDefaultExtensionMinutes > cap ? cap : shiftDefaultExtensionMinutes;
+  return shiftDefaultExtensionMinutes > cap
+      ? cap
+      : shiftDefaultExtensionMinutes;
 }
 
 /// Why this span cannot be sent, or null when it can.

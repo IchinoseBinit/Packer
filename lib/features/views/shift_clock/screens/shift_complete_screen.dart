@@ -244,19 +244,27 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
                               color: Colors.orange.shade800,
                             ),
                           if (audit != null) _auditCard(audit),
-                          ..._requestSection(clock, session, now),
+                          ..._requestSection(clock, session, now,
+                              auditOwed: audit != null),
                           SizedBox(height: 24.h),
-                          GeneralElevatedButton(
-                            title: _checkingOut
-                                ? 'Checking out...'
-                                : 'Check out and log out',
-                            isDisabled: _checkingOut || _openingAudit,
-                            bgColor: Colors.white,
-                            borderColor: AppColors.primaryColor,
-                            textStyle: _textStyle(
-                                15, FontWeight.w600, AppColors.primaryColor),
-                            onPressed: _checkOut,
-                          ),
+                          // The audit comes first: the backend refuses the
+                          // check out while it is owed anyway. One gate stands
+                          // in for both this and the Request extension button.
+                          if (audit != null)
+                            _auditGate('Complete the stock audit to request '
+                                'an extension or check out and log out.')
+                          else
+                            GeneralElevatedButton(
+                              title: _checkingOut
+                                  ? 'Checking out...'
+                                  : 'Check out and log out',
+                              isDisabled: _checkingOut || _openingAudit,
+                              bgColor: Colors.white,
+                              borderColor: AppColors.primaryColor,
+                              textStyle: _textStyle(
+                                  15, FontWeight.w600, AppColors.primaryColor),
+                              onPressed: _checkOut,
+                            ),
                           SizedBox(height: 12.h),
                         ],
                       ),
@@ -390,6 +398,43 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
     );
   }
 
+  /// Stands in for a button the owed stock audit holds back; a tap opens the
+  /// audit, and coming back from it finished brings the button back.
+  Widget _auditGate(String text) {
+    final color = Colors.orange.shade800;
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _openingAudit || _checkingOut ? null : _openAudit,
+        child: Padding(
+          padding: EdgeInsets.all(14.w),
+          child: Row(
+            children: [
+              Icon(Icons.lock_outline, color: color, size: 22.w),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  text,
+                  style: _textStyle(14, FontWeight.w500, Colors.black87),
+                ),
+              ),
+              _openingAudit
+                  ? SizedBox(
+                      width: 18.w,
+                      height: 18.w,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: color),
+                    )
+                  : Icon(Icons.chevron_right, color: color),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _timeRow(String label, String value) {
     return Row(
       children: [
@@ -403,7 +448,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   }
 
   List<Widget> _requestSection(
-      ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
+      ShiftClockProvider clock, ShiftSessionState session, DateTime now,
+      {required bool auditOwed}) {
     final pending = session.pendingRequest;
     if (pending != null) return [_pendingCard(clock, session, pending, now)];
 
@@ -432,7 +478,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
           detail: 'Check out, or ask support to check you out.',
           color: AppColors.primaryColor,
         ),
-      if (session.canRequest) _requestForm(clock, session, now),
+      if (session.canRequest)
+        _requestForm(clock, session, now, auditOwed: auditOwed),
     ];
   }
 
@@ -499,7 +546,8 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
   }
 
   Widget _requestForm(
-      ShiftClockProvider clock, ShiftSessionState session, DateTime now) {
+      ShiftClockProvider clock, ShiftSessionState session, DateTime now,
+      {required bool auditOwed}) {
     final until = estimateRequestedUntil(session, _minutes, now);
     // The roster decides the pay; this only says which it is.
     final payLine = extraHoursPayLine(session.extraHoursPay);
@@ -588,12 +636,15 @@ class _ShiftCompleteScreenState extends State<ShiftCompleteScreen> {
             ),
           ],
           SizedBox(height: 12.h),
-          GeneralElevatedButton(
-            title: busy ? 'Sending...' : 'Request extension',
-            isDisabled: busy,
-            textStyle: _textStyle(15, FontWeight.w600, Colors.white),
-            onPressed: _submit,
-          ),
+          // No asking for more time while this shift's stock audit is owed:
+          // the one audit gate under this form says so and opens the audit.
+          if (!auditOwed)
+            GeneralElevatedButton(
+              title: busy ? 'Sending...' : 'Request extension',
+              isDisabled: busy,
+              textStyle: _textStyle(15, FontWeight.w600, Colors.white),
+              onPressed: _submit,
+            ),
         ],
       ),
     );
