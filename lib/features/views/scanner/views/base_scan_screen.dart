@@ -161,7 +161,7 @@ class _BaseScanScreenState extends State<BaseScanScreen> {
               fit: BoxFit.cover,
               scanWindow: scanWindow,
               controller: controller,
-              errorBuilder: (context, error, child) =>
+              errorBuilder: (context, error) =>
                   ScannerErrorWidget(error: error),
               onDetect: (barcodes) async {
                 final code = barcodes.barcodes.first.rawValue ?? '';

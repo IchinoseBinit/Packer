@@ -66,16 +66,6 @@ PODS:
   - GoogleMaps (9.4.0):
     - GoogleMaps/Maps (= 9.4.0)
   - GoogleMaps/Maps (9.4.0)
-  - GoogleMLKit/BarcodeScanning (7.0.0):
-    - GoogleMLKit/MLKitCore
-    - MLKitBarcodeScanning (~> 6.0.0)
-  - GoogleMLKit/MLKitCore (7.0.0):
-    - MLKitCommon (~> 12.0.0)
-  - GoogleToolboxForMac/Defines (4.2.1)
-  - GoogleToolboxForMac/Logger (4.2.1):
-    - GoogleToolboxForMac/Defines (= 4.2.1)
-  - "GoogleToolboxForMac/NSData+zlib (4.2.1)":
-    - GoogleToolboxForMac/Defines (= 4.2.1)
   - GoogleUtilities/AppDelegateSwizzler (8.1.3):
     - GoogleUtilities/Environment
     - GoogleUtilities/Logger
@@ -100,7 +90,6 @@ PODS:
   - GoogleUtilities/UserDefaults (8.1.3):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
-  - GTMSessionFetcher/Core (3.5.0)
   - haptic_feedback (0.5.1):
     - Flutter
   - image_picker_ios (0.0.1):
@@ -123,26 +112,9 @@ PODS:
   - Mantle (2.2.0):
     - Mantle/extobjc (= 2.2.0)
   - Mantle/extobjc (2.2.0)
-  - MLImage (1.0.0-beta6)
-  - MLKitBarcodeScanning (6.0.0):
-    - MLKitCommon (~> 12.0)
-    - MLKitVision (~> 8.0)
-  - MLKitCommon (12.0.0):
-    - GoogleDataTransport (~> 10.0)
-    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
-    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
-    - GoogleUtilities/Logger (~> 8.0)
-    - GoogleUtilities/UserDefaults (~> 8.0)
-    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
-  - MLKitVision (8.0.0):
-    - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
-    - "GoogleToolboxForMac/NSData+zlib (< 5.0, >= 4.2.1)"
-    - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
-    - MLImage (= 1.0.0-beta6)
-    - MLKitCommon (~> 12.0)
-  - mobile_scanner (6.0.2):
+  - mobile_scanner (7.0.0):
     - Flutter
-    - GoogleMLKit/BarcodeScanning (~> 7.0.0)
+    - FlutterMacOS
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -185,7 +157,7 @@ DEPENDENCIES:
   - haptic_feedback (from `.symlinks/plugins/haptic_feedback/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - is_lock_screen2 (from `.symlinks/plugins/is_lock_screen2/ios`)
-  - mobile_scanner (from `.symlinks/plugins/mobile_scanner/ios`)
+  - mobile_scanner (from `.symlinks/plugins/mobile_scanner/darwin`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -203,17 +175,10 @@ SPEC REPOS:
     - Google-Maps-iOS-Utils
     - GoogleDataTransport
     - GoogleMaps
-    - GoogleMLKit
-    - GoogleToolboxForMac
     - GoogleUtilities
-    - GTMSessionFetcher
     - IosAwnCore
     - libwebp
     - Mantle
-    - MLImage
-    - MLKitBarcodeScanning
-    - MLKitCommon
-    - MLKitVision
     - nanopb
     - PromisesObjC
     - SDWebImage
@@ -251,7 +216,7 @@ EXTERNAL SOURCES:
   is_lock_screen2:
     :path: ".symlinks/plugins/is_lock_screen2/ios"
   mobile_scanner:
-    :path: ".symlinks/plugins/mobile_scanner/ios"
+    :path: ".symlinks/plugins/mobile_scanner/darwin"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
@@ -285,21 +250,14 @@ SPEC CHECKSUMS:
   google_maps_flutter_ios: 0291eb2aa252298a769b04d075e4a9d747ff7264
   GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
   GoogleMaps: 0608099d4870cac8754bdba9b6953db543432438
-  GoogleMLKit: eff9e23ec1d90ea4157a1ee2e32a4f610c5b3318
-  GoogleToolboxForMac: d1a2cbf009c453f4d6ded37c105e2f67a32206d8
   GoogleUtilities: 4e0c2ad9fa0d0d18b5c4df8bf57b461cba35b0bb
-  GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   haptic_feedback: fd1d8509833f58f164fc12122c0357fa9b2750e0
   image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
   IosAwnCore: 653786a911089012092ce831f2945cd339855a89
   is_lock_screen2: d978a082b33361499a4c8db9897d2f23008ffec0
   libwebp: af5937a13536ef73f3784d69cc342b98961acf33
   Mantle: c5aa8794a29a022dfbbfc9799af95f477a69b62d
-  MLImage: 0ad1c5f50edd027672d8b26b0fee78a8b4a0fc56
-  MLKitBarcodeScanning: 0a3064da0a7f49ac24ceb3cb46a5bc67496facd2
-  MLKitCommon: 07c2c33ae5640e5380beaaa6e4b9c249a205542d
-  MLKitVision: 45e79d68845a2de77e2dd4d7f07947f0ed157b0e
-  mobile_scanner: af8f71879eaba2bbcb4d86c6a462c3c0e7f23036
+  mobile_scanner: 9157936403f5a0644ca3779a38ff8404c5434a93
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
@@ -310,6 +268,6 @@ SPEC CHECKSUMS:
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
 
-PODFILE CHECKSUM: fc50b6e7cb5ab06b725e0662465b4166a2470cd6
+PODFILE CHECKSUM: a5a1a001bf4775a650d6e7d37a192f618b93864a
 
 COCOAPODS: 1.17.0

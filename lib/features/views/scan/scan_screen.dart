@@ -273,7 +273,7 @@ class _ScanScreenState extends State<ScanScreen> {
             fit: BoxFit.cover,
             scanWindow: scanWindow,
             controller: controller,
-            errorBuilder: (context, error, child) {
+            errorBuilder: (context, error) {
               return ScannerErrorWidget(error: error);
             },
             onDetect: (barcodes) {

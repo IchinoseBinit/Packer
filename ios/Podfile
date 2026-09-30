@@ -42,7 +42,9 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
-      config.build_settings.delete('VALID_ARCHS[sdk=iphonesimulator*]')
+      # Target-level value overrides is_lock_screen2's podspec xcconfig, which
+      # pins simulator to x86_64 (iOS 26+ simulators are arm64-only).
+      config.build_settings['VALID_ARCHS[sdk=iphonesimulator*]'] = 'arm64 x86_64'
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
 
       # permission_handler_apple compiles every permission out by default
