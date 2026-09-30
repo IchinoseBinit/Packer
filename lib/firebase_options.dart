@@ -56,11 +56,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCN9kIDBBlzNJiPEX6sHDuBSpEVn-zRAXk',
-    appId: '1:246901202538:ios:4cb2585e0e3fb1a6b37413',
+    appId: '1:246901202538:ios:b8c5da83de35ddf0b37413',
     messagingSenderId: '246901202538',
     projectId: 'dropit-nepal',
     storageBucket: 'dropit-nepal.firebasestorage.app',
-    iosBundleId: 'com.example.packer',
+    iosBundleId: 'com.np.fasto.packer',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

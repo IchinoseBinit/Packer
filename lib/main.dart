@@ -74,10 +74,26 @@ void main() async {
 
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
+  // Darwin settings are mandatory on iOS/macOS: initialize() throws an
+  // ArgumentError when they are absent, which would abort main() before
+  // runApp and leave the app on a blank screen.
+  const DarwinInitializationSettings initializationSettingsDarwin =
+      DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
+    iOS: initializationSettingsDarwin,
+    macOS: initializationSettingsDarwin,
   );
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  // Notification setup must never keep the app from reaching runApp.
+  try {
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  } catch (ex) {
+    dev.log('Local notification initialization failed: $ex');
+  }
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     handleIncomingCall(message, false);

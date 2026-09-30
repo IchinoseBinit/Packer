@@ -1,0 +1,106 @@
+
+# iOS release automation for the Packer app.
+#
+# Authentication uses an App Store Connect API key so no Apple ID password or
+# 2FA prompt is involved. Export these before running any lane:
+#
+#   export ASC_KEY_ID=XXXXXXXXXX          # Key ID from App Store Connect
+#   export ASC_ISSUER_ID=xxxxxxxx-....    # Issuer ID (same Keys page)
+#   export ASC_KEY_PATH=/secure/path/AuthKey_XXXXXXXXXX.p8
+#
+# Keep the .p8 outside the repository. It is a credential and cannot be
+# re-downloaded from Apple.
+
+# iOS uses com.np.fasto.packer, which differs from Android's
+# com.np.dropit.packer. The dropit identifier was auto-registered under a
+# personal Apple team and cannot be transferred, so iOS moved to a fasto
+# identifier that Fasto Nepal can own outright.
+APP_IDENTIFIER = "com.np.fasto.packer"
+TEAM_ID        = "DBJFG97478" # FASTO NEPAL PVT. LTD.
+
+default_platform(:ios)
+
+platform :ios do
+  # An App Store Connect API key is used when the ASC_* variables are present.
+  # Otherwise fastlane falls back to Apple ID login, which prompts for the
+  # password and a 2FA code. Creating an API key needs Admin or Account Holder
+  # rights, so the Apple ID path is the one to use without them.
+  before_all do
+    if ENV["ASC_KEY_ID"] && ENV["ASC_ISSUER_ID"] && ENV["ASC_KEY_PATH"]
+      app_store_connect_api_key(
+        key_id: ENV["ASC_KEY_ID"],
+        issuer_id: ENV["ASC_ISSUER_ID"],
+        key_filepath: ENV["ASC_KEY_PATH"],
+        in_house: false
+      )
+    else
+      UI.important("No ASC_* API key set - using Apple ID login (expect a 2FA prompt).")
+    end
+  end
+
+  # Verifies the API key works and reports which team it resolves to.
+  # Run this first: it makes no changes.
+  lane :whoami do
+    UI.message("Team: #{TEAM_ID}, app: #{APP_IDENTIFIER}")
+    UI.message("Distribution certificates on this account:")
+    Spaceship::ConnectAPI::Certificate.all.each do |c|
+      UI.message("  #{c.certificate_type}  #{c.display_name}  expires #{c.expiration_date}")
+    end
+  end
+
+  # Registers the App ID (with Push Notifications) and creates the
+  # App Store Connect record. Safe to re-run: existing items are skipped.
+  #
+  #   FASTLANE_USER=you@example.com fastlane register
+  #   FASTLANE_USER=you@example.com fastlane register app_name:"Other Name"
+  #
+  # app_name must be unique across the entire App Store and at most 30
+  # characters. Override the default by passing app_name: explicitly.
+  lane :register do |options|
+    app_name = options[:app_name] || "Packer: fasto's internal app"
+
+    produce(
+      username: ENV["FASTLANE_USER"] || UI.input("Apple ID: "),
+      app_identifier: APP_IDENTIFIER,
+      app_name: app_name,
+      team_id: TEAM_ID,
+      language: "English",
+      sku: "packer-ios-#{Time.now.strftime('%Y%m%d')}",
+      enable_services: {
+        push_notification: "on"
+      }
+    )
+  end
+
+  # Creates the Apple Distribution certificate and App Store provisioning
+  # profile. The account currently has development certs only.
+  lane :certs do
+    cert(
+      development: false,
+      team_id: TEAM_ID
+    )
+    sigh(
+      app_identifier: APP_IDENTIFIER,
+      team_id: TEAM_ID,
+      adhoc: false,
+      development: false
+    )
+  end
+
+  # Builds the production App Store .ipa into ./gen/fasto-packer.ipa.
+  # Mirrors the Android build_apk / build_aab lanes.
+  lane :build_release do
+    sh "../../scripts/build_ipa.sh"
+  end
+
+  # Uploads ./gen/fasto-packer.ipa to TestFlight.
+  lane :beta do
+    pilot(
+      username: ENV["FASTLANE_USER"] || UI.input("Apple ID: "),
+      app_identifier: APP_IDENTIFIER,
+      team_id: TEAM_ID,
+      ipa: File.expand_path("../../gen/fasto-packer.ipa", __dir__),
+      skip_waiting_for_build_processing: true
+    )
+  end
+end

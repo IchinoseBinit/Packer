@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '15.0'
+platform :ios, '16.6'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -40,5 +40,19 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings.delete('EXCLUDED_ARCHS[sdk=iphonesimulator*]')
+      config.build_settings.delete('VALID_ARCHS[sdk=iphonesimulator*]')
+      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'NO'
+
+      # permission_handler_apple compiles every permission out by default
+      # (PermissionHandlerEnums.h defines each PERMISSION_* macro as 0). Only the
+      # permissions this app actually requests are enabled, so unused permission
+      # APIs stay out of the binary and need no purpose strings.
+      defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || ['$(inherited)']
+      defs = [defs] unless defs.is_a?(Array)
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] =
+        (defs + ['PERMISSION_LOCATION_WHENINUSE=1']).uniq
+    end
   end
 end

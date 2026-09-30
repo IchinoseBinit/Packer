@@ -90,14 +90,13 @@ class HomeProvider with ChangeNotifier {
   // assigned orders : order that are assigned packer and comes from API
   List<OrderNotification> latestOrder = [];
 
-
   set isAvailable(val) {
     _isAvailable = val;
   }
 
   get isAvailable => _isAvailable;
-  
-  // [clearLatestOrder] : clear assigned orders 
+
+  // [clearLatestOrder] : clear assigned orders
   //
   // if call from payment then clear notifications and mark packer as not available
   clearLatestOrder({bool isFromPayment = true}) {
@@ -108,7 +107,6 @@ class HomeProvider with ChangeNotifier {
     }
     notifyListeners();
   }
-
 
   // initialize : initialize the home screen for packer
   //
@@ -128,7 +126,6 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-
   // fetchpackerSummary : fetch packer summary
   //
   // if online then set isOnline to true
@@ -144,8 +141,8 @@ class HomeProvider with ChangeNotifier {
       isOnline = packerSummary?.isOnline ?? false;
       // Shift clock: the shift end the app counts down to itself. Parsing is
       // defensive and the key is optional, so the summary stands either way.
-      final shift = ShiftSessionState.fromSummaryJson(
-          data is Map ? data['shift'] : null);
+      final shift =
+          ShiftSessionState.fromSummaryJson(data is Map ? data['shift'] : null);
       if (shift != null) summaryShift = shift;
       notifyListeners();
     } catch (ex) {
@@ -173,8 +170,6 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-
-
   // removeFromLatestOrder : remove order from assigned orders
   //
   // if order exists in assigned orders then remove it
@@ -192,7 +187,7 @@ class HomeProvider with ChangeNotifier {
         isLoading = true;
         notifyListeners();
       }
-      
+
       // step 2: fetch assigned orders
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
@@ -218,7 +213,6 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-
   // _showNotificationPopup : show notification popup
   //
   // if order is not in assigned orders then show notification popup
@@ -230,39 +224,37 @@ class HomeProvider with ChangeNotifier {
     // step 2: Check if order is in assigned orders from notifications
     if (notifications.any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
-    } 
-    
+    }
+
     // step 3: Check if order is in assigned orders from order provider
     else if (orderProvider.orders
         .any((element) => element.orderId == order.orderId)) {
       hasNotification = true;
-    } 
-    
+    }
+
     // step 4: Check if order is in order details from order provider
-    else if (orderProvider.orderDetails?.data.id.toString() ==
-        order.orderId) {
+    else if (orderProvider.orderDetails?.data.id.toString() == order.orderId) {
       hasNotification = true;
-    } 
-    
+    }
+
     // step 5: Check if order is in order picked details from order provider
-    else if (orderProvider.orderPickedDetails?.id.toString() ==
-        order.orderId) {
+    else if (orderProvider.orderPickedDetails?.id.toString() == order.orderId) {
       hasNotification = true;
-    } 
-    
+    }
+
     // step 6: Check if order is in completed order details from order provider
     else if (orderProvider.completedOrderDetails?.id.toString() ==
         order.orderId) {
       hasNotification = true;
-    } 
-    
+    }
+
     // step 7: Check if order is in unsettled orders from order provider
     else if (orderProvider.unsettledOrders?.data
             .any((element) => element.id.toString() == order.orderId) ??
         false) {
       hasNotification = true;
-    } 
-    
+    }
+
     // step 8: Check if order is in assigned orders from order provider
     else if (orderProvider.latestOrder
         .any((element) => element.orderId == order.orderId)) {

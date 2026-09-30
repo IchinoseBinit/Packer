@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCN9kIDBBlzNJiPEX6sHDuBSpEVn-zRAXk</string>
+	<key>GCM_SENDER_ID</key>
+	<string>246901202538</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.np.fasto.packer</string>
+	<key>PROJECT_ID</key>
+	<string>dropit-nepal</string>
+	<key>STORAGE_BUCKET</key>
+	<string>dropit-nepal.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:246901202538:ios:b8c5da83de35ddf0b37413</string>
+</dict>
+</plist>
