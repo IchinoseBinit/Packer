@@ -164,6 +164,11 @@ class AppUrls {
   // /basket/<str:identifier>/
   static String get basketUrl => "$baseUrl/basket/:id/";
 
+//   packer/basket/<basket_identifier>/
+
+// Yo xani esma
+// ?transfer_id= vanera id ni pathaidine banauhai ani shorebird bata deploy gardeuhai
+
   //damage product transfer
   static String get damagedProductTransfer =>
       "$baseUrl/transfer-damaged-products/";

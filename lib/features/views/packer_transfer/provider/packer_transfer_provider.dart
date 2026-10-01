@@ -883,9 +883,12 @@ class PackerTransferProvider extends ChangeNotifier {
     try {
       selectedTransferModelLoading = true;
       final url = AppUrls.basketUrl.replaceAll(':id', code);
+      final transferId = selectedTransferModel?.id;
       final response = await DioClient().request(
         requestType: RequestType.getWithToken,
         url: url,
+        queryParameters:
+            transferId != null ? {'transfer_id': transferId} : null,
       );
       if (response.statusCode == 200) {
         selectedTransferModel?.items = [];
