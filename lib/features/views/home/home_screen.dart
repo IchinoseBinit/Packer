@@ -6,6 +6,7 @@ import 'package:packer/controllers/services/secure_storage_helper.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/home/widgets/audit_prompt_card.dart';
 import 'package:packer/features/views/home/widgets/order_list_widget.dart';
+import 'package:packer/features/views/home/widgets/tasks_list_card.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/widgets/shift_status_card.dart';
 import 'package:packer/features/views/widgets/custom_switch.dart';
@@ -97,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 const OrderListWidget(),
                 const TodaysProgressWidget(),
                 const AuditPromptCard(),
+                const TasksListCard(),
                 SizedBox(height: 20.h),
                 SizedBox(height: 48.h),
                 SizedBox(height: 24.h),

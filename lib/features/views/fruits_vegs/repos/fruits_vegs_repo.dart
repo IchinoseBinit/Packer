@@ -66,4 +66,43 @@ class FruitsVegsRepo {
       rethrow;
     }
   }
+
+  static Future<PaginatedResponse<ProductModel>> getCantSayData({
+    int? storeId,
+    DateTime? date,
+    int page = 1,
+  }) async {
+    try {
+      final response = await DioClient().request(
+        requestType: RequestType.getWithToken,
+        url: AppUrls.cantSayUrl,
+        queryParameters: {
+          if (storeId != null) "store_id": storeId,
+          if (date != null) "date": DateFormat('yyyy-MM-dd').format(date),
+          "page": page,
+        },
+      );
+      return PaginatedResponse.fromJson(response.data, ProductModel.fromJson);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<void> assessCantSayUnit({
+    required String tagId,
+    required List<CanBeEatenEnum> canBeEaten,
+  }) async {
+    try {
+      await DioClient().request(
+        requestType: RequestType.postWithToken,
+        url: AppUrls.cantSayAssessUrl,
+        body: {
+          "tag": tagId,
+          "can_be_eaten": canBeEaten.map((e) => e.value).toList(),
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -15,6 +15,7 @@ class PackerSummary {
   int? storeId;
 
   AuditStatusEnum? auditStatus;
+  List<PackerTask>? tasks;
 
   PackerSummary.fromJson(Map obj) {
     onlineTime = obj['total_online_time'].toString().toStringConversion();
@@ -35,5 +36,19 @@ class PackerSummary {
             (element) => element.value == obj['audit_status'],
             orElse: () => AuditStatusEnum.completed,
           );
+
+    if (obj['tasks'] != null && obj['tasks'] is List) {
+      tasks = (obj['tasks'] as List).map((e) => PackerTask.fromJson(e)).toList();
+    }
+  }
+}
+
+class PackerTask {
+  String? type;
+  String? status;
+
+  PackerTask.fromJson(Map<String, dynamic> json) {
+    type = json['type']?.toString();
+    status = json['status']?.toString();
   }
 }

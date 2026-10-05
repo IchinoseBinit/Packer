@@ -201,7 +201,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     //
     final UserRole role = context.read<HomeProvider>().user.role;
-    if (role == UserRole.packer || role == UserRole.productChecker) {
+    if (role == UserRole.packer ||
+        role == UserRole.productChecker ||
+        role == UserRole.cashier ||
+        role == UserRole.manager) {
       otherInfoData.add({
         'icon': Icons.local_florist,
         'title': 'Fruits and Vegetables',

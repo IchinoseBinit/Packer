@@ -6,6 +6,7 @@ import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/fruits_vegs/providers/fruits_vegs_provider.dart';
 import 'package:packer/features/views/fruits_vegs/widgets/fruits_vegs_list.dart';
+import 'package:packer/features/views/fruits_vegs/widgets/cant_say_list.dart';
 import 'package:packer/features/views/fruits_vegs/widgets/store_picker_sheet.dart';
 import 'package:packer/features/views/stock_verification/model/store_model.dart';
 import 'package:provider/provider.dart';
@@ -61,12 +62,20 @@ class _FruitsVegsScreenState extends State<FruitsVegsScreen>
       return;
     }
 
-    context.read<FruitsVegsProvider>().getFruitsVegsData(
-          context,
-          checkedProducts: index == 1,
-          storeId: _selectedStore?.id,
-          date: _selectedDate,
-        );
+    if (userRole == UserRole.manager || userRole == UserRole.cashier) {
+      context.read<FruitsVegsProvider>().getCantSayData(
+            context,
+            storeId: _selectedStore?.id,
+            date: _selectedDate,
+          );
+    } else {
+      context.read<FruitsVegsProvider>().getFruitsVegsData(
+            context,
+            checkedProducts: index == 1,
+            storeId: _selectedStore?.id,
+            date: _selectedDate,
+          );
+    }
   }
 
   Future<void> _pickDate() async {
@@ -136,75 +145,83 @@ class _FruitsVegsScreenState extends State<FruitsVegsScreen>
             ),
           ],
         ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(60.h),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
-            child: Container(
-              height: 44.h,
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                dividerColor: Colors.transparent,
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorPadding: EdgeInsets.all(4.r),
-                isScrollable: false,
-                dragStartBehavior: DragStartBehavior.start,
-                indicator: BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.circular(9.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryColor.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+        bottom: (userRole == UserRole.manager || userRole == UserRole.cashier)
+            ? null
+            : PreferredSize(
+                preferredSize: Size.fromHeight(60.h),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
+                  child: Container(
+                    height: 44.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                  ],
+                    child: TabBar(
+                      controller: _tabController,
+                      dividerColor: Colors.transparent,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicatorPadding: EdgeInsets.all(4.r),
+                      isScrollable: false,
+                      dragStartBehavior: DragStartBehavior.start,
+                      indicator: BoxDecoration(
+                        color: AppColors.primaryColor,
+                        borderRadius: BorderRadius.circular(9.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                AppColors.primaryColor.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      labelColor: Theme.of(context).colorScheme.onPrimary,
+                      unselectedLabelColor:
+                          Theme.of(context).colorScheme.onSurfaceVariant,
+                      labelStyle: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      unselectedLabelStyle: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      tabs: [
+                        const Tab(text: 'All'),
+                        Tab(
+                            text: userRole == UserRole.productChecker
+                                ? 'Checked'
+                                : 'Damaged'),
+                      ],
+                    ),
+                  ),
                 ),
-                labelColor: Theme.of(context).colorScheme.onPrimary,
-                unselectedLabelColor:
-                    Theme.of(context).colorScheme.onSurfaceVariant,
-                labelStyle: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-                tabs: [
-                  Tab(text: 'All'),
-                  Tab(
-                      text: userRole == UserRole.productChecker
-                          ? 'Checked'
-                          : 'Damaged'),
-                ],
               ),
+      ),
+      body: (userRole == UserRole.manager || userRole == UserRole.cashier)
+          ? CantSayList(
+              selectedDate: _selectedDate,
+              storeId: _selectedStore?.id,
+            )
+          : TabBarView(
+              controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                FruitsVegsList(
+                  key: const ValueKey('all'),
+                  checkedProducts: false,
+                  selectedDate: _selectedDate,
+                  storeId: _selectedStore?.id,
+                ),
+                FruitsVegsList(
+                  key: const ValueKey('checked'),
+                  checkedProducts: true,
+                  selectedDate: _selectedDate,
+                  storeId: _selectedStore?.id,
+                ),
+              ],
             ),
-          ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          FruitsVegsList(
-            key: const ValueKey('all'),
-            checkedProducts: false,
-            selectedDate: _selectedDate,
-            storeId: _selectedStore?.id,
-          ),
-          FruitsVegsList(
-            key: const ValueKey('checked'),
-            checkedProducts: true,
-            selectedDate: _selectedDate,
-            storeId: _selectedStore?.id,
-          ),
-        ],
-      ),
     );
   }
 }

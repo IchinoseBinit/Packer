@@ -94,25 +94,61 @@ class Units {
   String? assessedBy;
   DateTime? assessedAt;
 
+  // new fields for cant-say
+  String? assessmentDate;
+  CanBeEatenEnum? canBeEatenToday;
+  List<DayAssessment>? days;
+
   Units.fromJson(Map<String, dynamic> json) {
     tag = json['tag']?.toString().toStringConversion();
     stockDate = json['stocked_date']?.toString().toStringConversion();
     //
     ripenessCategory = json['ripeness_category'] != null
-        ? RipenessCategoryEnum.values
-            .firstWhere((e) => e.value == json['ripeness_category'].toString())
+        ? RipenessCategoryEnum.values.firstWhere(
+            (e) => e.value == json['ripeness_category'].toString(),
+            orElse: () => RipenessCategoryEnum.values.first)
         : null;
     ripenessScore = json['ripeness_score'] != null
         ? RipenessScore.values.firstWhere(
-            (e) => e.score == json['ripeness_score'].toString().toInt())
+            (e) => e.score == json['ripeness_score'].toString().toInt(),
+            orElse: () => RipenessScore.values.first)
         : null;
-    canBeEaten = json['can_be_eaten'] != null
-        ? List<CanBeEatenEnum>.from(json['can_be_eaten'].map((e) =>
-            CanBeEatenEnum.values.firstWhere((x) => x.value == e.toString())))
+    canBeEaten = json['can_be_eaten'] != null && json['can_be_eaten'] is List
+        ? List<CanBeEatenEnum>.from((json['can_be_eaten'] as List).map((e) =>
+            CanBeEatenEnum.values.firstWhere((x) => x.value == e.toString(),
+                orElse: () => CanBeEatenEnum.values.first)))
         : null;
     assessedBy = json['assessed_by']?.toString().toStringConversion();
     assessedAt = json['assessed_at'] != null
         ? DateTime.parse(json['assessed_at'].toString()).toLocal()
+        : null;
+
+    // cant-say fields
+    assessmentDate = json['assessment_date']?.toString().toStringConversion();
+    canBeEatenToday = json['can_be_eaten_today'] != null
+        ? CanBeEatenEnum.values.firstWhere(
+            (e) => e.value == json['can_be_eaten_today'].toString(),
+            orElse: () => CanBeEatenEnum.cantSay)
+        : null;
+    if (json['days'] != null && json['days'] is List) {
+      days =
+          (json['days'] as List).map((e) => DayAssessment.fromJson(e)).toList();
+    }
+  }
+}
+
+class DayAssessment {
+  int? dayNumber;
+  String? date;
+  CanBeEatenEnum? canBeEaten;
+
+  DayAssessment.fromJson(Map<String, dynamic> json) {
+    dayNumber = json['day_number']?.toString().toInt();
+    date = json['date']?.toString().toStringConversion();
+    canBeEaten = json['can_be_eaten'] != null
+        ? CanBeEatenEnum.values.firstWhere(
+            (e) => e.value == json['can_be_eaten'].toString(),
+            orElse: () => CanBeEatenEnum.cantSay)
         : null;
   }
 }

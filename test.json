@@ -1,38 +1,40 @@
 {
-  "has_session": true,
-  "enforced": true,
-  "poll_seconds": 15,
-  "server_time": "2026-09-28T11:47:39.338408+05:45",
-  "can_take_work": false,
-  "show_dialog": true,
-  "show_warning": false,
-  "shift_complete": true,
-  "in_extra_time": false,
-  "is_extension_shift": false,
-  "max_extension_hours": 0.03,
-  "extension_left_hours": 0.02,
-  "extension_used_hours": 0.0,
-  "locked": true,
-  "extra_hours_pay": "overtime",
-  "session_id": 32,
-  "status": "active",
-  "role": "packer",
-  "started_at": "2026-09-28T11:32:54.178717+05:45",
-  "regular_hours": 0.03,
-  "regular_limit_at": "2026-09-28T11:34:00+05:45",
-  "hard_limit_at": "2026-09-28T11:37:00+05:45",
-  "seconds_to_regular_limit": -819,
-  "seconds_to_hard_limit": -639,
-  "stops_at": "2026-09-28T11:37:00+05:45",
-  "can_request": true,
-  "note": "",
-  "extension_base": "2026-09-28T11:47:39.338408+05:45",
-  "roster": {
-    "shift": "Day",
-    "ot_allowed": true,
-    "ot_pay_type": "overtime",
-    "ot_max_hours": null
-  },
-  "pending_request": null,
-  "last_decision": null
+  "count": 1,
+  "current_page": 1,
+  "total_pages": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1196,
+      "product_id": 2505,
+      "product_name": "All Out Fit Ultra Power Plus Slider Combi Repellents 45mL MRP 168",
+      "product_image": "/media/src/images/product_images/4fca2bed-ce3c-4f0b-91a1-ed42798a2cb6.png",
+      "size": "45.00",
+      "measurement": "mL",
+      "rack_name": "MAR-3-R-B-5-L",
+      "is_perishable_produce": true,
+      "units": [
+        {
+          "tag": "2505-7-126-98-17",
+          "assessment_date": "2026-10-05",
+          "assessed_by": "DH_packer2",
+          "can_be_eaten_today": "yes",
+          "days": [
+            {
+              "day_number": 2,
+              "date": "2026-10-06",
+              "can_be_eaten": "cant_say"
+            },
+            {
+              "day_number": 3,
+              "date": "2026-10-07",
+              "can_be_eaten": "cant_say"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pending_units": 1
 }

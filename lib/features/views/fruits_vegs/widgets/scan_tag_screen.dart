@@ -15,12 +15,16 @@ import 'package:packer/features/views/widgets/show_alert_dialog.dart';
 import 'package:packer/utils/qr_message.dart';
 import 'package:provider/provider.dart';
 
+import 'package:packer/features/views/fruits_vegs/widgets/cant_say_verification_widget.dart';
+
 class ScanTagScreen extends BaseScanScreen {
   final ProductModel productModel;
+  final bool isCantSay;
 
   const ScanTagScreen({
     super.key,
     required this.productModel,
+    this.isCantSay = false,
   }) : super(
           scanTitle: 'Scan Tag',
           showFlash: true,
@@ -138,10 +142,15 @@ class ScanTagScreen extends BaseScanScreen {
         // isDismissible: false,
         builder: (context) => Padding(
           padding: EdgeInsets.only(top: 32.h),
-          child: RateRipenessWidget(
-            productModel: productModel,
-            unit: unit,
-          ),
+          child: isCantSay
+              ? CantSayVerificationWidget(
+                  productModel: productModel,
+                  unit: unit,
+                )
+              : RateRipenessWidget(
+                  productModel: productModel,
+                  unit: unit,
+                ),
         ),
       );
 

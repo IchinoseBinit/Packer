@@ -10,6 +10,7 @@ import 'package:packer/features/views/auth/model/user.dart';
 import 'package:packer/features/views/auth/provider/auth_provider.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/order/widgets/ask_confirmation.dart';
+import 'package:packer/features/views/home/widgets/tasks_list_card.dart';
 import 'package:packer/features/views/shift_clock/providers/shift_clock_provider.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_logic.dart';
 import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
@@ -23,6 +24,96 @@ import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 /// without a QR, as they checked in. Completes when the logout has finished
 /// or stopped.
 Future<void> logoutWithCheckout(BuildContext context) async {
+  final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+  final tasks = homeProvider.packerSummary?.tasks;
+  
+  if (tasks != null) {
+    final incompleteTasks = tasks.where((t) => t.status != 'completed').toList();
+    if (incompleteTasks.isNotEmpty) {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.of(ctx).padding.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 48,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const Text(
+                'Incomplete Tasks',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Poppins',
+                  color: Color(0xff1A1C1E),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'You must complete all pending tasks before logging out. Tap on a task to view details.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Poppins',
+                  color: Color(0xff7A7F87),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const TasksListCard(),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffF01045),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it, go back',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+  }
+
   final isConfirmed = await AskConfirmation.show(
     context,
     title: 'Do you want to logout?',

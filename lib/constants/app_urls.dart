@@ -259,6 +259,12 @@ class AppUrls {
   static String get checkedProductsUrl =>
       "$baseUrl/packer/produce/units/quarantined/";
 
+  // cant say (manager/cashier)
+  static String get cantSayUrl => "$baseUrl/packer/produce/units/cant-say/";
+
+  static String get cantSayAssessUrl =>
+      "$baseUrl/packer/produce/units/cant-say/answer/";
+
   // stock audit
   static String get stockAuditUrl => "$_packerUrl/stock-audit/";
   static String get stockAuditStartUrl => "$_packerUrl/stock-audit/start/";

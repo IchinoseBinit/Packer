@@ -14,21 +14,31 @@ import 'package:provider/provider.dart';
 class FruitsVegsProvider with ChangeNotifier {
   AsyncState<PaginatedResponse<ProductModel>> allState = AsyncState.idle();
   AsyncState<PaginatedResponse<ProductModel>> checkedState = AsyncState.idle();
+  AsyncState<PaginatedResponse<ProductModel>> cantSayState = AsyncState.idle();
 
   final List<ProductModel> _allItems = [];
   final List<ProductModel> _checkedItems = [];
+  final List<ProductModel> _cantSayItems = [];
+
   bool _allHasNext = false;
   bool _checkedHasNext = false;
+  bool _cantSayHasNext = false;
+
   int _allNextPage = 1;
   int _checkedNextPage = 1;
+  int _cantSayNextPage = 1;
+
   bool _isLoadingMoreAll = false;
   bool _isLoadingMoreChecked = false;
+  bool _isLoadingMoreCantSay = false;
 
   // last-used params so loadMore can reuse them
   int? _allStoreId;
   DateTime? _allDate;
   int? _checkedStoreId;
   DateTime? _checkedDate;
+  int? _cantSayStoreId;
+  DateTime? _cantSayDate;
 
   AsyncState<PaginatedResponse<ProductModel>> stateFor(bool checkedProducts) =>
       checkedProducts ? checkedState : allState;
@@ -180,6 +190,88 @@ class FruitsVegsProvider with ChangeNotifier {
   clearScannedTags() {
     scannedTags.clear();
     notifyListeners();
+  }
+
+  // cant say specific
+  List<ProductModel> get cantSayItems => _cantSayItems;
+  bool get isLoadingMoreCantSay => _isLoadingMoreCantSay;
+
+  getCantSayData(
+    BuildContext context, {
+    int? storeId,
+    DateTime? date,
+  }) async {
+    try {
+      _cantSayItems.clear();
+      _cantSayNextPage = 1;
+      _cantSayHasNext = false;
+      _cantSayStoreId = storeId;
+      _cantSayDate = date;
+      cantSayState = AsyncState.loading();
+      notifyListeners();
+
+      final response = await FruitsVegsRepo.getCantSayData(
+        storeId: storeId,
+        date: date,
+        page: 1,
+      );
+
+      _cantSayItems.addAll(response.results);
+      _cantSayHasNext = response.hasNextPage;
+      _cantSayNextPage = response.page + 1;
+      cantSayState = AsyncState.success(response);
+    } catch (e) {
+      cantSayState = AsyncState.error(e.toString());
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  loadMoreCantSayData(BuildContext context) async {
+    if (_isLoadingMoreCantSay || !_cantSayHasNext) return;
+    _isLoadingMoreCantSay = true;
+    notifyListeners();
+
+    try {
+      final response = await FruitsVegsRepo.getCantSayData(
+        storeId: _cantSayStoreId,
+        date: _cantSayDate,
+        page: _cantSayNextPage,
+      );
+
+      _cantSayItems.addAll(response.results);
+      _cantSayHasNext = response.hasNextPage;
+      _cantSayNextPage = response.page + 1;
+    } catch (_) {
+    } finally {
+      _isLoadingMoreCantSay = false;
+      notifyListeners();
+    }
+  }
+
+  assessCantSayUnit({
+    required BuildContext context,
+    required String tagId,
+    required List<CanBeEatenEnum> canBeEaten,
+  }) async {
+    showLoading(context);
+    try {
+      await FruitsVegsRepo.assessCantSayUnit(
+        tagId: tagId,
+        canBeEaten: canBeEaten,
+      );
+
+      removeLoading(context);
+      scannedTags.add(tagId);
+      notifyListeners();
+
+      Navigator.pop(context); // Pop Bottom Sheet
+      Navigator.pop(context); // Pop ScanTagScreen
+      showToast("Verification submitted successfully");
+    } catch (e) {
+      removeLoading(context);
+      showToast("Failed to submit verification: ${e.toString()}");
+    }
   }
 
   //
