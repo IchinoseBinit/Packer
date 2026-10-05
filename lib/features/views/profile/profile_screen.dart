@@ -245,6 +245,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
 
+    if (!otherInfoData.any((e) => e['title'] == 'Meter Reading')) {
+      otherInfoData.add({
+        'icon': Icons.electric_meter,
+        'title': 'Meter Reading',
+        'screen': NavigationConstants.meterReadingScreenRoute,
+      });
+    }
+
     //
     otherInfoData.add({
       'icon': Icons.leave_bags_at_home,

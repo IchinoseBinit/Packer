@@ -16,6 +16,7 @@ import 'package:packer/controllers/services/router.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:packer/features/views/cleanliness/providers/cleanliness_provider.dart';
 import 'package:packer/features/views/grn_expiry/providers/grn_expiry_provider.dart';
+import 'package:packer/features/views/meter_reading/providers/meter_reading_provider.dart';
 import 'package:packer/features/views/driver/controller/driver_controller.dart';
 import 'package:packer/features/views/damage_products/controller/damage_product_controller.dart';
 import 'package:packer/features/views/expiry_product/providers/expired_product_provider.dart';
@@ -225,6 +226,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver, RouteAware {
         ChangeNotifierProvider(create: (_) => StockAuditProvider()),
         ChangeNotifierProvider(create: (_) => CleanlinessProvider()),
         ChangeNotifierProvider(create: (_) => GrnExpiryProvider()),
+        ChangeNotifierProvider(create: (_) => MeterReadingProvider()),
         ChangeNotifierProvider(create: (_) => ShiftClockProvider()),
       ],
       child: ScreenUtilInit(

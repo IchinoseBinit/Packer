@@ -83,6 +83,7 @@ import 'package:packer/features/views/summary/views/summary_screen.dart';
 import 'package:packer/features/views/vendor/screens/vendor_screen.dart';
 import 'package:packer/controllers/services/route_observer.dart';
 import 'package:packer/features/views/cleanliness/screens/cleanliness_screen.dart';
+import 'package:packer/features/views/meter_reading/screens/meter_reading_screen.dart';
 import 'package:packer/features/views/shift_clock/screens/shift_complete_screen.dart';
 import 'package:packer/features/views/shift_clock/utils/shift_clock_route_observer.dart';
 
@@ -721,6 +722,12 @@ class AppRouter {
                 return AuditProductScreen(
                   preselectedStore: state.extra as Store?,
                 );
+              },
+            ),
+            GoRoute(
+              path: NavigationConstants.meterReadingScreenRoute,
+              builder: (BuildContext context, GoRouterState state) {
+                return const MeterReadingScreen();
               },
             ),
             GoRoute(
