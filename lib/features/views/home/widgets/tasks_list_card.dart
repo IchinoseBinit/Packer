@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:packer/constants/navigation_constants.dart';
 import 'package:packer/controllers/services/navigate.dart';
+import 'package:packer/features/views/audit_product/utils/start_stock_audit.dart';
 import 'package:packer/features/views/auth/provider/home_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -136,7 +138,22 @@ class TasksListCard extends StatelessWidget {
                     children: [
                       InkWell(
                         onTap: route != null
-                            ? () => navigate(context, route: route)
+                            ? () async {
+                                if (task.status == 'completed') {
+                                  Fluttertoast.showToast(
+                                    msg: 'Task already done',
+                                  );
+                                  return;
+                                }
+
+                                // Show a toast message
+                                if (task.type == 'stock_audit' &&
+                                    task.status == 'not_created') {
+                                  return await startStockAudit(context);
+                                }
+
+                                navigate(context, route: route);
+                              }
                             : null,
                         borderRadius: BorderRadius.vertical(
                           top: i == 0 ? Radius.circular(10.r) : Radius.zero,

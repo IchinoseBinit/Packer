@@ -33,7 +33,8 @@ enum UserRole {
   audit,
   driver,
   productChecker,
-  cashier;
+  cashier,
+  staff;
 
   // from string
   static UserRole fromString(String role) {
@@ -52,6 +53,8 @@ enum UserRole {
         return UserRole.productChecker;
       case 'cashier':
         return UserRole.cashier;
+      case 'staff':
+        return UserRole.staff;
       default:
         return UserRole.packer; // default role
     }

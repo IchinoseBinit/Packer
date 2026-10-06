@@ -204,6 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (role == UserRole.packer ||
         role == UserRole.productChecker ||
         role == UserRole.cashier ||
+        role == UserRole.staff ||
         role == UserRole.manager) {
       otherInfoData.add({
         'icon': Icons.local_florist,

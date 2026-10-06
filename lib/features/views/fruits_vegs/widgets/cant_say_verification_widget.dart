@@ -32,24 +32,43 @@ class _CantSayVerificationWidgetState extends State<CantSayVerificationWidget> {
   static const Color _muted = Color(0xff7A7F87);
   static const Color _line = Color(0xffE8EAED);
 
-  List<DayAssessment> _cantSayDays = [];
+  // All days of the unit; backend expects an answer for every day.
+  List<DayAssessment> _days = [];
   late List<CanBeEatenEnum?> _canBeEaten;
+
+  bool get _hasCantSay =>
+      _days.any((d) => d.canBeEaten == CanBeEatenEnum.cantSay);
+
+  // Editable only if originally "cant say" and previous day isn't "no".
+  bool _isLocked(int index) =>
+      _days[index].canBeEaten != CanBeEatenEnum.cantSay ||
+      (index > 0 && _canBeEaten[index - 1] == CanBeEatenEnum.no);
+
+  // If a day can't be eaten, following days obviously can't either.
+  void _propagateFrom(int index) {
+    for (var j = index + 1; j < _days.length; j++) {
+      if (_days[j].canBeEaten != CanBeEatenEnum.cantSay) continue;
+      if (_canBeEaten[j - 1] == CanBeEatenEnum.no) {
+        _canBeEaten[j] = CanBeEatenEnum.no;
+      } else if (_canBeEaten[j] == CanBeEatenEnum.no) {
+        _canBeEaten[j] = null; // was forced, let user answer again
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    if (widget.unit.days != null) {
-      _cantSayDays = widget.unit.days!
-          .where((d) => d.canBeEaten == CanBeEatenEnum.cantSay)
-          .toList();
-    } else {
-      _cantSayDays = [];
-    }
-    _canBeEaten = List.generate(_cantSayDays.length, (_) => null);
+    _days = widget.unit.days ?? [];
+    _canBeEaten = _days
+        .map(
+            (d) => d.canBeEaten == CanBeEatenEnum.cantSay ? null : d.canBeEaten)
+        .toList();
+    _propagateFrom(0);
   }
 
   void _submit() async {
-    if (_cantSayDays.isNotEmpty && _canBeEaten.contains(null)) {
+    if (_canBeEaten.contains(null)) {
       showToast("Please provide verification for all required days");
       return;
     }
@@ -119,7 +138,8 @@ class _CantSayVerificationWidgetState extends State<CantSayVerificationWidget> {
           SizedBox(height: 8.h),
           _detailRow("Assessed By", widget.unit.assessedBy ?? '-'),
           SizedBox(height: 8.h),
-          _detailRow("Can Be Eaten Today", widget.unit.canBeEatenToday?.name ?? '-'),
+          _detailRow(
+              "Can Be Eaten Today", widget.unit.canBeEatenToday?.name ?? '-'),
         ],
       ),
     );
@@ -264,12 +284,13 @@ class _CantSayVerificationWidgetState extends State<CantSayVerificationWidget> {
             SizedBox(height: 20.h),
             _detailsSection(),
             SizedBox(height: 20.h),
-            if (_cantSayDays.isNotEmpty)
+            if (_hasCantSay)
               _section(
                 title: "Can it be eaten?",
                 child: Column(
-                  children: List.generate(_cantSayDays.length, (index) {
-                    final day = _cantSayDays[index];
+                  children: List.generate(_days.length, (index) {
+                    final day = _days[index];
+                    final locked = _isLocked(index);
                     return Padding(
                       padding: EdgeInsets.only(bottom: 12.h),
                       child: Row(
@@ -293,13 +314,16 @@ class _CantSayVerificationWidgetState extends State<CantSayVerificationWidget> {
                               child: ChoiceChip(
                                 label: Text(e.name),
                                 selected: isSelected,
-                                onSelected: (val) {
-                                  if (val) {
-                                    setState(() {
-                                      _canBeEaten[index] = e;
-                                    });
-                                  }
-                                },
+                                onSelected: locked
+                                    ? null
+                                    : (val) {
+                                        if (val) {
+                                          setState(() {
+                                            _canBeEaten[index] = e;
+                                            _propagateFrom(index);
+                                          });
+                                        }
+                                      },
                                 selectedColor: e.name.toLowerCase() == 'yes'
                                     ? const Color(0xffE9F7EF)
                                     : const Color(0xffFDEAED),
@@ -317,9 +341,8 @@ class _CantSayVerificationWidgetState extends State<CantSayVerificationWidget> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.r),
                                   side: BorderSide(
-                                    color: isSelected
-                                        ? Colors.transparent
-                                        : _line,
+                                    color:
+                                        isSelected ? Colors.transparent : _line,
                                   ),
                                 ),
                               ),
@@ -343,13 +366,13 @@ class _CantSayVerificationWidgetState extends State<CantSayVerificationWidget> {
         child: SafeArea(
           top: false,
           child: GeneralElevatedButton(
-            onPressed: _cantSayDays.isEmpty
+            onPressed: !_hasCantSay
                 ? () {
                     Navigator.pop(context); // Pop Bottom Sheet
                     Navigator.pop(context); // Pop ScanTagScreen
                   }
                 : _submit,
-            title: _cantSayDays.isEmpty ? 'Go Back' : 'Submit Verification',
+            title: !_hasCantSay ? 'Go Back' : 'Submit Verification',
           ),
         ),
       ),

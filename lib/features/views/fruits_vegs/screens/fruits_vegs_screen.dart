@@ -62,7 +62,9 @@ class _FruitsVegsScreenState extends State<FruitsVegsScreen>
       return;
     }
 
-    if (userRole == UserRole.manager || userRole == UserRole.cashier) {
+    if (userRole == UserRole.manager ||
+        userRole == UserRole.cashier ||
+        userRole == UserRole.staff) {
       context.read<FruitsVegsProvider>().getCantSayData(
             context,
             storeId: _selectedStore?.id,
@@ -145,7 +147,9 @@ class _FruitsVegsScreenState extends State<FruitsVegsScreen>
             ),
           ],
         ],
-        bottom: (userRole == UserRole.manager || userRole == UserRole.cashier)
+        bottom: (userRole == UserRole.manager ||
+                userRole == UserRole.cashier ||
+                userRole == UserRole.staff)
             ? null
             : PreferredSize(
                 preferredSize: Size.fromHeight(60.h),
@@ -199,7 +203,9 @@ class _FruitsVegsScreenState extends State<FruitsVegsScreen>
                 ),
               ),
       ),
-      body: (userRole == UserRole.manager || userRole == UserRole.cashier)
+      body: (userRole == UserRole.manager ||
+              userRole == UserRole.cashier ||
+              userRole == UserRole.staff)
           ? CantSayList(
               selectedDate: _selectedDate,
               storeId: _selectedStore?.id,

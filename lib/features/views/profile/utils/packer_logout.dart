@@ -26,9 +26,14 @@ import 'package:packer/features/views/widgets/custom_loading_indicator.dart';
 Future<void> logoutWithCheckout(BuildContext context) async {
   final homeProvider = Provider.of<HomeProvider>(context, listen: false);
   final tasks = homeProvider.packerSummary?.tasks;
-  
-  if (tasks != null) {
-    final incompleteTasks = tasks.where((t) => t.status != 'completed').toList();
+
+  final isPacker =
+      Provider.of<HomeProvider>(context, listen: false).user.role ==
+          UserRole.packer;
+
+  if (isPacker && tasks != null) {
+    final incompleteTasks =
+        tasks.where((t) => t.status != 'completed').toList();
     if (incompleteTasks.isNotEmpty) {
       await showModalBottomSheet(
         context: context,

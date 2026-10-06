@@ -33,7 +33,9 @@ class CustomProfileListTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
+                Text(name,
+                    style:
+                        TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold)),
                 Text(phoneNumber),
                 SizedBox(height: 2.0), // Add space between ID and phone number
                 Text(

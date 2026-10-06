@@ -38,7 +38,10 @@ class PackerSummary {
           );
 
     if (obj['tasks'] != null && obj['tasks'] is List) {
-      tasks = (obj['tasks'] as List).map((e) => PackerTask.fromJson(e)).toList();
+      tasks = (obj['tasks'] as List)
+          .where((e) => e is Map && e['status'] != null)
+          .map((e) => PackerTask.fromJson(e))
+          .toList();
     }
   }
 }
